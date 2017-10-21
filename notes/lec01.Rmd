@@ -56,7 +56,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.align="center")
 2. Build real-world data-driven reports and dashboard, data visualization.
 3. Latest Internet technology in cryptocurrency and payment system like Bitcoin and Blockchain.
 
-<center>![](imgs/keep-calm-code-on.jpg "Keep calm and code on"){width=75%}</center>
+<center>![](imgs/keep-calm-code-on.jpg "Keep calm and code on"){width=45%}</center>
 
 
 
