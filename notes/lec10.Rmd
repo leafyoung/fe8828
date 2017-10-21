@@ -16,4 +16,5 @@ How to simulate portfolio gain.
 How to do SVD analysis?
 
 # Object way and Data frame way
-
+sample option portfolio
+sample stock portfolio

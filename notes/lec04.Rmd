@@ -1,31 +1,267 @@
 
+# R: basic data types
+Vector
+c(1, 3)
 
-SQL
+rep(100, 10)
 
-let's start from SQL.
+matrix(10, 10, 10)
 
-SELECT
+runif(10, mean = 10, sd = 3)
 
-INSERT
+# Date
+as.Date("2017-11-03")
+as.Date("2017-11-03", format = "%Y-%m-%d")
+as.Date("2017-Nov-03", format = "%Y-%b-%d")
+as.Date("03Nov2017", format = "%d%b%Y")
+format(Sys.Date(), format = "%Y/%m%d")
 
-UPDATE
+# Time
+format(Sys.time(), format = "%H%M")
+format(Sys.time(), format = "%H:%M:%S")
 
-DELETE from WHERE
+# List
 
-JOIN
+a <- list(a = 3, b = 4)
+
+$ and [ operators
+
+a$a
+a$b
+
+List is R's map and object.
+list[]: gives back a list
+list[[]]: gives back a value
+
+list$a => list[[]]
+
+list[number] => item by ordera[2]
+
+    a <- list()
+    a["orange"] <- 3
+    a["banana"] <- 4
+
+    sum <- 3
+    sapply(1:length(a), function(x) {
+      key <- names(a[x])
+      value <- a[[x]]
+      sum + value
+    })
+
+    for (i in 1:length(a)) {
+      key <- names(a[x])
+      value <- a[x]
+    }
+
+    purrr::map(a, function(x) x + 4)
+
+add_to_map <- function(map, key, value) {
+  if (is.null(a[key])) {
+    
+  } else {
+    a[key] <- value
+  }
+}
+
+# R: data frame
+The basic structure of a data frame is that there is one observation per row and each column represents a variable, a measure, feature, or characteristic of that observation. 
+
+df <- data.frame(a = 1:10, b = 10:1)
+df["a"]: gives a data frame
+df[["a"]]: gives value
+
+df$a: gives value,equivalent to df[["a"]]
+
+single number, means column count
+df[number]: column
+
+multiple numbers, means co-ordinates in 2-dimensional.
+df[1, 1]: give value
+df[1, 1, drop = F]: give data frame with names.
+
+head()
+str()
+dim()
+colnames()
+
+# Read/Write data
+readRDS
+writeRDS
+
+# SQL
+
+Let's start from SQL.
+
+SELECT * FROM table WHERE a = 3
+
+SELECT * FROM table WHERE a = 3 ORDER BY a
+
+SELECT b, sum(a) FROM table WHERE a = 3 GROUP BY b
+
+INSERT into table (a, b, c, ...) VALUES ("a", "b", "c", ...);
+
+UPDATE table_name SET column1 = value1, column2 = value2, ... WHERE condition;
+
+DELETE from table WHERE a = 3
+
+# CRUD: Create Read Update Delete
+
+<center>![](imgs/CRUD.png "CRUD"){width=45%}</center>
+
+# Apply CRUD operations to data frame.
+
+Select:
+df[which(df$a == 3 | df$b == 3), , drop = T] 
+df[match(3, df$a), , drop = T]
+
+df[, match("city", colnames(df)), drop = T] 
+
+Insert:
+rbind(df, df)
+
+Delete:
+df[-(which(df$a == 3 | df$b == 3)), , drop = T]
+
+Update:
+df[which(df$a == 3 | df$b == 3), 3, drop = T] <- 3
+
+# dplyr
+dplyr package from tidyverse is a high-performance package to deal with data frame.
+
+dplyr provides functions in "verbs". Some of them are:
+
+- select: return a subset of the columns of a data frame, using a flexible notation
+- filter: extract a subset of rows from a data frame based on logical conditions
+- arrange: reorder rows of a data frame
+- rename: rename variables in a data frame
+- mutate: add new variables/columns or transform existing variables
+- %>%: the “pipe” operator is used to connect multiple verb actions together into a pipeline
+- group_by / rowwise / ungroup: stratify the data
+- summarise / summarize: generate summary statistics of different variables in the data frame, possibly within strata
+- do: process data within the strata
+- left_join / right_join / anti_join / full_join
+- bind_rows / bind_cols
+- ifelse / case_when
+- lag
+
+# sample dataset
+http://dx.doi.org/10.1016/j.dss.2014.03.001
+
+<center>![](imgs/sample-bank-data.png "Sample Bank Data"){width=45%}</center>
 
 
-Some of the key “verbs” provided by the dplyr package are
+# Sample dataset columns
 
-select: return a subset of the columns of a data frame, using a flexible notation
+   1 - age (numeric)
+   2 - job : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student",
+                                       "blue-collar","self-employed","retired","technician","services") 
+   3 - marital : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
+   4 - education (categorical: "unknown","secondary","primary","tertiary")
+   5 - default: has credit in default? (binary: "yes","no")
+   6 - balance: average yearly balance, in euros (numeric) 
+   7 - housing: has housing loan? (binary: "yes","no")
+   8 - loan: has personal loan? (binary: "yes","no")
+   # related with the last contact of the current campaign:
+   9 - contact: contact communication type (categorical: "unknown","telephone","cellular") 
+  10 - day: last contact day of the month (numeric)
+  11 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
+  12 - duration: last contact duration, in seconds (numeric)
+   # other attributes:
+  13 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+  14 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
+  15 - previous: number of contacts performed before this campaign and for this client (numeric)
+  16 - poutcome: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
 
-filter: extract a subset of rows from a data frame based on logical conditions
+  Output variable (desired target):
+  17 - y - has the client subscribed a term deposit? (binary: "yes","no")
 
-arrange: reorder rows of a data frame
 
-rename: rename variables in a data frame
+# Read the data
+Use RStudio's File -> Import Dataset, you may choose either "From Text (base)" or "From Text (readr)". Either way loads the data.
+base comes with R installation. `readr` is a package that provides more options and functionality.
+Copy the generated code to your script file.
 
-mutate: add new variables/columns or transform existing variables
+base
+
+    bank <- read.csv("D:/Dropbox/Docs/MFE/FE8828/example/data-bank/bank.csv", sep=";")
+
+readr
+
+    library(readr)
+    bank <- read_delim("D:/Dropbox/Docs/MFE/FE8828/example/data-bank/bank.csv", 
+        ";", escape_double = FALSE, trim_ws = TRUE)
+    View(bank)
+
+# select
+
+subset <- select(bank, marital)
+subset <- select(bank, 1)
+subset <- select(bank, -1)
+subset <- select(bank, -(job:education))
+subset <- select(bank, -job)
+subset <- select(bank, starts_with("p"))
+
+# filter
+young <- filter(bank, age < 20 & marital == "married")
+young <- filter(bank, age < 20 & marital == "single")
+young <- filter(bank, age < 20)
+
+young2 <- filter(bank, age >= 20 & age < 30 & marital == "married")
+young2 <- filter(bank, age >= 20 & age < 30 & marital == "single")
+young2 <- filter(bank, age >= 20 & age < 30)
+
+# rename
+raname(bank, Age = age)
+raname(bank, `Age in Bank` = age)
+
+# arrange
+arrange(bank, job)
+arrange(bank, default, job)
+
+arrange(bank, desc(day))
+arrange(bank, desc(as.Date(day, format="%d", origin = Sys.Date())))
+
+# mutate
+
+  df1 <- mutate(bank, y = ifelse(y == "yes", T, F))
+  df2 <- mutate(bank, duration_diff = duration - mean(duration, na.rm = TRUE))
+
+transmute would remove all other columns after mutation.
+  df3 <- transmute(bank, 
+                   duration_trend = duration - mean(duration, na.rm = TRUE),
+                   balance_trend = balance - mean(balance, na.rm = TRUE)))
+
+# %>%
+
+ third(second(first(x)))
+This nesting is not a natural way to think about a sequence of operations. The %>% operator allows you to string operations in a left-to-right fashion, i.e.
+
+> first(x) %>% second %>% third
+
+bank.num <- model.matrix(~ . - 1, bank)
+bank$cl <- kmeans(bank.num, 2)$cluster
+
+# Plot
+dev.new(width=4, height=4)
+with(bank, plot(balance, duration, type = 'n'))
+with(bank, text(balance, duration, education, col=cl))
+group_by(bank, cl) %>% summarise(n = n())
+
+# group_by
+
+chicago <- mutate(baml, year = as.POSIXlt(date)$year + 1900)
+> summarize(years, pm25 = mean(pm25, na.rm = TRUE), 
++           o3 = max(o3tmean2, na.rm = TRUE), 
++           no2 = median(no2tmean2, na.rm = TRUE))
+
+> qq <- quantile(chicago$pm25, seq(0, 1, 0.2), na.rm = TRUE)
+> chicago <- mutate(chicago, pm25.quint = cut(pm25, qq))
+
+> quint <- group_by(chicago, pm25.quint)
+Finally, we can compute the mean of o3 and no2 within quintiles of pm25.
+
+> summarize(quint, o3 = mean(o3tmean2, na.rm = TRUE), 
++           no2 = mean(no2tmean2, na.rm = TRUE))
 
 # mutate with style
 
@@ -36,9 +272,6 @@ mutate: add new variables/columns or transform existing variables
     })
 
 group_by/rowwise/ungroup
-
-ifelse
-case_when
 
 # grouped or ungrouped
     
@@ -56,25 +289,11 @@ Use if. ifelse is restrictive that it only output the same type as the input.
 
     rowwise(df) %>% mutate( x = { if ( x == "ABC" ) { "is ABC" } else { "not ABC" }  } )
 
+# summarise
+ example: how to get sub-total and total.
 
-summarise / summarize: generate summary statistics of different variables in the data frame, possibly within strata
-
-  example: how to get sub-total and total.
-
+# do
 do. with an index column and do the analysis for the rest.
-
-%>%: the “pipe” operator is used to connect multiple verb actions together into a pipeline
-
-The dplyr package as a number of its own data types that it takes advantage of. For example, there is a handy print method that prevents you from printing a lot of data to the console. Most of the time, these additional data types are transparent to the user and do not need to be worried about.
-
-left_join
-right_join
-anti_join
-full_join
-
-bind_rows
-bind_cols
-
 
 # Shiny
 
@@ -132,8 +351,6 @@ bind_cols
       )
     )
 
-
-
 ## Static table
 
     renderTable
@@ -149,9 +366,6 @@ bind_cols
       kable(df, format = "html") %>%
     }
 
-
-    
-
 ## Plot
 
       renderPlot({})
@@ -164,10 +378,6 @@ bind_cols
       })
 
 ## Flexdashboard
-
-
-
-
 
 
 

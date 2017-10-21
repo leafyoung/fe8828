@@ -1,13 +1,22 @@
 # Merkle tree
 
-
-
 # Blockchain
 
 BREAKING DOWN 'Blockchain'
 A block is the ‘current’ part of a blockchain, which records some or all of the recent transactions. Once completed, a block goes into the blockchain as a permanent database. Each time a block gets completed, a new one is generated. There is a countless number of such blocks in the blockchain, connected to each other (like links in a chain) in proper linear, chronological order. Every block contains a hash of the previous block. The blockchain has complete information about different user addresses and their balances right from the genesis block to the most recently completed block.
 
 The blockchain was designed so these transactions are immutable, meaning they cannot be deleted. The blocks are added through cryptography, ensuring that they remain meddle-proof: The data can be distributed, but not copied. However, the ever-growing size of the blockchain is considered by some to be a problem, creating issues of storage and synchronization.
+
+# Merkle tree
+
+<center>![](imgs/merkle-tree-aa.jpg "Merkle tree AA"){width=45%}</center>
+The Merkle root of block #482819 is e045b18e7a3d708d686717b4f44db2099aabcad9bebf968de5f7271b458f71c8. The root is combined with other information (the software version, the previous block's hash, the timestamp, the difficulty target and the nonce) and then run through a hash function to produce the block's unique hash: 000000000000000000bfc767ef8bf28c42cbd4bdbafd9aa1b5c3c33c2b089594 in the case of block #482819. This hash is not actually included in the relevant block, but the next one; it is distinct from the Merkle root. (See also, How Bitcoin Works.)
+
+<center>![](imgs/merkle-tree-ab.jpg "Merkle tree AB"){width=45%}</center>
+For example, say that you wanted to verify that transaction TD is included in the block in the diagram above. If you have the root hash (HABCDEFGH), the process is like a game of sudoku: you query the network about HD, and it returns HC, HAB and HEFGH. The Merkle tree allows you to verify that everything is accounted for with three hashes: given HAB, HC, HEFGH and the root HABCDEFGH, HD (the only missing hash) has to be present in the data.
+
+<center>![](imgs/confirmation-time.png "Merkle tree AB"){width=45%}</center>
+<center>![](imgs/bitcoin-difficulty.png "Merkle tree AB"){width=45%}</center>
 
 # 51% Attack
 
