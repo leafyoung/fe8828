@@ -1,0 +1,182 @@
+
+
+SQL
+
+let's start from SQL.
+
+SELECT
+
+INSERT
+
+UPDATE
+
+DELETE from WHERE
+
+JOIN
+
+
+Some of the key “verbs” provided by the dplyr package are
+
+select: return a subset of the columns of a data frame, using a flexible notation
+
+filter: extract a subset of rows from a data frame based on logical conditions
+
+arrange: reorder rows of a data frame
+
+rename: rename variables in a data frame
+
+mutate: add new variables/columns or transform existing variables
+
+# mutate with style
+
+    ungroup() %>%
+    mutate(nnn = 1:n()) %>%
+    mutate(x = tryCatch({
+        as.Date(x)
+    })
+
+group_by/rowwise/ungroup
+
+ifelse
+case_when
+
+# grouped or ungrouped
+    
+    ungroup(df) %>% mutate( x = ifelse( x == "ABC", "is ABC", "not ABC" ) )
+    group_by(x) %>% summarise( cc = count(x) )
+
+# summarise without a group_by
+Just cover entire dataset.
+
+    summarise( x = sum(ifelse( x == "ABC", 1, 0 ) )
+
+
+# rowwise
+Use if. ifelse is restrictive that it only output the same type as the input.
+
+    rowwise(df) %>% mutate( x = { if ( x == "ABC" ) { "is ABC" } else { "not ABC" }  } )
+
+
+summarise / summarize: generate summary statistics of different variables in the data frame, possibly within strata
+
+  example: how to get sub-total and total.
+
+do. with an index column and do the analysis for the rest.
+
+%>%: the “pipe” operator is used to connect multiple verb actions together into a pipeline
+
+The dplyr package as a number of its own data types that it takes advantage of. For example, there is a handy print method that prevents you from printing a lot of data to the console. Most of the time, these additional data types are transparent to the user and do not need to be worried about.
+
+left_join
+right_join
+anti_join
+full_join
+
+bind_rows
+bind_cols
+
+
+# Shiny
+
+# Output
+
+  output$x4 = renderPrint({
+    s = input$x3_rows_selected
+    if (length(s)) {
+      cat('These rows were selected:\n\n')
+      cat(s, sep = ', ')
+    }
+  })
+
+
+# How to export table
+
+## Dynamic table
+
+    library(shiny)
+    library(DT)
+
+    shinyApp(
+      ui = fluidPage(DT::dataTableOutput('tbl')),
+      server = function(input, output) {
+        output$tbl = DT::renderDataTable(
+          iris, options = list(lengthChange = FALSE)
+        )
+      }
+    )
+
+    output$x1 = DT::renderDataTable(cars, server = FALSE)
+
+    
+    output$x3 = DT::renderDataTable(mtcars2, server = TRUE)
+    output$x4 = renderPrint({
+        s = input$x3_rows_selected
+        if (length(s)) {
+          cat('These rows were selected:\n\n')
+          cat(s, sep = ', ')
+        }
+      })
+
+
+    library(shiny)
+    shiny::renderDataTable(iris, options = list(
+      pageLength = 5,
+      initComplete = I('function(setting, json) { alert("done"); }')
+    ))
+
+    library(DT)
+    DT::renderDataTable(
+      iris, options = list(
+        pageLength = 5,
+        initComplete = JS('function(setting, json) { alert("done"); }')
+      )
+    )
+
+
+
+## Static table
+
+    renderTable
+
+    library(knitr)
+    library(kableExtra)
+
+    # This is HTML output
+    kable(df, format = "html") %>%
+
+    # Use function() { } to output html
+    output$p1 <- function() {
+      kable(df, format = "html") %>%
+    }
+
+
+    
+
+## Plot
+
+      renderPlot({})
+
+## Report
+
+      renderUI({
+        htmlOutput("t1"),
+        plotOutput("p1")
+      })
+
+## Flexdashboard
+
+
+
+
+
+
+
+gather/spread
+- Pivot over multiple columns.
+
+pivoting table
+
+ggplot system
+
+
+

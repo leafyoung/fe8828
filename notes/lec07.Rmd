@@ -1,0 +1,201 @@
+
+
+# Shiny
+Server - Client
+
+User Interface (UI)
+Server Instructions (Server)
+
+# App template:
+    
+    library(shiny)
+    ui <- fluidPage("Hello World")
+    server <- function(input, output) {}
+    shinyApp(ui = ui, server = server)
+
+# Think around Input and Outputs
+
+
+  ui <- fluidPage(
+    # Input() functions,
+    # Output() functions
+  )
+
+# Input
+
+  slideInput
+  textInput
+  passwordInput
+
+
+  inputXXX(inputId = "input name", label = "label to display", ...)
+
+# Output
+
+  dataTableOutput()
+  htmlOutput()
+  imageOutput()
+
+  plotOutput(outputId = "hist")
+
+# Server
+
+  server <- function(input, output) {
+    output$hist <- # code
+    output$hist <- renderDataTable()
+    output$hist <- renderImage()
+    output$hist <- renderPlot({ hist(rnorm(100)) })
+
+    output$hist <- renderPlot({
+      title("a normal random number histogram")
+      hist(rnorm(input$num))
+    })
+
+  }
+
+# reactivity will kick in
+
+  input$num ------> renderPlot({ hist(rnorm(input$num)) })
+
+# runing the app
+
+Shiny server AMI
+
+# reactivity
+Reactivity links input to the output like a data flow
+
+input$x => output$y
+
+input$x => expression() => output$y
+
+reactive values work together with reactive functions.
+
+put input$XXX inside renderXXX
+
+1. reactive value notifies.
+2. reactive function responds.
+
+# Display output with render*() functions
+
+7 render*() functions
+
+renderDataTable() # an interactive table from data frame, matrix or other table-like structure
+renderImage() # an image (saved as a link to the source image file)
+renderPlot() # a plot generated on-the-fly
+renderPrint() # code block
+renderTable() # a static table from df, mat, etc.
+renderText() # a character string
+renderUI() # a shiny UI element
+renderHTML() # html tags
+
+# render*() arguments are code used to build and rebuild object
+render*() function reruns the code with every change in the input
+
+# reactive() object
+
+data <- reactive( { hist(rnorm(input$num)) } )
+
+output$hist <- renderPlot({ hist(data()) })
+output$stat <- renderPlot({ summary(data()) })
+
+allow multiple binding of data to different input
+
+# isolate()
+
+isolate({ rnorm(input$num) })
+isolate(input$title)
+
+# reactive 
+
+actionButton(inputId = "go", label = "Click me")
+
+observeEvent(input$go, { print(input$go) })
+
+observeEvent(input$go, { print(as.numeric(input$go)) })
+
+# observe() function
+observe({ print(input$go) }) reacts to whatever are changed in the code block.
+
+# eventReactive() delay reactions
+data <- eventReactive(input$go, { rnorm(input$num) })
+
+button -> data -> renderPlot
+
+button -> renderPlot (direct is not very good)
+
+mono-action to data binding
+
+# reactiveValues
+rv <- reactiveValues(data = rnorm(100))
+
+button -> change the data -> renderPlot
+
+allow multiple binding of data to different input
+
+# When it gets to run.
+ui: client. run once per user per session.
+server: run once per session
+code inside a reactive function runs with every input change.
+
+# HTML UI
+
+# add static content
+tags$h1()
+tags$a()
+
+tagList()
+
+# HTML layout
+
+ui <- fluidPage(
+  fluidRow(column(3),
+           column(5)),
+  fluidRow(column(4), offset = 8)
+  )
+
+# Panel
+
+wellPanel(input)
+
+tabPanel("tab 1")
+
+tabsetPanel(
+  tabPanel("tab1"),
+  tabPanel("tab2"),
+  tabPanel("tab3")
+)
+
+navlistPanel(
+  tabPanel("tab1", "contents"),
+  tabPanel("tab2", "contents"),
+  tabPanel("tab3", "contents")
+
+
+# prepacked layout
+
+fluidPage(sidebarLayout(
+  sidebarPanel(),
+  mainPanel()
+))
+
+fixedPage(
+  fixedRow(
+    column(5, # etc)
+  )
+)
+
+navbarPage(title = "title",
+  tabPanel("tab 1", "content"),
+  tabPanel("tab 2", "content"),
+  navbarMenu(title = "title",
+    tabPanel("tab 3", "content"),
+    tabPanel("tab 3", "content")
+  )
+)
+
+
+
+
+
+
+)

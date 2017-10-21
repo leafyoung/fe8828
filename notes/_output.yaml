@@ -1,0 +1,13 @@
+slidy_presentation:
+  incremental: true
+  highlight: pygments
+  duration: 45
+  footer: "FE8828 Programming Web Applications in Finance. Copyright (c) 2017, Yang Ye"
+  fig_width: 7
+  fig_height: 5
+  fig_caption: true
+  fig_retina: 2
+  df_print: kable # paged
+  # mathjax: local
+  # self_contained: false
+  # lib_dir: libs

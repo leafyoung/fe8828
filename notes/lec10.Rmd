@@ -1,0 +1,19 @@
+# Lecture 10: 
+
+library(xts)
+xts object => store prices and retrieve.
+
+library(fOption)
+
+Option valuation.
+
+How to value a portfolio of stocks?
+
+How to value a portfolio of options?
+
+How to simulate portfolio gain.
+
+How to do SVD analysis?
+
+# Object way and Data frame way
+
