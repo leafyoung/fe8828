@@ -1,0 +1,45 @@
+# Merkle tree
+
+
+
+# Blockchain
+
+BREAKING DOWN 'Blockchain'
+A block is the ‘current’ part of a blockchain, which records some or all of the recent transactions. Once completed, a block goes into the blockchain as a permanent database. Each time a block gets completed, a new one is generated. There is a countless number of such blocks in the blockchain, connected to each other (like links in a chain) in proper linear, chronological order. Every block contains a hash of the previous block. The blockchain has complete information about different user addresses and their balances right from the genesis block to the most recently completed block.
+
+The blockchain was designed so these transactions are immutable, meaning they cannot be deleted. The blocks are added through cryptography, ensuring that they remain meddle-proof: The data can be distributed, but not copied. However, the ever-growing size of the blockchain is considered by some to be a problem, creating issues of storage and synchronization.
+
+# 51% Attack
+
+DEFINITION of '51% Attack'
+51% attack refers to an attack on a blockchain – usually bitcoin's, for which such an attack is still hypothetical – by a group of miners controlling more than 50% of the network's mining hashrate, or computing power. The attackers would be able to prevent new transactions from gaining confirmations, allowing them to halt payments between some or all users.
+
+Read more: 51% Attack | Investopedia http://www.investopedia.com/terms/1/51-attack.asp#ixzz4w9WzpEMX 
+
+
+# Smart Contract
+
+Smart contracts were first proposed in 1994 by Nick Szabo, an American computer scientist who invented a virtual currency called "Bit Gold" in 1998, fully 10 years before the invention of Bitcoin. In fact, Szabo is often rumoured to be the real Satoshi Nakamoto, the anonymous inventor of Bitcoin, which he has denied.
+
+Szabo defined smart contracts as computerized transaction protocols that execute terms of a contract. He wanted to extend the functionality of electronic transaction methods, such as POS (point of sale), to the digital realm. 
+
+In his paper, Szabo also proposed the execution of a contract for synthetic assets, such as derivatives and bonds. “These new securities are formed by combining securities (such as bonds) and derivatives (options and futures) in a wide variety of ways. Very complex term structures for payments can now be built into standardized contracts and traded with low transaction costs, due to computerized analysis of these complex term structures,” he wrote. In simple words, he was referring to the sale and purchase of derivatives with complex terms. 
+
+Read more: Smart Contracts Definition | Investopedia http://www.investopedia.com/terms/s/smart-contracts.asp#ixzz4w9WNqQO4 
+
+
+# Smart Contract 2
+
+Read more: Are Smart Contracts the Best of Blockchain? | Investopedia http://www.investopedia.com/news/are-smart-contracts-best-blockchain/#ixzz4w9VNTv2M 
+
+Every day presents a fresh opportunity to uncover a new application for blockchain technology. After successfully forming the backbone for a revolutionary cryptocurrency, the blockchain is bringing forth strategic evolutions across industries including logistics, web security, and even trade finance. However, nowhere is this advance more evident than its growing function as an innovative payment solution. One of the key pillars driving this rapid adoption is the embrace of smart contracts.
+
+Simply stated, smart contracts are a form of automated contracts that use pre-defined rules to facilitate the exchange of nearly any good or service. The overarching principle is to increase the transparency of the transaction while reducing fees and allaying the potential for conflict over nonperformance. However, unlike traditional contracts, these contracts have no room for interpretation because all terms are predetermined and automatically enforced by the contract itself. (See also: Understanding Smart Contracts.)
+
+A simple analogy for understanding the purpose would be pizza delivery. In this example, a pizzeria promises 30-minute delivery for a pie or money back guaranteed. The pizzeria would then create a smart contract with a customer ordering a pie. The customer could put the funds in escrow, and if the pizza is delivered within 30 minutes, the funds are released from escrow to the pizzeria. If the pizzeria fails to deliver on time, the money held in escrow is returned to the customer. While overgeneralized, this example readily illustrates how smart contracts can be applied across nearly any activity that requires some sort of contract to establish trust and security between parties.
+
+Smart contracts are simply that – smart. They are very carefully designed to carry out specially designed functions and tasks without the intervention of either of the parties which could result in the breach of said contract. In the event of a breach, the contract is optimized to ensure that the other party is not damaged by the violation.
+
+The Automation Effect
+Ultimately, the embrace of smart contracts may very well owe its success to two of its key pillars: automation and the cost savings it brings. Foremost, transferring funds within a digital environment is much faster than traditional bank transfers, which can be time-consuming and costly. If digital wallets on either side of a transaction can be verified, it creates an atmosphere of trust that enables both parties to collaborate without fear of loss or the need to build confidence.
+
