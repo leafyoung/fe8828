@@ -1,4 +1,6 @@
 
+<center>![](imgs/Rlogo.png "R logo"){width=45%}</center>
+
 # R: basic data types
 Vector
 c(1, 3)
@@ -175,6 +177,8 @@ http://dx.doi.org/10.1016/j.dss.2014.03.001
   Output variable (desired target):
   17 - y - has the client subscribed a term deposit? (binary: "yes","no")
 
+# What are the data attributes?
+
 
 # Read the data
 Use RStudio's File -> Import Dataset, you may choose either "From Text (base)" or "From Text (readr)". Either way loads the data.
@@ -183,13 +187,13 @@ Copy the generated code to your script file.
 
 base
 
-    bank <- read.csv("D:/Dropbox/Docs/MFE/FE8828/example/data-bank/bank.csv", sep=";")
+    bank <- read.csv("../example/data-bank/bank.csv", sep=";")
 
 readr
 
     library(readr)
-    bank <- read_delim("D:/Dropbox/Docs/MFE/FE8828/example/data-bank/bank.csv", 
-        ";", escape_double = FALSE, trim_ws = TRUE)
+    bank <- read_delim("../example/data-bank/bank.csv", 
+                       ";", escape_double = FALSE, trim_ws = TRUE)
     View(bank)
 
 # select
@@ -210,6 +214,8 @@ young2 <- filter(bank, age >= 20 & age < 30 & marital == "married")
 young2 <- filter(bank, age >= 20 & age < 30 & marital == "single")
 young2 <- filter(bank, age >= 20 & age < 30)
 
+%in%
+
 # rename
 raname(bank, Age = age)
 raname(bank, `Age in Bank` = age)
@@ -225,6 +231,16 @@ arrange(bank, desc(as.Date(day, format="%d", origin = Sys.Date())))
 
   df1 <- mutate(bank, y = ifelse(y == "yes", T, F))
   df2 <- mutate(bank, duration_diff = duration - mean(duration, na.rm = TRUE))
+
+  mutate(bank, age_group = case_when(
+    age < 20 ~ "youth",
+    age < 40 ~ "middle-age",
+    age < 50 ~ "senior",
+    TRUE ~ "happy"
+  ))
+
+  # month.abb is a built-in array of month names.
+  mutate(bank, month = factor(firstup(bank$month), levels = month.abb))
 
 transmute would remove all other columns after mutation.
   df3 <- transmute(bank, 
@@ -282,7 +298,10 @@ group_by/rowwise/ungroup
 Just cover entire dataset.
 
     summarise( x = sum(ifelse( x == "ABC", 1, 0 ) )
-
+  min()
+  max()
+  n = n()
+  mean()
 
 # rowwise
 Use if. ifelse is restrictive that it only output the same type as the input.
@@ -294,6 +313,26 @@ Use if. ifelse is restrictive that it only output the same type as the input.
 
 # do
 do. with an index column and do the analysis for the rest.
+
+
+
+CRUD:
+add a column for rownumber.
+discover insights of data.
+retrieve with age, slider of numeric
+employment
+Social attributes.
+
+count for subtotal - total, plot graph
+
+D:
+Mark for not included in the 
+
+C:
+Add new.
+
+U:
+
 
 # Shiny
 
@@ -378,15 +417,4 @@ do. with an index column and do the analysis for the rest.
       })
 
 ## Flexdashboard
-
-
-
-gather/spread
-- Pivot over multiple columns.
-
-pivoting table
-
-ggplot system
-
-
 

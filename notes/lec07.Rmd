@@ -1,14 +1,222 @@
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+bank <- read.csv("../example/data-bank/bank.csv", sep=";")
+```
+
+Data analytics
+
+nrow(ozone)
+ncol(ozone)
+
+str()
+
+head(ozone[, c(6:7, 10)])
+tail(bank[])
+
+Hypothesis?
+Does season matters?
+Does employment matters?
+Does age matters?
+
+boxplot(bank$age, col = "blue")
+
+> hist(bank$age, col = "orange")
+> rug(bank$age)
+
+> hist(bank$age, col = "green", breaks = 100)
+> rug(bank$age)
+
+> library(ggplot2)
+> qplot(latitude, pm25, data = pollution, facets = . ~ region)
+
+select(ozone, State.Name) %>% unique %>% nrow
+
+> filter(ozone, State.Name == "Oklahoma" & County.Name == "Caddo") %>%
++         mutate(month = factor(months(Date.Local), levels = month.name)) %>%
++         group_by(month) %>%
++         summarize(ozone = mean(Sample.Measurement))
+
+
+# color
+> library(RColorBrewer)
+> display.brewer.all()
+
+# matrix/heatmap
+
+> set.seed(12345)
+> dataMatrix <- matrix(rnorm(400), nrow = 40)
+> image(1:10, 1:40, t(dataMatrix)[, nrow(dataMatrix):1])
+
+> heatmap(dataMatrix)
+
+gather/spread
+separate/unite
+
+separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE,
+  convert = FALSE, extra = "warn", fill = "warn", ...)
+
+do(df, {
+  some_message = a
+
+})
+
+- Pivot over multiple columns.
+
+pivoting table
+
+# ggplot system
+
+library(ggplot2)
+ggplot(airquality, aes(Temp, Ozone)) + 
+        geom_point() + 
+        geom_smooth(method = "loess", se = FALSE)
+
+# simply plot x and y
+qplot(age, balance, data = bank)
+qplot(age, balance, data = bank, color = job)
+
+# for non-numeric data
+qplot(default, age, data = bank)
+qplot(age, default, data = bank)
+qplot(job, age, data = bank)
+
+# add a geometry
+qplot(age, balance, data = bank, geom = c("point", "smooth"))
+qplot(age, balance, data = bank, color = job, geom = c("point", "smooth"))
+
+# histogram
+qplot(duration, data = bank, fill = job, binwidth = 2)
+qplot(duration, data = bank, fill = job, binwidth = 100)
+
+# density
+qplot(balance, data = bank, fill = job, geom = "density")
+qplot(duration, data = bank, fill = job, geom = "density")
+qplot(age, data = bank, color = job, geom = "density")
+v.s.
+qplot(age, data = bank, fill = job, geom = "density")
+qplot(age, data = bank, color = job, fill = job, geom = "density")
+
+# boxplot
+qplot(job, duration, data = bank, geom = "boxplot")
+qplot(job, balance, data = bank, geom = "boxplot")
+qplot(job, age, data = bank, geom = "boxplot")
+
+# Facets
+qplot(pdays, data = bank, facets = job ~ ., binwidth = 2) # doesn't look great because we have so many jobs.
+qplot(pdays, data = bank, facets = . ~ job, binwidth = 2) # not a good measure.
+qplot(campaign, data = bank, facets = . ~ job, binwidth = 2)
+qplot(duration, data = bank, facets = . ~ job, binwidth = 2)
+qplot(balance, age, data = bank, facets = . ~ job)
+qplot(age, balance, data = bank, facets = . ~ job)
+qplot(age, balance, data = bank, facets = . ~ job) + geom_smooth()
+
+Which is equivalent to
+qplot(age, balance, data = bank, facets = . ~ job, geom = c("point", "smooth"))
+qplot(age, balance, data = bank, facets = . ~ job, geom = "smooth")
+
+# fill/color/shape can be each on one dimension of the data.
+qplot(age, balance, data = bank, shape = marital, color = marital) + geom_smooth()
+qplot(age, balance, data = bank, shape = job, color = marital) + geom_smooth()
+
+# Insights Question
+```{r}
+qplot(age, job, data = bank, color = loan, shape = loan)
+```
+
+Things to consider:
+
++ bio:
+  + age
+  + job
+  + marital
+  + education
++ financial
+  + default
+  + balance
+  + housing
+  + loan
++ communication
+  + contact: celluar v.s. telephone v.s. unknown
+  + day/month: maybe good to ignore?
+  + duration:
+  + campaign:
+  + pdays:
+  + previous:
+  + poutcome:
+
+# Which data is good to use?
+qplot(previous, data = bank, facets = . ~ job, binwidth = 2)
+v.s.
+qplot(previous, data = bank, facets = . ~ marrital, binwidth = 2)
+
+# ggplot2
+Level 2
+
+g <- ggplot(bank, aes(x = age, y = duration))
+
+# Each + is a layer
+g + geom_smooth()
+g + geom_point() + geom_smooth()
+
+To combine we have, g is for re-use
+ggplot(bank, aes(x = age, y = duration)) + 
+  geom_point() + geom_smooth()
+
+g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
+g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) # each + is a layer
+
+# add theme
+default theme is theme_gray()
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_times()
+
+g <- ggplot(bank, aes(x = age, y = log(duration)))
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw() +
+    labs(title = "Duration is longer with age",
+         subtitle = "some random plot",
+         caption = "from MFE") +
+    labs(x = "age", y = expression("log " * Duration))
+
+Levels gives more control to the layer and style.
+
+cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
+# The age_group variable is now a categorical factor variable containing 3 levels, indicating the ranges of age.
+bank$age_group <- cut(bank$age, cutpoints)
+levels(bank$age_group)
+g <- ggplot(bank, aes(age, duration)) +
+     geom_point(alpha = 1/3) + 
+     facet_wrap(job ~ age_group, ncol = 3) + # ncol = number of cuts 3 = length(levels(bank$age_group))
+     geom_smooth(method="lm", se=FALSE, col="steelblue") + 
+     theme_bw(base_family = "Avenir", base_size = 10) + 
+     labs(x = "age", y = expression("log " * Duration)) + 
+     labs(title = "Bank Clients")  
+g
 
 
 
-
-
+## See the levels of the newly created factor variable
+levels(maacs$no2tert)
 
 # Shiny
 Server - Client
 
 User Interface (UI)
 Server Instructions (Server)
+
+updateSelectionInput(...)
+
+# Question?
+Age with respect to anything else.
+With facets
+
+# Dynamic UI
+insertUI
+renderUI
+scenarios
 
 # App template:
     
@@ -140,66 +348,3 @@ allow multiple binding of data to different input
 ui: client. run once per user per session.
 server: run once per session
 code inside a reactive function runs with every input change.
-
-# HTML UI
-
-# add static content
-tags$h1()
-tags$a()
-
-tagList()
-
-# HTML layout
-
-ui <- fluidPage(
-  fluidRow(column(3),
-           column(5)),
-  fluidRow(column(4), offset = 8)
-  )
-
-# Panel
-
-wellPanel(input)
-
-tabPanel("tab 1")
-
-tabsetPanel(
-  tabPanel("tab1"),
-  tabPanel("tab2"),
-  tabPanel("tab3")
-)
-
-navlistPanel(
-  tabPanel("tab1", "contents"),
-  tabPanel("tab2", "contents"),
-  tabPanel("tab3", "contents")
-
-
-# prepacked layout
-
-fluidPage(sidebarLayout(
-  sidebarPanel(),
-  mainPanel()
-))
-
-fixedPage(
-  fixedRow(
-    column(5, # etc)
-  )
-)
-
-navbarPage(title = "title",
-  tabPanel("tab 1", "content"),
-  tabPanel("tab 2", "content"),
-  navbarMenu(title = "title",
-    tabPanel("tab 3", "content"),
-    tabPanel("tab 3", "content")
-  )
-)
-
-
-
-
-
-
-)
