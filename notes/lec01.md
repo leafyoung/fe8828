@@ -1,15 +1,8 @@
----
-title: "FE8828 Programming Web Applications in Finance"
-subtitle: "Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud <br> Catch-up with R"
-author: "Dr. Yang Ye <br> <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 02, 2017"
-runtime: shiny
----
+# FE8828 Programming Web Applications in Finance
+Dr. Yang Ye <br> <sub> <Email:yy@runchee.com> </sub>  
+Nov 02, 2017  
 
-```{r setup, include=FALSE}
-library(tidyverse)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center")
-```
+
 
 # Introduction to this course
 ## Topics: Week 1-3
@@ -223,23 +216,11 @@ Reference in R Studio
 - R Markdown Cheat Sheet: Help > Cheatsheets > R Markdown Cheat Sheet,
 - R Markdown Reference Guide: Help > Cheatsheets > R Markdown Reference Guide.
 
-Create it via File > New File > R Markdown.
-- Document
-- Presentation
-- Shiny
+Create it via File > New File > 
 
-# Markdown example
 
-```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("../example/shiny-mfe-example.Rmd"))
-```
 
-```{r, echo = FALSE}
-wellPanel("Inputs",
-          numericInput("fav_num", "What's your favorite number?", 3))
-```
-
-# Header
+## Header
 
     # Header1
     ## Header2
@@ -255,6 +236,9 @@ wellPanel("Inputs",
     > "markdowns of up to 50 per cent on many items"
 
 ## List
+
+Lists
+Bullet lists
 
 * First paragraph.
 
@@ -301,8 +285,15 @@ eight spaces:
     #.
     #.
 
-# Table
 
+# Horizontal rules
+
+    ---------------
+
+---------------
+---------------
+
+# Tables
     | Tables        | Are           | Cool  |
     | ------------- |:-------------:| -----:|
     | col 3 is      | right-aligned | $1600 |
@@ -396,8 +387,7 @@ An image occurring by itself in a paragraph will be rendered as a figure with a 
 R Markdown is a extension to Markdown that you can execute code among the code. (Not only R, but Python, etc.)
 If you name the file as .Rmd and _knit_ in R Studio.
 
-    ```{r chunk_name}
-    ```
+    
 The name is optional; if included, each code chunk needs a distinct name.
 It’s usually best to give each code chunk a name.
 
@@ -406,13 +396,12 @@ Also, any figures that are created will be given names based on the name of the 
 
 # chunk options
 
-    ```{r cars, echo = TRUE}
+    
+    ```r
     a <- runif(100, 0, 1)
     ```
 
-    ```{r plot}
-    plot(a)
-    ```
+    <img src="lec01_files/figure-slidy/plot-1.png" style="display: block; margin: auto;" />
 
 + _echo_ is to decide whether to display code, default is FALSE.
 + _result_ is to decide whether to display result, default is show, set to "hide" to hide.
@@ -588,17 +577,35 @@ Column counts always add up to 12, 4 + 8.
 
 ## Slide with R Output
 
-```{r, echo = TRUE}
+
+```r
 summary(cars)
+```
+
+```
+##      speed           dist       
+##  Min.   : 4.0   Min.   :  2.00  
+##  1st Qu.:12.0   1st Qu.: 26.00  
+##  Median :15.0   Median : 36.00  
+##  Mean   :15.4   Mean   : 42.98  
+##  3rd Qu.:19.0   3rd Qu.: 56.00  
+##  Max.   :25.0   Max.   :120.00
+```
+
+```r
 a <- filter(cars, speed > 4)
 a
 ```
 
+<div data-pagedtable="false">
+  <script data-pagedtable-source type="application/json">
+{"columns":[{"label":["speed"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["dist"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"7","2":"4"},{"1":"7","2":"22"},{"1":"8","2":"16"},{"1":"9","2":"10"},{"1":"10","2":"18"},{"1":"10","2":"26"},{"1":"10","2":"34"},{"1":"11","2":"17"},{"1":"11","2":"28"},{"1":"12","2":"14"},{"1":"12","2":"20"},{"1":"12","2":"24"},{"1":"12","2":"28"},{"1":"13","2":"26"},{"1":"13","2":"34"},{"1":"13","2":"34"},{"1":"13","2":"46"},{"1":"14","2":"26"},{"1":"14","2":"36"},{"1":"14","2":"60"},{"1":"14","2":"80"},{"1":"15","2":"20"},{"1":"15","2":"26"},{"1":"15","2":"54"},{"1":"16","2":"32"},{"1":"16","2":"40"},{"1":"17","2":"32"},{"1":"17","2":"40"},{"1":"17","2":"50"},{"1":"18","2":"42"},{"1":"18","2":"56"},{"1":"18","2":"76"},{"1":"18","2":"84"},{"1":"19","2":"36"},{"1":"19","2":"46"},{"1":"19","2":"68"},{"1":"20","2":"32"},{"1":"20","2":"48"},{"1":"20","2":"52"},{"1":"20","2":"56"},{"1":"20","2":"64"},{"1":"22","2":"66"},{"1":"23","2":"54"},{"1":"24","2":"70"},{"1":"24","2":"92"},{"1":"24","2":"93"},{"1":"24","2":"120"},{"1":"25","2":"85"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+
 ## Slide with Plot
 
-```{r}
-plot(a)
-```
+<img src="lec01_files/figure-slidy/unnamed-chunk-2-1.png" style="display: block; margin: auto;" />
 
 \![picture of spaghetti](images/spaghetti.jpg)
 
