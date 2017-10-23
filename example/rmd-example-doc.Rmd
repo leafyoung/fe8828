@@ -10,13 +10,11 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Report
-
 ```{r cars}
 summary(cars)
 ```
 
 ## Including Plots
-
 ```{r pressure, echo=FALSE}
 plot(pressure)
 ```

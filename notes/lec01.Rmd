@@ -8,31 +8,31 @@ runtime: shiny
 
 ```{r setup, include=FALSE}
 library(tidyverse)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
 
 # Introduction: Topics for Week 1-3
 - Week 1:
-    #. What's Internet? What's Web?
-    #. Launch into the Cloud: AWS
-    #. R catch-up: R Markdown and Shiny layout
+    * What's Internet? What's Web?
+    * Launch into the Cloud: AWS
+    * R catch-up: R Markdown and Shiny layout
 - Week 2:
-    #. Data manipulation, visualization, and web: part 1/2
+    * Data manipulation, visualization, and web: part 1/2
 - Week 3:
-    #. Data manipulation, visualization, and web: part 2/2
+    * Data manipulation, visualization, and web: part 2/2
 
 # Introduction: Topics for Week 4-6
 - Week 4:
-    #. Finance application basics and cases
+    * Finance application basics and cases
 - Week 5:
-    #. Bitcoin and Blockchain
+    * Bitcoin and Blockchain
 - Week 6:
-    #. Further topics of Blockchain
-    #. Presentation of Assignment: Web applicaiton.
+    * Further topics of Blockchain
+    * Presentation of Assignment: Web applicaiton.
 - Week 7:
-    #. Presentation of Assignment: Blockchain.
+    * Presentation of Assignment: Blockchain.
 
 # Introduction: Assingments
 - Week 1: A static website. A front page, a about page and a description page in the cloud. (due on Week 2)
@@ -59,18 +59,18 @@ knitr::include_graphics("imgs/keep-calm-code-on.jpg")
 - Network
 
 # Network
-```{r, echo = FALSE, out.width = "40%"}
+```{r, echo = FALSE, out.width = "60%"}
 knitr::include_graphics("imgs/Internet_map_1024.jpg")
 ```
 
 # Network is to connect the dots
-```{r, echo = FALSE, out.width = "30%"}
+```{r, echo = FALSE, out.width = "50%"}
 knitr::include_graphics("imgs/dot-to-dot-connect-the-dots.jpg")
 ```
 Wrong version
 
 # Network is to connect the dots
-<center>![](imgs/network_connect_dots.jpg "Connect the dots"){width=35%}</center>
+<center>![](imgs/network_connect_dots.jpg "Connect the dots"){width=45%}</center>
 
 # What happens to a computer network?
 We need to talk to each other.
@@ -227,24 +227,49 @@ Markdown is a language is that it adds minimal to the text to decorate it, creat
   A Markdown-formatted document should be publishable as-is, as plain text, without looking like it's been marked up with tags or formatting instructions. - John Gruber
 
 # Markdown example
-...
 
-# Header
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("../example/markdown-example.md"))
+```
 
-    # Header1
-    ## Header2
-    ### Header3
+# Markdown doc example
+```{r, echo = FALSE, out.height = "70%"}
+knitr::include_graphics("imgs/markdown-doc-preview.png")
+```
 
-## Block quote
+# Markdown Elements 1
 
-    > markdown
-    > /ˈmɑːkdəʊn/
-    > noun
-    > noun: markdown; plural noun: markdowns; noun: mark-down; plural noun: mark-downs
-    > a reduction in price.
-    > "markdowns of up to 50 per cent on many items"
+## Header
+
+```{r echo = FALSE, comment = ""}
+cat("# Header1\n## Header2\n### Header3\n")
+```
+
+## Code
+Give four spaces before it
+```{r echo = FALSE, comment = ""}
+cat("    if (a > 0) {\n      print(a)\n    }\n")
+```
+
+    if (a > 0) {
+      print(a)
+    }
+
+# Markdown Elements 2
 
 ## List
+
+    * First paragraph.
+    Continued.
+
+    * Second paragraph. With a code block, which must be indented
+    eight spaces:
+
+            { code }
+
+```{r, echo = FALSE, out.width = "12%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
 
 * First paragraph.
 Continued.
@@ -252,9 +277,12 @@ Continued.
 * Second paragraph. With a code block, which must be indented
 eight spaces:
 
-    { code }
+        { code }
 
-# Multi-level lists
+# Markdown Elements 3
+
+## Multi-level lists
+Put four more spaces for each level.
 
     * fruits
         + apples
@@ -276,9 +304,23 @@ eight spaces:
     + chard
 
 # Ordered Lists
+Put 4 more spaces for each level.
 
-    #.
-    #.
+    #. Chapter 1
+        #. Section 1.1
+        #. Section 1.2
+    #. Chapter 2
+    #. Chapter 3
+
+```{r, echo = FALSE, out.width = "12%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
+
+#. Chapter 1
+    #. 1.1
+    #. 1.2
+#. Chapter 2
+#. Chapter 3
 
 # Table
 
@@ -288,6 +330,10 @@ eight spaces:
     | col 2 is      | centered      |   $12 |
     | zebra stripes | are neat      |    $1 |
 
+```{r, echo = FALSE, out.width = "12%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
+
 | Tables        | Are           | Cool  |
 | ------------- |:-------------:| -----:|
 | col 3 is      | right-aligned | $1600 |
@@ -296,69 +342,72 @@ eight spaces:
 
 # Inline formatting
 
-Emphasis
+1. Emphasis
 To emphasize some text, surround it with *s or _, like this:
+
+    This text is \_emphasized with underscores\_, and this
+    is \*emphasized with asterisks\*.
+    Double * or _ produces strong emphasis:
 
     This text is _emphasized with underscores_, and this
     is *emphasized with asterisks*.
     Double * or _ produces strong emphasis:
 
+    This is \*\*strong emphasis\*\* and \_\_with underscores\_\_.
+
     This is **strong emphasis** and __with underscores__.
     A * or _ character surrounded by spaces, or backslash-escaped, will not trigger emphasis:
 
-This ~~is deleted text.~~
+2. Strikthrough
 
-Superscripts and subscripts
+    This \~\~is deleted text.\~\~
 
-H~2~O is a liquid.  2^10^ is 1024.
+    This ~~is deleted text.~~
 
-Verbatim
-To make a short span of text verbatim, put it inside backticks:
+3. Superscripts and subscripts
+
+    H\~2\~O is a liquid.  2\^10\^ is 1024.
+
+    H~2~O is a liquid.  2^10^ is 1024.
+
+4. Verbatim. inline code. Use backtick \`>>=\`
 
 What is the difference between `>>=` and `>>`?
 If the verbatim text includes a backtick, use double backticks:
 
 # Links
 
-Markdown allows links to be specified in several ways.
-
-Automatic links
-If you enclose a URL or email address in pointy brackets, it will become a link:
-
 <http://google.com>
-<sam@green.eggs.ham>
-Inline links
-An inline link consists of the link text in square brackets, followed by the URL in parentheses. (Optionally, the URL can be followed by a link title, in quotes.)
 
-This is an [inline link](/url), and here's [one with
-a title](http://fsf.org "click here for a good time!").
-
-# images
+# Images
 
 A link immediately preceded by a ! will be treated as an image. The link text will be used as the image’s alt text:
 
-    ![la lune](lalune.jpg "Voyage to the moon")
+    ![Pizza](imgs/bitcoin-pizza.png)
 
-    ![movie reel]
+![Pizza](imgs/bitcoin-pizza.png){width=75%}
 
-    [movie reel]: movie.gif
+# Formula
+MathJax. Use laTex syntax. You may find many online resources.
 
-An image occurring by itself in a paragraph will be rendered as a figure with a caption.4 (In LaTeX, a figure environment will be used; in HTML, the image will be placed in a div with class figure, together with a caption in a p with class caption.) The image’s alt text will be used as the caption.
+## Inline with text
 
-    ![This is the caption](/url/of/image.png)
+    $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 
-# Verbatim (Code) block
+$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
 
-    if (a > 3) {
-      moveShip(5 * gravity, DOWN);
-    }
+## Centered
+
+    $$\sum_{i=1}^n X_i$$
+
+$$\sum_{i=1}^n X_i$$
 
 # R Markdown
-Reference in R Studio
+## Reference in R Studio
 - R Markdown Cheat Sheet: Help > Cheatsheets > R Markdown Cheat Sheet,
 - R Markdown Reference Guide: Help > Cheatsheets > R Markdown Reference Guide.
 
-Create it via File > New File > R Markdown.
+## Create it via File > New File > R Markdown.
 - Document
 - Presentation
 - Shiny
@@ -368,23 +417,34 @@ Create it via File > New File > R Markdown.
 cat(htmltools::includeText("../example/rmd-example-doc.Rmd"))
 ```
 
-output:
+Output:
+
 - html_document
 - pdf_document
 - word_document
 
-# R Markdown Shiny example
+# Code block for R Markdown
+* R Markdown is a extension to Markdown that you can execute code among the code. (Not only R, but Python, etc.)
+If you name the file as __.Rmd__ and _knit_ in R Studio.
 
-```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("../example/shiny-mfe-example.Rmd"))
-```
+        `r chunk`{r chunk_name}
+        a <- 3
+        b <- 4
+        print(a + b)
+        `r chunk`
 
-```{r, echo = FALSE}
-wellPanel("Inputs",
-          numericInput("fav_num", "What's your favorite number?", 3))
-```
+  ```{r chunk_name}
+  a <- 3
+  b <- 4
+  print(a + b)
+  ```
 
-# R markdown Table
+* The chunk_name is optional; if included, each code chunk needs a distinct name.
+It’s usually best to give each code chunk a name, for easier debug.
+
+* R code can also be inline. For example, to generate a random number everytime, include this \`runif(1, 0, 1)\`, `r runif(1, 0, 1)`
+
+# R Markdown example
 
     `r chunk`{r kable}
     knitr::kable(
@@ -393,6 +453,13 @@ wellPanel("Inputs",
     )
     `r chunk`
 
+    `r chunk`{r plot1, echo = FALSE}
+    a <- filter(cars, speed > 4)
+    plot(a)
+    `r chunk`
+
+# R Markdown result
+
 ```{r kable}
 knitr::kable(
   mtcars[1:5, ], 
@@ -400,22 +467,10 @@ knitr::kable(
 )
 ```
 
-# image
-```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("rmarkdown/diamond-sizes-notebook.png")
+```{r plot1, echo = FALSE}
+a <- filter(cars, speed > 4)
+plot(a)
 ```
-
-## Code block for R Markdown
-R Markdown is a extension to Markdown that you can execute code among the code. (Not only R, but Python, etc.)
-If you name the file as .Rmd and _knit_ in R Studio.
-
-    ```{r chunk_name}
-    ```
-The name is optional; if included, each code chunk needs a distinct name.
-It’s usually best to give each code chunk a name.
-
-The advantage of giving each chunk a name is that it will be easier to understand where to look for errors, should they occur.
-Also, any figures that are created will be given names based on the name of the code chunk that produced them.
 
 # chunk options
 
@@ -442,7 +497,6 @@ plot(a)
 
 # R Shiny
 Just about layout and some R Syntax
-
 
 # HTML UI
 
@@ -607,21 +661,16 @@ Column counts always add up to 12, 4 + 8.
         tabPanel("Sub-Component B"))
     )
 
+# R Markdown Shiny example
 
-## Slide with R Output
-
-```{r, echo = TRUE}
-summary(cars)
-a <- filter(cars, speed > 4)
-a
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("../example/shiny-mfe-example.Rmd"))
 ```
 
-## Slide with Plot
-
-```{r}
-plot(a)
+```{r, echo = FALSE}
+wellPanel("Inputs",
+          numericInput("fav_num", "What's your favorite number?", 3))
 ```
 
-\![picture of spaghetti](images/spaghetti.jpg)
+# Assignments
 
-\\[ x = {-b \pm \sqrt{b^2-4ac} \over 2a} \\]
