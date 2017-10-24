@@ -47,7 +47,22 @@ inline <- function(x = "") paste0("`` `r ", x, "` ``")
 2. Build real-world data-driven reports and dashboard, data visualization.
 3. Latest Internet technology in cryptocurrency and payment system like Bitcoin and Blockchain.
 
-Spectrum.
+# How does this course affect your career?
+An intro to data science
+
+## One kind of pipeline
+Data -> Model -> Application
+
+## Breakdown the pipeline
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/data-science-explore.png")
+```
+
+You should strive to learn new things throughout your career, but make sure your understanding is solid before you move on to the next interesting thing.
+
+# Keep calm and code on
+<center>![](imgs/keep-calm-code-on.jpg "Keep calm and code on"){width=45%}</center>
+
 Data ->  Model -> Application
 
 ```{r, echo = FALSE, out.width = "20%"}
@@ -200,6 +215,56 @@ Use FBI....
 Warning:
 You may be charged for using AWS EC2.
 Free Tier applies to t1.micro.
+
+
+## AWS
+
+Windows: Download Git for Windows from https://git-scm.com/download/.
+ssh -i 'c:\Users\yourusername\Downloads\MyKeyPair.pem' ec2-user@{IP_Address}
+
+Mac: skip download Git. Go straight
+ssh -i ~/Downloads/MyKeyPair.pem ec2-user@{IP_Address} 
+
+
+http://www.louisaslett.com/RStudio_AMI/
+Singapore
+ami-a13b59c2
+
+rstudio
+rstudio
+
+
+# Create VPC
+
+# Create Internet gateway
+
+# Create Security Groups
+
+Inbound v.s Outbound rules
+
+Simply put, an inbound firewall protects the network against incoming traffic from the internet or other network segments, namely disallowed connection from outside.
+
+# EBS (Elastic Block Storage)
+Use Stop not Terminate for the instance
+
+# Note for T2.micro
+
+sudo fallocate -l 1G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+
+Next, we need to make sure that the swap file is enabled even after rebooting the system
+
+Edit the `fstab``file with root privileges in your text editor:
+
+sudo nano /etc/fstab
+At the bottom of the file, you need to add a line that will tell the operating system to automatically use the file you created:
+
+/swapfile   none    swap    sw    0   0
+
+# git hub
+auto push
 
 # Lecture 03: R Markdown and Shiny layout
 ## Introduction
@@ -673,4 +738,6 @@ wellPanel("Inputs",
 ```
 
 # Assignments
-
+●	Setup a website with AWS.
+●	Write a markdown document and publish it website.
+●	Use JavaScript to manipulate web page parts
