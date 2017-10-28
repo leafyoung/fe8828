@@ -230,8 +230,6 @@ bank2 <- bank1 %>%
 ggplot(data = bank2) + 
   geom_point(mapping = aes(x = age, y = resid))
 
-
-
 # density
 qplot(balance, data = bank, fill = job, geom = "density")
 qplot(duration, data = bank, fill = job, geom = "density")

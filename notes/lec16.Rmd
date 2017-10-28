@@ -67,6 +67,28 @@ The typical mapping of this story onto blockchain is that the network nodes are 
 
 In the paper referred above, several solutions have been proposed.
 
+# Consensus
+Consensus is the process of building agreement among a group of mutually distrusting participants.
+There are many different algorithms for building consensus based on requirements related to performance, scalability, consistency, threat model, and failure model.
+While most distributed ledgers operate with an assumption of Byzantine failures (malicious attacker), other properties are largely determined by application requirements.
+For example, ledgers used to record financial transactions often require high transaction rates with relatively few participants and immediate finality of commitment. Consumer markets, in contrast, require substantial aggregate throughput across a large number of participants; however, short-term finality is less important.
+
+Two general approaches have been proposed.
+The first, often referred to as “Nakamoto consensus”, elects a leader through some form of “lottery”. The leader then proposes a block that can be added to a chain of previously committed blocks.
+In Bitcoin, the first participant to successfully solve a cryptographic puzzle wins the leader-election lottery.
+The elected leader broadcasts the new block to the rest of the participants who *implicitly* vote to accept the block by adding the block to a chain of accepted blocks and proposing subsequent transaction blocks that build on that chain.
+
+The second approach is based on traditional Byzantine Fault Tolerance (BFT) algorithms and uses multiple rounds of explicit votes to achieve consensus. Ripple and Stellar developed consensus protocols that extend traditional BFT for open participation.
+
+# Proof of Work or Proof of Stake
+The proof of stake was created as an alternative to the proof of work (PoW), to tackle inherent issues in the latter. When a transaction is initiated, the transaction data is fitted into a block with a maximum capacity of 1 megabyte, and then duplicated across multiple computers or nodes on the network. The nodes are the administrative body of the blockchain and verify the legitimacy of the transactions in each block. To carry out the verification step, the nodes or miners would need to solve a computational puzzle, known as the proof of work problem. The first miner to decrypt each block transaction problem gets rewarded with coin. Once a block of transactions has been verified, it is added to the blockchain, a public transparent ledger.
+
+With a PoS, the attacker would need to obtain 51% of the cryptocurrency to carry out a 51% attack. The proof of stake avoids this ‘tragedy’ by making it disadvantageous for a miner with a 51% stake in a cryptocurrency to attack the network. Although it would be difficult and expensive to accumulate 51% of a reputable digital coin, a miner with 51% stake in the coin would not have it in his best interest to attack a network which he holds a majority share. If the value of the cryptocurrency falls, this means that the value of his holdings would also fall, and so the majority stake owner would be more incentivized to maintain a secure network.
+
+# Tragedy of Commons
+Bitcoin uses a PoW system and as such is susceptible to a potential Tragedy of Commons. The Tragedy of Commons refers to a future point in time when there will be fewer bitcoin miners available due to little to no block reward from mining. The only fees that will be earned will come from transaction fees which will also diminish over time as users opt to pay lower fees for their transactions. With fewer miners than required mining for coins, the network becomes more vulnerable to a 51% attack. A 51% attack is when a miner or mining pool controls 51% of the computational power of the network and creates fraudulent blocks of transactions for himself, while invalidating the transactions of others in the network.
+
+
 # Mining
 
 Bitcoin has successfully overcome the BFT problem by using “Proof-of-Work” or “mining”.
