@@ -1,3 +1,18 @@
+---
+title: "FE8828 Programming Web Applications in Finance"
+subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 1/2 </sub>"
+author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+date: "Nov 02, 2017"
+# runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(shiny)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE)
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+```
 
 <center>![](imgs/Rlogo.png "R logo"){width=45%}</center>
 
