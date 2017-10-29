@@ -1,13 +1,104 @@
-# Merkle tree
-
-
+# Satoshi's paper
 
 # Blockchain
+
+The name “blockchain” is derived from the fact that new information can only be added to the file in blocks that refer to their predecessor in the chain.
 
 BREAKING DOWN 'Blockchain'
 A block is the ‘current’ part of a blockchain, which records some or all of the recent transactions. Once completed, a block goes into the blockchain as a permanent database. Each time a block gets completed, a new one is generated. There is a countless number of such blocks in the blockchain, connected to each other (like links in a chain) in proper linear, chronological order. Every block contains a hash of the previous block. The blockchain has complete information about different user addresses and their balances right from the genesis block to the most recently completed block.
 
 The blockchain was designed so these transactions are immutable, meaning they cannot be deleted. The blocks are added through cryptography, ensuring that they remain meddle-proof: The data can be distributed, but not copied. However, the ever-growing size of the blockchain is considered by some to be a problem, creating issues of storage and synchronization.
+
+## Block hash
+Block contains all transactions. Now this block includes the hash value in its header for all transactions inside it.
+<center>![](imgs/block-hash.png "Block hash"){width=45%}</center>
+In a blockchain, the database is distributed and every participant has a copy of this block. They can easily verify if the hash of the transactions in a block matches with the header.
+
+## Block chain
+The next block contains the previous block's hash
+<center>![](imgs/block-chain.png "blockchain"){width=45%}</center>
+In blockchain, once a block is made, the hash header of this block is passed on to the next block as an input. Linked blocks
+With this link, in a blockchain, if any transaction is altered or corrupted, then the hash of that block will change. Since this hash is an input to the next block, the hash of the next block also changes and so on. Thus all the blocks, subsequent to the changed block will be corrupted and this is easily verifiable by others.
+There is still a possibility of all future block hashes also reconstructed by a bad element.
+
+# Merkle tree
+
+<center>![](imgs/block-head.jpg "Block head"){width=45%}</center>
+The transactions are at the leaf level. Hash of two transactions (Tx0 and Tx1) are again hashed and a non-leaf node of Hash01 is formed. Similarly Hash23, Hash45 etc are formed. A tree is formed and at the top of the tree is the Top Hash or the Root Hash.
+In bitcoin the Block header contains this Root as Merkle Root.
+
+<center>![](imgs/block-head-chain.jpg "Block head chain"){width=45%}</center>
+With this design, they have greatly reduced the size of the blocks that are required for a transaction user.
+
+# Merkle tree storage
+As mentioned in the paper - “A block header with no transactions would be about 80 bytes. If we suppose blocks are generated every 10 minutes, 80 bytes * 6 * 24 * 365 = 4.2MB per year. With computer systems typically selling with 2GB of RAM as of 2008, and Moore’s Law predicting current growth of 1.2GB per year, storage should not be a problem even if the block headers must be kept in memory.”
+
+# Verification is easily
+
+To verify that a transaction is part of a block )or a hash tree), one needs the specific transaction details and just the hash values of the higher level non branches.
+To verify that Tx0 is in the block, one needs the details of
+- Tx0
+- Hash1 and
+- Hash23
+<center>![](imgs/merkle-tree-veri.png "merkle tree verification"){width=45%}</center>
+
+More illustrative example.
+https://media.consensys.net/ever-wonder-how-merkle-trees-work-c2f8b7100ed3
+<center>![](imgs/merkle-banana.png "Merkle tree in banana"){width=45%}</center>
+
+
+<center>![](imgs/merkle-tree-aa.jpg "Merkle tree AA"){width=45%}</center>
+The Merkle root of block #482819 is e045b18e7a3d708d686717b4f44db2099aabcad9bebf968de5f7271b458f71c8. The root is combined with other information (the software version, the previous block's hash, the timestamp, the difficulty target and the nonce) and then run through a hash function to produce the block's unique hash: 000000000000000000bfc767ef8bf28c42cbd4bdbafd9aa1b5c3c33c2b089594 in the case of block #482819. This hash is not actually included in the relevant block, but the next one; it is distinct from the Merkle root. (See also, How Bitcoin Works.)
+
+<center>![](imgs/merkle-tree-ab.jpg "Merkle tree AB"){width=45%}</center>
+For example, say that you wanted to verify that transaction TD is included in the block in the diagram above. If you have the root hash (HABCDEFGH), the process is like a game of sudoku: you query the network about HD, and it returns HC, HAB and HEFGH. The Merkle tree allows you to verify that everything is accounted for with three hashes: given HAB, HC, HEFGH and the root HABCDEFGH, HD (the only missing hash) has to be present in the data.
+
+# Byzantine Generals Problem
+
+<center>![](imgs/bft-paper-front.png "bft-paper-front"){width=45%}</center>
+
+“The Byzantine Generals Problem is with a group of generals, each commanding a portion of the Byzantine army, encircle a city. These generals wish to formulate a plan for attacking the city. In its simplest form, the generals must only decide whether to attack or retreat. Some generals may prefer to attack, while others prefer to retreat. The important thing is that every general agrees on a common decision, for a halfhearted attack by a few generals would become a rout and be worse than a coordinated attack or a coordinated retreat.”
+<center>![](imgs/bft-general.png "bft-general"){width=45%}</center>
+
+The problem is complicated by the presence of traitorous generals who may not only cast a vote for a suboptimal strategy, they may do so selectively. For instance, if nine generals are voting, four of whom support attacking while four others are in favor of retreat, the ninth general may send a vote of retreat to those generals in favor of retreat, and a vote of attack to the rest. Those who received a retreat vote from the ninth general will retreat, while the rest will attack (which may not go well for the attackers). The problem is complicated further by the generals being physically separated and having to send their votes via messengers who may fail to deliver votes or may forge false votes.”
+<center>![](imgs/general-message.png "general-message"){width=45%}</center>
+
+The typical mapping of this story onto blockchain is that the network nodes are the generals and their digital communication system links are the messengers.
+
+In the paper referred above, several solutions have been proposed.
+
+# Consensus
+Consensus is the process of building agreement among a group of mutually distrusting participants.
+There are many different algorithms for building consensus based on requirements related to performance, scalability, consistency, threat model, and failure model.
+While most distributed ledgers operate with an assumption of Byzantine failures (malicious attacker), other properties are largely determined by application requirements.
+For example, ledgers used to record financial transactions often require high transaction rates with relatively few participants and immediate finality of commitment. Consumer markets, in contrast, require substantial aggregate throughput across a large number of participants; however, short-term finality is less important.
+
+Two general approaches have been proposed.
+The first, often referred to as “Nakamoto consensus”, elects a leader through some form of “lottery”. The leader then proposes a block that can be added to a chain of previously committed blocks.
+In Bitcoin, the first participant to successfully solve a cryptographic puzzle wins the leader-election lottery.
+The elected leader broadcasts the new block to the rest of the participants who *implicitly* vote to accept the block by adding the block to a chain of accepted blocks and proposing subsequent transaction blocks that build on that chain.
+
+The second approach is based on traditional Byzantine Fault Tolerance (BFT) algorithms and uses multiple rounds of explicit votes to achieve consensus. Ripple and Stellar developed consensus protocols that extend traditional BFT for open participation.
+
+# Proof of Work or Proof of Stake
+The proof of stake was created as an alternative to the proof of work (PoW), to tackle inherent issues in the latter. When a transaction is initiated, the transaction data is fitted into a block with a maximum capacity of 1 megabyte, and then duplicated across multiple computers or nodes on the network. The nodes are the administrative body of the blockchain and verify the legitimacy of the transactions in each block. To carry out the verification step, the nodes or miners would need to solve a computational puzzle, known as the proof of work problem. The first miner to decrypt each block transaction problem gets rewarded with coin. Once a block of transactions has been verified, it is added to the blockchain, a public transparent ledger.
+
+With a PoS, the attacker would need to obtain 51% of the cryptocurrency to carry out a 51% attack. The proof of stake avoids this ‘tragedy’ by making it disadvantageous for a miner with a 51% stake in a cryptocurrency to attack the network. Although it would be difficult and expensive to accumulate 51% of a reputable digital coin, a miner with 51% stake in the coin would not have it in his best interest to attack a network which he holds a majority share. If the value of the cryptocurrency falls, this means that the value of his holdings would also fall, and so the majority stake owner would be more incentivized to maintain a secure network.
+
+# Tragedy of Commons
+Bitcoin uses a PoW system and as such is susceptible to a potential Tragedy of Commons. The Tragedy of Commons refers to a future point in time when there will be fewer bitcoin miners available due to little to no block reward from mining. The only fees that will be earned will come from transaction fees which will also diminish over time as users opt to pay lower fees for their transactions. With fewer miners than required mining for coins, the network becomes more vulnerable to a 51% attack. A 51% attack is when a miner or mining pool controls 51% of the computational power of the network and creates fraudulent blocks of transactions for himself, while invalidating the transactions of others in the network.
+
+
+# Mining
+
+Bitcoin has successfully overcome the BFT problem by using “Proof-of-Work” or “mining”.
+Proof-of-Work involves scanning for a value (nonce) that when hashed, the (block) hash begins with a specific number of zero bits.
+Assuming Proof-of-work needs that the resultant hash must start with 0000. We now need to find a nonce value that would satisfy this condition. After trying many combinations, we find that a nonce value of “67068” makes the hash value of the block start with “0000”.
+This process of finding the nonce value is “mining” and the first miner gets rewarded with bitcoins.
+However, this process consumes enormous power for just finding a random number!
+
+<center>![](imgs/confirmation-time.png "confirmation-time"){width=45%}</center>
+<center>![](imgs/bitcoin-difficulty.png "bitcoin-difficulty"){width=45%}</center>
 
 # 51% Attack
 
@@ -43,3 +134,27 @@ Smart contracts are simply that – smart. They are very carefully designed to c
 The Automation Effect
 Ultimately, the embrace of smart contracts may very well owe its success to two of its key pillars: automation and the cost savings it brings. Foremost, transferring funds within a digital environment is much faster than traditional bank transfers, which can be time-consuming and costly. If digital wallets on either side of a transaction can be verified, it creates an atmosphere of trust that enables both parties to collaborate without fear of loss or the need to build confidence.
 
+# Python
+
+    from hashlib import sha256 as sha
+
+    def chunks(l, n):
+        """Yield successive n-sized chunks from l."""
+        for i in range(0, len(l), n):
+            yield l[i:i + n]
+
+    def m_tree(transactions):
+      """Takes an array of transactions and computes a Merkle root"""
+        sub_t = []
+        for i in chunks(transactions,2):
+            if len(i) == 2:
+                hash = sha(str(i[0]+i[1])).hexdigest()
+            else:
+                hash = sha(str(i[0]+i[0])).hexdigest()
+            sub_t.append(hash)
+        print sub_t
+        if len(sub_t) == 1:
+          return sub_t[0]
+        else:
+          return m_tree(sub_t)
+          

@@ -1,13 +1,32 @@
+# revealjs::revealjs_presentation:
+#   incremental: false
+#   transition: none
+#   self_contained: false
+#   reveal_plugins: ["chalkboard"]
+#   reveal_options:
+#     chalkboard:
+#       theme: whiteboard
+#       toggleNotesButton: false
+
+# ioslides_presentation:
+  # font-import: http://fonts.googleapis.com/css?family=Risque
+  # font-family: 'Risque'
+
+# html_document:
 slidy_presentation:
-  incremental: true
+  md_extensions: +simple_tables+multiline_tables+pipe_tables
   highlight: pygments
-  duration: 45
+  duration: 180
+  font_adjustment: +1
   footer: "FE8828 Programming Web Applications in Finance. Copyright (c) 2017, Yang Ye"
-  fig_width: 7
-  fig_height: 5
-  fig_caption: true
-  fig_retina: 2
-  df_print: kable # paged
+  df_print: paged # paged kable
+  # keep_md: true
   # mathjax: local
   # self_contained: false
   # lib_dir: libs
+  # fig_width: 7
+  # fig_height: 5
+  # fig_caption: true
+  # fig_retina: 2
+  # conflict with shortcut key "A" mode
+  # theme: readable # "default", "cerulean", "journal", "flatly", "readable", "spacelab", "united", "cosmo", "lumen", "paper", "sandstone", "simplex", "yeti"

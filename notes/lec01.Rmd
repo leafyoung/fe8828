@@ -1,497 +1,724 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud <br> Catch-up with R"
-author: "Dr. Yang Ye <br> <sub> <Email:yy@runchee.com> </sub>"
+subtitle: "<sub> Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud <br> Catch-up with R </sub>"
+author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Nov 02, 2017"
+# runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
 library(tidyverse)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center")
+library(shiny)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE)
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
 
-# Introduction to this course
-
-## Topics: Week 1-3
-
+# Introduction: Topics for Week 1-3
 - Week 1:
-    #. What's Internet? What's Web?
-    #. Launch into the Cloud: AWS
-    #. R catch-up: R Markdown and Shiny layout
+    * What's Internet? What's Web?
+    * Launch into the Cloud: AWS
+    * R catch-up: R Markdown and Shiny layout
 - Week 2:
-    #. Data manipulation with dplyr 1/2
-    #. Data visualization with ggplot 1/2
-    #. Interactive Web application with Shiny 1/2
+    * Data, visualization, and web: part 1/2
 - Week 3:
-    #. Data manipulation with dplyr 2/2
-    #. Data visualization with ggplot 2/2
-    #. Interactive Web application with Shiny 2/2
+    * Data, visualization, and web: part 2/2
 
-# Introduction to this course
-
-## Topics: Week 4-6
-
+# Introduction: Topics for Week 4-6
 - Week 4:
-    #. Finance application basics
-    #. Finance application cases
+    * Finance applications
 - Week 5:
-    #. Bitcoin and Blockchain
+    * Bitcoin and Blockchain
 - Week 6:
-    #. Further topics of Blockchain
-    #. Presentation of Assignment: Web applicaiton.
+    * Further topics of Blockchain
+    * Presentation of Assignment: Web applicaiton.
+- Week 7:
+    * Presentation of Assignment: Blockchain.
 
-# Introduction to this course
-## Assingments
+# Introduction: Assingments
+- Week 1: A static website. A front page, a about page and a description page. (due by Week 2)
+- Week 2: A dynamic website that can do CRUD. (due by Week 3)
+- Week 3: A data-driven website that does data analytics.  (due by Week 4)
+- Week 4: A finance-data application website. (due by Week 6)
+- Week 5: Reading on Blockchain. (due by Week 7) Working on web assignment. (due by Week 6)
+- Week 6: Reading on Blockchain. (due by Week 7)
 
-- Week 1: A static website. A front page, a about page and a description page in the cloud. (due on Week 2)
-- Week 2: A dynamic website that can do CRUD. (due on Week 3)
-- Week 3: A data-driven website that does data analytics.  (due on Week 4)
-- Week 4: A finance-data application website. (due on Week 6)
-- Week 5: Reading on Blockchain. (due on Week 7) Working on web assignment. (due on Week 6)
-- Week 6: Reading of Blockchain. (due on Week 7)
-
-# Introduction to this course
-## Objective
+# Introduction: Objective
 1. Know the way of Internet: the network, the cloud and the application. 
 2. Build real-world data-driven reports and dashboard, data visualization.
 3. Latest Internet technology in cryptocurrency and payment system like Bitcoin and Blockchain.
 
-<center>![](imgs/keep-calm-code-on.jpg "Keep calm and code on"){width=45%}</center>
+# Where does this course stands on?
+* It's about "Data science"
+Data -> Model -> Application
 
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/data-science-explore.png")
+```
 
+* We deep dive into R.
+    - R is a system that has been designed to process data. Later in career you will expose Python, Julia, Hadoop.
+    - The principle will be the same.
+
+# Keep calm and code on
+```{r, echo = FALSE, out.width = "40%"}
+knitr::include_graphics("imgs/keep-calm-code-on.jpg")
+```
 
 # Lecture 01: What's Internet? What's Web?
+- Network
+- Internet
+- HTTP/HTML/Web
 
-#
-<center>![](imgs/Internet_map_1024.jpg "Internet"){width=75%}</center>
+# Network
+```{r, echo = FALSE, out.width = "50%"}
+knitr::include_graphics("imgs/Internet_map_1024.jpg")
+```
 
-# Introduction
+# Network is to connect the dots
+```{r, echo = FALSE, out.width = "40%"}
+knitr::include_graphics("imgs/dot-to-dot-connect-the-dots.jpg")
+```
 
-    A network is to connet the dots.
+# Network is to connect the ~~dots~~ devices
+<center>![](imgs/network_connect_dots.jpg "Connect the dots"){width=55%}</center>
 
-<center>![](imgs/dot-to-dot-connect-the-dots.jpg "Connect the dots"){width=75%}</center>
+# Building network
+* There are many ways to connect the devices: Network topology
 
-    Internet is a super network of the world.
+```{r, echo = FALSE, out.width = "55%"}
+knitr::include_graphics("imgs/Common-network-topologies.png")
+```
 
-<center>![](imgs/network_connect_dots.jpg "Connect the dots"){width=75%}</center>
+* Which network topology is our home Wi-Fi?
 
-# What happens to a computer network?
+# Building network
+- Different network topology takes different way of communications.
+- Fully-connected network is the most costly and robust. Ring is the cheapest but vulnerable.
 
-We need to talk to each other.
+# Network talks
+After laying down the wires, what runs inside?
 
-Layout: Star v.s. inter-connected.
+```{r, echo = FALSE, out.width = "62%"}
+knitr::include_graphics("imgs/cables.jpg")
+```
 
-* In a fully inter-connected network, 
-
-1. Information turns to Packet
-
-<center>![](imgs/tcp_header.gif "Network packet"){width=75%}</center>
-
-2. Protocol designs the packet
-TCP/IP Protocol - Internet protocol suite
-
-<center>![](imgs/tcp-ip.png "TCP/IP"){width=75%}</center>
-
-Why the Internet succeeded?
-
-What does TCP/IP gives?
-
-The Defense Advanced Research Projects Agency (DARPA), the research branch of the U.S. Department of Defense, created the TCP/IP model in the 1970s for use in ARPANET, a wide area network that preceded the internet.
-
-Four layer approach:
-<center>![](imgs/640px-UDP_encapsulation.svg.png "TCP/IP"){width=75%}</center>
-
+# Network talks
+1. Information turns to *packet*
+2. Protocol designs the packet and process
 3. Infrastructure is to route the packets to the destination.
 
-<center>![](imgs/wireshark-packets.jpg "Wireshark capture of the network"){width=75%}</center>
+# Packet
+1. Information turns to packet
+<center>![](imgs/tcp_header.gif "Network packet"){width=75%}</center>
 
-Locally efficient but not very smart. Tries to be very smart.
-leaves space for improvement. Every equipment manufacturer can improve.
-Scalable.
+# Protocol
+2. Protocol designs the packet and process
 
-# Layered structure:
+TCP Session
 
-Low level address
+```{r, echo = FALSE, out.width = "20%"}
+knitr::include_graphics("imgs/375px-TCP_CLOSE.svg.png")
+```
 
-What happens after the cable is plugged in?
-<center>![](imgs/cables-plug.jpg "Plug into the network"){width=75%}</center>
+DHCP Session
 
+```{r, echo = FALSE, out.width = "18%"}
+knitr::include_graphics("imgs/DHCP_session.svg.png")
+```
+
+# Routing/Gateway
+3. Infrastructure helps to transmit and route the packets to the destination.
+<center>![](imgs/wireshark-packets.jpg "Wireshark capture of the network"){width=85%}</center>
+
+# TCP/IP and Internet
+The Defense Advanced Research Projects Agency (DARPA) created the TCP/IP model in the 1970s to build ARPANET.
+ARPANET is a wide area network that preceded the internet.
+
+# What does TCP/IP gives?
+1. IP (Internet Protocol, IP address)
+```{r, echo = FALSE, out.height = "30%"}
+knitr::include_graphics("imgs/internet-partial.png")
+```
+2. TCP (Transmission Control Protocol) 
+TCP provides reliable, ordered, and error-checked delivery of a stream
+
+# TCP/IP
+* Four Layers
+
+<center>![](imgs/640px-UDP_encapsulation.svg.png "TCP/IP"){width=32%}</center>
+
+* Application layer runs many protocols
+
+<center>![](imgs/tcp-ip.png "TCP/IP"){width=20%}</center>
+
+# This is why and how Internet growed in size
+```{r, echo = FALSE, out.width = "85%"}
+knitr::include_graphics("imgs/internet-host-count.png")
+```
+
+# What happens after ~~plugging cable~~, turning on Wi-Fi?
 * Every network device has a hardware address
-* 
-When a computer connects to the network, the DHCP client, generally a component of the operating system sends out a DHCP request and recieves an offer from a DHCP server. The offer generally contains:
+* DHCP client, a component of the operating system sends out a DHCP request and recieves an offer from a DHCP server running on the router.
+* Device accepts the IP address and use it to label for itself. Router also knows where to send the packet.
 
-An IP Address
-A subnet mask for that IP address
+# When it wants to visit someone on the network? 1/2
+* Domain Name System:
+    - We don't use 123.456.789.012 but www.google.com.
+    - DNS is the directory service for internet.
+    - Your device also receives One or more DNS server addresses so the computer knows where to send DNS requests.
 
-A gateway that should be used for off-network requests (like those going via the internet)
-One or more DNS server addresses so the computer knows where to send DNS requests.
-Connecting to a Router
+```{r, echo = FALSE, out.width = "20%"}
+knitr::include_graphics("imgs/jediocto.jpg")
+```
+Demo with nslookup.
 
-When you plug your computer into a router or associate your wireless adapter with an access point, the computer will usually receive a DHCP response directly from the router, which may itself have requested an IP from the ISP for the interface the modem uses. it will then route traffic from the computer via it's interface connected to the modem where appropriate.
+# When it wants to visit someone on the network? 2/2
+* Then, your device creates and send the packet "request". Wait for response.
+* Router and gateway will relay the packets to the receiver.
+```{r, echo = FALSE, out.width = "62%"}
+knitr::include_graphics("imgs/India_Post_Letter_Box.jpg")
+```
 
-# Image of network plug/wireless network/fibre/underwater fiber.
+# HTTP/HTML
+- Initiated by Tim Berners-Lee at CERN in 1989.
+- HTML was also invented by Tim, "HTML tags"
 
-# DHCP/DNS/Gateway
-Home networking guide.
+# HTTP Request/Response
 
-# HTTP(S) protocols
+* Request
 
-# HTML and WWW
+        GET /index.html HTTP/1.1
+        Host: www.example.com
 
-_www._ used be a popular prefix to the website. E.g. www.yahoo.com. Together with _ftp._, _gopher._. It means the domain is serving different services. www for Web, ftp for FTP, gopher for Gopher (you don't what it is).
-However, that era is gone. Now it is abbreviated, google.com, facebook.com, uber.com. Not www.....
+* Response
 
-XML grew out of the document markup world. 
+        HTTP/1.1 200 OK
+        Date: Mon, 23 May 2005 22:38:34 GMT
+        Content-Type: text/html; charset=UTF-8
+        Content-Encoding: UTF-8
+        Content-Length: 138
+        Last-Modified: Wed, 08 Jan 2003 23:11:55 GMT
+        Server: Apache/1.3.3.7 (Unix) (Red-Hat/Linux)
+        ETag: "3f80f-1b6-3e1cb03b"
+        Accept-Ranges: bytes
+        Connection: close
 
-# URL
+        <html>
+        <head>
+            <title>An Example Page</title>
+        </head>
+        <body>
+            Hello World, this is a very simple HTML document.
+        </body>
+        </html>
+
+# HTTP/HTML
+- Hypertext Transfer Protocol (HTTP) but obviously, it does file, music, anything now.
+- It's a clear text protocol. That's why we need to use HTTPS (HTTP on SSL) to secure the communication.
+
+```{r, echo = FALSE, out.width = "42%"}
+knitr::include_graphics("imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firefox.png")
+```
+In browser, you can see the green lock in address bar. App doesn't show it, we just trust that they are using HTTPS.
+
+# Web
+When you have HTML and URL (Uniform Resource Locator), Web is born.
+
+- Website: https://en.wikipedia.org/
+- Document: https://en.wikipedia.org/wiki/World_Wide_Web
+- Resource: https://en.wikipedia.org/wiki/World_Wide_Web#/media/File:Web_Index.svg
+
+How this resource is used in the document.
+
+        <div class="thumbinner" style="width:302px;">
+            <a href="/wiki/File:Web_Index.svg" class="image">
+            <img alt="" src="//upload.wikimedia.org/wikipedia/commons/thumb/6/65/Web_Index.svg/300px-Web_Index.svg.png"
+                width="300" height="154" class="thumbimage"  />
+            </a>
+        </div>
+
+# Web Browser
+First generation
+
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/mosaic-browser.jpg")
+```
+
+# Web application
+- Static v.s. Dynamic
+- Dynamic website display content based on user input.
+- Supported by HTML/CSS/JavaScript. HTML 5, CSS 3 and JavaScript 7 .
+- App also uses HTML/CSS/JS.
+```{r, echo = FALSE, out.width = "55%"}
+knitr::include_graphics("imgs/HTML5_CSS_JavaScript.png")
+```
+
+# Web application
+- Why it is important?
+
+```{r, echo = FALSE, out.width = "25%"}
+knitr::include_graphics("imgs/heisencat.png")
+```
+
+- Needless to say. It is not 1995 anymore.
+- Easy to develop
+- Easy to deploy
+- Runs fast
+
+# To recap
+## Why the Internet succeeded?
+- Information flows by packet.
+    + IP protocol sets the address for the device
+    + TCP protocol transmit the packet reliably
+    + UDP, for real-time transmission which can accept failure.
+- Local device just needs to send the packet
+- Transmission is done by the network devices
+- Efficient and scalable
+
+# To recap
+## Web application
+- Browser => HTML/CSS/JavaScript => HTTP => TCP => IP => Network physical.
+
+- We will write in R, which subsequently writes HTML/CSS/JavaScript.
+
+# Lecture 03: R Markdown and Shiny (layout)
+## Introduction
+- *Markdown* is a format that is easy to read and can be converted to other formats, HTML, PDF, Word, Slides.
+- R Studio extends it further to create R notebook, interactive document and web application, which is *R Markdown*.
+- Shiny is a web programming framework in R. We use it extensively in this course. We begin with the layout part.
+
+# Markup and Markdown
+- Document stores information.
+- Web is a superset of interlinked documents.
+- HTML is a markup language, built for machines.
+- Markdown is for humans to write doc, with minimal added to decorate it, created by John Gruber in collaboration with Aaron Swartz in 2004.
 
 
+        A Markdown-formatted document should be publishable as-is, as plain text,
+        without looking like it's been marked up with tags or formatting instructions. - John Gruber
 
+```{r, echo = FALSE, out.width = "15%"}
+knitr::include_graphics("imgs/Markdown-mark.svg.png")
+```
 
-3.	Development Tools
+# Markdown example
 
-4.	Amazon Web Services:
-4.1.	How to setup S3 for storage, EC2 for virtual machine, Route 53 for DNS.
-Reading: TBC
-Assignment:
-+ Setup a website with AWS.
-+ Write a markdown document and publish it website.
-+ Use JavaScript to manipulate web page parts
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/markdown-example.md"))
+```
 
-Use programming language to process and present data	Know how to program R and JavaScript for data-driven interactive applications
+# Markdown doc example
+```{r, echo = FALSE, out.width = "47%"}
+knitr::include_graphics("imgs/markdown-doc-preview.png")
+```
 
-+ Logic thinking of data processing technical.
-+ Clarity in data visualization
-+ Dealing the complexity of handling user-interaction.
+# Markdown: Header and Code
 
+## Headers
 
-# Lecture 02: AWS
+More hashtag, deeper level.
 
-AWS ways of signing up
-* Sign-up with an AWS acccount
-* Sign-up AWS Educate acccount
-* Apply credit from AWS Educate
-* Claim credit from AWS
+```{r echo = FALSE, comment = ""}
+cat("# Header1\n## Header2\n### Header3\n")
+```
 
-1. With their own AWS account
-Students will need to either create a new AWS account or use one that they've already created. Their AWS account needs to be fully activated by completing phone verification steps and adding a valid credit card. They will need to select the AWS Account option and enter their 12 digit AWS Account ID number when they apply to AWS Educate.
-Upon approval, they will be sent a Welcome email with a credit code and important information about their AWS Educate benefits. They can redeem the credit code from the Welcome email to their AWS account. Once the credit has been redeemed to their AWS account, it will automatically be applied to any charges incurred by eligible services they launch as part of your course instructions, until the credit balance has been exhausted or expires. Students will receive a renewal code every 12 months that they are eligible for the program; they will not need to reapply.
+## Code
 
-2. AWS Educate Starter Account:
-A valid credit card is not required for this option. The Starter Account is created for the student and managed by a 3rd party, qwikLABS. The credit is included on the Starter account, and the account will shut down automatically once the credit balance has been exhausted.
-Upon approval, students will be sent a Welcome email with a link to set up their password and a second link to bookmark for future logins. Once logged in, they will need to follow the steps in the Starter Account Overview [attached to this case] to access their Starter account and use AWS resources.
+Give four spaces before it
 
-Disclaimer:
-1. I am not working for Amazon and I don't get paid by this.
-2. I am not owning Amazon shares directly and indirectly.
-3. I don't plan to long AMZN during the course of this course.
-4. I will do a demo for Google Cloud.
+```{r echo = FALSE, comment = ""}
+cat("    if (a > 0) {\n      print(a)\n    }\n")
+```
 
-Use FBI....
-Warning:
-You may be charged for using AWS EC2.
-Free Tier applies to t1.micro.
+    if (a > 0) {
+      print(a)
+    }
 
-# Lecture 03: R catch-up and Markdown, RMarkdown
-
-2.	Languages
-2.1.	HTML/CSS
-2.2.	JavaScript
-2.3.	Markdown: the language for static and interactive documents.
-2.4.	R refresh
-
-## R catch-up
-
-## R Markdown
-
-HTML is a markup language. It means it "adds" something to the text to decorate it. 
-
-> markup
-/ˈmɑːkʌp/
-noun
-> 1. the amount added to the cost price of goods to cover overheads and profit.
-> "a mark-up of 50 per cent"
-> 2. the process or result of correcting text in preparation for printing.
-
-Markdown is a language is that it adds minimal to the text to decorate it.
-> A Markdown-formatted document should be publishable as-is, as plain text, without looking like it's been marked up with tags or formatting instructions. - John Gruber
-
-# Markdown
-## Header
-
-    # Header1
-    ## Header2
-    ### Header3
-
-## Block quote
-
-    > /ˈmɑːkʌp/
-    > noun
-    > > 1. the amount added to the cost price of goods to cover overheads and profit.
-    > > "a mark-up of 50 per cent"
-    > > 2. the process or result of correcting text in preparation for printing.
-
-## Line blocks
-
-|
-|
-|
-
-    | a
-    | b
-    | c
-
-
-## List
-
-Lists
-Bullet lists
-
-* First paragraph.
-
-Continued.
-
-* Second paragraph. With a code block, which must be indented
-eight spaces:
-
-    { code }
-
+# Markdown: List
 
     * First paragraph.
-
-        Continued.
+    Continued.
 
     * Second paragraph. With a code block, which must be indented
-        eight spaces:
+    eight spaces:
 
-        { code }
+            { code }
 
-# Multi-level lists
+```{r, echo = FALSE, out.width = "9%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
+
+* First paragraph.
+Continued.
+
+* Second paragraph. With a code block, which must be indented eight spaces:
+
+# Markdown: Multi-level lists
+Put four more spaces for each level.
+
+    * fruits
+        + apples
+            - macintosh
+            - red delicious
+        + pears
+    * vegetables
+        + broccoli
+        + chard
 
 * fruits
     + apples
         - macintosh
         - red delicious
     + pears
-    + peaches
 * vegetables
     + broccoli
     + chard
 
-# Ordered Lists
+# Markdown: Ordered Lists
 
-    #.
-    #.
+Put 4 more spaces for each level.
 
+    #. Chapter 1
+        #. Section 1.1
+        #. Section 1.2
+    #. Chapter 2
+    #. Chapter 3
 
-# Horizontal rules
+```{r, echo = FALSE, out.width = "9%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
 
-    ---------------
+#. Chapter 1
+    #. Section 1.1
+    #. Section 1.2
+#. Chapter 2
+#. Chapter 3
 
----------------
----------------
+# Table
 
-# Tables
+    | Tables        | Are           | Cool  |
+    | ------------- |:-------------:| -----:|
+    | col 3 is      | right-aligned | $1600 |
+    | col 2 is      | centered      |   $12 |
+    | zebra stripes | are neat      |    $1 |
 
-  Right     Left     Center     Default
--------     ------ ----------   -------
-     12     12        12            12
-    123     123       123          123
-      1     1          1             1
+```{r, echo = FALSE, out.width = "12%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
 
+| Tables        | Are           | Cool  |
+| ------------- |:-------------:| -----:|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
 
-# Inline formatting
+# Markdown: Inline formatting
 
-Emphasis
+## Emphasis
+
 To emphasize some text, surround it with *s or _, like this:
 
-This text is _emphasized with underscores_, and this
-is *emphasized with asterisks*.
-Double * or _ produces strong emphasis:
+    This text is \_emphasized with underscores\_, and this
+    is \*emphasized with asterisks\*.
+    Double * or _ produces strong emphasis:
+
+    This is \*\*strong emphasis\*\* and \_\_with underscores\_\_.
+
+```{r, echo = FALSE, out.width = "7%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
+
+This text is _emphasized with underscores_, and this is *emphasized with asterisks*.
+Double * or _ produces strong emphasis.
 
 This is **strong emphasis** and __with underscores__.
-A * or _ character surrounded by spaces, or backslash-escaped, will not trigger emphasis:
+A * or _ character surrounded by spaces, or backslash-escaped, will not trigger emphasis.
 
-This is * not emphasized *, and \*neither is this\*.
-Extension: intraword_underscores
+# Markdown: Inline formatting
 
-Because _ is sometimes used inside words and identifiers, pandoc does not interpret a _ surrounded by alphanumeric characters as an emphasis marker. If you want to emphasize just part of a word, use *:
+## Strikthrough
 
-feas*ible*, not feas*able*.
-Strikeout
-Extension: strikeout
+This \~\~is deleted text.\~\~  This ~~is deleted text.~~
 
-To strikeout a section of text with a horizontal line, begin and end it with ~~. Thus, for example,
+## Superscripts and subscripts
 
-This ~~is deleted text.~~
-Superscripts and subscripts
-Extension: superscript, subscript
+H\~2\~O is a liquid.  2\^10\^ is 1024. H~2~O is a liquid.  2^10^ is 1024.
 
-Superscripts may be written by surrounding the superscripted text by ^ characters; subscripts may be written by surrounding the subscripted text by ~ characters. Thus, for example,
+## Verbatim. inline code
 
-H~2~O is a liquid.  2^10^ is 1024.
-If the superscripted or subscripted text contains spaces, these spaces must be escaped with backslashes. (This is to prevent accidental superscripting and subscripting through the ordinary use of ~ and ^.) Thus, if you want the letter P with ‘a cat’ in subscripts, use P~a\ cat~, not P~a cat~.
+Use backtick \`. What is the difference between \`>>=\` and \`>>\`?  What is the difference between `>>=` and `>>`?
 
-Verbatim
-To make a short span of text verbatim, put it inside backticks:
+```{r, echo = FALSE, out.width = "9%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
 
-What is the difference between `>>=` and `>>`?
-If the verbatim text includes a backtick, use double backticks:
+Note:
 
-Here is a literal backtick `` ` ``.
+* If the verbatim text includes a backtick, use two backticks.
+* Use \\ to turn off \\~~, \\^.
 
-# Links
+# Markdown: Links
 
-Markdown allows links to be specified in several ways.
+    <http://google.com>
 
-Automatic links
-If you enclose a URL or email address in pointy brackets, it will become a link:
+```{r, echo = FALSE, out.width = "9%"}
+knitr::include_graphics("imgs/professortocat.png")
+```
 
 <http://google.com>
-<sam@green.eggs.ham>
-Inline links
-An inline link consists of the link text in square brackets, followed by the URL in parentheses. (Optionally, the URL can be followed by a link title, in quotes.)
 
-This is an [inline link](/url), and here's [one with
-a title](http://fsf.org "click here for a good time!").
-
-# images
+# Images
 
 A link immediately preceded by a ! will be treated as an image. The link text will be used as the image’s alt text:
 
-    ![la lune](lalune.jpg "Voyage to the moon")
+    ![Pizza](imgs/bitcoin-pizza.png)
 
-    ![movie reel]
-
-    [movie reel]: movie.gif
-
-An image occurring by itself in a paragraph will be rendered as a figure with a caption.4 (In LaTeX, a figure environment will be used; in HTML, the image will be placed in a div with class figure, together with a caption in a p with class caption.) The image’s alt text will be used as the caption.
-
-    ![This is the caption](/url/of/image.png)
-
-# Verbatim (Code) block
-
-    if (a > 3) {
-      moveShip(5 * gravity, DOWN);
-    }
-
-## Code block for R Markdown
-R Markdown is a extension to Markdown that you can execute code among the code. (Not only R, but Python, etc.)
-If you name the file as .Rmd and _knit_ in R Studio.
-
-    ```{r chunk_name}
-    ```
-The name is optional; if included, each code chunk needs a distinct name.
-It’s usually best to give each code chunk a name.
-
-The advantage of giving each chunk a name is that it will be easier to understand where to look for errors, should they occur.
-Also, any figures that are created will be given names based on the name of the code chunk that produced them.
-
-# chunk options
-
-    ```{r cars, echo = TRUE}
-    a <- runif(100, 0, 1)
-    ```
-
-    ```{r plot}
-    plot(a)
-    ```
-
-+ _echo_ is to decide whether to display code, default is FALSE.
-+ _result_ is to decide whether to display result, default is show, set to "hide" to hide.
-+ _include_ is to hide both code and result, default is FALSE.
-
-# R: basic data types
-Vector
-c(1, 3)
-
-rep(100, 10)
-
-matrix(10, 10, 10)
-
-runif(10, mean = 10, sd = 3)
-
-# Date
-as.Date("2017-11-03")
-as.Date("2017-11-03", format = "%Y-%m-%d")
-as.Date("2017-Nov-03", format = "%Y-%b-%d")
-as.Date("03Nov2017", format = "%d%b%Y")
-format(Sys.Date(), format = "%Y/%m%d")
-
-# Time
-format(Sys.time(), format = "%H%M")
-format(Sys.time(), format = "%H:%M:%S")
-
-# List
-
-a <- list(a = 3, b = 4)
-a$a
-a$b
-
-List is R's map and object.
-list[]: gives back a list
-list[[]]: gives back a value
-
-list$a => list[[]]
-
-list[number] => item by ordera[2]
-
-    a <- list()
-    a["orange"] <- 3
-    a["banana"] <- 4
-
-    sum <- 3
-    sapply(1:length(a), function(x) {
-      key <- names(a[x])
-      value <- a[[x]]
-      sum + value
-    })
-
-    for (i in 1:length(a)) {
-      key <- names(a[x])
-      value <- a[x]
-    }
-
-    purrr::map(a, function(x) x + 4)
-
-add_to_map <- function(map, key, value) {
-  if (is.null(a[key])) {
-    
-  } else {
-    a[key] <- value
-  }
-}
-
-# R: data frame
-df <- data.frame(a = 1:10, b = 10:1)
-df["a"]: gives a data frame
-df[["a"]]: gives value
-
-df$a: gives value,equivalent to df[["a"]]
-
-single number, means column count
-df[number]: column
-
-multiple numbers, means co-ordinates in 2-dimensional.
-df[1, 1]: give value
-df[1, 1, drop = F]: give data frame with names.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
-
-## Slide with R Output
-
-```{r, echo = TRUE}
-summary(cars)
-a <- filter(cars, speed > 4)
-a
+```{r, echo = FALSE, out.width = "9%"}
+knitr::include_graphics("imgs/professortocat.png")
 ```
 
-## Slide with Plot
+![Pizza](imgs/bitcoin-pizza.png){width=40%}
 
-```{r}
+# Formula
+MathJax. Use laTex syntax. There are many online references.
+
+## Inline with text
+
+    $x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
+
+$x = {-b \pm \sqrt{b^2-4ac} \over 2a}$
+
+## Centered
+
+    $$\sum_{i=1}^n X_i$$
+
+$$\sum_{i=1}^n X_i$$
+
+# R Markdown
+
+## Reference in R Studio
+
+- R Markdown Cheat Sheet: Help > Cheatsheets > R Markdown Cheat Sheet,
+- R Markdown Reference Guide: Help > Cheatsheets > R Markdown Reference Guide.
+
+## Create it via File > New File > R Markdown.
+
+- Document
+- Presentation
+- Shiny
+
+# R Markdown Document example
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/rmd-example-doc.Rmd"))
+```
+
+# R Markdown Document Output
+In the header, you can change the output to other types:
+
+- html_document
+- pdf_document
+- word_document
+
+- Ctrl+Shift+K or “Knitr”
+
+# Code block for R Markdown
+* R Markdown is a extension to Markdown that you can execute code among the code.
+If you name the file as __.Rmd__ and _knit_ in R Studio.
+
+        `r chunk`{r Calculate_7}
+        a <- 3
+        b <- 4
+        print(a + b)
+        `r chunk`
+
+  ```{r chunk_name}
+  a <- 3
+  b <- 4
+  print(a + b)
+  ```
+
+* Calculate_7 is the chunk name. It's optional to give a chunk name. If included, each code chunk needs a distinct name.
+It’s usually best to give each code chunk a name, for easier debug.
+
+* R code can also be inline. For example, to generate a random number everytime, include this \`runif(1, 0, 1)\`, `r runif(1, 0, 1)`.
+
+# Chunk options
+
+* _echo_ is to decide whether to display code, default is FALSE.
+* _result_ is to decide whether to display result, default is show, set to "hide" to hide.
+* _include_ is to hide both code and result, default is FALSE.
+
+        `r chunk`{r cars, echo = TRUE}
+        a <- runif(100, 0, 1)
+        `r chunk`
+
+        `r chunk`{r plot}
+        plot(a)
+        `r chunk`
+
+
+```{r cars, echo = TRUE}
+a <- runif(100, 0, 1)
+```
+
+```{r plot, echo = FALSE, out.width = "20%"}
 plot(a)
 ```
 
-\![picture of spaghetti](images/spaghetti.jpg)
+# R Markdown example: Table
 
-\\[ x = {-b \pm \sqrt{b^2-4ac} \over 2a} \\]
+    `r chunk`{r kable}
+    knitr::kable(
+      mtcars[1:5, ], 
+      caption = "A knitr kable."
+    )
+    `r chunk`
+
+```{r kable}
+knitr::kable(
+  mtcars[1:5, ], 
+  caption = "A knitr kable."
+)
+```
+
+# R Markdown example: plot
+
+    `r chunk`{r plot1, echo = FALSE}
+    a <- filter(cars, speed > 4)
+    plot(a)
+    `r chunk`
+
+```{r plot1, echo = FALSE, out.width = "40%"}
+a <- filter(cars, speed > 4)
+plot(a)
+```
+
+# R Shiny
+- To start, use R Studio.
+- File > New File > Shiny Web App...
+- Choose single file
+- Give a name and folder 
+- Ctrl+Shift+S or “Run App”
+
+# UI First
+I removed everything in functions `server` and `ui`. This is the minimal Shiny.
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-1-empty.R"))
+```
+
+# Sidebar Layout
+Let's add a minimal sidebarLayout
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-2-sidebar.R"))
+```
+
+# `fluidPage`
+- fluidPage means to place the controls from left-right, top-down order.
+- `fluidPage` function can take any number of input parameter.
+
+
+        fluidPage(sidebarLayout(
+            sidebarPanel(),
+            mainPanel()
+        ))
+
+# Add some things
+- `titlePanel("Hello Shiny!")`, `h1("Introduction to Layout")`, `h2("Sidebar Layout")`
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-3-sidebar.R"))
+```
+
+# Sidebar layout with bar on the right
+
+    fluidPage(
+        sidebarLayout(position = "right",
+        sidebarPanel(),
+        mainPanel()
+        )
+    )
+
+# More tags
+Each tag is a function.
+
+    h1("A header")
+    p("some text as a paragraph")
+    a("A link to Google", href="http://www.google.com")
+    img(src = "p19-Hero-Image-796x398.jpg", width = "100%")
+    tags$ul("title", tags$li("Item 1"), tags$li("Item 2"))
+    tags$ol("Step", tags$li("Item 1"), tags$li("Item 2"))
+
+Note:
+
+* For image, you need to create a sub-directory `www` together with the R source file. Place the file under it.
+* tags is a list of functions. To avoid name conflict, I prefer to use `tags$img()`, even `img()` is available to use.
+
+# Panels
+`titlePanel()` and `wellPanel()`
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-4-wellPanel.R"))
+```
+
+# Navlist panel
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-5-navPanel.R"))
+```
+
+# tabPanel
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-6-tabPanel.R"))
+```
+
+# navBar
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-7-navbar.R"))
+```
+
+# Column-based layout
+- Caveat: There is fluidRow, but no fluidColumn.
+- Column counts always add up to 12 = 4 + 6 + 2; otherwise, it will appear in the next line.
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-8-column.R"))
+```
+
+# Composition layout: Top and Down
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-10-composite.R"))
+```
+
+# R Markdown can also contain Shiny
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-mfe-example.Rmd"))
+```
+
+```{r, echo = FALSE}
+wellPanel("Inputs",
+          numericInput("fav_num", "What's your favorite number?", 3))
+```
+
+This is interactive document.
+
+# Assignments
+- (Optional) Setup AWS and run EC2.
+- Create a website with Shiny using navBar layout
+    - You are starting a company to offer.
+    - Decide what you want to do
+    - Create three pages. Name the pages depending on what you want to do. e.g. Product, About Us and Contact Us
+    - Use different layouts for the pages: sideBar, column-based layout, Navlist.
+    - Be creative!
+
+# 
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/runchee.png")
+```
+

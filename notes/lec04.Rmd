@@ -1,31 +1,491 @@
 
+<center>![](imgs/Rlogo.png "R logo"){width=45%}</center>
 
-SQL
+# R: basic data types
+Vector
+c(1, 3)
 
-let's start from SQL.
+rep(100, 10)
 
-SELECT
+matrix(10, 10, 10)
 
-INSERT
+runif(10, mean = 10, sd = 3)
 
-UPDATE
+# Date
+as.Date("2017-11-03")
+as.Date("2017-11-03", format = "%Y-%m-%d")
+as.Date("2017-Nov-03", format = "%Y-%b-%d")
+as.Date("03Nov2017", format = "%d%b%Y")
+format(Sys.Date(), format = "%Y/%m%d")
 
-DELETE from WHERE
+# Time
+format(Sys.time(), format = "%H%M")
+format(Sys.time(), format = "%H:%M:%S")
 
-JOIN
+# List
+
+a <- list(a = 3, b = 4)
+
+$ and [ operators
+
+a$a
+a$b
+
+List is R's map and object.
+list[]: gives back a list
+list[[]]: gives back a value
+
+list$a => list[[]]
+
+list[number] => item by ordera[2]
+
+    a <- list()
+    a["orange"] <- 3
+    a["banana"] <- 4
+
+    sum <- 3
+    sapply(1:length(a), function(x) {
+      key <- names(a[x])
+      value <- a[[x]]
+      sum + value
+    })
+
+    for (i in 1:length(a)) {
+      key <- names(a[x])
+      value <- a[x]
+    }
+
+    purrr::map(a, function(x) x + 4)
+
+add_to_map <- function(map, key, value) {
+  if (is.null(a[key])) {
+    
+  } else {
+    a[key] <- value
+  }
+}
+
+# R: data frame
+The basic structure of a data frame is that there is one observation per row and each column represents a variable, a measure, feature, or characteristic of that observation. 
+
+df <- data.frame(a = 1:10, b = 10:1)
+df["a"]: gives a data frame
+df[["a"]]: gives value
+
+df$a: gives value,equivalent to df[["a"]]
+
+single number, means column count
+df[number]: column
+
+multiple numbers, means co-ordinates in 2-dimensional.
+df[1, 1]: give value
+df[1, 1, drop = F]: give data frame with names.
+
+View()
+head()
+str()
+dim()
+colnames()
 
 
-Some of the key “verbs” provided by the dplyr package are
+# Read/Write data
+readRDS
+writeRDS
 
-select: return a subset of the columns of a data frame, using a flexible notation
+# SQL
 
-filter: extract a subset of rows from a data frame based on logical conditions
+Let's start from SQL.
 
-arrange: reorder rows of a data frame
+SELECT * FROM table WHERE a = 3
 
-rename: rename variables in a data frame
+SELECT * FROM table WHERE a = 3 ORDER BY a
 
-mutate: add new variables/columns or transform existing variables
+SELECT b, sum(a) FROM table WHERE a = 3 GROUP BY b
+
+INSERT into table (a, b, c, ...) VALUES ("a", "b", "c", ...);
+
+UPDATE table_name SET column1 = value1, column2 = value2, ... WHERE condition;
+
+DELETE from table WHERE a = 3
+
+# CRUD: Create Read Update Delete
+
+<center>![](imgs/CRUD.png "CRUD"){width=45%}</center>
+
+# Apply CRUD operations to data frame.
+
+Select:
+df[which(df$a == 3 | df$b == 3), , drop = T] 
+df[match(3, df$a), , drop = T]
+
+df[, match("city", colnames(df)), drop = T] 
+
+Insert:
+rbind(df, df)
+
+Delete:
+df[-(which(df$a == 3 | df$b == 3)), , drop = T]
+
+Update:
+df[which(df$a == 3 | df$b == 3), 3, drop = T] <- 3
+
+# dplyr
+dplyr package from tidyverse is a high-performance package to deal with data frame.
+
+dplyr provides functions in "verbs". Some of them are:
+
+- select: return a subset of the columns of a data frame, using a flexible notation
+- filter: extract a subset of rows from a data frame based on logical conditions
+- arrange: reorder rows of a data frame
+- rename: rename variables in a data frame
+- mutate: add new variables/columns or transform existing variables
+- %>%: the “pipe” operator is used to connect multiple verb actions together into a pipeline
+- group_by / rowwise / ungroup: stratify the data
+- summarise / summarize: generate summary statistics of different variables in the data frame, possibly within strata
+- do: process data within the strata
+- left_join / right_join / anti_join / full_join
+- bind_rows / bind_cols
+- ifelse / case_when
+- lag
+
+# sample dataset
+http://dx.doi.org/10.1016/j.dss.2014.03.001
+
+<center>![](imgs/sample-bank-data.png "Sample Bank Data"){width=45%}</center>
+
+
+# Sample dataset columns
+
+   1 - age (numeric)
+   2 - job : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student",
+                                       "blue-collar","self-employed","retired","technician","services") 
+   3 - marital : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
+   4 - education (categorical: "unknown","secondary","primary","tertiary")
+   5 - default: has credit in default? (binary: "yes","no")
+   6 - balance: average yearly balance, in euros (numeric) 
+   7 - housing: has housing loan? (binary: "yes","no")
+   8 - loan: has personal loan? (binary: "yes","no")
+   # related with the last contact of the current campaign:
+   9 - contact: contact communication type (categorical: "unknown","telephone","cellular") 
+  10 - day: last contact day of the month (numeric)
+  11 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
+  12 - duration: last contact duration, in seconds (numeric)
+   # other attributes:
+  13 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+  14 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
+  15 - previous: number of contacts performed before this campaign and for this client (numeric)
+  16 - poutcome: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
+
+  Output variable (desired target):
+  17 - y - has the client subscribed a term deposit? (binary: "yes","no")
+
+# What are the data attributes?
+
+
+# Read the data
+Use RStudio's File -> Import Dataset, you may choose either "From Text (base)" or "From Text (readr)". Either way loads the data.
+base comes with R installation. `readr` is a package that provides more options and functionality.
+Copy the generated code to your script file.
+
+base
+
+    bank <- read.csv("../example/data-bank/bank.csv", sep=";")
+
+readr
+
+    library(readr)
+    bank <- read_delim("../example/data-bank/bank.csv", 
+                       ";", escape_double = FALSE, trim_ws = TRUE)
+    View(bank)
+
+Please refer to R for Data Science, chapter 11.
+http://r4ds.had.co.nz/data-import.html
+
+write_csv
+
+
+
+# select
+
+subset <- select(bank, marital)
+subset <- select(bank, 1)
+subset <- select(bank, -1)
+subset <- select(bank, -(job:education))
+subset <- select(bank, -job)
+subset <- select(bank, starts_with("p"))
+subset <- select(bank, ends_with("p"))
+subset <- select(bank, contains("p"))
+subset <- select(bank, matches("(.)\\1"))
+subset <- select(bank, num_range("x", 1:3))
+
+## Select as a re-arrangement of columns.
+select <- select(bank, job, everything())
+
+# filter
+young <- filter(bank, age < 20 & marital == "married")
+young <- filter(bank, age < 20 & marital == "single")
+young <- filter(bank, age < 20)
+
+young2 <- filter(bank, age >= 20 & age < 30 & marital == "married")
+young2 <- filter(bank, age >= 20 & age < 30 & marital == "single")
+young2 <- filter(bank, age >= 20 & age < 30)
+
+%in%
+
+|
+
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/transform-logical.png")
+```
+
+filter out NA value.
+filter(df, is.na(x) | x > 1)
+
+sum(x, na.rm = T)
+
+sqrt(2) ^ 2 == 2
+near(sqrt(2) ^ 2, 2)
+
+1/49 * 49 == 1
+near(1/49 * 49, 1)
+
+How many bank client have a loan while doesn't have a housing?
+How many bank client have a job between 20 to 40?
+
+# rename
+raname(bank, Age = age)
+raname(bank, `Age in Bank` = age)
+
+# arrange
+arrange(bank, job)
+arrange(bank, default, job)
+
+arrange(bank, desc(day))
+arrange(bank, desc(as.Date(day, format="%d", origin = Sys.Date())))
+
+NB: Missing values are always sorted at the end.
+
+How could you use arrange() to sort all missing values to the start? (Hint: use is.na()).
+```{r}
+arrange(df, !is.na(a), a)
+```
+
+Find the longest duration
+Find the eldest.
+
+# mutate
+Add a new column.
+
+  df1 <- mutate(bank, y = ifelse(y == "yes", T, F))
+  df2 <- mutate(bank, duration_diff = duration - mean(duration, na.rm = TRUE))
+
+  mutate(bank, age_group = case_when(
+    age < 20 ~ "youth",
+    age < 40 ~ "middle-age",
+    age < 50 ~ "senior",
+    TRUE ~ "happy"
+  ))
+
+  # month.abb is a built-in array of month names.
+  mutate(bank, month = factor(firstup(bank$month), levels = month.abb))
+
+transmute would remove all other columns after mutation, only keeping the new variable.
+  df3 <- transmute(bank, 
+                   duration_trend = duration - mean(duration, na.rm = TRUE),
+                   balance_trend = balance - mean(balance, na.rm = TRUE)))
+
+# What you can do with mutate
+## +, -, *, /:
+## %/% (integer division) and %% (remainder), where x == y * (x %/% y) + (x %% y)
+## apply this to ungroup df.
+x / sum(x)
+y - mean(y) computes the difference from the mean.
+## log2(), log(), log10()
+## lead(), lag()
+compute running differences (e.g. x - lag(x)) or find when values change (x != lag(x))
+## rolling sum, prod, min, max
+cumsum(), cumprod(), cummin(), cummax(); and dplyr provides cummean()
+## rank
+y <- c(1, 2, 2, NA, 3, 4)
+min_rank(y)
+min_rank(desc(y))
+
+row_number(y)
+#> [1]  1  2  3 NA  4  5
+dense_rank(y)
+#> [1]  1  2  2 NA  3  4
+percent_rank(y)
+#> [1] 0.00 0.25 0.25   NA 0.75 1.00
+cume_dist(y)
+#> [1] 0.2 0.6 0.6  NA 0.8 1.0
+
+# operators
+
+# %>%
+third(second(first(x)))
+This nesting is not a natural way to think about a sequence of operations. The %>% operator allows you to string operations in a left-to-right fashion, i.e.
+
+first(x) %>% second() %>% third()
+x %>% first() %>% second() %>% third() # this could also do.
+x %>% first(.) %>% second(.) %>% third(.) # . represents the input
+
+What's the output of below?
+
+```{r, echo = TRUE }
+c(1, 3, 7, 9) %>% {
+  print(.)
+  mean(.)
+} %>% { . * 3 } %>% {
+  print(.)
+  sample(round(., 0))
+}
+```
+
+We don't need to keep intermediate result, sames memory and also variable names.
+But the issues cames at debugging
+- add { print(.) }
+- separate the long pipes into shorter pipes, adding more intermediate variables.
+
+- Your pipes are longer than (say) ten steps. In that case, create intermediate objects with meaningful names. That will make debugging easier, because you can more easily check the intermediate results, and it makes it easier to understand your code, because the variable names can help communicate intent.
+- You have multiple inputs or outputs. If there isn’t one primary object being transformed, but two or more objects being combined together, don’t use the pipe.
+- You are starting to think about a directed graph with a complex dependency structure. Pipes are fundamentally linear and expressing complex relationships with them will typically yield confusing code.
+
+# model
+models <- mtcars %>% 
+  split(.$cyl) %>% 
+  map(function(df) lm(mpg ~ wt, data = df))
+
+models <- mtcars %>% 
+  split(.$cyl) %>% 
+  map(~lm(mpg ~ wt, data = .))
+  
+
+# left_join / right_join / anti_join / full_join
+
+| position_id | buy/sell | quantity | risk factor |
+
+Suppose we have two days position data, suppose positions are additive (to close a position, we won't change the original position but to do a new reverse trade), they are of same structure
+
+In order to find the new positions. We will use:
+anti_join(new_data, old_data) # order matters, new_data needs to be placed first.
+
+In order to find old positions, we will use:
+inner_join(new_data, old_data) # regardless order, new_data is in front of old_data.
+left_join(old_data, new_data) # produce the same result
+right_join(new_data, old_data) # produce the same result
+
+## full_join
+find all combinations between table a and b.
+
+# left_join/right_join
+can be used to do mapping.
+
+Table a:
+| type_code | type_name |
+| 1         | orange    |
+| 2         | banana    |
+
+Table b:
+| type_code | quantity | customer_id |
+| 1         | 1        | A           |
+| 2         | 3        | B           |
+| 3         | 4        | C           |
+| 2         | 2        | D           |
+| 1         | 6        | B           |
+
+table c:
+| customer_id | customer_phone |
+| A           | +123           |
+| B           | +456           |
+| C           | +789           |
+
+left_join(b, a, by = "type_code") %>% left_join(c, by = "customer_id")
+
+| type_code | quantity | customer_id | type_name | customer_phone |
+| 1         | 1        | A           | orange    | +123           |
+| 2         | 3        | B           | banana    | +456           |
+| 3         | 4        | C           | NA        | +789           |
+| 2         | 2        | D           | banana    | NA             |
+| 1         | 6        | B           | orange    | +456           |
+
+
+
+
+
+
+
+join can be multiple types
+
+
+# bind_rows / bind_cols
+
+
+
+# Plot
+dev.new(width=4, height=4)
+with(bank, plot(balance, duration, type = 'n'))
+with(bank, text(balance, duration, education, col=cl))
+group_by(bank, cl) %>% summarise(n = n())
+
+# group_by
+bank1 <- group_by(bank, age) %>%
+  summarise(balance_mean = mean(balance),
+            count = n(),
+            default_count = sum(ifelse(default == "no", 0, 1)))
+
+## If combined with ggplot, to be learnt in next session
+ggplot(bank1, aes(x = age, y = balance_mean)) +
+  geom_point(aes(size = count), alpha = 1/4, color = "red") +
+  geom_point(aes(size = default_count), alpha = 1/3, color = "blue") +
+  geom_smooth(se = F)
+
+# summarise functions
+## mean(x), but median(x)
+mean(age[balance > 0])
+mean(age[balance < 0])
+# sd(x), IQR(x), mad(x)
+sd(distance)
+# min(x), quantile(x, 0.25), max(x)
+# n(): count / n_distinct()
+# first(x), nth(x, 2), last(x)
+# count for condition
+sum(balance < 500)): TRUE => 1, FALSE => 0
+sum(x > 10), mean(y == 0)
+
+I often forgot there are existing functions that resort to longer versions.
+
+# group filter
+Find the maximum and minimum balance on each age.
+bank %>% 
+  group_by(age) %>%
+  filter(rank(balance) == 1 | rank(desc(balance)) == 1) %>%
+  arrange(age, balance)
+
+Find the big age group
+bank %>% 
+  group_by(age %/% 10) %>%
+  filter(n()/nrow(bank) > 0.2) %>%
+  arrange(age)
+
+
+
+
+ungroup() removes strata, restores the data frame back to entire rows.
+
+
+chicago <- mutate(baml, year = as.POSIXlt(date)$year + 1900)
+> summarize(years, pm25 = mean(pm25, na.rm = TRUE), 
++           o3 = max(o3tmean2, na.rm = TRUE), 
++           no2 = median(no2tmean2, na.rm = TRUE))
+
+> qq <- quantile(chicago$pm25, seq(0, 1, 0.2), na.rm = TRUE)
+> chicago <- mutate(chicago, pm25.quint = cut(pm25, qq))
+
+> quint <- group_by(chicago, pm25.quint)
+Finally, we can compute the mean of o3 and no2 within quintiles of pm25.
+
+> summarize(quint, o3 = mean(o3tmean2, na.rm = TRUE), 
++           no2 = mean(no2tmean2, na.rm = TRUE))
 
 # mutate with style
 
@@ -37,9 +497,6 @@ mutate: add new variables/columns or transform existing variables
 
 group_by/rowwise/ungroup
 
-ifelse
-case_when
-
 # grouped or ungrouped
     
     ungroup(df) %>% mutate( x = ifelse( x == "ABC", "is ABC", "not ABC" ) )
@@ -49,34 +506,58 @@ case_when
 Just cover entire dataset.
 
     summarise( x = sum(ifelse( x == "ABC", 1, 0 ) )
-
+  min()
+  max()
+  n = n()
+  mean()
 
 # rowwise
 Use if. ifelse is restrictive that it only output the same type as the input.
 
     rowwise(df) %>% mutate( x = { if ( x == "ABC" ) { "is ABC" } else { "not ABC" }  } )
 
+# summarise
+ example: how to get sub-total and total.
 
-summarise / summarize: generate summary statistics of different variables in the data frame, possibly within strata
-
-  example: how to get sub-total and total.
-
+# do
 do. with an index column and do the analysis for the rest.
 
-%>%: the “pipe” operator is used to connect multiple verb actions together into a pipeline
+CRUD:
+add a column for rownumber.
+discover insights of data.
+retrieve with age, slider of numeric
+employment
+Social attributes.
 
-The dplyr package as a number of its own data types that it takes advantage of. For example, there is a handy print method that prevents you from printing a lot of data to the console. Most of the time, these additional data types are transparent to the user and do not need to be worried about.
+count for subtotal - total, plot graph
 
-left_join
-right_join
-anti_join
-full_join
+D:
+Mark for not included in the 
 
-bind_rows
-bind_cols
+C:
+Add new.
+
+U:
 
 
 # Shiny
+
+# Shiny in R Markdown
+
+    --
+    runtime: shiny
+    output: html_document
+    ---
+
+    ### Here are two Shiny widgets
+
+    ```{r echo = FALSE}
+    selectInput("n_breaks", label = "Number of bins:",
+                  choices = c(10, 20, 35, 50), selected = 20)
+      
+    sliderInput("bw_adjust", label = "Bandwidth adjustment:",
+                  min = 0.2, max = 2, value = 1, step = 0.2)
+    ```
 
 # Output
 
@@ -132,8 +613,6 @@ bind_cols
       )
     )
 
-
-
 ## Static table
 
     renderTable
@@ -149,9 +628,6 @@ bind_cols
       kable(df, format = "html") %>%
     }
 
-
-    
-
 ## Plot
 
       renderPlot({})
@@ -164,19 +640,4 @@ bind_cols
       })
 
 ## Flexdashboard
-
-
-
-
-
-
-
-gather/spread
-- Pivot over multiple columns.
-
-pivoting table
-
-ggplot system
-
-
 

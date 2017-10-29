@@ -1,5 +1,112 @@
 # Lecture 10: 
 
+# Model
+
+First, you define a family of models that express a precise, but generic, pattern that you want to capture. For example, the pattern might be a straight line, or a quadatric curve. You will express the model family as an equation like y = a_1 * x + a_2 or y = a_1 * x ^ a_2. Here, x and y are known variables from your data, and a_1 and a_2 are parameters that can vary to capture different patterns.
+
+Next, you generate a fitted model by finding the model from the family that is the closest to your data. This takes the generic model family and makes it specific, like y = 3 * x + 7 or y = 9 * x ^ 2.
+
+install.package("purrr", "modelr")
+library(purrr)
+library(modelr)
+
+# Data set
+sim1
+
+model1 <- function(a, data) {
+  a[1] + data$x * a[2]
+}
+
+measure_distance <- function(mod, data) {
+  diff <- data$y - model1(mod, data)
+  sqrt(mean(diff ^ 2))
+}
+best <- optim(c(0, 0), measure_distance, data = sim1)
+best$par
+
+sim1_mod <- lm(y ~ x, data = sim1)
+coef(sim1_mod)
+
+# prediction is for the new data
+sim1 %>%
+data_grid(x) %>% # generate data set.
+add_predictions(sim1_mod) 
+
+ggplot(sim1, aes(x)) +
+  geom_point(aes(y = y)) +
+  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
+
+# residual is for the existing data
+add_residuals(sim1_mod, sim1)
+
+ggplot(sim1, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+# apply it for the bank dataset
+ggplot(bank) + geom_bar(aes(x = age, fill = y))
+
+model_matrix(bank, y ~ age)
+
+bank_mod <- lm(y ~ age, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
+
+# add_prediction
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod)
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod) %>% ggplot(aes(x = age, y = pred)) + geom_point()
+
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
+ggplot(aes(resid)) + 
+  geom_freqpoly(binwidth = 0.05) 
+
+# 2nd model
+bank_mod <- lm(y ~ age * job, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age, job) %>%
+  add_predictions(bank_mod) %>%
+  ggplot(aes(x = age, colour = job)) + geom_line(aes(y = pred))
+
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
+ggplot(aes(x = age, resid, colour = job)) +
+  geom_point()
+
+# model 
+model_matrix(df, y ~ I(x^2) + x)
+
+# try age with balance?
+
+with different jobs
+
+by_job <- group_by(bank, job) %>% nest()
+job_balance <- function(df) {
+  lm(balance ~ age, data = df)
+}
+models <- mutate(by_job, model = purrr::map(data, job_balance))
+
+by_job_res <- models %>%
+  mutate(resids = map2(data, model, add_residuals))
+
+resids <- unnest(by_job_res, resids)
+
+resids %>% 
+  ggplot(aes(age, resid)) +
+    geom_line(aes(colour = job)) + 
+    geom_smooth(se = FALSE)
+
+resids %>%
+  ggplot(aes(age, resid, group = job)) +
+    geom_line(alpha = 1 / 3) + 
+    facet_wrap(~job)
+
+# natural spine
+
+mod1 <- lm(y ~ ns(x, 1), data = sim5)
+
+
+mod1 <- lm(y ~ x1 + x2, data = sim3)
+mod2 <- lm(y ~ x1 * x2, data = sim3)
+
+
+# draw the 
+
+
 library(xts)
 xts object => store prices and retrieve.
 
@@ -15,5 +122,13 @@ How to simulate portfolio gain.
 
 How to do SVD analysis?
 
-# Object way and Data frame way
+# Scenarios
 
+dynamic rendering of UI
+
+
+
+
+# Object way and Data frame way
+sample option portfolio
+sample stock portfolio
