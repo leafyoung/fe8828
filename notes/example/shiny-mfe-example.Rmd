@@ -1,0 +1,14 @@
+---
+title: "MFE FE8828 Assignment 1"
+date: 2017-11-03
+output: html_document
+runtime: shiny
+---
+  
+```{r setup, include = FALSE}
+```
+
+```{r, echo = FALSE}
+wellPanel("Inputs",
+          numericInput("fav_num", "What's your favorite number?", 3))
+```

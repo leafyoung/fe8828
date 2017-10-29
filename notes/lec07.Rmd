@@ -424,6 +424,8 @@ Age with respect to anything else.
 With facets
 
 # Dynamic UI
+append into tagList()
+
 insertUI
 renderUI
 scenarios
@@ -436,7 +438,6 @@ scenarios
     shinyApp(ui = ui, server = server)
 
 # Think around Input and Outputs
-
 
   ui <- fluidPage(
     # Input() functions,
