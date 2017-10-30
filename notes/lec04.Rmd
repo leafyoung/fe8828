@@ -2,7 +2,7 @@
 title: "FE8828 Programming Web Applications in Finance"
 subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 1/2 </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 02, 2017"
+date: "Nov 09, 2017"
 # runtime: shiny
 ---
 
@@ -14,28 +14,137 @@ chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
 
+# Lecture 04: R catch-up
+Let's review some R basics.
+
 <center>![](imgs/Rlogo.png "R logo"){width=45%}</center>
 
-# R: basic data types
-Vector
-c(1, 3)
+# R: Basic data types
+Vector/Matrix/List/Dataframe
 
-rep(100, 10)
+    # Create a vector from number
+    > v <- c(1, 3)
+    > v[1] <- 3
 
-matrix(10, 10, 10)
+    # repeat 100 for 10 times.
+    > rep(100, 10)
 
-runif(10, mean = 10, sd = 3)
+    # create matrix of 10x10
+    > mat <- matrix(2, 3, 4)
+         [,1] [,2] [,3] [,4]
+    [1,]    2    2    2    2
+    [2,]    2    2    2    2
+    [3,]    2    2    2    2
+    > mat[1,] <- 4 # set first row to 4
+    > mat[2, 2] <- 6
+
+# Random number
+
+    # Norm random number
+    > rnorm(10, mean = 10, sd = 3)
+
+    # Uniform random number
+    > runif(3)
+
+# Print
+- `cat(paste0(..., "\n"))` is what I used most. `"\n"` is appended to the end to create a line break.
+- `paste0` combines any thing without space. `paste` uses space. They can use to create new string.
+- `paste0`/paste with `collapse` helps with vector to print them in one line.
+
+    x <- c(Sys.Date(), Sys.Date(), Sys.Date())
+    cat(paste0("Current dates is ", paste0(x, collapse = ", "), ".\n"))
+
+# String
+
+    # subset of string
+    substr("asdf", 1, 3)
+
+    # concatenate string
+    paste0("This is ", "cat")
+
+    # toupper/tolower
+
+    # find
+    grepl("A", "ABC", fixed = T)
+    grepl("D", "ABC", fixed = T)
+
+    # replace. one time
+    sub("D", "ABC", "DDD", fixed = T)
+    # replace. all times
+    gsub("D", "ABC", "DDD", fixed = T)
+
+    # if you start to know regular expression, sub/grepl is super powerful.
+    # without using fixed = T.
+    # This is an example of `Start` appearing the beginning of the string
+    grepl("^Start", "Start with me")
+    grepl("^Start", "me Start")
 
 # Date
-as.Date("2017-11-03")
-as.Date("2017-11-03", format = "%Y-%m-%d")
-as.Date("2017-Nov-03", format = "%Y-%b-%d")
-as.Date("03Nov2017", format = "%d%b%Y")
-format(Sys.Date(), format = "%Y/%m%d")
+
+    as.Date("2017-11-03")
+    as.Date("2017-11-03", format = "%Y-%m-%d") # %m for number month
+    as.Date("2017-Nov-03", format = "%Y-%b-%d") # %b for the 3-letter month
+    as.Date("03Nov2017", format = "%d%b%Y")
+    format(Sys.Date(), format = "%Y/%m%d")
+
+# Date function from lubridate
+Date is such a central role in finance.
+More function about date can be found in package `lubridate`
+
+    library(lubridate)
+    # change a date
+    > x <- as.Date("2017-10-10")
+    > month(x) <- 1
+    > cat(
+    x = 2017-1-10
+
+    # Set to the end of the month
+    day(x) <- days_in_month(x)
+    
+    # create date
+    ymd(20171003)
+    ymd("20171003")
+
+# Business days
+Use package `bizdays`
+
+    library(bizdays)
+
+    # weekends is a calendar that excludes all weekends.
+    # Strange name, weekdays is better.
+    bizdays("2017-10-16", "2017-10-30", "weekends")
+
+    # add bizdays
+    add.bizdays("2017-10-03", 5, "weekends")
+
+    # generate all business days between.
+    # You will find this useful for later financial application.
+    bizseq("2017-10-10", "2018-01-01", "weekends")
 
 # Time
-format(Sys.time(), format = "%H%M")
-format(Sys.time(), format = "%H:%M:%S")
+Convert time to character/string
+
+    format(Sys.time(), format = "%H%M")
+    format(Sys.time(), format = "%H:%M:%S")
+    format(Sys.time(), format = "%H:%M:%S")
+
+Change time, lubridate provides `hour`, `minute`
+    x <- Sys.time()
+    hour(x) <- 12
+    minute(x) <- 3
+    minute(x) <- 123 # what will happen?
+
+# Time
+
+Convert time to date, be aware of timezone. Use the current timezone, "+08"
+    Sys.time()
+    [1] "2017-10-30 22:50:22 +08"
+
+    > as.Date(Sys.time(), tz = "NZ")
+    "2017-10-31"
+
+    > as.Date(Sys.time(), tz = "UTC")
+    "2017-10-30"
 
 # List
 
@@ -106,6 +215,20 @@ colnames()
 # Read/Write data
 readRDS
 writeRDS
+
+
+# Function
+Write function
+
+x <- function() {
+
+}
+
+do.call("function name", ...)
+sapply(1:10, function(x) { sum <- x + sum } )
+purrr::map(1:10, rnorm, n = 10) %>% map_dbl(mean)
+
+# Lecture 05: Data
 
 # SQL
 
@@ -424,17 +547,10 @@ left_join(b, a, by = "type_code") %>% left_join(c, by = "customer_id")
 | 1         | 6        | B           | orange    | +456           |
 
 
-
-
-
-
-
 join can be multiple types
 
 
 # bind_rows / bind_cols
-
-
 
 # Plot
 dev.new(width=4, height=4)
@@ -481,8 +597,6 @@ bank %>%
   group_by(age %/% 10) %>%
   filter(n()/nrow(bank) > 0.2) %>%
   arrange(age)
-
-
 
 
 ungroup() removes strata, restores the data frame back to entire rows.

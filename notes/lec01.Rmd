@@ -716,6 +716,7 @@ This is interactive document.
     - Create three pages. Name the pages depending on what you want to do. e.g. Product, About Us and Contact Us
     - Use different layouts for the pages: sideBar, column-based layout, Navlist.
     - Be creative!
+- Create a Dropbox directory and share with me at leafyoung@yahoo.com.
 
 # 
 ```{r, echo = FALSE, out.width = "75%"}
