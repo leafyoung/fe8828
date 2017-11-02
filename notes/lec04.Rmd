@@ -121,6 +121,12 @@ Use package `bizdays`
     # You will find this useful for later financial application.
     bizseq("2017-10-10", "2018-01-01", "weekends")
 
+# Assignment
+* Use days_in_month to determine leap year?
+* Print the list of Month names
+* Create a Bond Schedule
+* Craete a time series
+
 # Time
 Convert time to character/string
 
@@ -147,6 +153,41 @@ Convert time to date, be aware of timezone. Use the current timezone, "+08"
     "2017-10-30"
 
 # List
+
+Use list to pass data around.
+
+    do_lots_of_work <- function(a, b, c) {
+
+    }
+
+    do_lots_of_work <- function(lst) {
+      lst$a
+      lst$b
+      lst$c
+    }
+
+Case 2: configuration
+
+    app_config <- list(MAX = 10, MIN = 10, DISPLAY_RESULT = T)
+
+    do_lots_of_work <- function(app_config) {
+      app_config$MAX
+    }
+
+
+Return data
+    return_lots_of_work <- function() {
+      ...
+
+      list(a = res_a, b = res_b )
+    }
+
+    res <- return_lots_of_work()
+    res$a
+    res$b
+
+
+
 
 a <- list(a = 3, b = 4)
 
@@ -668,6 +709,17 @@ Add new.
 
 U:
 
+# Rules of Thumb for design data storage
+* Use list to store app data, i.e. configuration.
+* User data frame to store user data.
+* You need column **item_id** to put into every_table. It can be number or character. Make it unique. So you need to keep the current highest number in another place.
+* Delete is not good for customer data. add a column name with a common name, e.g. SYS_DEL.
+
+| position_id | call_put | amount | strike | SYS_DEL |
+| X123        |          |        |        |
+
+* Market 
+
 
 # Shiny
 
@@ -768,5 +820,7 @@ U:
         plotOutput("p1")
       })
 
-## Flexdashboard
-
+# Assignment
+* Book bank transactions
+* Book option trade transactions
+* Market data / quandl

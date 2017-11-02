@@ -500,6 +500,9 @@ put input$XXX inside renderXXX
 
 # Display output with render*() functions
 
+# ggplot/grid/gridExtra
+# knitr/kableExtra
+
 7 render*() functions
 
 renderDataTable() # an interactive table from data frame, matrix or other table-like structure
