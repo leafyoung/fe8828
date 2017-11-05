@@ -1,6 +1,13 @@
 
 
+# Consensus algorithm.
+- Elect a leader randomly
+- Ensure leadership is propagated, properly challenged and continued
 
+# Blockchain
+- It’s everywhere and it’s the same
+- It’s immutable
+- No one owns it, or everyone owns a piece of it
 
 
 Bitcoin, a digital currency that can be transmitted across the Internet, has attracted a lot of attention lately. The Bitcoin system can be thought of as a ledger that keeps track of who owns which bitcoins, and allows them to be transferred from one person to another. The revolutionary feature of Bitcoin is there's no central machine or authority keeping track of things. Instead, the "blockchain" is stored across thousands of machines on the Internet, and the system works with nobody in charge.

@@ -121,7 +121,8 @@ Use package `bizdays`
     # You will find this useful for later financial application.
     bizseq("2017-10-10", "2018-01-01", "weekends")
 
-# Assignment
+# Assignment (Dates)
+* How many working days in Singapore in 2017?
 * Use days_in_month to determine leap year?
 * Print the list of Month names
 * Create a Bond Schedule
@@ -187,8 +188,6 @@ Return data
     res$b
 
 
-
-
 a <- list(a = 3, b = 4)
 
 $ and [ operators
@@ -230,6 +229,34 @@ add_to_map <- function(map, key, value) {
   }
 }
 
+# Environment
+assign( enviro = .Global )
+
+# Pipe
+
+%>% ... %>%
+
+return multiple value
+
+%>% {
+  - assign parent.env
+}  %>%
+
+%>% {
+  - list
+}  %>%
+
+# Code pattern with Pipe
+
+Df %>% ... %>%
+{
+ggplot() +
+
+Individual 
+Group
+}
+
+
 # R: data frame
 The basic structure of a data frame is that there is one observation per row and each column represents a variable, a measure, feature, or characteristic of that observation. 
 
@@ -270,6 +297,11 @@ sapply(1:10, function(x) { sum <- x + sum } )
 purrr::map(1:10, rnorm, n = 10) %>% map_dbl(mean)
 
 # Lecture 05: Data
+
+# tidyverse
+
+Library dplyr::lag is creating a conflict.
+
 
 # SQL
 
@@ -719,6 +751,19 @@ U:
 | X123        |          |        |        |
 
 * Market 
+
+
+# debug Shiny
+Clear all variable to run shiny
+
+Reactive- wiring things
+
+Connect from trigger- button, isolate to create a Chinese wall
+
+Connect from receiver- plot/table to data
+
+
+
 
 
 # Shiny
