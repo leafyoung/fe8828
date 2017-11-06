@@ -1,0 +1,24 @@
+# Time
+
+Convert time to date, be aware of timezone. Use the current timezone, "+08"
+```{r, echo = T}
+Sys.time()
+[1] "2017-10-30 22:50:22 +08"
+
+> as.Date(Sys.time(), tz = "NZ")
+"2017-10-31"
+
+> as.Date(Sys.time(), tz = "UTC")
+"2017-10-30"
+```
+
+# Call function with the name of the function
+
+new_option <- function(strike, call_put, quantity, underlying)
+{
+  params <- as.list(match.call())[-1]
+  do.call("list", params)
+}
+
+do.call("function name", ...)
+

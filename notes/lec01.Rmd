@@ -546,7 +546,7 @@ It’s usually best to give each code chunk a name, for easier debug.
 # Chunk options
 
 * _echo_ is to decide whether to display code, default is FALSE.
-* _result_ is to decide whether to display result, default is show, set to "hide" to hide.
+* _results_ is to decide whether to display result, default is "markup", set to "hide" to hide.
 * _include_ is to hide both code and result, default is FALSE.
 
         `r chunk`{r cars, echo = TRUE}

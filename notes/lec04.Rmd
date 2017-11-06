@@ -1,6 +1,6 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 1/2 </sub>"
+subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 1 </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Nov 09, 2017"
 # runtime: shiny
@@ -17,291 +17,816 @@ inline <- function(x = "") paste0("`` `r ", x, "` ``")
 # Lecture 04: R catch-up
 Let's review some R basics.
 
-<center>![](imgs/Rlogo.png "R logo"){width=45%}</center>
+- Vector/Matrix/String/Date/Time
+- Anonymous function
+- List
+- Environment
+- Pipe
+- Load/Save
+- Data Frame
+
+```{r, echo = FALSE, out.width = "15%"}
+knitr::include_graphics("imgs/Rlogo.png")
+```
 
 # R: Basic data types
 Vector/Matrix/List/Dataframe
 
-    # Create a vector from number
-    > v <- c(1, 3)
-    > v[1] <- 3
+```{r, echo = T}
+# Create a vector from number
+v <- c(1, 3)
+v[1] <- 3
+v
+```
 
-    # repeat 100 for 10 times.
-    > rep(100, 10)
+```{r, echo = T}
+# repeat 100 for 10 times.
+rep(100, 10)
+```
 
-    # create matrix of 10x10
-    > mat <- matrix(2, 3, 4)
-         [,1] [,2] [,3] [,4]
-    [1,]    2    2    2    2
-    [2,]    2    2    2    2
-    [3,]    2    2    2    2
-    > mat[1,] <- 4 # set first row to 4
-    > mat[2, 2] <- 6
+```{r, echo = T}
+# create matrix of 10x10
+mat <- matrix(2, 3, 4)
+mat
+# set first row to 4
+mat[1,] <- 4
+# set element (2, 2) to 6
+mat[2, 2] <- 6
+```
 
-# Random number
+# Find element in Vector
+- `which()`
+- `match()`
+- `%in%`
 
-    # Norm random number
-    > rnorm(10, mean = 10, sd = 3)
+```{r, echo = T}
+data <- 10:1
+match(c(1, 3), data)
+data[match(c(1, 3), data)]
+which(1 == data | 3 == data)
+data[which(1== data | 3 == data)]
+```
 
-    # Uniform random number
-    > runif(3)
+- False case
+
+```{r, echo = T}
+match(c(11, 31), 10:1)
+which(11== 10:1 | 31 == 10:1)
+```
+
+# Check whether element exists
+```{r, echo = T}
+if (all(c(1, 33) %in% 1:3)) {
+  cat("Found all\n")
+}
+
+if (any(c(1, 33) %in% 1:3)) {
+  cat("Found one/some.\n")
+}
+```
+
+# Random
+```{r, echo = T}
+# Norm random number
+rnorm(3, mean = 10, sd = 3)
+```
+
+```{r, echo = T}
+# Uniform random number
+runif(3)
+```
+
+```{r, echo = T}
+# Sample
+sample(1:10, 10, replace = F)
+# To Be/Not to Be
+sample(c(T, F), 10, replace = T)
+# Throw a dice
+sample(1:6, 10, replace = T)
+```
 
 # Print
 - `cat(paste0(..., "\n"))` is what I used most. `"\n"` is appended to the end to create a line break.
 - `paste0` combines any thing without space. `paste` uses space. They can use to create new string.
-- `paste0`/paste with `collapse` helps with vector to print them in one line.
+- `paste0/paste` with `collapse` helps with vector to print them in one line.
+- `paste0/paste` works with all types of data.
 
-    x <- c(Sys.Date(), Sys.Date(), Sys.Date())
-    cat(paste0("Current dates is ", paste0(x, collapse = ", "), ".\n"))
+```{r, echo = T}
+x <- c(Sys.Date(), Sys.Date(), Sys.Date())
+cat(paste0("Current dates is ", paste0(x, collapse = ", "), ".\n"))
+```
 
 # String
 
-    # subset of string
-    substr("asdf", 1, 3)
+```{r, echo = T}
+# sub-string
+# substr(x, start, stop) 
+substr("The fox jumps.", 6, 6 + 5 - 1)
+```
 
-    # concatenate string
-    paste0("This is ", "cat")
+```{r, echo = T}
+# paste0/paste to concatenate string/convert to string
+new_string <- paste0("This is ", "cat")
+new_string <- paste0("This is ", "cat", sep = "a")
+new_string <- paste0(1:3, sep = "a")
+```
 
-    # toupper/tolower
+```{r, echo = T}
+# toupper/tolower
+toupper("big")
+tolower("LOWER")
+```
 
-    # find
-    grepl("A", "ABC", fixed = T)
-    grepl("D", "ABC", fixed = T)
+# Find/Replace string in string
 
-    # replace. one time
-    sub("D", "ABC", "DDD", fixed = T)
-    # replace. all times
-    gsub("D", "ABC", "DDD", fixed = T)
+```{r, echo = T}
+# Find. grepl returns T or F
+grepl("A", "ABC", fixed = T)
+grepl("D", "ABC", fixed = T)
 
-    # if you start to know regular expression, sub/grepl is super powerful.
-    # without using fixed = T.
-    # This is an example of `Start` appearing the beginning of the string
-    grepl("^Start", "Start with me")
-    grepl("^Start", "me Start")
+```{r, echo = T}
+# sub: replace for one time
+sub("D", "ABC", "DDD", fixed = T)
+# gsub: replace for all
+gsub("D", "ABC", "DDD", fixed = T)
+```
+
+# Find/Replace String with Regular Expression (RE)
+If you start to know regular expression, sub/grepl is super powerful.
+```{r, echo = T}
+# If we need to find `Start` appearing the beginning of the string
+grepl("^Start", "Start with me")
+grepl("^Start", "me Start")
+```
+
+```{r, echo = T}
+# To find something in the end
+sub("X$", "Z", "XYZ ends with X")
+```
+
+# Matching/Extracting with Regular Expression (RE)
+## Matching
+```{r, echo = T}
+sub("[^\\_]+\\_.*", "", "USDCNY_M1")
+```
+- `[^\\_]`: Character not containing `_`. Because _ is a special character, we quote it with two backslashes.
+- `+`: One or more 
+- `.`: Any character
+- `*`: none or more.
+
+## Extraction
+```{r, echo = T}
+sub("([^\\_]+)\\_.*", "\\1", "USDCNY_M1")
+```
+
+Cheatsheat is available at <https://www.rstudio.com/resources/cheatsheets/>
 
 # Date
 
-    as.Date("2017-11-03")
-    as.Date("2017-11-03", format = "%Y-%m-%d") # %m for number month
-    as.Date("2017-Nov-03", format = "%Y-%b-%d") # %b for the 3-letter month
-    as.Date("03Nov2017", format = "%d%b%Y")
-    format(Sys.Date(), format = "%Y/%m%d")
+```{r, echo = T}
+# Create date
+dt1 <- as.Date("2017-11-03")
+dt1
+dt2 <- Sys.Date()
+dt2
+```
 
-# Date function from lubridate
-Date is such a central role in finance.
-More function about date can be found in package `lubridate`
+```{r, echo = T}
+library(lubridate)
+# Date is such a central role in finance.
+# More function about date can be found in package `lubridate`
+# Create date with lubridate, a package which provides lots of date functions.
+ymd(20171003)
+ymd("20171003")
+```
 
-    library(lubridate)
-    # change a date
-    > x <- as.Date("2017-10-10")
-    > month(x) <- 1
-    > cat(
-    x = 2017-1-10
+# Date: format code
+We can use codes for convert date to/from string.
 
-    # Set to the end of the month
-    day(x) <- days_in_month(x)
-    
-    # create date
-    ymd(20171003)
-    ymd("20171003")
+- %Y/%y: four-digit year/two-digit year
+- %m: month in number
+- %b/%B: month in abbr./full. i.e. Jan/January.
+- %d: day
+
+```{r, echo = T}
+format(Sys.Date(), format = "%Y/%m/%d")
+```
+
+```{r, echo = T}
+as.Date("2017-11-03", format = "%Y-%m-%d") # %m for number month
+as.Date("2017-Nov-03", format = "%Y-%b-%d") # %b for the 3-letter month
+as.Date("03Nov2017", format = "%d%b%Y")
+```
+
+# Other functions from `lubridate`
+
+```{r, echo = T}
+library(lubridate)
+# Change a date
+x <- as.Date("2017-10-10")
+month(x) <- 1
+x
+```
+
+```{r, echo = T}
+# Set to the end of the month
+day(x) <- days_in_month(x)
+```
 
 # Business days
 Use package `bizdays`
 
-    library(bizdays)
+```{r, echo = T}
+install.packages("bizdays")
+library(bizdays)
 
-    # weekends is a calendar that excludes all weekends.
-    # Strange name, weekdays is better.
-    bizdays("2017-10-16", "2017-10-30", "weekends")
+# 'weekends' is a calendar of weekdays
+bizdays("2017-10-16", "2017-10-30", "weekends")
 
-    # add bizdays
-    add.bizdays("2017-10-03", 5, "weekends")
+# add bizdays
+add.bizdays("2017-11-03", 5, "weekends")
 
-    # generate all business days between.
-    # You will find this useful for later financial application.
-    bizseq("2017-10-10", "2018-01-01", "weekends")
+# generate all business days between.
+# You will find this useful for later financial application.
+bizseq("2017-11-10", "2017-12-01", "weekends")
+```
 
-# Assignment (Dates)
-* How many working days in Singapore in 2017?
-* Use days_in_month to determine leap year?
+# Calendar
+
+```{r, echo = T}
+create.calendar(name="Singapore", holidays = c(as.Date("2017-10-18")),
+                start.date = as.Date("2017-01-01"), end.date = as.Date("2071-01-01"),
+                weekdays = c("saturday", "sunday"))
+bizdays("2017-10-13", "2017-10-30", "weekends")
+bizdays("2017-10-13", "2017-10-30", "Singapore")
+```
+
+# Write function
+Input parameters
+
+```{r, echo = T, results = "hide"}
+func1 <- function() { }
+
+func2 <- function(input1, input2) { }
+
+# Param input1 is default to 1
+func3 <- function(input1 = 1, input2) { }
+
+func4 <- function(input1, input_type = c("int", "char")
+{
+  # This would check wheher input_type is set to one of the pre-set values.
+  input_type = match.arg(input_type) 
+}
+```
+
+# Write function
+
+```{r, echo = T, results = "hide"}
+func5 <- function(in1, in2) {
+  if (in1 < 0) {
+    return(0)
+  } else {
+    return(in1 + in2)
+  }
+}
+
+# The last value before function finishes will be returned automatically. No need to use return.
+func5 <- function(in1, in2) {
+  if (in1 < 0) {
+    0
+  } else {
+    in1 + in2
+  }
+}
+
+# Unless there is extra steps before
+func6 <- function(in1, in2) {
+  if (in1 < 0) {
+    return(0) # if we have 0 here, it's not the last step before function exits.
+  } else {
+    res <- in1 + in2
+  }
+
+  res <- res * 3
+  res
+}
+```
+
+# Exercise
+* Write a function to determine leap year?
 * Print the list of Month names
-* Create a Bond Schedule
-* Craete a time series
+* How many working days in Singapore in 2017?
 
 # Time
 Convert time to character/string
 
-    format(Sys.time(), format = "%H%M")
-    format(Sys.time(), format = "%H:%M:%S")
-    format(Sys.time(), format = "%H:%M:%S")
+- %H: hour
+- %M: minute
+- %S: second
+
+```{r, echo = T}
+format(Sys.time(), format = "%H%M")
+format(Sys.time(), format = "%H:%M:%S")
+format(Sys.time(), format = "%H:%M:%S")
+libary(lubridate)
+ymd_hms("2011-12-31 12:59:59")
+```
 
 Change time, lubridate provides `hour`, `minute`
-    x <- Sys.time()
-    hour(x) <- 12
-    minute(x) <- 3
-    minute(x) <- 123 # what will happen?
 
-# Time
-
-Convert time to date, be aware of timezone. Use the current timezone, "+08"
-    Sys.time()
-    [1] "2017-10-30 22:50:22 +08"
-
-    > as.Date(Sys.time(), tz = "NZ")
-    "2017-10-31"
-
-    > as.Date(Sys.time(), tz = "UTC")
-    "2017-10-30"
+```{r, echo = T}
+x <- Sys.time()
+x
+hour(x) <- 12
+x
+minute(x) <- 3
+x
+minute(x) <- 123 # what will happen?
+x
+```
 
 # List
+```{r, echo = T}
+# Create list with list() function
+# Nameless list
+# list[_n_] => item by order
+a <- list(3, 4)
+a[[1]]
+a[[2]]
 
-Use list to pass data around.
-
-    do_lots_of_work <- function(a, b, c) {
-
-    }
-
-    do_lots_of_work <- function(lst) {
-      lst$a
-      lst$b
-      lst$c
-    }
-
-Case 2: configuration
-
-    app_config <- list(MAX = 10, MIN = 10, DISPLAY_RESULT = T)
-
-    do_lots_of_work <- function(app_config) {
-      app_config$MAX
-    }
-
-
-Return data
-    return_lots_of_work <- function() {
-      ...
-
-      list(a = res_a, b = res_b )
-    }
-
-    res <- return_lots_of_work()
-    res$a
-    res$b
-
-
+# Named list, you can use $ and [ operators
+# list[[]]: gives back a value
+# list$name => list[["name"]]
 a <- list(a = 3, b = 4)
-
-$ and [ operators
-
+a[[1]]
+a[[2]]
+a[["a"]]
 a$a
-a$b
 
-List is R's map and object.
-list[]: gives back a list
-list[[]]: gives back a value
+# When you want to use a number as key, use backtick
+list_of_strikes <- list()
+list_of_strikes$`65` <- 3
+list_of_strikes$`60` <- 4
 
-list$a => list[[]]
+# if a name doesn't exist in the list
+a$c
+# Use `is.null()` to check
+if (is.null(a$c)) {
+  cat("c doesn't exist in list a\n")
+}
+```
 
-list[number] => item by ordera[2]
+# List's Usage
 
-    a <- list()
-    a["orange"] <- 3
-    a["banana"] <- 4
+```{r, echo = T}
+# List can be used as map/dictionary.
+# Map
+basket <- sample(c("Apple", "Orange", "Banana", "Pear"), 100, replace = T)
+fruit_count <- list()
+for (b in basket) {
+  if (is.null(fruit_count[[b]])) {
+    fruit_count[[b]] <- 1
+  } else {
+    fruit_count[[b]] <- fruit_count[[b]] + 1
+  }
+}
+fruit_count
+```
 
-    sum <- 3
-    sapply(1:length(a), function(x) {
-      key <- names(a[x])
-      value <- a[[x]]
-      sum + value
-    })
-
-    for (i in 1:length(a)) {
-      key <- names(a[x])
-      value <- a[x]
-    }
-
-    purrr::map(a, function(x) x + 4)
-
+```{r, echo = T}
+# Let's write a generic function to do this
 add_to_map <- function(map, key, value) {
   if (is.null(a[key])) {
-    
-  } else {
     a[key] <- value
+  } else {
+    a[key] <- a[key] + value
   }
 }
 
-# Environment
-assign( enviro = .Global )
+fruit_count <- add_to_map(fruit_count, b, 1)
+# You may copy function add_to_map to every file that you want to use this kind of dictionary
+```
+# List's Usage
 
-# Pipe
+```{r, echo = T}
+Use case 1: Use list to pass data in or out.
 
-%>% ... %>%
-
-return multiple value
-
-%>% {
-  - assign parent.env
-}  %>%
-
-%>% {
-  - list
-}  %>%
-
-# Code pattern with Pipe
-
-Df %>% ... %>%
-{
-ggplot() +
-
-Individual 
-Group
+do_lots_of_work <- function(a, b, c) {
 }
 
-
-# R: data frame
-The basic structure of a data frame is that there is one observation per row and each column represents a variable, a measure, feature, or characteristic of that observation. 
-
-df <- data.frame(a = 1:10, b = 10:1)
-df["a"]: gives a data frame
-df[["a"]]: gives value
-
-df$a: gives value,equivalent to df[["a"]]
-
-single number, means column count
-df[number]: column
-
-multiple numbers, means co-ordinates in 2-dimensional.
-df[1, 1]: give value
-df[1, 1, drop = F]: give data frame with names.
-
-View()
-head()
-str()
-dim()
-colnames()
-
-
-# Read/Write data
-readRDS
-writeRDS
-
-
-# Function
-Write function
-
-x <- function() {
-
+do_lots_of_work <- function(lst) {
+  lst$a
+  lst$b
+  lst$c
 }
 
-do.call("function name", ...)
-sapply(1:10, function(x) { sum <- x + sum } )
+ret_lots_of_work <- function() {
+  return(list(a = a, b = b, c = c))
+}
+
+res <- ret_lots_of_work()
+res$a
+res$b
+res$c
+```
+
+```{r, echo = T}
+# Case 2: configuration
+app_config <- list(MAX = 10, MIN = 10, DISPLAY_RESULT = T)
+
+do_lots_of_work <- function(app_config) {
+  app_config$MAX
+}
+```
+
+# Object
+```{r, echo = T}
+# Object
+# Define class with attributes.
+vanilla_option <- setClass("vanilla_option",
+                           slots = c(type = "character",
+                                     strike = "numeric",
+                                     underlying = "numeric"))
+# Create object
+opt1 <- new("vanilla_option", type = "c", strike = 100, underlying = 100)
+opt2 <- vanilla_option(type = "c", strike = 100, underlying = 100)
+
+# Use @ to visit member
+opt1@type
+```
+
+# Work with objects
+```{r, echo = T}
+# Generate a vector of options
+opts <- sapply(1:10000, function(x) { 
+                       vanilla_option(type = sample(c("c", "p"), 1),
+                                      strike = round(runif(1) * 100, 0),
+                                      underlying = round(runif(1) * 100, 0)) } )
+
+# install.packages("fOptions")
+library(fOptions)
+
+# GBSOption also returns an object. We just need its price attribute.
+sapply(opts, function(o) {
+  (GBSOption(o@type, o@underlying, o@strike, Time = 1, r = 0.01, b = 0, sigma = 0.3))@price
+}))
+cat(as.numeric(Sys.time() - a))
+
+# alternative to sapply, we can use map* functions from `purrr` package
+# `map` is a generic function that returns a list
+# `map_dbl` is for result of double, it would return a vector
+purrr::map_dbl(opts, function(o) {
+  (GBSOption(o@type, o@underlying, o@strike, Time = 1, r = 0.01, b = 0, sigma = 0.3))@price
+})
+```
+
+# Anonymous Function
+
+```{r, echo = T}
+# Function that's defined in-place, which doesnt' need to have a name.
+(function(x) { print(x) }) (3)
+# if there is only one line, you can skip { }
+(function(x) print(x)) (3)
+
+# For more complicate, you can make it multilines
+(function(x) {
+  if (x > 3) {
+    print(x)
+  } else {
+    print(x - 3)
+  }
+}) (3)
+```
+
+# purrr::map and sapply Function
+```{r, echo = T}
+# These two are equivalent.
+purrr::map(1:10, function(x) rnorm(x), n = 10)
+# function(x) func(x) can be simplied as func.
+purrr::map(1:10, rnorm, n = 10)
+# This is what we want to do this. %>% means to use previous result.
 purrr::map(1:10, rnorm, n = 10) %>% map_dbl(mean)
 
-# Lecture 05: Data
+# sapply achieves the same as purrr::map, a bit slower.
+# Package purrr succeeds original R base.
+sapply(1:10, function(x) x ^ 2 )
+sapply(1:10, function(x) `^`(2, x) )
+sapply(1:10, function(x) `^`(x, 2) )
+```
+
+# Read/Write data
+- `setwd("C:/TEMP")` 
+- `saveRDS(object, file = "C:/TEMP/DATA/data.Rds")`
+- `x <- readRDS(file = "C:/TEMP/DATA/data.Rds")`
+
+- On Windows, use double slash `\\` or single backslash `/`. e.g. `C:\\TEMP\\DATA`, `C:/TEMP/DATA`
+- On Mac, use `/Users/.../`
+
+# R: data frame
+The basic structure of a data frame:
+
+- There is one observation per row and
+- Each column represents a variable, a measure, feature, or characteristic of that observation. 
+- In summary, **2D table**
+
+```{r, echo = T}
+df <- data.frame(a = 1:10, b = 10:1, c = runif(10), d = sample(LETTERS, 10))
+df["a"]: gives a data frame
+df[["a"]]: gives value
+df$a: same as [["a"]]
+
+# Get three rows
+df[c(3, 6, 9), , drop = F]
+# Get three columns
+df[, 1, drop = F]
+# This would return a vector
+df[, 1, drop = T]
+
+# Use column names
+df[, c("b", "d"), drop = F]
+```
+
+# R: data frame
+Common functions for data frame
+
+```{r, echo = T}
+View()
+head()
+tail()
+str()
+nrow()
+ncol()
+dim() # returns both nrow and ncol
+colnames()/rownames()
+```
+
+## Birthday Problem
+- With different weights to the month
+- N simulation
+
+```{r, echo = T}
+sample_bday <- function(dummy) {
+  a <- trunc(runif(365, min=1,max=13))
+  bday <- rep(FALSE, 12)
+  nn <- 0
+  for (ii in a) {
+    nn <- nn + 1
+    if (!bday[ii]) bday[ii] <- TRUE
+    if (sum(bday) == 12) break
+  }
+  nn
+}
+result <- sapply(seq(1:1000000), sample_bday, simplify = TRUE)
+
+# library(parallel)
+# cl <- setDefaultCluster()
+# result <- parSapply(seq(1:1000), sample_bday, simplify = TRUE)
+
+print(min(result))
+print(max(result))
+print(mean(result))
+hist(result, xlim=c(0,100), freq=3)
+# 12 207 37.23126
+
+# Fastest fish
+
+```{r, echo = T}
+N <- 10
+
+survi <- function() {
+  queue <- sample(1:N, N, replace = F)
+  # qori <- queue
+  fastest <- queue[1]
+  for (n in 2:N) {
+    if (queue[n] < fastest) {
+      queue[n] <- NA
+    } else {
+      fastest <- queue[n]
+    }
+  }
+  # print(qori)
+  # print(queue)
+  length(na.omit(queue))
+}
+
+survi()
+survi()
+survi()
+
+sim_sample <- replicate(1000000, survi())
+res_sim <- mean(sim_sample)
+
+survi.prob <- function() {
+  sum <- 0
+  for (n in 1:N) {
+    sum <- sum + 1/n
+  }
+  sum
+}
+
+res_ana <- survi.prob()
+
+print(paste("res_sim:", res_sim))
+print(paste("res_ana:", res_ana))
+hist(sim_sample)
+
+library(ggplot2)
+qplot(sim_sample, geom="histogram", binwidth = 1) 
+```
+
+- With fish problem
+
+## Fish problem
+
+# Lecture 05: Shiny
+
+# Minimalist
+    
+    library(shiny)
+    ui <- fluidPage("Hello World")
+    server <- function(input, output, session) {}
+    shinyApp(ui = ui, server = server)
+
+# Think around Input and Outputs
+
+  ui <- fluidPage(
+    # Input() functions,
+    # Output() functions
+  )
+
+# Input
+
+- numericInput
+- textInput
+- passwordInput
+- slideInput
+- selectInput
+- dateInput
+
+All input function follow such function signature except for later parameters.
+Reference: https://shiny.rstudio.com/reference/shiny/1.0.5/
+
+    inputXXX(inputId = "input name", label = "label to display", ...)
+
+# Output
+
+      plotOutput(outputId = "hist"): renderPlot({ plot(runif(1000), runif(1000)) })
+      tableOutput("t1"): output$t1 <- renderTable(iris)
+      dataTableOutput("t2"): output$t2 <- renderDataTable(iris)
+      htmlOutput("h1"): output$h1 <- renderUI({ tagList(
+                                                  sliderInput("n", "N", 1, 1000, 500),
+                                                  textInput("label", "Label"))
+                                              })
+      renderText({ "foo" })
+
+# Server
+
+  server <- function(input, output) {
+    output$hist <- # code
+    output$hist <- renderDataTable()
+    output$hist <- renderImage()
+    output$hist <- renderPlot({ hist(rnorm(100)) })
+
+    output$hist <- renderPlot({
+      title("a normal random number histogram")
+      hist(rnorm(input$num))
+    })
+
+  }
+
+# Reactivity kicks in
+
+  library(shiny)
+
+  ui <- fluidPage(
+    numericInput("num", "Num", 10),
+    plotOutput("p1")
+  )
+
+  server <- function(input, output, session) {
+    output$p1 <- renderPlot({
+      hist(rnorm(input$num))
+    })
+  }
+
+  shinyApp(ui, server)
+
+  Reactivity:
+  input$num ------> output$p1
+
+# Reactivity
+Reactivity links input to the output like a data flow.
+
+input$x => output$y
+input$x => expression() => output$y
+
+reactive values work together with reactive functions.
+i.e. Put input$XXX inside renderXXX
+
+1. Reactive value notifies.
+2. Reactive function responds.
+
+# Output
+## How to export table
+
+## Static table
+
+renderTable
+
+```{r, echo = T}
+library(knitr)
+library(kableExtra)
+
+# This is HTML output
+kable(df, format = "html") %>%
+
+# Use function() { } to output html
+output$p1 <- function() {
+  kable(df, format = "html")
+}
+```
+
+renderTable({ df })
+
+## Plot
+
+```{r, echo = T}
+renderPlot({})
+```
+
+## Dynamic UI for Report
+
+```{r, echo = T}
+renderUI({
+  htmlOutput("t1"),
+  plotOutput("p1")
+})
+```
+
+append into tagList()
+Case: scenarios
+
+## Dynamic table
+
+library(shiny)
+library(DT)
+
+shinyApp(
+  ui = fluidPage(DT::dataTableOutput('tbl')),
+  server = function(input, output) {
+    output$tbl = DT::renderDataTable(
+      iris, options = list(lengthChange = FALSE)
+    )
+  }
+)
+
+output$x1 = DT::renderDataTable(cars, server = FALSE)
+
+output$x3 = DT::renderDataTable(mtcars2, server = TRUE)
+output$x4 = renderPrint({
+    s = input$x3_rows_selected
+    if (length(s)) {
+      cat('These rows were selected:\n\n')
+      cat(s, sep = ', ')
+    }
+  })
+
+library(shiny)
+shiny::renderDataTable(iris, options = list(
+  pageLength = 5,
+  initComplete = I('function(setting, json) { alert("done"); }')
+))
+
+library(DT)
+DT::renderDataTable(
+  iris, options = list(
+    pageLength = 5,
+    initComplete = JS('function(setting, json) { alert("done"); }')
+  )
+)
+
+# debug Shiny
+- tryCatch
+
+tryCatch({
+})
+
+- debug in R Studio
+- Clear all variable to run shiny in R Studio
+- Reactive- wiring things
+- Connect from trigger- button, isolate to create a Chinese wall
+- Connect from receiver- plot/table to data
+
+# Assignment (Dates)
+* Create a Bond Schedule
+* Craete a time series
+
+
+# Lecture 06: Data
 
 # tidyverse
 
 Library dplyr::lag is creating a conflict.
-
 
 # SQL
 
@@ -401,6 +926,7 @@ Copy the generated code to your script file.
 base
 
     bank <- read.csv("../example/data-bank/bank.csv", sep=";")
+    bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 
 readr
 
@@ -413,8 +939,6 @@ Please refer to R for Data Science, chapter 11.
 http://r4ds.had.co.nz/data-import.html
 
 write_csv
-
-
 
 # select
 
@@ -476,13 +1000,12 @@ arrange(bank, desc(as.Date(day, format="%d", origin = Sys.Date())))
 
 NB: Missing values are always sorted at the end.
 
-How could you use arrange() to sort all missing values to the start? (Hint: use is.na()).
-```{r}
-arrange(df, !is.na(a), a)
-```
+- How could you use arrange() to sort all missing values to the start? (Hint: use is.na()).
 
-Find the longest duration
-Find the eldest.
+    arrange(bank, !is.na(a), a)
+
+- Find the longest duration?
+- Find the eldest?
 
 # mutate
 Add a new column.
@@ -554,22 +1077,48 @@ c(1, 3, 7, 9) %>% {
 
 We don't need to keep intermediate result, sames memory and also variable names.
 But the issues cames at debugging
-- add { print(.) }
+- Use { print(.); filter(., ...) }
 - separate the long pipes into shorter pipes, adding more intermediate variables.
 
 - Your pipes are longer than (say) ten steps. In that case, create intermediate objects with meaningful names. That will make debugging easier, because you can more easily check the intermediate results, and it makes it easier to understand your code, because the variable names can help communicate intent.
 - You have multiple inputs or outputs. If there isn’t one primary object being transformed, but two or more objects being combined together, don’t use the pipe.
 - You are starting to think about a directed graph with a complex dependency structure. Pipes are fundamentally linear and expressing complex relationships with them will typically yield confusing code.
 
-# model
-models <- mtcars %>% 
-  split(.$cyl) %>% 
-  map(function(df) lm(mpg ~ wt, data = df))
+# Environment
+Environment is where your data resides.
 
-models <- mtcars %>% 
-  split(.$cyl) %>% 
-  map(~lm(mpg ~ wt, data = .))
-  
+```{r, echo = T}
+
+```
+
+
+```{r, echo = T}
+assign("x", x, enviro = .Global )
+```
+
+# Pipe
+
+%>% ... %>%
+
+return multiple value
+
+%>% {
+  - assign parent.env
+}  %>%
+
+%>% {
+  - list
+}  %>%
+
+# Code pattern with Pipe
+
+    Df %>% ... %>%
+    {
+    ggplot() +
+
+    Individual 
+    Group
+    }
 
 # left_join / right_join / anti_join / full_join
 
@@ -619,9 +1168,7 @@ left_join(b, a, by = "type_code") %>% left_join(c, by = "customer_id")
 | 2         | 2        | D           | banana    | NA             |
 | 1         | 6        | B           | orange    | +456           |
 
-
 join can be multiple types
-
 
 # bind_rows / bind_cols
 
@@ -671,9 +1218,7 @@ bank %>%
   filter(n()/nrow(bank) > 0.2) %>%
   arrange(age)
 
-
 ungroup() removes strata, restores the data frame back to entire rows.
-
 
 chicago <- mutate(baml, year = as.POSIXlt(date)$year + 1900)
 > summarize(years, pm25 = mean(pm25, na.rm = TRUE), 
@@ -725,13 +1270,14 @@ Use if. ifelse is restrictive that it only output the same type as the input.
 do. with an index column and do the analysis for the rest.
 
 CRUD:
-add a column for rownumber.
-discover insights of data.
-retrieve with age, slider of numeric
-employment
-Social attributes.
 
-count for subtotal - total, plot graph
+Create:
+- add a column for rownumber.
+- discover insights of data.
+- retrieve with age, slider of numeric
+- employment
+- Social attributes.
+- count for subtotal - total, plot graph
 
 D:
 Mark for not included in the 
@@ -752,120 +1298,11 @@ U:
 
 * Market 
 
-
-# debug Shiny
-Clear all variable to run shiny
-
-Reactive- wiring things
-
-Connect from trigger- button, isolate to create a Chinese wall
-
-Connect from receiver- plot/table to data
-
-
-
-
-
-# Shiny
-
-# Shiny in R Markdown
-
-    --
-    runtime: shiny
-    output: html_document
-    ---
-
-    ### Here are two Shiny widgets
-
-    ```{r echo = FALSE}
-    selectInput("n_breaks", label = "Number of bins:",
-                  choices = c(10, 20, 35, 50), selected = 20)
-      
-    sliderInput("bw_adjust", label = "Bandwidth adjustment:",
-                  min = 0.2, max = 2, value = 1, step = 0.2)
-    ```
-
-# Output
-
-  output$x4 = renderPrint({
-    s = input$x3_rows_selected
-    if (length(s)) {
-      cat('These rows were selected:\n\n')
-      cat(s, sep = ', ')
-    }
-  })
-
-
-# How to export table
-
-## Dynamic table
-
-    library(shiny)
-    library(DT)
-
-    shinyApp(
-      ui = fluidPage(DT::dataTableOutput('tbl')),
-      server = function(input, output) {
-        output$tbl = DT::renderDataTable(
-          iris, options = list(lengthChange = FALSE)
-        )
-      }
-    )
-
-    output$x1 = DT::renderDataTable(cars, server = FALSE)
-
-    
-    output$x3 = DT::renderDataTable(mtcars2, server = TRUE)
-    output$x4 = renderPrint({
-        s = input$x3_rows_selected
-        if (length(s)) {
-          cat('These rows were selected:\n\n')
-          cat(s, sep = ', ')
-        }
-      })
-
-
-    library(shiny)
-    shiny::renderDataTable(iris, options = list(
-      pageLength = 5,
-      initComplete = I('function(setting, json) { alert("done"); }')
-    ))
-
-    library(DT)
-    DT::renderDataTable(
-      iris, options = list(
-        pageLength = 5,
-        initComplete = JS('function(setting, json) { alert("done"); }')
-      )
-    )
-
-## Static table
-
-    renderTable
-
-    library(knitr)
-    library(kableExtra)
-
-    # This is HTML output
-    kable(df, format = "html") %>%
-
-    # Use function() { } to output html
-    output$p1 <- function() {
-      kable(df, format = "html") %>%
-    }
-
-## Plot
-
-      renderPlot({})
-
-## Report
-
-      renderUI({
-        htmlOutput("t1"),
-        plotOutput("p1")
-      })
-
 # Assignment
+* Book option trades
+* https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&ei=iIoAWvDmF8GqugSsj5mICw
+* Date | Strike | Quantity | Underlying | Long/Short | Call/Put
+* 
 * Book bank transactions
 * Book option trade transactions
 * Market data / quandl

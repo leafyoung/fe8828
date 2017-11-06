@@ -4,6 +4,48 @@ knitr::opts_chunk$set(echo = FALSE, fig.align="center")
 bank <- read.csv("../example/data-bank/bank.csv", sep=";")
 ```
 
+```{r, echo = T}
+library(fOptions)
+
+EuropeanOption(type="call", underlying=1.56, strike=1.6, dividendYield=0.06-0.08, riskFreeRate=0.06, maturity=1/2, volatility=0.12) 
+
+a <- GBSCharacteristics(TypeFlag = "c", S = 1.5600, X = 1.6000,  Time = 1/2, r = 0.06, b = 0.06-0.08, sigma = 0.12)
+
+GBSOption(TypeFlag = "p", S = 3500, X = 3765, Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
+GBSGreeks("delta", TypeFlag = "p", S = 3500, X = 3765,  Time = 1/12, r = 0, b = 0, sigma = 0.3)
+GBSGreeks("delta", TypeFlag = "p", S = 3500, X = 3765,  Time = 1/365, r = 0, b = 0, sigma = 0.3)
+
+y <- rep(0,0)
+ii <- seq(from=1/12, to=1/365, by = -(1/365))
+for (i in ii) {
+  x <- GBSGreeks("delta", TypeFlag = "p", S = 3500, X = 3765,  Time = i, r = 0, b = 0, sigma = 0.3)
+  x <- GBSOption(TypeFlag = "p", S = 3500, X = 3765, Time = i, r = 0, b = 0, sigma = 0.3)@price
+  y <- c(y, x)
+}
+plot(ii, y)
+
+GBSVolatility(price = 200, TypeFlag = "p", S = 3500, X = 3700, Time = 1/12, r = 0, b = 0)
+GBSOption(TypeFlag = "p", S = 3500, X = 3500,  Time = 1/12, r = 0, b = 0, sigma = 0.74)@price
+GBSOption(TypeFlag = "p", S = 3500, X = 3500,  Time = 1/12, r = 0, b = 0, sigma = 0.74)@price
+Black76Option(TypeFlag = "p", FT = 3500, X = 3500,  Time = 1/12, r = 0, sigma = 0.74)@price
+
+GBSGreeks("delta", TypeFlag = "p", S = 3500, X = 3500,  Time = 1/12, r = 0, b = 0, sigma = 0.74)
+GBSGreeks("delta", TypeFlag = "p", S = 3500, X = 3500,  Time = 1/365, r = 0, b = 0, sigma = 0.3)
+
+y <- rep(0,0)
+ii <- seq(from=1/12, to=1/365, by = -(1/365))
+vool <- seq(from=0.74, to=0.3, length.out=length(ii))
+for (i in seq(1,length(ii))) {
+  x <- GBSGreeks("delta", TypeFlag = "p", S = 3500, X = 3765,  Time = i, r = 0, b = 0, sigma = 0.3)
+  x <- GBSOption(TypeFlag = "p", S = 3500, X = 3700,  Time = ii[i], r = 0, b = 0, sigma = vool[i])@price
+  y <- c(y, x)
+}
+plot(ii, y)
+
+```
+
+
+
 Data analytics
 
 nrow(ozone)
@@ -28,6 +70,31 @@ boxplot(bank$age, col = "blue")
 > rug(bank$age)
 
 > library(ggplot2)
+
+```{r, echo = T}
+library(ggplot2)
+library(reshape2)
+
+biorhythm <- function(dob, target = Sys.Date()) {
+  dob <- as.Date(dob)
+  target <- as.Date(target)
+  t <- round(as.numeric(difftime(target, dob)))
+  days <- (t - 14) : (t + 14)
+  period <- data.frame(Date = seq.Date(from = target - 15, by = 1, length.out = 29),
+                       Physical = sin (2 * pi * days / 23) * 100, 
+                       Emotional = sin (2 * pi * days / 28) * 100, 
+                       Intellectual = sin (2 * pi * days / 33) * 100)
+  period <- melt(period, id.vars = "Date", variable.name = "Biorhythm", value.name = "Percentage")
+  ggplot(period, aes(x = Date, y = Percentage, col = Biorhythm)) + geom_line() +  
+    ggtitle(paste("DoB:", format(dob, "%d %B %Y"))) + 
+    geom_vline(xintercept = as.numeric(target))
+}
+
+biorhythm("1969-09-12", "2017-03-30")
+biorhythm("1981-11-03", "2017-03-30")
+```
+
+
 > qplot(latitude, pm25, data = pollution, facets = . ~ region)
 
 select(ozone, State.Name) %>% unique %>% nrow
@@ -215,6 +282,16 @@ ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = mean), fill = educ
   coord_flip()
 
 # model
+models <- mtcars %>% 
+  split(.$cyl) %>% 
+  map(function(df) lm(mpg ~ wt, data = df))
+
+models <- mtcars %>% 
+  split(.$cyl) %>% 
+  map(~lm(mpg ~ wt, data = .))
+
+
+# model with Modelr
 
 library(modelr)
 
@@ -422,81 +499,6 @@ updateSelectionInput(...)
 # Question?
 Age with respect to anything else.
 With facets
-
-# Dynamic UI
-append into tagList()
-
-insertUI
-renderUI
-scenarios
-
-# App template:
-    
-    library(shiny)
-    ui <- fluidPage("Hello World")
-    server <- function(input, output) {}
-    shinyApp(ui = ui, server = server)
-
-# Think around Input and Outputs
-
-  ui <- fluidPage(
-    # Input() functions,
-    # Output() functions
-  )
-
-# Input
-
-  slideInput
-  textInput
-  passwordInput
-
-
-  inputXXX(inputId = "input name", label = "label to display", ...)
-
-# Output
-
-  dataTableOutput()
-  htmlOutput()
-  imageOutput()
-
-  plotOutput(outputId = "hist")
-
-# Server
-
-  server <- function(input, output) {
-    output$hist <- # code
-    output$hist <- renderDataTable()
-    output$hist <- renderImage()
-    output$hist <- renderPlot({ hist(rnorm(100)) })
-
-    output$hist <- renderPlot({
-      title("a normal random number histogram")
-      hist(rnorm(input$num))
-    })
-
-  }
-
-# reactivity will kick in
-
-  input$num ------> renderPlot({ hist(rnorm(input$num)) })
-
-# runing the app
-
-Shiny server AMI
-
-# reactivity
-Reactivity links input to the output like a data flow
-
-input$x => output$y
-
-input$x => expression() => output$y
-
-reactive values work together with reactive functions.
-
-put input$XXX inside renderXXX
-
-1. reactive value notifies.
-2. reactive function responds.
 
 # Display output with render*() functions
 
