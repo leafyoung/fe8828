@@ -7,19 +7,11 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  if (FALSE) {
-    observeEvent(input$go, {
-      output$p1 <- renderPlot({
-        hist(rnorm(isolate(input$num)))
-      }) 
-    })
-  }
-
-  data <- eventReactive(input$go, {
-    hist(rnorm(input$num))
+  observeEvent(input$go, {
+    output$p1 <- renderPlot({
+      hist(rnorm(isolate(input$num)))
+    }) 
   })
-  
-  output$p1 <- renderPlot({ data() }) 
 }
 
 shinyApp(ui, server)

@@ -1,3 +1,33 @@
+For textOutput and verbatimTextOutput
+
+  - renderText({ "foo" })
+  - renderPrint({
+      print("foo")
+      print("bar")
+    })
+
+For uiOutput, output$h1 <- renderUI({ tagList(
+                                            sliderInput("n", "N", 1, 1000, 500),
+                                            textInput("label", "Label"))
+                                        })
+
+## Dynamic UI for Report
+
+    renderUI({
+      htmlOutput("t1"),
+      plotOutput("p1")
+    })
+
+append into tagList()
+Case: scenarios
+
+For uiOutput, output$h1 <- renderUI({ tagList(
+                                            sliderInput("n", "N", 1, 1000, 500),
+                                            textInput("label", "Label"))
+                                        })
+
+* Market data / quandl
+
 ```{r setup, include=FALSE}
 library(tidyverse)
 knitr::opts_chunk$set(echo = FALSE, fig.align="center")
@@ -504,6 +534,21 @@ With facets
 
 # ggplot/grid/gridExtra
 # knitr/kableExtra
+
+    `r chunk`{r shiny_block}
+    library(knitr)
+    library(kableExtra)
+    
+    # This is HTML output
+    kable(df, format = "html")
+    
+    # Use function() { } to output html
+    output$p1 <- function() {
+      kable(df, format = "html")
+    }
+    `r chunk`
+
+kable_styling(x_html, "striped", position = "left", font_size = 7)
 
 7 render*() functions
 

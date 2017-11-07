@@ -9,6 +9,18 @@
 - It’s immutable
 - No one owns it, or everyone owns a piece of it
 
+The time between blocks in the Bitcoin blockchain is Poisson distributed with an expected value of 10 minutes between blocks.
+
+This is no accident. The crux of how blockchain works is the hash puzzle, a massive race that bitcoin miners all over the world are striving to solve every second. The mechanics of the puzzle are fairly simple. Every miner has a block containing a list of transactions that should be published. The miner’s goal is to find a value called a nonce, such that the hash of {nonce + block} is less than a target value.
+
+The current target is 440 billion, which may seem like a lot, but keep in mind that miners are using the SHA-256 hash, which outputs 256 bits. And because SHA-256 is a specially constructed cryptographic hash function, miners can’t do better than guesswork when it comes to finding a nonce that wins the hash puzzle. So every nonce has a 440 billion / 2^256 chance of winning the hash puzzle—meaning a Bernoulli trial.
+
+Since millions of these Bernoulli trials are happening every second, across the global compute power of miners, we end up with a Bernoulli distribution where a miner wins the hash puzzle (and can then publish a block) every 10 minutes, on average.
+
+Since the global compute power of miners changes, so does the target value in the hash puzzle. Thus, the expected time between blocks remains 10 minutes, even as global mining power changes over time.
+
+
+
 
 Bitcoin, a digital currency that can be transmitted across the Internet, has attracted a lot of attention lately. The Bitcoin system can be thought of as a ledger that keeps track of who owns which bitcoins, and allows them to be transferred from one person to another. The revolutionary feature of Bitcoin is there's no central machine or authority keeping track of things. Instead, the "blockchain" is stored across thousands of machines on the Internet, and the system works with nobody in charge.
 
