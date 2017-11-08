@@ -1,11 +1,3 @@
-For textOutput and verbatimTextOutput
-
-  - renderText({ "foo" })
-  - renderPrint({
-      print("foo")
-      print("bar")
-    })
-
 For uiOutput, output$h1 <- renderUI({ tagList(
                                             sliderInput("n", "N", 1, 1000, 500),
                                             textInput("label", "Label"))

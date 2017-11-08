@@ -18,7 +18,8 @@ server <- function(input, output, session) {
     }
     
     output$p2 <- function() {
-      kable(iris[1:row_num, , drop = T], format = "html")
+      kable(iris[1:row_num, , drop = T], format = "html") %>%
+        kable_styling(bootstrap_options = "responsive", position = "float_left")
     }
   })
 }
