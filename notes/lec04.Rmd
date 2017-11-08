@@ -917,7 +917,7 @@ rbind(df, df)
 df[-(which(df$a == 3 | df$b == 3)), , drop = T]
 
 # Update
-df[which(df$a == 3 | df$b == 3), 3, drop = T] <- 3
+df[which(df$a == 3 | df$b == 3), 2] <- 3
 ```
 
 # dplyr
@@ -979,30 +979,30 @@ I chose this data set of a Portuguese retail bank clients profile
 variable = column = field
 
 ### Personal profile
-1 - age (numeric)
-2 - job : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student",
+* 1 - age (numeric)
+* 2 - job : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student",
                                     "blue-collar","self-employed","retired","technician","services") 
-3 - marital : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
-4 - education (categorical: "unknown","secondary","primary","tertiary")
-5 - default: has credit in default? (binary: "yes","no")
-6 - balance: average yearly balance, in euros (numeric) 
-7 - housing: has housing loan? (binary: "yes","no")
-8 - loan: has personal loan? (binary: "yes","no")
+* 3 - marital : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
+* 4 - education (categorical: "unknown","secondary","primary","tertiary")
+* 5 - default: has credit in default? (binary: "yes","no")
+* 6 - balance: average yearly balance, in euros (numeric) 
+* 7 - housing: has housing loan? (binary: "yes","no")
+* 8 - loan: has personal loan? (binary: "yes","no")
 
 ### Related with the last contact of the current campaign:
-9 - contact: contact communication type (categorical: "unknown","telephone","cellular") 
-10 - day: last contact day of the month (numeric)
-11 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
-12 - duration: last contact duration, in seconds (numeric)
+* 9 - contact: contact communication type (categorical: "unknown","telephone","cellular") 
+* 10 - day: last contact day of the month (numeric)
+* 11 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
+* 12 - duration: last contact duration, in seconds (numeric)
 
 ### Other attributes:
-13 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
-14 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
-15 - previous: number of contacts performed before this campaign and for this client (numeric)
-16 - poutcome: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
+* 13 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+* 14 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
+* 15 - previous: number of contacts performed before this campaign and for this client (numeric)
+* 16 - poutcome: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
 
 ### Output variable (desired target):
-17 - y - has the client subscribed a term deposit? (binary: "yes","no")
+* 17 - y - has the client subscribed a term deposit? (binary: "yes","no")
 
 # Read the data
 Use RStudio's File -> Import Dataset, you may choose either "From Text (base)" or "From Text (readr)". Either way loads the data.
@@ -1016,19 +1016,20 @@ You may download it and save it to local.
 
 ```{r, echo = T}
 # Use base
-bank <- read.csv("../example/data-bank/bank.csv", sep=";") # or,
+bank <- read.csv("example/data-bank/bank.csv", sep=";") # or,
 bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 
 # use readr
 library(readr)
-bank <- read_delim("../example/data-bank/bank.csv", 
+bank <- read_delim("example/data-bank/bank.csv", 
                     ";", escape_double = FALSE, trim_ws = TRUE)
 ```
 
     View(bank)
 
 # `select`
-`select(df, ...)`, ... can be 
+`select(df, ...)`, ... can be
+
 - variable name
 - numeric to indicate nth column (`-` means exclude)
 - a range
@@ -1048,18 +1049,21 @@ subset <- select(bank, contains("p"))
 
 # `select` as a re-arrangement of columns.
 ```{r, echo = T}
-select <- select(bank, job, everything())
+job_first <- select(bank, job, everything())
+bank
 ```
 
 # `filter`
 ```{r, echo = T}
-young <- filter(bank, age < 20)
-another_young <- filter(bank, age < 20 & marital == "married")
-just_young <- filter(bank, age < 20 & marital == "single")
+colnames(bank)
 
-young2 <- filter(bank, age >= 20 & age < 30)
-another_young2 <- filter(bank, age >= 20 & age < 30 & marital == "married")
-just_young2 <- filter(bank, age >= 20 & age < 30 & marital == "single")
+young <- dplyr::filter(bank, age < 40)
+another_young <- dplyr::filter(bank, age < 20 & marital == "married")
+just_young <- dplyr::filter(bank, age < 20 & marital == "single")
+
+young2 <- dplyr::filter(bank, age >= 20 & age < 30)
+another_young2 <- dplyr::filter(bank, age >= 20 & age < 30 & marital == "married")
+just_young2 <- dplyr::filter(bank, age >= 20 & age < 30 & marital == "single")
 ```
 
 # filter - logic operators
@@ -1068,12 +1072,13 @@ just_young2 <- filter(bank, age >= 20 & age < 30 & marital == "single")
 knitr::include_graphics("imgs/transform-logical.png")
 ```
 
-```{r, echo = F}
+# filter - string operations
+```{r, echo = T}
 # %in% to match multiple
-second_upper <- filter(bank, education %in% c("tertiary", "secondary"))
+second_upper <- dplyr::filter(bank, education %in% c("tertiary", "secondary"))
 
 # filter out NA value.
-no_na <- filter(bank, is.na(balance) | balance > 0)
+no_na <- dplyr::filter(bank, is.na(balance) | balance > 0)
 ```
 
 # Exercise
@@ -1084,8 +1089,8 @@ no_na <- filter(bank, is.na(balance) | balance > 0)
 ```{r, echo = T}
 # rename(new name = old)
 # Use tick to quote special strings.
-raname(bank, Age = age) 
-raname(bank, `Age in Bank` = age)
+df <- rename(bank, young_age = age) 
+df <- rename(bank, `Age in Bank` = age)
 ```
 
 # arrange
@@ -1126,13 +1131,18 @@ mutate(bank, age_group = case_when(
   TRUE ~ "happy"
 ))
 
-# month.abb is a built-in array of month names.
-mutate(bank, month = factor(firstup(bank$month), levels = month.abb))
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}
 
-transmute would remove all other columns after mutation, only keeping the new variable.
-df3 <- transmute(bank, 
+# month.abb is a built-in array of month names.
+df3 <- mutate(bank, month_name = factor(firstup(as.character(month)), levels = month.abb))
+
+# transmute would remove all other columns after mutation, only keeping the new variable.
+df5 <- transmute(bank, 
                   duration_trend = duration - mean(duration, na.rm = TRUE),
-                  balance_trend = balance - mean(balance, na.rm = TRUE)))
+                  balance_trend = balance - mean(balance, na.rm = TRUE))
 
 ```
 
@@ -1248,6 +1258,7 @@ Cons:
 Environment is where your data resides.
 
 ```{r, echo = T}
+# local stores the data wihtin the boundary of {}
 x <- 3
 local({
   print(x)
@@ -1258,6 +1269,7 @@ print(x)
 ```
 
 ```{r, echo = T}
+# local stores the nearest environment
 x <- 3
 {
   print(x)
@@ -1268,11 +1280,13 @@ x
 ```
 
 ```{r, echo = T}
+# assign data to global environment
 x <- 1
 pass_out_global <- function() {
   assign("x", 3, envir = .GlobalEnv)  
 }
 
+# assign data to just one level up 
 pass_out <- function() {
   assign("x", 2, envir = parent.env(environment()))
 }
@@ -1283,6 +1297,7 @@ x <- 1
 pass_out()
 x
 
+# assign data to pass it out of function
 extra_layer <- function() {
   pass_out()
 }
@@ -1301,207 +1316,4 @@ x
 ```
 
 # Summary
-- We learned the key "verbs" from dplyr. The rest will be picked up next week.
-
-
-
-
-# left_join / right_join / anti_join / full_join
-
-| position_id | buy/sell | quantity | risk factor |
-
-Suppose we have two days position data, suppose positions are additive (to close a position, we won't change the original position but to do a new reverse trade), they are of same structure
-
-In order to find the new positions. We will use:
-anti_join(new_data, old_data) # order matters, new_data needs to be placed first.
-
-In order to find old positions, we will use:
-inner_join(new_data, old_data) # regardless order, new_data is in front of old_data.
-left_join(old_data, new_data) # produce the same result
-right_join(new_data, old_data) # produce the same result
-
-## full_join
-find all combinations between table a and b.
-
-# left_join/right_join
-can be used to do mapping.
-
-Table a:
-| type_code | type_name |
-| 1         | orange    |
-| 2         | banana    |
-
-Table b:
-| type_code | quantity | customer_id |
-| 1         | 1        | A           |
-| 2         | 3        | B           |
-| 3         | 4        | C           |
-| 2         | 2        | D           |
-| 1         | 6        | B           |
-
-table c:
-| customer_id | customer_phone |
-| A           | +123           |
-| B           | +456           |
-| C           | +789           |
-
-left_join(b, a, by = "type_code") %>% left_join(c, by = "customer_id")
-
-| type_code | quantity | customer_id | type_name | customer_phone |
-| 1         | 1        | A           | orange    | +123           |
-| 2         | 3        | B           | banana    | +456           |
-| 3         | 4        | C           | NA        | +789           |
-| 2         | 2        | D           | banana    | NA             |
-| 1         | 6        | B           | orange    | +456           |
-
-join can be multiple types
-
-# bind_rows / bind_cols
-
-# Plot
-dev.new(width=4, height=4)
-with(bank, plot(balance, duration, type = 'n'))
-with(bank, text(balance, duration, education, col=cl))
-group_by(bank, cl) %>% summarise(n = n())
-
-# group_by
-bank1 <- group_by(bank, age) %>%
-  summarise(balance_mean = mean(balance),
-            count = n(),
-            default_count = sum(ifelse(default == "no", 0, 1)))
-
-mutate with group_by
-```{r, echo = T}
-group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>% mutate(b = a / sum(a))
-```
-summarise with group_by
-```{r, echo = T}
-group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>% summarise(b = sum(a))
-```
-
-group_by is a like folding a paper without tearing it later.
-summarise will tear the paper.
-
-## If combined with ggplot, to be learnt in next session
-ggplot(bank1, aes(x = age, y = balance_mean)) +
-  geom_point(aes(size = count), alpha = 1/4, color = "red") +
-  geom_point(aes(size = default_count), alpha = 1/3, color = "blue") +
-  geom_smooth(se = F)
-
-sum(x, na.rm = T)
-
-# summarise functions
-## mean(x), but median(x)
-mean(age[balance > 0])
-mean(age[balance < 0])
-# sd(x), IQR(x), mad(x)
-sd(distance)
-# min(x), quantile(x, 0.25), max(x)
-# n(): count / n_distinct()
-# first(x), nth(x, 2), last(x)
-# count for condition
-sum(balance < 500)): TRUE => 1, FALSE => 0
-sum(x > 10), mean(y == 0)
-
-I often forgot there are existing functions that resort to longer versions.
-
-# group filter
-Find the maximum and minimum balance on each age.
-bank %>% 
-  group_by(age) %>%
-  filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
-  arrange(age, balance)
-
-Find the big age group
-bank %>% 
-  group_by(age %/% 10) %>%
-  filter(n()/nrow(bank) > 0.2) %>%
-  arrange(age)
-
-ungroup() removes strata, restores the data frame back to entire rows.
-
-chicago <- mutate(baml, year = as.POSIXlt(date)$year + 1900)
-> summarize(years, pm25 = mean(pm25, na.rm = TRUE), 
-+           o3 = max(o3tmean2, na.rm = TRUE), 
-+           no2 = median(no2tmean2, na.rm = TRUE))
-
-> qq <- quantile(chicago$pm25, seq(0, 1, 0.2), na.rm = TRUE)
-> chicago <- mutate(chicago, pm25.quint = cut(pm25, qq))
-
-> quint <- group_by(chicago, pm25.quint)
-Finally, we can compute the mean of o3 and no2 within quintiles of pm25.
-
-> summarize(quint, o3 = mean(o3tmean2, na.rm = TRUE), 
-+           no2 = mean(no2tmean2, na.rm = TRUE))
-
-# mutate with style
-
-    ungroup() %>%
-    mutate(nnn = 1:n()) %>%
-    mutate(x = tryCatch({
-        as.Date(x)
-    })
-
-group_by/rowwise/ungroup
-
-# grouped or ungrouped
-    
-    ungroup(df) %>% mutate( x = ifelse( x == "ABC", "is ABC", "not ABC" ) )
-    group_by(x) %>% summarise( cc = count(x) )
-
-# summarise without a group_by
-Just cover entire dataset.
-
-    summarise( x = sum(ifelse( x == "ABC", 1, 0 ) )
-  min()
-  max()
-  n = n()
-  mean()
-
-# rowwise
-Use if. ifelse is restrictive that it only output the same type as the input.
-
-    rowwise(df) %>% mutate( x = { if ( x == "ABC" ) { "is ABC" } else { "not ABC" }  } )
-
-# summarise
- example: how to get sub-total and total.
-
-# do
-do. with an index column and do the analysis for the rest.
-
-CRUD:
-
-Create:
-- add a column for rownumber.
-- discover insights of data.
-- retrieve with age, slider of numeric
-- employment
-- Social attributes.
-- count for subtotal - total, plot graph
-
-D:
-Mark for not included in the 
-
-C:
-Add new.
-
-U:
-
-# Rules of Thumb for design data storage
-* Use list to store app data, i.e. configuration.
-* User data frame to store user data.
-* You need column **item_id** to put into every_table. It can be number or character. Make it unique. So you need to keep the current highest number in another place.
-* Delete is not good for customer data. add a column name with a common name, e.g. SYS_DEL.
-
-| position_id | call_put | amount | strike | SYS_DEL |
-| X123        |          |        |        |
-
-* Market 
-
-# Assignment
-* Book option trades
-* https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&ei=iIoAWvDmF8GqugSsj5mICw
-* Date | Strike | Quantity | Underlying | Long/Short | Call/Put
-* 
-* Book bank transactions
-* Book option trade transactions
+- We learned the key "verbs" from dplyr. Let's pick up the rest next week.
