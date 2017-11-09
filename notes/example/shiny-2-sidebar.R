@@ -2,9 +2,15 @@ library(shiny)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
+  
   fluidPage(sidebarLayout(
-    sidebarPanel(),
-    mainPanel()
+    sidebarPanel("This is a panel on the side"),
+    mainPanel("This is the main panel")
+  )),
+
+  fluidPage(sidebarLayout(
+    sidebarPanel("This is a panel on the side"),
+    mainPanel("This is the main panel")
   ))
 )
 
