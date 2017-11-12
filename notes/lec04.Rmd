@@ -860,7 +860,7 @@ cat(htmltools::includeText("example/shiny-24.R"))
     plot(1:10, pch = 19, cex = 1, col = "skyblue1")
 
 2. Create a Bond Schedule
-  + Inputs: start date, tenor, coupon rate, yield to maturity.
+  + Inputs: start date, tenor, coupon rate, coupon frequency, and yield to maturity.
   + Output: coupon schedule (ignore public holidays), amount in table and plot.
             NPV
   
@@ -975,7 +975,7 @@ library(tidyverse)
 + Helpers
     - %>%: the “pipe” operator is used to connect multiple verb actions together into a pipeline
     - ifelse / case_when
-    - lag
+    - lag/distinct
     - n
 
 # Sample dataset
@@ -1162,12 +1162,13 @@ df5 <- transmute(bank,
 # What you can do with `mutate`
 * +, -, *, /: ordinary arithmetic operator
 * %/% (integer division) and %% (remainder), where x == y * (x %/% y) + (x %% y)
-* x / sum(x) amd y - mean(y): computes the difference from the mean.
+* x / sum(x): compute the proportion of all things
+* y - mean(y): computes the difference from the mean.
 * log2(), log(), log10(): 
-* lead(), lag(): compute running differences (e.g. x - lag(x)) or find when values change (x != lag(x))
+* lead(), lag(): compute running differences (e.g. x - lag(x)) or find when values change (x != lag(x)
 * rolling sum, prod, min, max: cumsum(), cumprod(), cummin(), cummax(); and dplyr provides cummean()
 * row_number()/min_rank()/ntile(,n)
-      
+
 ```{r, echo = T}
 y <- c(1, 2, 2, NA, 3, 4)
 row_number(y)

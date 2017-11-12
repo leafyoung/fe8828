@@ -1,5 +1,8 @@
 # Satoshi's paper
 
+# Bitcoin Mining
+Bitcoin mining is the process by which transactions are verified and added to the public ledger, known as the block chain, and also the means through which new bitcoin are released. Anyone with access to the internet and suitable hardware can participate in mining. The mining process involves compiling recent transactions into blocks and trying to solve a computationally difficult puzzle. The participant who first solves the puzzle gets to place the next block on the block chain and claim the rewards. The rewards, which incentivize mining, are both the transaction fees associated with the transactions compiled in the block as well as newly released bitcoin.
+
 # Blockchain
 
 The name “blockchain” is derived from the fact that new information can only be added to the file in blocks that refer to their predecessor in the chain.
