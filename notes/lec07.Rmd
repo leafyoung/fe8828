@@ -1,71 +1,173 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 2 </sub>"
+subtitle: "<sub> Week 3 <br> Data, visualization, and web: part 2 </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Nov 16, 2017"
 # runtime: shiny
 ---
 
-# Data 2
+<style type="text/css">
 
+code.r{ /* Code block */
+    font-size: 18px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 15px;
+}
+</style>
 
+```{r setup, include=FALSE}
+library(tidyverse)
+library(shiny)
+library(lubridate)
+library(bizdays)
+library(fOptions)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Lecture 7: Data 2
+
+# Joins
+
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/join_today_header_image.jpg")
+```
 
 # left_join / right_join / anti_join / full_join
 
-| position_id | buy/sell | quantity | risk factor |
+| Position_id | Buy/Sell | Quantity | Risk Factor |
 
-Suppose we have two days position data, suppose positions are additive (to close a position, we won't change the original position but to do a new reverse trade), they are of same structure
+Positions are additive (to close a position, we won't change the original position but to do a new reverse trade).
+Suppose we have two days of position data.
+
+    new_data <- filter(position, date == new_date)
+    old_data <- filter(position, date == old_date)
 
 In order to find the new positions. We will use:
-anti_join(new_data, old_data) # order matters, new_data needs to be placed first.
+
+    anti_join(new_data, old_data, by = "position_id") # order matters, new_data needs to be placed first.
 
 In order to find old positions, we will use:
-inner_join(new_data, old_data) # regardless order, new_data is in front of old_data.
-left_join(old_data, new_data) # produce the same result
-right_join(new_data, old_data) # produce the same result
 
-## full_join
-find all combinations between table a and b.
+    inner_join(new_data, old_data, by = "position_id") # regardless order, new_data needs to be in front of old_data.
+    left_join(old_data, new_data, by = "position_id") # produce the same result
+    right_join(new_data, old_data, by = "position_id") # produce the same result
 
 # left_join/right_join
-can be used to do mapping.
+Can be used to do mapping table (aka. vlookup)
 
 Table a:
-| type_code | type_name |
-| 1         | orange    |
-| 2         | banana    |
+
+    | type_code | type_name |
+    | 1         | orange    |
+    | 2         | banana    |
 
 Table b:
-| type_code | quantity | customer_id |
-| 1         | 1        | A           |
-| 2         | 3        | B           |
-| 3         | 4        | C           |
-| 2         | 2        | D           |
-| 1         | 6        | B           |
 
-table c:
-| customer_id | customer_phone |
-| A           | +123           |
-| B           | +456           |
-| C           | +789           |
+    | type_code | quantity | customer_id |
+    | 1         | 1        | A           |
+    | 2         | 3        | B           |
+    | 3         | 4        | C           |
+    | 2         | 2        | D           |
+    | 1         | 6        | B           |
+
+Table c:
+
+    | customer_id | customer_phone |
+    | A           | +123           |
+    | B           | +456           |
+    | C           | +789           |
 
 left_join(b, a, by = "type_code") %>% left_join(c, by = "customer_id")
 
-| type_code | quantity | customer_id | type_name | customer_phone |
-| 1         | 1        | A           | orange    | +123           |
-| 2         | 3        | B           | banana    | +456           |
-| 3         | 4        | C           | NA        | +789           |
-| 2         | 2        | D           | banana    | NA             |
-| 1         | 6        | B           | orange    | +456           |
+    | type_code | quantity | customer_id | type_name | customer_phone |
+    | 1         | 1        | A           | orange    | +123           |
+    | 2         | 3        | B           | banana    | +456           |
+    | 3         | 4        | C           | NA        | +789           |
+    | 2         | 2        | D           | banana    | NA             |
+    | 1         | 6        | B           | orange    | +456           |
 
-join can be multiple types
+Join can be multiple types
 
-# bind_rows / bind_cols
+## full_join
+Find all combinations between table a and b.
+
+# all possible combination 
+x <- full_join(distinct(bank, job) %>% mutate(x = 1), distinct(bank, education) %>% mutate(x = 1)) %>% select(-x)
+y <- distinct(bank, job, education)
+
+anti_join(x, y)
+anti_join(y, x)
+
+nrow(x)
+nrow(y)
+
+# Joins is a set operation
+
+- full_join is `*`
+- anti_join is `-`
+- inner_joins is `-`, `/`
+- left_join/right_join is either just the same, or `*`, `/`. 
+
+# bind_rows
+- bind_rows is the `+` operator for data frames.
+
+```{r, echo = T}
+# add empty data frame is the same.
+bind_rows(data.frame(a = 3:4), data.frame())
+bind_rows(data.frame(), data.frame(a = 3:4))
+```
+
+I usually use bind_rows to collect results. For example,
+
+    new_positions <- data.frame()
+    closed_positions <- data.frame()
+
+    for (i in length(dates)-1) {
+      old_date <- dates[i]
+      new_date <- dates[i+1]
+
+      new_data <- filter(position, date == new_date)
+      old_data <- filter(position, date == old_date)
+
+      new_positions <- bind_rows(new_positions,
+                                 anti_join(new_data, old_data, by = "position_id"))
+    }
+
+    # new_positions contains all new positions on day 1
+
+# bind_cols
+- bind_cols is to extend the data frame in width.
+
+Use cases
+- It's a lazyman's `left_join` or `select`
+- It does the copy
+- I usually find it useful to generate data frame for reports.
+
+```{r, echo = T}
+dt1 <- bind_cols(select(bank, job), select(bank, education))
+dt1[1:3,]
+dt2 <- bind_cols(dt1, dt1)
+dt2[1:3,]
+```
 
 # Plot
-dev.new(width=4, height=4)
-with(bank, plot(balance, duration, type = 'n'))
-with(bank, text(balance, duration, education, col=cl))
+data.model <- select(bank, job, education) %>% mutate(job = factor(job), education = factor(education))
+plot(data.model)
+
+bank.num <- model.matrix(~ . - 1, data.model)
+data.model$cl <- kmeans(bank.num, 4)$cluster
+
+plot(data.model)
+
+# Plot
+with(data.model, plot(job, education, type = 'n'))
+with(data.model, text(job, education, education, col=cl))
+
 group_by(bank, cl) %>% summarise(n = n())
 
 # group_by
@@ -173,6 +275,29 @@ Use if. ifelse is restrictive that it only output the same type as the input.
 # do
 do. with an index column and do the analysis for the rest.
 
+```{r, echo = T}
+library(ggplot2)
+library(reshape2)
+
+biorhythm <- function(dob, target = Sys.Date()) {
+  dob <- as.Date(dob)
+  target <- as.Date(target)
+  t <- round(as.numeric(difftime(target, dob)))
+  days <- (t - 14) : (t + 14)
+  period <- data.frame(Date = seq.Date(from = target - 15, by = 1, length.out = 29),
+                       Physical = sin (2 * pi * days / 23) * 100, 
+                       Emotional = sin (2 * pi * days / 28) * 100, 
+                       Intellectual = sin (2 * pi * days / 33) * 100)
+  period <- melt(period, id.vars = "Date", variable.name = "Biorhythm", value.name = "Percentage")
+  ggplot(period, aes(x = Date, y = Percentage, col = Biorhythm)) + geom_line() +  
+    ggtitle(paste("DoB:", format(dob, "%d %B %Y"))) + 
+    geom_vline(xintercept = as.numeric(target))
+}
+
+biorhythm("1969-09-12", "2017-03-30")
+biorhythm("1981-11-03", "2017-03-30")
+```
+
 CRUD:
 
 Create:
@@ -200,7 +325,89 @@ U:
 | position_id | call_put | amount | strike | SYS_DEL |
 | X123        |          |        |        |
 
-* Market 
+# Wide format <=> Long format
+
+Wide format is more familiar to us. Column name is the data attribute. Long format is what we reformat the data that common attributes are gathered together as a single variable.
+
+## Wide format
+```{r echo = FALSE}
+wfmt <- data_frame(date = seq(from = as.Date("2017-01-01"), by = "day", length.out = 5),
+                   Copper_qty = round(runif(5) * 1000, 0),
+                   Gold_qty = round(runif(5) * 1000, 0),
+                   Silver_qty = round(runif(5) * 1000, 0))
+wfmt
+```
+
+## Long format
+```{r echo = FALSE}
+gather(wfmt, key, value, -date)
+```
+
+# Wide format <=> Long format 1
+```{r echo = TRUE }
+mini_iris <- iris[1:3,]
+```
+
+```{r echo = TRUE }
+gather(mini_iris, key = flower_att, value = measurement, -Species)
+```
+
+```{r echo = TRUE }
+lfmt <- gather(mini_iris, key = flower_att, value = measurement, Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
+lfmt
+```
+
+gather(data, key, value, ...)
+... is where you want to make as independent columns.
+You need to specify all columns that should be gathers (or remove all columns that should _not_be gathered):
+
+# Spread
+
+    spread(lfmt, key, value)
+
+Example
+Get row sum.
+
+```{r echo = TRUE }
+wfmt %>%
+  gather(key, value, -date) %>%
+  group_by(date) %>%
+  summarize(value1 = sum(value)) %>%
+  rename(value = value1) %>%
+  mutate(key = "Total") %>%
+  spread(key = key, value = value) %>%
+  inner_join(wfmt, ., by = "date")
+```
+
+# separate/unite
+
+separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE,
+  convert = FALSE, extra = "warn", fill = "warn", ...)
+
+#> # A tibble: 6 × 3
+#>       country  year              rate
+#> *       <chr> <int>             <chr>
+#> 1 Afghanistan  1999      745/19987071
+#> 2 Afghanistan  2000     2666/20595360
+#> 3      Brazil  1999   37737/172006362
+#> 4      Brazil  2000   80488/174504898
+#> 5       China  1999 212258/1272915272
+#> 6       China  2000 213766/1280428583
+
+separate(rate, into = c("cases", "population"))
+separate(rate, into = c("cases", "population"), convert = TRUE)
+
+unite(new, century, year) # default sep is "_"
+unite(new, century, year, sep = "") # seamless unite
+
+do(df, {
+  some_message = a
+
+})
+
+- Pivot over multiple columns.
+
+pivoting table
 
 # Assignment
 * Book option trades
@@ -210,19 +417,12 @@ U:
 * Book bank transactions
 * Book option trade transactions
 
+* Market 
 
 * Market data / quandl
 
-```{r setup, include=FALSE}
-library(tidyverse)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center")
-bank <- read.csv("../example/data-bank/bank.csv", sep=";")
-```
-
 ```{r, echo = T}
 library(fOptions)
-
-EuropeanOption(type="call", underlying=1.56, strike=1.6, dividendYield=0.06-0.08, riskFreeRate=0.06, maturity=1/2, volatility=0.12) 
 
 a <- GBSCharacteristics(TypeFlag = "c", S = 1.5600, X = 1.6000,  Time = 1/2, r = 0.06, b = 0.06-0.08, sigma = 0.12)
 
@@ -283,28 +483,6 @@ boxplot(bank$age, col = "blue")
 
 > library(ggplot2)
 
-```{r, echo = T}
-library(ggplot2)
-library(reshape2)
-
-biorhythm <- function(dob, target = Sys.Date()) {
-  dob <- as.Date(dob)
-  target <- as.Date(target)
-  t <- round(as.numeric(difftime(target, dob)))
-  days <- (t - 14) : (t + 14)
-  period <- data.frame(Date = seq.Date(from = target - 15, by = 1, length.out = 29),
-                       Physical = sin (2 * pi * days / 23) * 100, 
-                       Emotional = sin (2 * pi * days / 28) * 100, 
-                       Intellectual = sin (2 * pi * days / 33) * 100)
-  period <- melt(period, id.vars = "Date", variable.name = "Biorhythm", value.name = "Percentage")
-  ggplot(period, aes(x = Date, y = Percentage, col = Biorhythm)) + geom_line() +  
-    ggtitle(paste("DoB:", format(dob, "%d %B %Y"))) + 
-    geom_vline(xintercept = as.numeric(target))
-}
-
-biorhythm("1969-09-12", "2017-03-30")
-biorhythm("1981-11-03", "2017-03-30")
-```
 
 > qplot(latitude, pm25, data = pollution, facets = . ~ region)
 
@@ -328,90 +506,6 @@ select(ozone, State.Name) %>% unique %>% nrow
 
 > heatmap(dataMatrix)
 
-# Wide format <=> Long format
-
-Wide format is more familiar to us. Column name is the data attribute. Long format is what we reformat the data that common attributes are gathered together as a single variable.
-
-## Wide format
-```{r echo = FALSE}
-wfmt <- data_frame(date = seq(from = as.Date("2017-01-01"), by = "day", length.out = 5),
-                   Copper_qty = round(runif(5) * 1000, 0),
-                   Gold_qty = round(runif(5) * 1000, 0),
-                   Silver_qty = round(runif(5) * 1000, 0))
-wfmt
-```
-
-## Long format
-```{r echo = FALSE}
-gather(wfmt, key, value, -date)
-```
-
-# Wide format <=> Long format 1
-```{r echo = TRUE }
-mini_iris <- iris[1:3,]
-```
-
-```{r echo = TRUE }
-gather(mini_iris, key = flower_att, value = measurement, -Species)
-```
-
-```{r echo = TRUE }
-lfmt <- gather(mini_iris, key = flower_att, value = measurement, Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
-lfmt
-```
-
-gather(data, key, value, ...)
-... is where you want to make as independent columns.
-You need to specify all columns that should be gathers (or remove all columns that should _not_be gathered):
-
-
-# Spread
-```{r echo = TRUE }
-spread(lfmt, key, value)
-```
-
-Example
-Get row sum.
-
-wfmt %>%
-  gather(key, value, -date) %>%
-  group_by(date) %>%
-  summarize(value1 = sum(value)) %>%
-  rename(value = value1) %>%
-  mutate(key = "Total") %>%
-  spread(key = key, value = value) %>%
-  inner_join(wfmt, ., by = "date")
-
-# separate/unite
-
-separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE,
-  convert = FALSE, extra = "warn", fill = "warn", ...)
-
-#> # A tibble: 6 × 3
-#>       country  year              rate
-#> *       <chr> <int>             <chr>
-#> 1 Afghanistan  1999      745/19987071
-#> 2 Afghanistan  2000     2666/20595360
-#> 3      Brazil  1999   37737/172006362
-#> 4      Brazil  2000   80488/174504898
-#> 5       China  1999 212258/1272915272
-#> 6       China  2000 213766/1280428583
-
-separate(rate, into = c("cases", "population"))
-separate(rate, into = c("cases", "population"), convert = TRUE)
-
-unite(new, century, year) # default sep is "_"
-unite(new, century, year, sep = "") # seamless unite
-
-
-do(df, {
-  some_message = a
-
-})
-
-- Pivot over multiple columns.
-
-pivoting table
 
 
 

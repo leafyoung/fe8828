@@ -980,7 +980,8 @@ library(tidyverse)
 
 # Sample dataset
 
-## A data-driven approach to predict the success of bank telemarketing
+## A data-driven approach to predict the success of 
+telemarketing
 ### Author: Sérgio Moroa; Paulo Cortezb; Paulo Ritaa
 #### <http://dx.doi.org/10.1016/j.dss.2014.03.001>
 
