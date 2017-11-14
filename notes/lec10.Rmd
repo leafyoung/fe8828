@@ -12,7 +12,6 @@ WRONG
 ~~ggplot(data = <DATA>)~~
 ~~+ <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))~~
 
-
 ## Use the categorical variable to differtiate between different groups.
 
 ggplot(data = mpg) + 
@@ -29,7 +28,6 @@ ggplot(data = mpg) +
 
 ggplot(data = mpg) + 
   geom_line(mapping = aes(x = displ, y = hwy, group = class))
-
 
 ## you can also enforce
 ggplot(data = mpg) + 
@@ -387,36 +385,10 @@ resids %>%
 
 mod1 <- lm(y ~ ns(x, 1), data = sim5)
 
-
 mod1 <- lm(y ~ x1 + x2, data = sim3)
 mod2 <- lm(y ~ x1 * x2, data = sim3)
 
-
-# draw the 
-
-
-library(xts)
-xts object => store prices and retrieve.
-
-library(fOption)
-
-Option valuation.
-
-How to value a portfolio of stocks?
-
-How to value a portfolio of options?
-
-How to simulate portfolio gain.
-
-How to do SVD analysis?
-
-# Scenarios
-
-dynamic rendering of UI
-
 # Regression Model
-
-
 ```{r, echo = T}
 library(ggplot2)
 
@@ -471,6 +443,53 @@ for (f in function_list){
                        title=as.character(deparse(f))[2])
 }
 ```
+
+# K-means
+# K-means between two categorical variables
+dev.off()
+data.model <- select(bank, balance, education) %>% mutate(education = factor(education))
+plot(data.model)
+combination <- model.matrix(~ . - 1, data.model)
+data.model$cl <- kmeans(combination, 4)$cluster
+with(data.model, plot(balance, education, col = cl))
+
+# K-means between one categorical variable + one numeric variable
+dev.off()
+data.model <- select(bank, job, education) %>% mutate(job = factor(job), education = factor(education))
+plot(data.model)
+combination <- model.matrix(~ . - 1, data.model)
+data.model$cl <- kmeans(combination, 2)$cluster
+with(data.model, plot(job, education, col = cl))
+
+# K-means between two numeric variables
+dev.off()
+data.model <- select(bank, balance, duration)
+plot(data.model)
+data.model$cl <- kmeans(data.model[, 1:2], 4)$cluster
+with(data.model, plot(balance, duration, col = cl))
+with(data.model, text(balance, duration, col=cl))
+
+
+# draw the 
+
+library(xts)
+xts object => store prices and retrieve.
+
+library(fOption)
+
+Option valuation.
+
+How to value a portfolio of stocks?
+
+How to value a portfolio of options?
+
+How to simulate portfolio gain.
+
+How to do SVD analysis?
+
+# Scenarios
+
+dynamic rendering of UI
 
 # 
 Quandl and forecast
@@ -590,8 +609,6 @@ getSymbols('SPY', src = 'av', adjusted = TRUE, output.size = 'full', api.key = "
 head(SPY)
 tail(SPY)
 ```
-
-
 
 ```{r, echo = T}
 library(Quandl)					# Quandl package
@@ -1261,10 +1278,6 @@ dygraph(combined_xts(),
   dyRangeSelector(dateWindow = c(start_date, end_date))
 })
 ```
-
-
-```
-
 
 # Object way and Data frame way
 sample option portfolio
