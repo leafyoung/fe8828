@@ -69,7 +69,7 @@ code.r{ /* Code block */
     font-size: 22px;
 }
 pre { /* Code block - determines code spacing between lines */
-    font-size: 19px;
+    font-size: 18px;
 }
 </style>
 </div>
@@ -462,11 +462,15 @@ for (i in length(dates)-1) {
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["age"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["previous"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"41.1701","2":"NA","3":"NA","4":"NA","5":"NA","6":"1422.658","7":"NA","8":"NA","9":"NA","10":"15.91528","11":"NA","12":"263.9613","13":"2.79363","14":"39.76664","15":"0.5425791","16":"NA","17":"NA","_rn_":"4522"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
+</div>
+<div id="bind_rows-use-case-3" class="slide section level1">
+<h1><code>bind_rows</code>: Use case</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># bind_rows can match column names and type.</span>
 <span class="co"># let's adjust the column order.</span>
 <span class="co"># As due-deligence, better to check the result.</span>
 <span class="co"># I remember earlier version of dplyr doesn't do match.</span>
-<span class="kw">tail</span>(<span class="kw">bind_rows</span>(bank, <span class="kw">summarise_if</span>(bank, is.numeric, mean) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">select</span>(balance, day, <span class="kw">everything</span>())), <span class="dt">n =</span> <span class="dv">1</span>) </code></pre></div>
+<span class="kw">tail</span>(<span class="kw">bind_rows</span>(bank, <span class="kw">summarise_if</span>(bank, is.numeric, mean) <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">select</span>(balance, day, <span class="kw">everything</span>())), <span class="dt">n =</span> <span class="dv">1</span>) </code></pre></div>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["age"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["previous"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"41.1701","2":"NA","3":"NA","4":"NA","5":"NA","6":"1422.658","7":"NA","8":"NA","9":"NA","10":"15.91528","11":"NA","12":"263.9613","13":"2.79363","14":"39.76664","15":"0.5425791","16":"NA","17":"NA","_rn_":"4522"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
@@ -486,6 +490,9 @@ dt1[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>,
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[2],"type":["fctr"],"align":["left"]}],"data":[{"1":"unemployed","2":"primary","_rn_":"1"},{"1":"services","2":"secondary","_rn_":"2"},{"1":"management","2":"tertiary","_rn_":"3"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
+</div>
+<div id="bind_cols-1" class="slide section level1">
+<h1>bind_cols</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt2 &lt;-<span class="st"> </span><span class="kw">bind_cols</span>(dt1, dt1)
 dt2[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>,]</code></pre></div>
 <div data-pagedtable="false">
@@ -695,8 +702,8 @@ unite(df, century, year, sep = &quot;&quot;) # seamless unite</code></pre>
 <li>User data frame to store repeating data of similar structure</li>
 <li>Every data frame is better to have a column with the function of <strong>item_id</strong>. It can be number or character. Make it unique. If <strong>item_id</strong> is a number, when insert new record to the data frame, we need to increment it somewhere. So, store it somewhere.</li>
 <li><p>Delete is not good for customer data. add a column name with a common name, e.g. SYS_DEL.</p>
-<div style="white-space: pre-line;">position_id | call_put | amount | strike | SYS_DEL |
-X123 | | | |</div></li>
+<pre><code>| position_id | call_put | amount | strike | SYS_DEL |
+| X123        |          |        |        |</code></pre></li>
 </ul>
 </div>
 <div id="crud-in-dplyr" class="slide section level1">
@@ -766,7 +773,12 @@ bank %&gt;%
 res
 
 plot(res$age_group, res$count)
-```</code></pre>
+```
+
+# Discover insights of data
+- Employment
+- Social attributes.
+- Count for sub-total / total, plot graph</code></pre>
 </div>
 <div id="assignment-1" class="slide section level1">
 <h1>Assignment</h1>
@@ -776,14 +788,19 @@ plot(res$age_group, res$count)
 <p>1.1 Store the options from <a href="https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&amp;ei=iIoAWvDmF8GqugSsj5mICw">https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&amp;ei=iIoAWvDmF8GqugSsj5mICw</a></p>
 <pre><code>    | Date | Strike | Quantity | Underlying | Long/Short | Call/Put
     </code></pre>
-<p>1.2 Count the total valuation of call alone, put alone, call and put. 1.3 Find those in the money. 1.4. Plot the volatility curve, strike v.s. vol</p>
+<p>1.2 Count the total valuation of call alone, put alone, call and put.</p>
+<p>1.3 Find those in the money.</p>
+<p>1.4. Plot the volatility curve, strike v.s. vol</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># GBSVolatility(price, TypeFlag, S, X, Time, r, b, tol, maxiter)</span>
 <span class="co"># Use Price to back-out implied volatility</span>
-<span class="kw">GBSVolatility</span>(<span class="fl">867.30</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="dv">240</span>, <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
+<span class="kw">GBSVolatility</span>(<span class="fl">867.30</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="dv">240</span>,
+              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
 ## [1] 8.101273e-18
-<span class="kw">GBSVolatility</span>(<span class="fl">256.50</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="fl">880.00</span>, <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
+<span class="kw">GBSVolatility</span>(<span class="fl">256.50</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="fl">880.00</span>,
+              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
 ## [1] 0.3107899
-<span class="kw">GBSVolatility</span>(<span class="fl">53.62</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="fl">1120.00</span>, <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
+<span class="kw">GBSVolatility</span>(<span class="fl">53.62</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="fl">1120.00</span>,
+              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
 ## [1] 0.2394823</code></pre></div>
 </div>
 <div id="assignment-2" class="slide section level1">
