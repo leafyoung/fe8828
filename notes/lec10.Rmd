@@ -1,3 +1,119 @@
+
+# Shiny
+
+For uiOutput, output$h1 <- renderUI({ tagList(
+                                            sliderInput("n", "N", 1, 1000, 500),
+                                            textInput("label", "Label"))
+                                        })
+
+## Dynamic UI for Report
+
+    renderUI({
+      htmlOutput("t1"),
+      plotOutput("p1")
+    })
+
+append into tagList()
+Case: scenarios
+
+For uiOutput, output$h1 <- renderUI({ tagList(
+                                            sliderInput("n", "N", 1, 1000, 500),
+                                            textInput("label", "Label"))
+                                        })
+
+Server - Client
+
+User Interface (UI)
+Server Instructions (Server)
+
+updateSelectionInput(...)
+
+# Question?
+Age with respect to anything else.
+With facets
+
+# Display output with render*() functions
+
+# ggplot/grid/gridExtra
+# knitr/kableExtra
+
+    `r chunk`{r shiny_block}
+    library(knitr)
+    library(kableExtra)
+    
+    # This is HTML output
+    kable(df, format = "html")
+    
+    # Use function() { } to output html
+    output$p1 <- function() {
+      kable(df, format = "html")
+    }
+    `r chunk`
+
+kable_styling(x_html, "striped", position = "left", font_size = 7)
+
+7 render*() functions
+
+renderDataTable() # an interactive table from data frame, matrix or other table-like structure
+renderImage() # an image (saved as a link to the source image file)
+renderPlot() # a plot generated on-the-fly
+renderPrint() # code block
+renderTable() # a static table from df, mat, etc.
+renderText() # a character string
+renderUI() # a shiny UI element
+renderHTML() # html tags
+
+# render*() arguments are code used to build and rebuild object
+render*() function reruns the code with every change in the input
+
+# reactive() object
+
+data <- reactive( { hist(rnorm(input$num)) } )
+
+output$hist <- renderPlot({ hist(data()) })
+output$stat <- renderPlot({ summary(data()) })
+
+allow multiple binding of data to different input
+
+# isolate()
+
+isolate({ rnorm(input$num) })
+isolate(input$title)
+
+# reactive 
+
+actionButton(inputId = "go", label = "Click me")
+
+observeEvent(input$go, { print(input$go) })
+
+observeEvent(input$go, { print(as.numeric(input$go)) })
+
+# observe() function
+observe({ print(input$go) }) reacts to whatever are changed in the code block.
+
+# eventReactive() delay reactions
+data <- eventReactive(input$go, { rnorm(input$num) })
+
+button -> data -> renderPlot
+
+button -> renderPlot (direct is not very good)
+
+mono-action to data binding
+
+# reactiveValues
+rv <- reactiveValues(data = rnorm(100))
+
+button -> change the data -> renderPlot
+
+allow multiple binding of data to different input
+
+# When it gets to run.
+ui: client. run once per user per session.
+server: run once per session
+code inside a reactive function runs with every input change.
+
+
+
 ggplot
 
 

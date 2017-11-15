@@ -7,21 +7,19 @@ date: "Nov 16, 2017"
 ---
 
 <style type="text/css">
-
 code.r{ /* Code block */
-    font-size: 18px;
+    font-size: 22px;
 }
 pre { /* Code block - determines code spacing between lines */
-    font-size: 15px;
+    font-size: 19px;
 }
 </style>
 
 ```{r setup, include=FALSE}
+library(fOptions)
 library(tidyverse)
-library(shiny)
 library(lubridate)
 library(bizdays)
-library(fOptions)
 library(ggplot2)
 knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
 chunk <- "```"
@@ -37,9 +35,12 @@ bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 knitr::include_graphics("imgs/join_today_header_image.jpg")
 ```
 
-# `left_join / right_join / anti_join / full_join`
+# `left_/right_/anti_/full_join`
 
-| Position_id | Buy/Sell | Quantity | Risk Factor |
+
+    | Position_id | Buy/Sell | Quantity | Risk Factor |
+    | ----------- |----------|----------|-------------|
+
 
 Positions are additive (to close a position, we won't change the original position but to do a new reverse trade).
 Suppose we have two days of position data.
@@ -62,13 +63,13 @@ In order to find old positions, we will use:
 # `left_join / right_join`
 Can be used to do mapping table (aka. vlookup)
 
-Table a:
+Table `Product`:
 
     | type_code | type_name |
     | 1         | orange    |
     | 2         | banana    |
 
-Table b:
+Table `Transaction`:
 
     | type_code | quantity | customer_id |
     | 1         | 1        | A           |
@@ -77,37 +78,45 @@ Table b:
     | 2         | 2        | D           |
     | 1         | 6        | B           |
 
-Table c:
+Table `Customer`:
 
     | customer_id | customer_phone |
     | A           | +123           |
     | B           | +456           |
     | C           | +789           |
 
-left_join(b, a, by = "type_code") %>% left_join(c, by = "customer_id")
+# Use `left_join` to create a full report
+
+    left_join(Transaction, Product, by = "type_code") %>%
+    left_join(Customer, by = "customer_id")
 
     | type_code | quantity | customer_id | type_name | customer_phone |
+    |-----------|----------|-------------|-----------|----------------|
     | 1         | 1        | A           | orange    | +123           |
     | 2         | 3        | B           | banana    | +456           |
     | 3         | 4        | C           | NA        | +789           |
     | 2         | 2        | D           | banana    | NA             |
     | 1         | 6        | B           | orange    | +456           |
 
-Join can be multiple types
 
-## `full_join`
-Find all combinations between table a and b.
+# `full_join` and `anti_join`
+- full_join(a, b): Find all combinations between table a and b.
+- anti_join(a, b): Find those in a but not in b.
 
 ```{r, echo = T}
-# all possible combination 
-x <- full_join(distinct(bank, job) %>% mutate(x = 1), distinct(bank, education) %>% mutate(x = 1)) %>% select(-x)
+# All possible combination between job and education
+x <- full_join(distinct(bank, job) %>% mutate(dummy = 1),
+               distinct(bank, education) %>% mutate(dummy = 1),
+               by = "dummy") %>%
+     select(-dummy)
 y <- distinct(bank, job, education)
-
-anti_join(x, y)
-anti_join(y, x)
 
 nrow(x)
 nrow(y)
+
+anti_join(x, y, by = c("job", "education"))
+anti_join(y, x, by = c("job", "education"))
+
 ```
 
 # Join is a set operation
@@ -126,16 +135,16 @@ Group_by is our way leading to analyze the data.
 Function can process bulk data:
 Note: I often forgot there are existing functions that resort to longer versions.
 
-- sum/mean/median/sd
-- min(x), quantile(x, 0.25), max(x):
-- n() / n_distinct():
+- sum/mean/median/sd: basic statistics
+- min(x), quantile(x, 0.25), max(x): min/max/quantile
+- n()/n_distinct(): count and count distint
 - ntile: a rough divide into a few groups
-- first(x), nth(x, 2), last(x)
+- first(x), nth(x, 2), last(x): 
 
 # `group_by` / `summarize`: Examples
 
 ```{r, echo = T}
-# add paramter na.rm, if there is na
+# Add paramter na.rm, if there is NA among the data.
 df <- data.frame(a = c(1, 3, 4, NA))
 summarise(df, total = sum(a))
 summarise(df, total = sum(a, na.rm = T))
@@ -143,20 +152,31 @@ summarise(df, total = mean(a))
 summarise(df, total = mean(a, na.rm = T))
 ```
 
-# `group_by` / `summarize`: Examples 2
+# `group_by` / `summarize`: Examples
 
 ```{r, echo = T}
 # count number of people in each age group
 group_by(bank, age) %>% summarise(n = n())
-group_by(bank, age) %>% summarise(n = n()) %>% plot
+```
 
+# `group_by` / `summarize`: Examples
+
+```{r, echo = T}
+group_by(bank, age) %>% summarise(n = n()) %>% plot
+```
+
+# `group_by` / `summarize`: Examples
+```{r, echo = T}
 bank1 <- group_by(bank, age) %>%
   summarise(balance_mean = mean(balance),
             count = n(),
             default_count = sum(ifelse(default == "no", 0, 1)))
 
 head(bank1)
+```
 
+# `group_by` / `summarize`: Examples
+```{r, echo = T}
 # If combined with ggplot, to be learnt in next session
 ggplot(bank1, aes(x = age, y = balance_mean)) +
   geom_point(aes(size = count), alpha = 1/4, color = "red") +
@@ -173,20 +193,16 @@ bank %>%
   arrange(age, balance)
 ```
 
-```{r, echo = T}
-# Find the big age group
-bank %>% 
-  group_by(age %/% 10) %>%
-  filter(n()/nrow(bank) > 0.2) %>%
-  arrange(age)
-```
 # Count for condition
 TRUE => 1, FALSE => 0
 
 ```{r, echo = T}
 # Generate a report for balance and job
-d1 <- group_by(bank, job) %>% summarise(`balance > 500` = sum(balance > 500))
-d2 <- group_by(bank, job) %>% summarise(`balance <= 500` = sum(balance <= 500))
+d1 <- group_by(bank, job) %>%
+  summarise(`balance > 500` = sum(balance > 500))
+d2 <- group_by(bank, job) %>%
+  summarise(`balance <= 500` = sum(balance <= 500))
+# d collects all jobs, in case some jobs is missing from d1 or d2
 d <- distinct(bank, job) %>% arrange(job)
 d <- left_join(d, d1, by = "job")
 d <- left_join(d, d2, by = "job")
@@ -194,25 +210,33 @@ d <- mutate(d, total = `balance > 500` + `balance <= 500`)
 d
 ```
 
-# Group_by and Summarise: a metaphor
-group_by is a like folding a paper without tearing it later.
-summarise will tear the paper.
-Therefore, group_by can be used with other verbs, `mutate`, `filter`, which will work within the group.
-summarise can be used without group_by, then it will apply to entire data as one whole group.
+# `group_by` and `summarise/summarize`: Further expository
+- `group_by` is a like folding a paper without tearing it later.
+- `summarise` will tear the paper.
+- Therefore, `group_by` can be used with other verbs, `mutate`, `filter`, which will work within the group.
+- `summarise` can be used without group_by, then it will apply to entire data as one whole group.
+
+# `group_by`
 
 ```{r, echo = T}
 # mutate with group_by
-group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>% mutate(b = a / sum(a))
+group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>%
+  mutate(b = a / sum(a))
 ```
+
+# `group_by` / 2
 
 ```{r, echo = T}
 # filter with group_by
-group_by(bank, age) %>% dplyr::filter(balance == max(balance))
+group_by(bank, age) %>% filter(balance == max(balance))
 ```
+
+# `summarize/summarise`
 
 ```{r, echo = T}
 # summarise with group_by
-group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>% summarise(b = sum(a))
+group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>%
+  summarise(b = sum(a))
 ```
 
 ```{r, echo = T}
@@ -223,20 +247,37 @@ summarise(bank, with_housing = sum(housing == "yes") / n(),
 ```
 
 # group_by/rowwise/ungroup
-ungroup() removes group definition, restores the `ungrouped` data frame back to entire data.
-Because group_by operation will leave a trace 
+`ungroup()` removes group definition, restores the "ungrouped"" data frame back to entire data.
+Because `group_by` will leave a trace 
 
 ```{r, echo = T}
 # wrong
-group_by(bank, age) %>% dplyr::filter(balance == max(balance)) %>% summarize(balance = mean(balance)) %>% head(n = 3)
-# correct
-group_by(bank, age) %>% dplyr::filter(balance == max(balance)) %>% ungroup %>% summarize(balance = mean(balance))
+group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  summarize(balance = mean(balance)) %>%
+  head(n = 3)
 
-# can't remove age
-group_by(bank, age) %>% dplyr::filter(balance == max(balance)) %>% select(-age) %>% head(n = 3)
-# R: Adding missing grouping variables: `age`
-# can remove age
-group_by(bank, age) %>% dplyr::filter(balance == max(balance)) %>% ungroup %>% select(-age) %>% head(n = 3)
+# correct
+group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  ungroup %>%
+  summarize(balance = mean(balance))
+```
+
+# group_by/rowwise/ungroup
+
+```{r, echo = T}
+# We can't remove age
+# R will prompt for "Adding missing grouping variables: `age`"
+group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  select(-age) %>% head(n = 3)
+
+# We can remove age with ungroup
+group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  ungroup %>%
+  select(-age) %>% head(n = 3)
 ```
 
 # rowwise
@@ -246,43 +287,6 @@ Use case, it applies to complex logic that can't be applied as a group.
 ```{r, echo = T}
 df <- data.frame(throw_dices = 1:10)
 rowwise(df) %>% mutate( mean = mean(sample(1:6, throw_dices, replace = T)))
-```
-
-# Exercise with group_by/summarise
-- How to know the row number of the wrong date
-```{r, echo = T}
-df <- data.frame(x = c("2017-10-01", "2017-31-12", "2017-03-17", "2017-02-29", "2017-09-30"))
-df
-```
-```{r, echo = F}
-df %>%
-    ungroup() %>%
-    mutate(nnn = 1:n()) %>%
-    mutate(x = as.Date(x)) %>%
-    dplyr::filter( is.na(x)) %>%
-    { cat(paste0("Wrong dates on: " .$nnn, collapse = ", ")) }
-```
-
-- How to get sub-total and total on mean of age and balance, group by job and education?
-
-| job       | education | mean(Age) | median(Balance) |
-| services  | primary   | ...       | ...             |
-| services  |           | 
-| services  | +         | ...       | ...             |
-| ...
-| +         | +         | ...       | ...             |
-
-- To evaluate a portfolio of options for its total value.
-
-```{r, echo = T}
-GBSOption(TypeFlag = "p", S = 3500, X = 3765, Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
-df <- data.frame(type = sample(c("c", "p"), 100, replace = T),
-                 strike = round(runif(100) * 100, 0),
-                 underlying = round(runif(100) * 100, 0),
-                 Time = 1,
-                 r = 0.01,
-                 b = 0,
-                 sigma = 0.3)
 ```
 
 # `bind_rows`
@@ -323,7 +327,11 @@ If row order matters, bind_row can be used to re-order/splice and recombine.
 # Note: use { } to use the .
 arrange(bank, age) %>%
 { bind_rows(head(., n = 5), tail(., n = 5)) }
+```
 
+# `bind_rows`: Use case
+
+```{r, echo = T}
 # summary
 summarise_if(bank, is.numeric, mean)
 # add summary to the records
@@ -348,14 +356,67 @@ dt1 <- bind_cols(select(bank, job), select(bank, education))
 dt1[1:3,]
 dt2 <- bind_cols(dt1, dt1)
 dt2[1:3,]
+```
 
-d1 <- dplyr::filter(bank, month == "sep") %>% summarize(duration = mean(duration)) %>% rename(`Duration Sep` = duration)
-d2 <- dplyr::filter(bank, month == "oct") %>% summarize(duration = mean(duration)) %>% rename(`Duration Oct` = duration)
-d3 <- dplyr::filter(bank, month == "nov") %>% summarize(duration = mean(duration)) %>% rename(`Duration Nov` = duration)
+# bind_cols: Use cases
+```{r, echo = T}
+d1 <- filter(bank, month == "sep") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Duration Sep` = duration)
+d2 <- filter(bank, month == "oct") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Duration Oct` = duration)
+d3 <- filter(bank, month == "nov") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Duration Nov` = duration)
 
-bind_cols(dplyr::filter(bank, month == "sep") %>% summarize(duration = mean(duration)) %>% rename(`Duration Sep` = duration),
-          dplyr::filter(bank, month == "oct") %>% summarize(duration = mean(duration)) %>% rename(`Duration Oct` = duration),
-          dplyr::filter(bank, month == "nov") %>% summarize(duration = mean(duration)) %>% rename(`Duration Nov` = duration))
+bind_cols(d1, d2, d3)
+```
+
+# Exercise
+
+1. How to know the row number of the wrong date
+```{r, echo = T}
+df <- data.frame(x = c("2017-10-01", "2017-31-12", "2017-03-17", "2017-02-29", "2017-09-30"))
+df
+```
+
+   Output:
+```{r, echo = F}
+df %>%
+  ungroup() %>%
+  mutate(nnn = 1:n()) %>%
+  mutate(x = as.Date(x)) %>%
+  filter(is.na(x)) %>%
+  { cat(paste0("Wrong dates on: ", paste0(.$nnn, collapse = ", "))) }
+```
+
+# Exercise
+
+2. How to get sub-total and total on mean of age and balance, group by job and education?
+
+    | job       | education | mean(Age) | median(Balance) |
+    |-----------|-----------|-----------|-----------------|
+    | services  | primary   | ...       | ...             |
+    | services  |           | 
+    | services  | +         | ...       | ...             |
+    | ...
+    | +         | +         | ...       | ...             |
+
+# Exercise
+
+3. To evaluate a portfolio of options for its total value.
+
+```{r, echo = T}
+GBSOption(TypeFlag = "p", S = 3500, X = 3765,
+          Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
+df <- data.frame(type = sample(c("c", "p"), 100, replace = T),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
 ```
 
 # tidyr: gather/spread
@@ -366,6 +427,7 @@ Wide format <=> Long format
 - Long format is what we reformat the data that common attributes are gathered together as a single variable.
 - Reference: Tidy data <https://en.wikipedia.org/wiki/Tidy_data>
 
+# Wide v.s. Long
 ## Wide format
 ```{r echo = FALSE}
 wfmt <- data_frame(date = seq(from = as.Date("2017-01-01"), by = "day", length.out = 5),
@@ -387,22 +449,28 @@ gather(wfmt, key, value, -date)
 ... is where you want to make as independent columns.
 You need to specify all columns that should be gathers (or remove all columns that should _not_be gathered):
 
-
 ```{r echo = TRUE }
 mini_iris <- iris[1:3,]
-gather(mini_iris, key = flower_att, value = measurement, -Species)
+gather(mini_iris,
+       key = flower_att,
+       value = measurement,
+       -Species)
 ```
 
+# `spread/gather` what columns to remove/add
+
 ```{r echo = TRUE }
-lfmt <- gather(mini_iris, key = flower_att, value = measurement, Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
+lfmt <- gather(mini_iris,
+               key = flower_att,
+               value = measurement,
+               Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
 lfmt
 ```
 # Spread
 
     spread(lfmt, key, value)
 
-Example
-Get row sum.
+Example: get row sum.
 
 ```{r echo = TRUE }
 library(tidyr)
@@ -418,88 +486,95 @@ wfmt %>%
 
 ```{r, echo = T}
 # although this works...
-# No hard coding of column names "Copper_qty Gold_qty Silver_qty".
+# Hard coding of column names "Copper_qty Gold_qty Silver_qty".
 wfmt %>% mutate(total = Copper_qty + Gold_qty + Silver_qty)
 ```
 
 # `separate/unite`
 
-separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE,
-  convert = FALSE, extra = "warn", fill = "warn", ...)
+    separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE,
+      convert = FALSE, extra = "warn", fill = "warn", ...)
 
-#> # A tibble: 6 × 3
-#>       country  year              rate
-#> *       <chr> <int>             <chr>
-#> 1 Afghanistan  1999      745/19987071
-#> 2 Afghanistan  2000     2666/20595360
-#> 3      Brazil  1999   37737/172006362
-#> 4      Brazil  2000   80488/174504898
-#> 5       China  1999 212258/1272915272
-#> 6       China  2000 213766/1280428583
+    #> # A tibble: 6 × 3
+    #>       country  year              rate
+    #> *       <chr> <int>             <chr>
+    #> 1 Afghanistan  1999      745/19987071
+    #> 2 Afghanistan  2000     2666/20595360
+    #> 3      Brazil  1999   37737/172006362
+    #> 4      Brazil  2000   80488/174504898
+    #> 5       China  1999 212258/1272915272
+    #> 6       China  2000 213766/1280428583
 
-separate(rate, into = c("cases", "population"))
-separate(rate, into = c("cases", "population"), convert = TRUE)
-
-unite(new, century, year) # default sep is "_"
-unite(new, century, year, sep = "") # seamless unite
-
-
-# CRUD:
-
-Create:
-- add a column for rownumber.
-- discover insights of data.
-- retrieve with age, slider of numeric
-- employment
-- Social attributes.
-- count for subtotal - total, plot graph
-
-D:
-Mark for not included in the 
-
-C:
-Add new.
-
-U:
+    separate(df, rate, into = c("cases", "population"))
+    separate(df, rate, into = c("cases", "population"), convert = TRUE)
+  
+    unite(df, century, year) # default sep is "_"
+    unite(df, century, year, sep = "") # seamless unite
 
 # Rules of Thumb for design data storage
 * Use list to store app data, i.e. configuration.
-* User data frame to store user data.
-* You need column **item_id** to put into every_table. It can be number or character. Make it unique. So you need to keep the current highest number in another place.
+* User data frame to store repeating data of similar structure
+* Every data frame is better to have a column with the function of **item_id**. It can be number or character. Make it unique.
+  If **item_id** is a number, when insert new record to the data frame, we need to increment it somewhere. So, store it somewhere.
 * Delete is not good for customer data. add a column name with a common name, e.g. SYS_DEL.
 
-| position_id | call_put | amount | strike | SYS_DEL |
-| X123        |          |        |        |
+
+    | position_id | call_put | amount | strike | SYS_DEL |
+    | X123        |          |        |        |
+
+# CRUD in dplyr
+
+Create:
+
+- add new rows. bind_rows()
+
+Read:
+
+- You have known enough: filter/select/joins/... to get what you need.
+
+Update:
+
+- Use either data frame way or mutate.
+
+```
+# get all row numbers for students
+row_nums <- mutate(bank, nnn = 1:n()) %>%
+            filter(job == "student" & age < 22) %>%
+            select(nnn) %>%
+            .$nnn
+ 
+bank1 <- bank
+bank1[row_nums, "taxable"] <- "no"
+bank1[setdiff(1:nrow(bank), row_nums), "taxable"] <- "yes"
+
+# use dplyr
+bank1 <- mutate(bank, taxable = ifelse(job == "student" & age < 22, "no", "yes"))
+distinct(bank1, taxable)
+```
+
+Delete:
+
+- Use filter to exclude the row(s).
+- (Advanced version) Create a column `DELETED` of logic type, if we need to delete the row, set it T.
+  We need to change all read commands to have `!DELETED`
 
 # Assignment
 1. Exploratory Data
 Work on the bank dataset. Find 10 findings from data.
 Use R Markdown.
 
-    ---
-    title: "FE8828 Assignment for Exploratory Data Analysis"
-    author: "Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-    date: "Nov 15, 2017"
-    output: html_document
-    ---
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/assignment.Rmd"))
+```
 
-    ```{r setup, include=FALSE}
-    library(tidyverse)
-    library(lubridate)
-    library(bizdays)
-    knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
-    bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
-    ```
-
-    # Finding #1
-    This data contains `r nrow(data)` rows.
-
-    # Finding #2
-
+# Assignment
 2. Book option trades
-1.1 Store the options from 
-* https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&ei=iIoAWvDmF8GqugSsj5mICw
-| Date | Strike | Quantity | Underlying | Long/Short | Call/Put
+
+1.1 Store the options from
+    https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&ei=iIoAWvDmF8GqugSsj5mICw
+
+        | Date | Strike | Quantity | Underlying | Long/Short | Call/Put
+        
 1.2 Count the total valuation of call alone, put alone, call and put.
 1.3 Find those in the money.
 1.4. Plot the volatility curve, strike v.s. vol
@@ -507,22 +582,30 @@ Use R Markdown.
 ```{r, echo = T}
 # GBSVolatility(price, TypeFlag, S, X, Time, r, b, tol, maxiter)
 # Use Price to back-out implied volatility
-GBSVolatility(867.30, "c", 1135.67, 240, as.numeric((as.Date("2018-01-19") - as.Date("2017-11-15")))/365, r = 0.01, b = 0)
-GBSVolatility(256.50, "c", 1135.67, 880.00, as.numeric((as.Date("2018-01-19") - as.Date("2017-11-15")))/365, r = 0.01, b = 0)
-GBSVolatility(53.62, "c", 1135.67, 1120.00, as.numeric((as.Date("2018-01-19") - as.Date("2017-11-15")))/365, r = 0.01, b = 0)
+GBSVolatility(867.30, "c", 1135.67, 240,
+              as.numeric((as.Date("2018-01-19") - as.Date("2017-11-15")))/365, r = 0.01, b = 0)
+GBSVolatility(256.50, "c", 1135.67, 880.00,
+              as.numeric((as.Date("2018-01-19") - as.Date("2017-11-15")))/365, r = 0.01, b = 0)
+GBSVolatility(53.62, "c", 1135.67, 1120.00,
+              as.numeric((as.Date("2018-01-19") - as.Date("2017-11-15")))/365, r = 0.01, b = 0)
 ```
 
+# Assignment
 3. Bank (Group - choose a coordinator to send me the report)
-Data frame 1: Account 
-| Acount No | Name |
+This is the 1st installment of the assignment.
+There will be more installment.
+Due on 6th week. Please pace your group.
 
-Data frame 2: Transaction
-| Date | Account | Action | Amount | Currency |
+        Data frame 1: Account 
+        | AcountNo | Name |
+        
+        Data frame 2: Transaction
+        | TransactionNo | Date | AccountNo | TransactionType | Amount | Currency |
+        
+        Data frame 3: Currency to SGD
+        | Currency | Conversion | Date |
 
-Data frame 3: Currency to SGD
-| Currency | Conversion | Date |
-
-Action can only be: Withdraw/Deposit/Spend
+TransactionType can be: Withdraw/Deposit/Spend
 Write follow functions and use them to initialize the data.
 
 1. Create 10 accounts with initial random deposit and credit in SGD.
@@ -534,186 +617,27 @@ Write follow functions and use them to initialize the data.
    You can't withdraw more than the deposit, can't spend more than credit + deposit.
 4. Generate report for transaction as month-end statement in SGD.
 
-    {Name}
 
-    Date | Action | Amount | Currency | Deposite Balance | Credit Balance |
-
-
-
-    -----------------------------------------------------------------------
-                   Month-End Balance |
-
-    Summary:
-
-    Item | Deposit | Amount |
+        { Client Name }
+        { Month }
+    
+        # Transaction History
+        
+        Date | TransactionType | Amount | Currency | Deposit Balance | Credit Balance |
+             |                 |        |          |                 |                |
+             |                 |        |          |                 |                |
+             |                 |        |          |                 |                |
+        -------------------------------------------------------------------------------
+                                 Month-End Balance | Deposit         | Credit         |
+    
+        # Summary
+    
+        TransactionType | Amount |
+        ...
 
 
 Submission:
+
 1. A report describing interesting learning points on design and coding (1-2 pages, just be concise)
 2. Code with decent amount of comments
 3. Example running result.
-
-Data analytics
-
-# install.packages("plyr")
-
-ozone <- plyr::ozone
-
-nrow(ozone)
-ncol(ozone)
-
-str()
-
-head(ozone[, c(6:7, 10)])
-tail(bank[])
-
-Hypothesis?
-Does season matters?
-Does employment matters?
-Does age matters?
-
-boxplot(bank$age, col = "blue")
-
-> hist(bank$age, col = "orange")
-> rug(bank$age)
-
-> hist(bank$age, col = "green", breaks = 100)
-> rug(bank$age)
-
-> library(ggplot2)
-
-> qplot(latitude, pm25, data = pollution, facets = . ~ region)
-
-select(ozone, State.Name) %>% unique %>% nrow
-
-> filter(ozone, State.Name == "Oklahoma" & County.Name == "Caddo") %>%
-+         mutate(month = factor(months(Date.Local), levels = month.name)) %>%
-+         group_by(month) %>%
-+         summarize(ozone = mean(Sample.Measurement))
-
-
-# color
-> library(RColorBrewer)
-> display.brewer.all()
-
-# matrix/heatmap
-
-> set.seed(12345)
-> dataMatrix <- matrix(rnorm(400), nrow = 40)
-> image(1:10, 1:40, t(dataMatrix)[, nrow(dataMatrix):1])
-
-> heatmap(dataMatrix)
-
-
-# Shiny
-
-For uiOutput, output$h1 <- renderUI({ tagList(
-                                            sliderInput("n", "N", 1, 1000, 500),
-                                            textInput("label", "Label"))
-                                        })
-
-## Dynamic UI for Report
-
-    renderUI({
-      htmlOutput("t1"),
-      plotOutput("p1")
-    })
-
-append into tagList()
-Case: scenarios
-
-For uiOutput, output$h1 <- renderUI({ tagList(
-                                            sliderInput("n", "N", 1, 1000, 500),
-                                            textInput("label", "Label"))
-                                        })
-
-Server - Client
-
-User Interface (UI)
-Server Instructions (Server)
-
-updateSelectionInput(...)
-
-# Question?
-Age with respect to anything else.
-With facets
-
-# Display output with render*() functions
-
-# ggplot/grid/gridExtra
-# knitr/kableExtra
-
-    `r chunk`{r shiny_block}
-    library(knitr)
-    library(kableExtra)
-    
-    # This is HTML output
-    kable(df, format = "html")
-    
-    # Use function() { } to output html
-    output$p1 <- function() {
-      kable(df, format = "html")
-    }
-    `r chunk`
-
-kable_styling(x_html, "striped", position = "left", font_size = 7)
-
-7 render*() functions
-
-renderDataTable() # an interactive table from data frame, matrix or other table-like structure
-renderImage() # an image (saved as a link to the source image file)
-renderPlot() # a plot generated on-the-fly
-renderPrint() # code block
-renderTable() # a static table from df, mat, etc.
-renderText() # a character string
-renderUI() # a shiny UI element
-renderHTML() # html tags
-
-# render*() arguments are code used to build and rebuild object
-render*() function reruns the code with every change in the input
-
-# reactive() object
-
-data <- reactive( { hist(rnorm(input$num)) } )
-
-output$hist <- renderPlot({ hist(data()) })
-output$stat <- renderPlot({ summary(data()) })
-
-allow multiple binding of data to different input
-
-# isolate()
-
-isolate({ rnorm(input$num) })
-isolate(input$title)
-
-# reactive 
-
-actionButton(inputId = "go", label = "Click me")
-
-observeEvent(input$go, { print(input$go) })
-
-observeEvent(input$go, { print(as.numeric(input$go)) })
-
-# observe() function
-observe({ print(input$go) }) reacts to whatever are changed in the code block.
-
-# eventReactive() delay reactions
-data <- eventReactive(input$go, { rnorm(input$num) })
-
-button -> data -> renderPlot
-
-button -> renderPlot (direct is not very good)
-
-mono-action to data binding
-
-# reactiveValues
-rv <- reactiveValues(data = rnorm(100))
-
-button -> change the data -> renderPlot
-
-allow multiple binding of data to different input
-
-# When it gets to run.
-ui: client. run once per user per session.
-server: run once per session
-code inside a reactive function runs with every input change.
