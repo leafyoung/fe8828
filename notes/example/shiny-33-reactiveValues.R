@@ -3,7 +3,7 @@ library(knitr)
 library(kableExtra)
 
 ui <- fluidPage(
-  numericInput("num", "Num", 5),
+  textInput("text", "Tell me something", "Long long time ago", width = "100%"),
   verbatimTextOutput("d1"),
   hr(),
   textOutput("d2"),
@@ -11,15 +11,16 @@ ui <- fluidPage(
   verbatimTextOutput("d3")
 )
 
-
-
 server <- function(input, output, session) {
   values <- reactiveValues(data = "")
   output$d3 <- renderText({ values$data })
 
   observe({
+    tell_me <- input$text
+    
     output$d1 <- renderPrint({
       tryCatch({
+        cat(paste0(tell_me, "\n"))    
         cat("foo", "\n")
         runif(1)
         cat(1 / 0, "\n")
@@ -33,7 +34,7 @@ server <- function(input, output, session) {
     
     output$d2 <- renderText({ print("foo"); "bar1 bar2" })
 
-    isolate(values$data <- paste0(values$data, "one ", "\n"))
+    values$data <- isolate(paste0(values$data, tell_me, "\n"))
   })
 }
 
