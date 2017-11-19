@@ -113,12 +113,12 @@ server: run once per session
 code inside a reactive function runs with every input change.
 
 
-
 ggplot
 
-
 ## ggplot
-
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/main-qimg-bf859b506013fd60589a28be4c3f9e47.png")
+```
 ggplot(data = <DATA>) + 
   <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
 

@@ -456,7 +456,7 @@ gather(wfmt, key, value, -date)
     
 ... is where you want to make as independent columns.
 You need to specify all columns that should be gathers (or remove all columns that should _not_be gathered):
-
+pdf
 ```{r echo = TRUE }
 mini_iris <- iris[1:3,]
 gather(mini_iris,

@@ -726,7 +726,6 @@ hist(sim_sample)
       plotOutput("hist")
     )
 
-
 # Input
 
 All input function follow such function signature except for input-specific parameters.
@@ -1092,7 +1091,7 @@ knitr::include_graphics("imgs/transform-logical.png")
 second_upper <- dplyr::filter(bank, education %in% c("tertiary", "secondary"))
 
 # filter out NA value.
-no_na <- dplyr::filter(bank, is.na(balance) | balance > 0)
+no_na <- dplyr::filter(bank, !is.na(balance) & balance > 0)
 ```
 
 # Exercise

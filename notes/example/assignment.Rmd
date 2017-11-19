@@ -29,7 +29,7 @@ res
 plot(res$age_group, res$count)
 ```
 
-# Discover insights of data
+# Discover insights of data frame: bank
 - Employment
 - Social attributes.
 - Count for sub-total / total, plot graph
