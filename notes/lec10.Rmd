@@ -478,7 +478,7 @@ ggplot(bank, aes(age, duration)) +
   geom_point(alpha = 1/3) + 
   facet_wrap(job ~ age_group, nrow = 2) + # ncol = number of cuts 3 = length(levels(bank$age_group))
   geom_smooth(method="lm", se=FALSE, col="steelblue") + 
-  theme_bw(base_family = "Avenir", base_size = 10) + 
+  theme_bw(base_size = 10) + 
   labs(x = "age", y = expression("log " * Duration)) + 
   scale_y_log10() +
   labs(title = "Bank Clients")  
