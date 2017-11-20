@@ -657,6 +657,13 @@ cat(htmltools::includeText("example/shiny-32-renderUI.R"))
 cat(htmltools::includeText("example/shiny-36-update.R"))
 ```
 
+# Very dynamic
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-37-createDynamic.R"))
+```
+
+
 # ggplot/gridExtra
 If we need to generate multiple plots. ggplot has a companion package to arrange plots. 
 
