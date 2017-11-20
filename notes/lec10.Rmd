@@ -629,35 +629,30 @@ ggplot(world, aes(long, lat, group = group)) +
 - Append new items to tagList()
 
 # Create dynamic output
+`tagList()`
+
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-34-renderUI.R"))
 ```
 
 # Create dynamic output 2
 You can use newly created UI immeidately
+
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-35-renderUI-2.R"))
 ```
 
 # Create dynamic output 3
+
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-32-renderUI.R"))
 ```
 
-# Create dynamic input 4
-uiOutput("h1")
-output$h1 <- renderUI({
-  tagList(
-    sliderInput("n", "N", 1, 1000, 500),
-    textInput("label", "Label")
-  )
-})
-
-# Update various input values
-updateSelectionInput(...)
-updateNumericInput(...)
-
 # Dynamic input and `update***Input`
+- Update various input values
+    - updateSelectionInput(...)
+    - updateNumericInput(...)
+
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-36-update.R"))
 ```

@@ -1,3 +1,5 @@
+# shiny-36-update.R
+
 library(shiny)
 
 ui <- fluidPage(
@@ -28,6 +30,7 @@ server <- function(input, output, session) {
                                choices = scenarios,
                                selected = scenarios)
     }
+    # put a new random value
     updateNumericInput(session, "shock", value = round(runif(1) * 1000))
   })
   
