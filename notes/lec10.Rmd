@@ -6,77 +6,227 @@ date: "Nov 23, 2017"
 # runtime: shiny
 ---
 
+<style type="text/css">
+code.r{ /* Code block */
+    font-size: 22px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 18px;
+}
+</style>
+
+```{r setup, include=FALSE}
+library(fOptions)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(maps)
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
 # Lecture 8: Viz
 
-`library(ggplot)`
+`library(ggplot)`, author Hadley Wickham. First release on June 10, 2007.
 
-## ggplot
+<https://qz.com/1007328/all-hail-ggplot2-the-code-powering-all-those-excellent-charts-is-10-years-old/>
+
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/ggplot2-10.png")
+```
+
+# Why do we need ggplot?
+It's part of the exploration of the data via visualization.
+
 ```{r, echo = FALSE, out.width = "75%"}
 knitr::include_graphics("imgs/main-qimg-bf859b506013fd60589a28be4c3f9e47.png")
 ```
-ggplot(data = <DATA>, ...) + 
-  <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
-
-Put the + sign in the end of the line, not the beginning of the line.
-
-WRONG
-~~ggplot(data = <DATA>, ...)~~
-~~+ <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))~~
 
 # ggplot system
 
+```{r, echo = T}
 library(ggplot2)
 ggplot(airquality, aes(Temp, Ozone)) + 
         geom_point() + 
         geom_smooth(method = "loess", se = FALSE)
+```
 
-# simply plot x and y
-qplot(age, balance, data = bank)
-qplot(age, balance, data = bank, color = job)
+# Syntax of ggplot
 
-# for non-numeric data
-qplot(default, age, data = bank)
-qplot(age, default, data = bank)
-qplot(job, age, data = bank)
+- Definition of data + Definitions of layers
 
-# add a geometry
-qplot(age, balance, data = bank, geom = c("point", "smooth"))
-qplot(age, balance, data = bank, color = job, geom = c("point", "smooth"))
+    ggplot(data = <DATA>, ...) + 
+      <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
 
-# density
-qplot(balance, data = bank, fill = job, geom = "density")
-qplot(duration, data = bank, fill = job, geom = "density")
-qplot(age, data = bank, color = job, geom = "density")
-v.s.
-qplot(age, data = bank, fill = job, geom = "density")
-qplot(age, data = bank, color = job, fill = job, geom = "density")
+- For example, geom_point() is for points, geom_line() is for line, geom_smooth() for smoothed line.
+- The definition of data will pass down to the layers. But layers can have its own data.
 
-# boxplot
-qplot(job, duration, data = bank, geom = "boxplot")
-qplot(job, balance, data = bank, geom = "boxplot")
-qplot(job, age, data = bank, geom = "boxplot")
+    ggplot(data = d1, ...) +
+      geom_point() + # this would get data = d1
+      geom_point(data = d2, ...) # this would get data = d2
 
-# Facets
-qplot(pdays, data = bank, facets = job ~ ., binwidth = 2) # doesn't look great because we have so many jobs.
-qplot(pdays, data = bank, facets = . ~ job, binwidth = 2) # not a good measure.
-qplot(campaign, data = bank, facets = . ~ job, binwidth = 2)
-qplot(duration, data = bank, facets = . ~ job, binwidth = 2)
-qplot(balance, age, data = bank, facets = . ~ job)
-qplot(age, balance, data = bank, facets = . ~ job)
-qplot(age, balance, data = bank, facets = . ~ job) + geom_smooth()
+- Put the + sign in the end of the line, not the beginning of the line.
 
-Which is equivalent to
-qplot(age, balance, data = bank, facets = . ~ job, geom = c("point", "smooth"))
-qplot(age, balance, data = bank, facets = . ~ job, geom = "smooth")
+    # This would result in error
+    ggplot(data = <DATA>, ...)
+    + <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
 
-# fill/color/shape can be each on one dimension of the data.
-qplot(age, balance, data = bank, shape = marital, color = marital) + geom_smooth()
-qplot(age, balance, data = bank, shape = job, color = marital) + geom_smooth()
+```{r, echo = FALSE, out.width = "53%"}
+knitr::include_graphics("imgs/ggplot2-basics.png")
+```
 
+# Simply plot x and y
 
-Things to consider:
+```{r, echo = T}
+ggplot(bank, aes(age, balance)) + geom_point()
+```
 
-Which variables in mpg are categorical? Which variables are continuous?
+```{r, echo = T}
+ggplot(bank, aes(age, balance, color = job)) + geom_point()
+```
+
+If you don't know the column name, use `aes_string` to pass variable name as string/character.
+
+    ggplot(bank, aes_string("age", "balance", color = "job")) + geom_point()
+
+# For non-numeric data
+```{r, echo = T}
+ggplot(bank, aes(default, age)) + geom_point()
+```
+
+```{r, echo = T}
+ggplot(bank, aes(age, default)) + geom_point()
+```
+
+```{r, echo = T}
+ggplot(bank, aes(job, age)) + geom_point()
+```
+
+# Add 2nd geometry 
+```{r, echo = T}
+ggplot(bank, aes(age, balance)) + geom_point() + geom_smooth()
+```
+
+```{r, echo = T}
+ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth()
+```
+
+# Pass `aes` down
+```{r, echo = T}
+ggplot(bank, aes(x = age, y = duration)) +
+geom_smooth() +
+geom_point()
+
+# This is equivalent to below
+ggplot(bank) +
+geom_point(aes(x = age, y = duration)) +
+geom_smooth(aes(x = age, y = duration))
+
+# But we can do specify different data for two geom_smooth()
+ggplot(bank) +
+geom_point(aes(x = age, y = duration)) +
+geom_smooth(data = filter(bank, age > median(age)), aes(x = age, y = duration), color = "green") +
+geom_smooth(data = filter(bank, age <= median(age)), aes(x = age, y = duration), color = "red")
+```
+
+# Adjustment
+```{r, echo = T}
+# adjust legent position
+ggplot(bank, aes(x = age, y = duration, color = job)) +
+geom_point() +
+theme(legend.position="bottom")
+
+ggplot(bank, aes(x = age, y = duration, color = job)) +
+geom_point() +
+theme(legend.position="left")
+
+# Different feeling?
+ggplot(bank, aes(x = age, y = duration, color = job)) +
+geom_point() +
+theme(legend.position="left") + 
+coord_flip()
+
+# Make y as log scaled.
+# Note that before flip, x is y, so we use scale_y_log10()
+ggplot(bank, aes(x = age, y = duration, color = job)) +
+geom_point() +
+theme(legend.position="left") + 
+coord_flip() +
+scale_y_log10()
+```
+
+# Each `+` is a layer
+```{r, echo = T}
+# Nearly empty chart.
+g <- ggplot(bank, aes(x = age, y = duration))
+g
+
+# This is almost empty
+g <- ggplot(bank)
+g
+
+# This is really empty.
+g <- ggplot()
+g
+```
+
+# Combine `g` with layers
+
+```{r, echo = T}
+ggplot(bank, aes(x = age, y = duration)) + 
+  geom_point() + geom_smooth()
+
+# This is equivalent to above
+g <- ggplot(bank, aes(x = age, y = duration))
+g + geom_point() + geom_smooth()
+```
+
+```{r, echo = T, result = "hide"}
+# g can be re-used. It's good to be used when we want to exploratory data. 
+# Fixed a few variables in `g <- ggplot(data, aes(...))`.
+# Use `g + geom_XXX()` to find the best representation for the relationship.
+g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
+g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
+```
+
+# Use `color/shape/size/alpha/group` to differentiate to different groups.
+
+```{r, echo = T}
+ggplot(bank) +
+  geom_point(aes(age, duration, shape = contact))
+
+ggplot(bank) +
+  geom_point(aes(age, duration, color = contact))
+
+ggplot(bank) +
+  geom_point(aes(age, duration, size = contact))
+
+ggplot(bank) +
+  geom_point(aes(age, duration, alpha = contact))
+
+ggplot(bank) +
+  geom_point(aes(age, duration, group = contact))
+```
+
+```{r, echo = T}
+## you can also enforce color, put things outside aes
+ggplot(bank) +
+  geom_point(aes(age, duration), color = "blue", size = 10)
+```
+
+# Things to consider:
+
+- Which variables in data are categorical?
+- Which variables are continuous?
 
 - bio:
     + age
@@ -97,109 +247,165 @@ Which variables in mpg are categorical? Which variables are continuous?
     + previous:
     + poutcome:
 
+# Exercise
+```{r, echo = T}
+ggplot(bank, aes(age, job)) + geom_point()
 
-# Insights Question
-```{r}
-qplot(age, job, data = bank, color = loan, shape = loan)
+# Reverse a categorical variable, we use rev(levels(...)).
+# Reverse a continous numerical variable, we use scale_x_reverse().
+ggplot(bank, aes(age, job)) +
+geom_point() +
+scale_y_discrete(limit = rev(levels(bank$job)))
 ```
 
-# Which data is good to use?
-qplot(previous, data = bank, facets = . ~ job, binwidth = 2)
-v.s.
-qplot(previous, data = bank, facets = . ~ marrital, binwidth = 2)
+```{r, echo = F}
+# I tried to plot between job, loan and age. Better idea?
+ggplot(bank, aes(age, job, color = loan)) + geom_point()
+```
 
-# ggplot2
-Level 2
+```{r, echo = F, result = "hide" }
+ggplot(bank, aes(age, job, color = loan, size = loan)) + geom_point()
+```
 
-g <- ggplot(bank, aes(x = age, y = duration))
+# Other geoms
+- geom_boxplot()
+- geom_density()
+- geom_histogram()
+- geom_bar()
 
-# Each + is a layer
-g + geom_smooth()
-g + geom_point() + geom_smooth()
+# Boxplot
+```{r, echo = T}
+ggplot(bank, aes(job, duration)) + geom_boxplot()
+```
 
-To combine we have, g is for re-use
-ggplot(bank, aes(x = age, y = duration)) + 
-  geom_point() + geom_smooth()
+```{r, echo = T}
+ggplot(bank, aes(job, age)) + geom_boxplot()
+```
 
-g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
-g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
-g + geom_point(aes(color = job), size = 4, alpha = 1/2)
-g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) # each + is a layer
+# Density
+```{r, echo = T}
+ggplot(bank, aes(balance, color = job)) + geom_density()
+```
 
-# Use the categorical variable to differtiate between different groups.
+```{r, echo = T}
+ggplot(bank, aes(duration, fill = job)) + geom_density()
+```
 
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+```{r, echo = T}
+ggplot(bank, aes(age, color = job, alpha = 0.3)) + geom_density()
+```
 
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy, shape = class))
-
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy, size = class))
-
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy, alpha = class))
-
-ggplot(data = mpg) + 
-  geom_line(mapping = aes(x = displ, y = hwy, group = class))
-
-## you can also enforce
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```{r, echo = T}
+# Which is better?
+ggplot(bank, aes(age, color = job, fill = job, alpha = 0.3)) + geom_density()
+```
 
 # histogram
+```{r, echo = T}
 ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 2)
 ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 100)
+```
 
+```{r, echo = T}
 ggplot(data = bank, mapping = aes(x = age, fill = job)) + geom_histogram(binwidth = 10)
 ggplot(data = bank, mapping = aes(x = age, colour = job)) + geom_freqpoly(binwidth = 10)
+```
 
-# geom_bar: lowest granuity or
-ggplot(data = bank, mapping = aes(x = age, colour = job)) + geom_bar()
+# geom_bar: bar is a statistical function: it counts.
+```{r, echo = T}
+# first input parameter to geom_bar is mapping, so we can skip it.
+ggplot(bank) + geom_bar(mapping = aes(x = age))
+# in short, we skip mapping
+ggplot(bank) + geom_bar(aes(x = age))
+
+# comparing to colour, for Bar, we better use fill
+# ggplot(data = bank, ) + geom_bar(aes(x = age, colour = job))
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
+```
+
+```{r, echo = T}
+ggplot(bank) +
+  geom_bar(mapping = aes(x = job))
+# Color doesn't work, because age is a continous variable.
+ggplot(bank) +
+  geom_bar(mapping = aes(x = job, fill = age)) 
+```
+
+# Position for bar
+```{r, echo = T}
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
+# fill to 100%
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill")
+# dodge means "adaptive width of the bar"
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "dodge")
+```
+
+# Variations
+```{r, echo = T}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
+coord_flip()
+```
+
+```{r, echo = T}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
+coord_flip() +
+scale_x_reverse()
+```
+
+```{r, echo = T}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
+coord_polar()
+```
 
 # geom_bar: better serves for categorical data
+```{r, echo = T}
 ggplot(data = bank, mapping = aes(x = job, fill = education)) + geom_bar()
+```
+
+```{r, echo = T}
 ggplot(data = bank, mapping = aes(x = job, fill = education)) + geom_bar() + coord_flip()
+```
+
+```{r, echo = T}
 ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = mean), fill = education)) +
   geom_bar() +
   coord_flip()
+```
 
+```{r, echo = T}
 ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = mean), fill = education)) +
+    geom_bar() +
+    coord_flip()
+```
+
+```{r, echo = T}
+# If we just to order job according to alphabetical order.
+# use rev(levels(...))
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = education)) +
   geom_bar() +
-  scale_x_discrete(limit = rev(levels(reorder(bank$job, bank$age, FUN = mean)))) +
+  scale_x_discrete(limit = rev(levels(bank$job))) +
   coord_flip()
+```
 
+# Bar with composite data
 
-
-Levels gives more control to the layer and style.
-
-cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
-# The age_group variable is now a categorical factor variable containing 3 levels, indicating the ranges of age.
-bank$age_group <- cut(bank$age, cutpoints)
-levels(bank$age_group)
-g <- ggplot(bank, aes(age, duration)) +
-     geom_point(alpha = 1/3) + 
-     facet_wrap(job ~ age_group, ncol = 3) + # ncol = number of cuts 3 = length(levels(bank$age_group))
-     geom_smooth(method="lm", se=FALSE, col="steelblue") + 
-     theme_bw(base_family = "Avenir", base_size = 10) + 
-     labs(x = "age", y = expression("log " * Duration)) + 
-     labs(title = "Bank Clients")  
-g
-
-ggplot(data = mpg) + 
-  geom_point(mapping = aes(x = displ, y = hwy)) + 
-  facet_wrap(~ class, nrow = 2)
-
-# ggplot with statistical transformation
-ggplot(bank) + geom_bar(mapping = aes(x = age))
-ggplot(bank) + geom_bar(aes(x = age)) # first input parameter to geom_bar is mapping, so we can skip it.
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
-
-ggplot(bank) + geom_bar(mapping = aes(x = job))
-ggplot(bank) +
-  geom_bar(mapping = aes(x = job, fill = age)) # why this doesn't work. Age is a continous variable.
+```{r, echo = T}
+# If we want to sort the job acccording to median age
+# And also add age range and median age.
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = education)) +
+  geom_bar() +
+  scale_x_discrete(limit = rev(levels(reorder(bank$job, bank$age, FUN = median)))) +
+  geom_line(aes(x = job, y = age)) +
+  geom_point(data = group_by(bank, job) %>% summarize(age = median(age)) %>% ungroup, aes(x = job, y = age), inherit.aes = FALSE) +
+  xlab("Job sorted according to\nMedian age\n(Top - younger)") +
+  coord_flip()
+```
 
 # Data with statistical
+```{r, echo = T}
 ggplot(data = bank) + 
   stat_summary(
     mapping = aes(x = age, y = balance),
@@ -207,36 +413,97 @@ ggplot(data = bank) +
     fun.ymax = max,
     fun.y = median
   )
+```
 
-# Position for bar
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "dodge")
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill")
+# Facets
+```{r, echo = T}
+# If just want to
+ggplot(data = bank) + 
+  geom_point(mapping = aes(x = age, y = duration)) + 
+  facet_wrap(~ education, nrow = 2)
+```
 
-# Variations
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill") + coord_flip()
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill") + coord_polar()
+# Facets - finding the best
+```{r, echo = T}
+# doesn't look great because we have so many jobs.
+ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(job ~ .)
 
+# Not a good choice, neither
+ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(. ~ job)
 
+# Can we do better?
+ggplot(bank, aes(campaign)) + geom_histogram() + facet_grid(. ~ job)
 
+ggplot(bank, aes(duration)) + geom_histogram(aes(color = job)) + facet_grid(. ~ job)
 
+# facet with points is good
+ggplot(bank, aes(balance, age)) + geom_point() + facet_grid(. ~ job)
+# do better
+ggplot(bank, aes(balance, age)) + geom_point(aes(color = job)) + facet_grid(. ~ job)
 
-# add theme
+# Can we apply points between age and balance?
+ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth() + facet_grid(. ~ job)
+
+# Smooth line is mixed with points
+ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) + geom_smooth() + facet_grid(. ~ job)
+```
+
+# With facets or without facets?
+```{r, echo = T}
+ggplot(bank, aes(previous)) + geom_histogram() + facet_grid(. ~ job)
+# v.s.
+ggplot(bank, aes(previous)) + geom_histogram(aes(fill = job)) + facet_grid(. ~ job)
+# v.s.
+ggplot(bank, aes(previous)) + geom_density(aes(fill = job))
+```
+
+# With facets or without facets - Case 2?
+```{r, echo = T}
+ggplot(bank, aes(previous)) + geom_histogram() + facet_grid(. ~ marital)
+# v.s.
+ggplot(bank, aes(previous)) + geom_density(aes(fill = marital))
+# v.s.
+ggplot(bank, aes(previous)) + geom_density(aes(fill = marital), alpha = 0.7) + xlim(1, 10)
+```
+
+# Facets in the full power.
+```{r, echo = T}
+# Levels gives more control to the layer and style.
+cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
+# The age_group variable is now a categorical factor variable containing 3 levels, indicating the ranges of age.
+bank$age_group <- cut(bank$age, cutpoints)
+levels(bank$age_group)
+# Use facet_wrap to specify nrow/ncol.
+ggplot(bank, aes(age, duration)) +
+  geom_point(alpha = 1/3) + 
+  facet_wrap(job ~ age_group, nrow = 2) + # ncol = number of cuts 3 = length(levels(bank$age_group))
+  geom_smooth(method="lm", se=FALSE, col="steelblue") + 
+  theme_bw(base_family = "Avenir", base_size = 10) + 
+  labs(x = "age", y = expression("log " * Duration)) + 
+  scale_y_log10() +
+  labs(title = "Bank Clients")  
+```
+
+# Add theme
 default theme is theme_gray()
-g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
-g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_times()
 
-g <- ggplot(bank, aes(x = age, y = log(duration)))
+```{r, echo = T}
+g <- ggplot(bank, aes(x = age, y = log10(duration)))
 g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
-g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw() +
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_void()
+
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_minimal() +
     labs(title = "Duration is longer with age",
-         subtitle = "some random plot",
-         caption = "from MFE") +
+        subtitle = "some random plot",
+        caption = "from MFE") +
     labs(x = "age", y = expression("log " * Duration))
+```
 
+# ggthemes
+- package `ggthemes` provides many other themes.
 
-# Add themes
-package ggthemes provides many classical themes.
-
+```{r, echo = T}
+library(ggthemes)
 ## [1] "theme_base" "theme_calc"
 ## [3] "theme_economist" "theme_economist_white"
 ## [5] "theme_excel" "theme_few"
@@ -247,6 +514,7 @@ package ggthemes provides many classical themes.
 ## [15] "theme_solarized" "theme_solarized_2"
 ## [17] "theme_solid" "theme_stata"
 ## [19] "theme_tufte" "theme_wsj"
+```
 
 # ggplot summary
 ggplot(data = <DATA>) + 
@@ -260,7 +528,8 @@ ggplot(data = <DATA>) +
 
 # ggplot: one more thing.
 ```{r echo = FALSE}
-install.packages("maps")
+# install.packages("maps")
+library(maps)
 nz <- map_data("nz")
 ggplot(nz, aes(long, lat, group = group)) +
   geom_polygon(fill = "white", colour = "black") +
@@ -272,35 +541,10 @@ ggplot(world, aes(long, lat, group = group)) +
   coord_quickmap()
 ```
 
-
-# model
-models <- mtcars %>% 
-  split(.$cyl) %>% 
-  map(function(df) lm(mpg ~ wt, data = df))
-
-models <- mtcars %>% 
-  split(.$cyl) %>% 
-  map(~lm(mpg ~ wt, data = .))
-
-# model with Modelr
-
-library(modelr)
-
-mod <- lm(log(balance) ~ log(age), data = bank)
-
-bank1 <- filter(bank, default == "no" & balance > 0)
-mod <- lm(log(balance) ~ log(age), data = bank1)
-
-bank2 <- bank1 %>% 
-  add_residuals(mod) %>% 
-  mutate(resid = exp(resid))
-
-ggplot(data = bank2) + 
-  geom_point(mapping = aes(x = age, y = resid))
-
-# Question?
-Age with respect to anything else.
-With facets
+# Assignment
+- In an R Markdown document (output: html), produce 10 data insights about 5.
+    + Each with a figure and a data story.
+    + You can write about existing examples, up to 5.
 
 # Lecture 9: Shiny
 
@@ -423,6 +667,7 @@ If we need to generate multiple plots. ggplot has a companion package to arrange
 
 SxS: side by side
 ```{r, echo = T}
+library(gridExtra)
 p1 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill") + coord_polar()
 p2 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = education), position = "fill") + coord_polar()
 grid.arrange(p1, p2, ncol=2, nrow=1)
@@ -437,7 +682,7 @@ library(tibble)
 library(ggplot2)
 library(gridExtra)
 
-df <- tibble(x = rnorm(100), y = rnorm(1000))
+df <- tibble(x = rnorm(1000), y = rnorm(1000))
 
 hist_top <- ggplot(df, aes(x = x)) + geom_density()
 
@@ -452,7 +697,7 @@ scatter <- ggplot(df, aes(x = x, y = y)) + geom_point()
 
 hist_right <- ggplot(df, aes(x = y)) + geom_density() + coord_flip()
 
-grid.arrange(hist_top, empty, scatter, hist_right, ncol=2, nrow=2, widths=c(4, 2), heights=c(1, 4))
+grid.arrange(hist_top, empty, scatter, hist_right, ncol=2, nrow=2, widths=c(3.5, 0.7), heights=c(1, 4))
 ```
 
 # knitr/kableExtra
@@ -477,254 +722,67 @@ https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_ht
 
 - style
 
-    kable(dt, "html") %>%
-      kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
-                    font_size = 12,
-                    full_width = F, # True for left-to-right width
-                    position = "left") # if full_width == F
+```{r, echo = T}
+mtcars[1:10, , drop = F] %>%
+kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                font_size = 12,
+                full_width = F, # True for left-to-right width
+                position = "left") # if full_width == F
+```
 
 - column_spec
 
+```{r, echo = T}
+mtcars[1:10, , drop = F] %>%
+kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                font_size = 12,
+                full_width = F, # True for left-to-right width
+                position = "left") %>% # if full_width == F
     column_spec(1, bold = T, border_right = T) %>%
     column_spec(2, width = "30em", background = "yellow")
+```
 
 - row_spec
-
+```{r, echo = T}
+mtcars[1:10, , drop = F] %>%
+kable("html") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
+                font_size = 12,
+                full_width = F, # True for left-to-right width
+                position = "left") %>% # if full_width == F
     column_spec(5:7, bold = T) %>%
     row_spec(3:5, bold = T, color = "white", background = "#D7261E")    
+```
+
 
 - cell_spec
 
-    mtcars[1:10, 1:2] %>%
-      mutate(
-        car = row.names(.),
-        # You don't need format = "html" if you have ever defined options(knitr.table.format)
-        mpg = cell_spec(mpg, "html", color = ifelse(mpg > 20, "red", "blue")),
-        cyl = cell_spec(cyl, "html", color = "white", align = "c", angle = 45, 
-                        background = factor(cyl, c(4, 6, 8), 
-                                            c("#666666", "#999999", "#BBBBBB")))
-      ) %>%
-      select(car, mpg, cyl) %>%
-      kable("html", escape = F) %>%
-      kable_styling("striped", full_width = F)
-
-    volatility surface.
-
-    Include all cells for colors, using gather, cell_spec, then spread
-
-iris[1:10, ] %>%
-  mutate_if(is.numeric, function(x) {
-    cell_spec(x, "html", bold = T, color = spec_color(x, end = 0.9),
-              font_size = spec_font_size(x))
-  }) %>%
-  mutate(Species = cell_spec(
-    Species, "html", color = "white", bold = T,
-    background = spec_color(1:10, end = 0.9, option = "A", direction = -1)
-  )) %>%
-  kable("html", escape = F, align = "c") %>%
-  kable_styling("striped", full_width = F)
-
-# Lecture 10: Model 
-
-First, you define a family of models that express a precise, but generic, pattern that you want to capture. For example, the pattern might be a straight line, or a quadatric curve. You will express the model family as an equation like y = a_1 * x + a_2 or y = a_1 * x ^ a_2. Here, x and y are known variables from your data, and a_1 and a_2 are parameters that can vary to capture different patterns.
-
-Next, you generate a fitted model by finding the model from the family that is the closest to your data. This takes the generic model family and makes it specific, like y = 3 * x + 7 or y = 9 * x ^ 2.
-
-install.package("purrr", "modelr")
-library(purrr)
-library(modelr)
-
-# Data set
-sim1
-
-model1 <- function(a, data) {
-  a[1] + data$x * a[2]
-}
-
-measure_distance <- function(mod, data) {
-  diff <- data$y - model1(mod, data)
-  sqrt(mean(diff ^ 2))
-}
-best <- optim(c(0, 0), measure_distance, data = sim1)
-best$par
-
-sim1_mod <- lm(y ~ x, data = sim1)
-coef(sim1_mod)
-
-# prediction is for the new data
-sim1 %>%
-data_grid(x) %>% # generate data set.
-add_predictions(sim1_mod) 
-
-ggplot(sim1, aes(x)) +
-  geom_point(aes(y = y)) +
-  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
-
-# residual is for the existing data
-add_residuals(sim1_mod, sim1)
-
-ggplot(sim1, aes(resid)) + 
-  geom_freqpoly(binwidth = 0.5)
-
-# apply it for the bank dataset
-ggplot(bank) + geom_bar(aes(x = age, fill = y))
-
-model_matrix(bank, y ~ age)
-
-bank_mod <- lm(y ~ age, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
-
-# add_prediction
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod)
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod) %>% ggplot(aes(x = age, y = pred)) + geom_point()
-
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
-ggplot(aes(resid)) + 
-  geom_freqpoly(binwidth = 0.05) 
-
-# 2nd model
-bank_mod <- lm(y ~ age * job, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age, job) %>%
-  add_predictions(bank_mod) %>%
-  ggplot(aes(x = age, colour = job)) + geom_line(aes(y = pred))
-
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
-ggplot(aes(x = age, resid, colour = job)) +
-  geom_point()
-
-# model 
-model_matrix(df, y ~ I(x^2) + x)
-
-# try age with balance?
-
-with different jobs
-
-by_job <- group_by(bank, job) %>% nest()
-job_balance <- function(df) {
-  lm(balance ~ age, data = df)
-}
-models <- mutate(by_job, model = purrr::map(data, job_balance))
-
-by_job_res <- models %>%
-  mutate(resids = map2(data, model, add_residuals))
-
-resids <- unnest(by_job_res, resids)
-
-resids %>% 
-  ggplot(aes(age, resid)) +
-    geom_line(aes(colour = job)) + 
-    geom_smooth(se = FALSE)
-
-resids %>%
-  ggplot(aes(age, resid, group = job)) +
-    geom_line(alpha = 1 / 3) + 
-    facet_wrap(~job)
-
-# natural spine
-
-mod1 <- lm(y ~ ns(x, 1), data = sim5)
-
-mod1 <- lm(y ~ x1 + x2, data = sim3)
-mod2 <- lm(y ~ x1 * x2, data = sim3)
-
-# Regression Model
-```{r, echo = T}
-library(ggplot2)
-
-set.seed(123)
-N <- 1000
-x <- rnorm(N)
-f <- function(x) 50*x^2/(1 + 4*x) # data-simulating function
-
-y <- f(x) + rnorm(N, sd=3)
-
-point_data <- data.frame(x, y)
-
-library("tidyverse")
-
-ggplot(point_data, aes(x=x, y=y)) + 
-  geom_point() + 
-  ylim(-100, 100) + 
-  ggtitle("simulated data points")
-
-fit_pade <- function(point_data){
-  fit <- lm(y ~ x + I(x^2) + I(y*x) + I(y*x^2), point_data)
-  lm_coef <- as.list(coef(fit))
-  names(lm_coef) <- c("a0", paste0(rep(c('a','b'), each=2), 1:2))
-  
-  with(lm_coef, function(x)(a0 + a1*x + a2*x^2)/(1 - b1*x - b2*x^2))
-}
-
-plot_fitted_function <- function(x_data, fitted_fun, title){
-  x_data$y_hat <- fitted_fun(x_data$x)
-  g <- ggplot(x_data, aes(x=x, y=y)) + 
-    geom_point() + ylim(-100, 100) +
-    geom_line(aes(y=y_hat), col="red", size=1) + 
-    ggtitle(title)
-  
-  plot(g)
-}
-
-pade_approx <- fit_pade(point_data)
-
-plot_fitted_function(point_data, pade_approx, title="fitted function")
-
-function_list <- list(
-  function(x) (100 - 50*x - 100*x^2)/(1 - 50*x - 5*x^2),
-  function(x) (100 - 50*x - 100*x^2)/(1 - 10*x - 5*x^2),
-  function(x) (100 - 50*x - 100*x^2)/(1 - 10*x - 10*x^2)
-)
-
-for (f in function_list){
-  sim_data <- point_data %>% mutate(y=f(x) + 
-                                      rnorm(nrow(point_data), sd=3))
-  plot_fitted_function(sim_data, fit_pade(sim_data), 
-                       title=as.character(deparse(f))[2])
-}
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("imgs/virdis.png")
 ```
 
-# K-means
-# K-means between two categorical variables
-dev.off()
-data.model <- select(bank, balance, education) %>% mutate(education = factor(education))
-plot(data.model)
-combination <- model.matrix(~ . - 1, data.model)
-data.model$cl <- kmeans(combination, 4)$cluster
-with(data.model, plot(balance, education, col = cl))
+```{r, echo = T}
+vol_surface <- tibble(tenor = c("1M", "2M", "3M", "6M"),
+                      `0.1` = c(0.472, 0.435, 0.391, 0.29),
+                      `0.25` = c(0.431, 0.41, 0.337, 0.28),
+                      `0.5` = c(0.398, 0.30, 0.251, 0.2),
+                      `0.75` = c(0.428, 0.336, 0.307, 0.249),
+                      `0.9` = c(0.457, 0.411, 0.391, 0.278))
 
-# K-means between one categorical variable + one numeric variable
-dev.off()
-data.model <- select(bank, job, education) %>% mutate(job = factor(job), education = factor(education))
-plot(data.model)
-combination <- model.matrix(~ . - 1, data.model)
-data.model$cl <- kmeans(combination, 2)$cluster
-with(data.model, plot(job, education, col = cl))
-
-# K-means between two numeric variables
-dev.off()
-data.model <- select(bank, balance, duration)
-plot(data.model)
-data.model$cl <- kmeans(data.model[, 1:2], 4)$cluster
-with(data.model, plot(balance, duration, col = cl))
-with(data.model, text(balance, duration, col=cl))
-
-# draw the 
-
-library(xts)
-xts object => store prices and retrieve.
-
-library(fOption)
-
-Option valuation.
-
-How to value a portfolio of stocks?
-
-How to value a portfolio of options?
-
-How to simulate portfolio gain.
-
-How to do SVD analysis?
-
-
-# Object way and Data frame way
-sample option portfolio
-sample stock portfolio
+# Coloring for volatility surface:
+# Include all cells for colors, using gather, cell_spec, then spread
+library(knitr)
+library(kableExtra)
+gather(vol_surface, key = "delta", value = "vol", -tenor) %>%
+# cell_spec takes column vol. spec_color also takes column vol values into consideration.
+# We take half of the spectrurm - yellow to red.
+# Color specturm: "magma" (or "A"), "inferno" (or "B"), "plasma" (or "C"), and "viridis" (or "D", the default option).
+mutate(vol = cell_spec(
+    vol, "html", color = "black", bold = T,
+    background = spec_color(vol, begin = 0.5, end = 1, option = "A", direction = -1))) %>%
+spread(key = "delta", value = "vol") %>%
+  kable("html", escape = F, align = "c") %>%
+  kable_styling("striped", full_width = F)
+```
