@@ -17,7 +17,7 @@ library(gridExtra)
 library(maps)
 library(knitr)
 library(kableExtra)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
@@ -52,7 +52,7 @@ knitr::include_graphics("imgs/main-qimg-bf859b506013fd60589a28be4c3f9e47.png")
 # ggplot system
 
 ```{r, echo = T}
-library(ggplot2)
+# library(ggplot2)
 ggplot(airquality, aes(Temp, Ozone)) + 
         geom_point() + 
         geom_smooth(method = "loess", se = FALSE)
@@ -79,7 +79,7 @@ knitr::include_graphics("imgs/ggplot2-basics.png")
           geom_point() + # this would get data = d1
           geom_point(data = d2, ...) # this would get data = d2
 
-- This would result in error
+- Below would result in error
 
         ggplot(data = <DATA>, ...)
         + <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
@@ -87,13 +87,10 @@ knitr::include_graphics("imgs/ggplot2-basics.png")
 # Simply plot x and y
 
     ggplot(bank, aes(age, balance)) + geom_point()
-    ggplot(bank, aes(age, balance, color = job)) + geom_point()
 
 
-```{r, echo = F, out.height = '20%', out.width="100%"}
-p1 <- ggplot(bank, aes(age, balance)) + geom_point()
-p2 <- ggplot(bank, aes(age, balance, color = job)) + geom_point()
-grid.arrange(p1, p2, ncol = 2, widths = c(1.5,2))
+```{r, echo = F, fig.width=10, fig.height=5}
+ggplot(bank, aes(age, balance)) + geom_point()
 ```
 
 # `aes` and `aes_string`
@@ -127,10 +124,10 @@ ggplot(bank, aes(job, age)) + geom_point()
     ggplot(bank, aes(age, balance)) + geom_point() + geom_smooth()
     ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth()
 
-```{r, echo = F, out.height = '30%', out.width = '100%'}
+```{r, echo = F, fig.width=10, fig.height = 4}
 p1 <- ggplot(bank, aes(age, balance)) + geom_point() + geom_smooth()
 p2 <- ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth()
-grid.arrange(p1, p2, ncol = 2, widths = c(1.5,2))
+grid.arrange(p1, p2, ncol = 2, widths = c(1.35,2))
 ```
 
 # Pass `aes` down
@@ -143,19 +140,24 @@ geom_point()
 
 # Pass `aes` down
 ```{r, echo = T}
-# This is equivalent to below
+# This is equivalent to below. But this is a bit repeating.
 ggplot(bank) +
 geom_point(aes(x = age, y = duration)) +
 geom_smooth(aes(x = age, y = duration))
 ```
 
 # Pass `aes` down
-```{r, echo = T}
-# But we can do specify different data and aes for different geom_* functions.
+```{r, echo = T, fig.height=3}
+# But repeating is useful sometimes.
+# we can do specify different data and aes for different geom_* functions.
 ggplot(bank) +
 geom_point(aes(x = age, y = duration)) +
-geom_smooth(data = filter(bank, age > median(age)), aes(x = age, y = duration), color = "green") +
-geom_smooth(data = filter(bank, age <= median(age)), aes(x = age, y = duration), color = "red")
+geom_smooth(data = dplyr::filter(bank, job == "entrepreneur"),
+            aes(x = age, y = duration), color = "green") +
+geom_smooth(data = dplyr::filter(bank, job == "blue-collar"),
+            aes(x = age, y = duration), color = "blue") +
+geom_smooth(data = dplyr::filter(bank, job != "entrepreneur"),
+            aes(x = age, y = duration), color = "orange")
 ```
 
 # Adjustment: legend bottom
@@ -196,21 +198,15 @@ scale_y_log10()
 ```
 
 # Each `+` is a layer
-```{r, echo = T, results = "hide"}
-# Nearly empty chart.
-g <- ggplot(bank, aes(x = age, y = duration))
-g
 
-# This is almost empty
-g <- ggplot(bank)
-g
+    # Nearly empty chart.
+    g <- ggplot(bank, aes(x = age, y = duration))
+    # This is almost empty
+    g <- ggplot(bank)
+    # This is really empty.
+    g <- ggplot()
 
-# This is really empty.
-g <- ggplot()
-g
-```
-
-```{r, echo = F, out.width="100%", out.height="100%"}
+```{r, echo = F, fig.width=10, fig.height = 4}
 # Nearly empty chart.
 g1 <- ggplot(bank, aes(x = age, y = duration))
 g2 <- ggplot(bank)
@@ -231,7 +227,7 @@ g + geom_point() + geom_smooth()
 ```
 
 # `g` can be re-used.
-- `g` can be re-used. It's good to be used when we want to exploratory data. 
+- `g` can be re-used. It's good to be used when we want to exploratory data and try to plot many figures.
 - Fixed a few variables in `g <- ggplot(data, aes(...))`.
 - Use `g + geom_XXX()` to find the best representation for the relationship.
 
@@ -241,14 +237,48 @@ g + geom_point() + geom_smooth()
         g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 
 # `g`: mix and match
-- Please find the matched figure to the command
 
-```{r, echo = F, out.height="100%", out.width="100%"}
-p1 <- g + geom_point(aes(color = job), size = 4, alpha = 1/2)
-p2 <- g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
-p3 <- g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
-p4 <- g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
-grid.arrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
+    g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
+    g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+    g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
+
+
+```{r, echo = F}
+g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+```
+
+# `g`: mix and match
+
+    g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
+    g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+    g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
+
+```{r, echo = F}
+g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
+```
+
+# `g`: mix and match
+
+    g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
+    g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+    g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
+
+```{r, echo = F}
+g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+```
+
+# `g`: mix and match
+
+    g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
+    g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2)
+    g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
+
+```{r, echo = F}
+g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
 ```
 
 # Differentiate groups - `shape`
@@ -340,12 +370,12 @@ ggplot(bank, aes(age, job)) + geom_point()
 ```
 
 # Exercise 
-2. I tried to plot between job, loan and age. Better idea? 
-```{r, echo = T, out.width="100%"}
+2. I tried to plot between job, loan and age. Any better idea? 
+```{r, echo = T}
 ggplot(bank, aes(age, job, color = loan)) + geom_point()
 ```
 
-```{r, echo = F, results = "hide" }
+```{r, echo = F, fig.show = "hide"}
 ggplot(bank, aes(age, job, color = loan, size = loan)) + geom_point()
 ```
 
@@ -408,7 +438,7 @@ ggplot(data = bank, mapping = aes(x = age, colour = job)) + geom_freqpoly(binwid
 
 # geom_bar
 - `bar` is a statistical function: It counts.
-```{r, echo = T, results='hide'}
+```{r, echo = T, fig.show = "hide"}
 # First input parameter to geom_bar is mapping, so we can skip it.
 ggplot(bank) + geom_bar(mapping = aes(x = age))
 ```
@@ -418,20 +448,25 @@ ggplot(bank) + geom_bar(mapping = aes(x = age))
 ggplot(bank) + geom_bar(aes(x = age))
 ```
 
-# geom_bar with fill job
+# geom_bar with fill: job
 ```{r, echo = T}
 # comparing to colour, for Bar, we better use fill
 # ggplot(data = bank, ) + geom_bar(aes(x = age, colour = job))
 ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
 ```
 
-# geom_bar with fill age
-```{r, echo = T}
-ggplot(bank) +
-  geom_bar(mapping = aes(x = job))
-# Color doesn't work, because age is a continous variable.
-ggplot(bank) +
-  geom_bar(mapping = aes(x = job, fill = age)) 
+# geom_bar with fill: age
+
+    ggplot(bank) +
+      geom_bar(mapping = aes(x = job))
+    # Color doesn't work, because age is a continous variable.
+    ggplot(bank) +
+      geom_bar(mapping = aes(x = job, fill = age)) 
+
+```{r, echo = F, fig.height=5, fig.width=10}
+p1 <- ggplot(bank) + geom_bar(mapping = aes(x = job))
+p2 <- ggplot(bank) + geom_bar(mapping = aes(x = job, fill = age)) 
+grid.arrange(p1, p2, ncol = 2, widths = c(2, 2))
 ```
 
 # Position for bar
@@ -442,13 +477,15 @@ ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
 # Position for bar: fill
 ```{r, echo = T}
 # fill to 100%
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill")
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job),
+                        position = "fill")
 ```
 
 # Position for bar: dodge
 ```{r, echo = T}
 # dodge means "adaptive width of the bar"
-ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "dodge")
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job),
+                        position = "dodge")
 ```
 
 # Variations: coord_flip
@@ -478,40 +515,47 @@ scale_x_reverse()
 
 # geom_bar: better serves for categorical data
 ```{r, echo = T}
-ggplot(data = bank, mapping = aes(x = job, fill = education)) + geom_bar()
+ggplot(data = bank, mapping = aes(x = job, fill = education)) +
+  geom_bar() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 # geom_bar: coord_flip
 ```{r, echo = T}
-ggplot(data = bank, mapping = aes(x = job, fill = education)) + geom_bar() + coord_flip()
+ggplot(data = bank, mapping = aes(x = job, fill = education)) +
+  geom_bar() + coord_flip()
 ```
 
 # geom_bar: sort job by mean age
 ```{r, echo = T}
-ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = mean), fill = education)) +
-  geom_bar() +
-  coord_flip()
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = mean),
+       fill = education)) +
+  geom_bar() + coord_flip()
 ```
 
 # geom_bar: sort job by alphabetical order
 ```{r, echo = T}
 # If we want to order job according to alphabetical order.
 # use rev(levels(...))
-ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = education)) +
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),
+       fill = education)) +
   geom_bar() +
   scale_x_discrete(limit = rev(levels(bank$job))) +
   coord_flip()
 ```
 
 # Bar with composite data
-```{r, echo = T, results = 'hide'}
-ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = education)) +
+```{r, echo = T, fig.show = "hide"}
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),
+       fill = education)) +
   geom_bar() +
   # If we want to sort the job acccording to median age
-  scale_x_discrete(limit = rev(levels(reorder(bank$job, bank$age, FUN = median)))) +
+  scale_x_discrete(limit =
+    rev(levels(reorder(bank$job, bank$age, FUN = median)))) +
   geom_line(aes(x = job, y = age)) +
   # And also add age range and median age.
-  geom_point(data = group_by(bank, job) %>% summarize(age = median(age)) %>% ungroup,
+  geom_point(data = group_by(bank, job) %>%
+               summarize(age = median(age)) %>% ungroup,
             aes(x = job, y = age), inherit.aes = FALSE) +
   xlab("Job sorted according to\nMedian age\n(Top - younger)") +
   coord_flip()
@@ -547,7 +591,7 @@ ggplot(data = bank) +
 - `facet_grid`: basic
 - `facet_wrap`: you can control number of rows and cols
 
-```{r, echo = T}
+```{r, echo = T, fig.heght=3}
 ggplot(data = bank) + 
   geom_point(mapping = aes(x = age, y = duration)) + 
   facet_grid( ~ education)
@@ -566,7 +610,7 @@ ggplot(data = bank) +
 ggplot(data = bank) + 
   geom_point(mapping = aes(x = age, y = duration)) + 
   facet_wrap(loan ~ education ~ housing, nrow = 2)
-  # facet_grid(loan ~ education ~ housing)
+  # or we can use, facet_grid(loan ~ education ~ housing)
 ```
 
 # Facets - finding the best
@@ -575,70 +619,119 @@ ggplot(data = bank) +
 ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(job ~ .)
 ```
 
+# Facets - finding the best. trying.
 ```{r, echo = T}
 # Not a good choice, neither
 ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(. ~ job)
 ```
 
+# Facets - finding the best. better
 ```{r, echo = T}
-
 # Can we do better?
 ggplot(bank, aes(campaign)) + geom_histogram() + facet_grid(. ~ job)
 ```
 
+# Facets - finding the best. trying another
 ```{r, echo = T}
-ggplot(bank, aes(duration)) + geom_histogram(aes(color = job)) + facet_grid(. ~ job)
+ggplot(bank, aes(duration)) + geom_histogram(aes(color = job)) +
+  facet_grid(. ~ job)
 ```
 
+# Facets - finding the best: points
 ```{r, echo = T}
 # facet with points is good
 ggplot(bank, aes(balance, age)) + geom_point() + facet_grid(. ~ job)
 ```
 
+# Facets - finding the best: better with color
 ```{r, echo = T}
 # do better
-ggplot(bank, aes(balance, age)) + geom_point(aes(color = job)) + facet_grid(. ~ job)
+ggplot(bank, aes(balance, age)) + geom_point(aes(color = job)) +
+  facet_grid(. ~ job)
 ```
 
+# Facets - finding the best: points
 ```{r, echo = T}
 # Can we apply points between age and balance?
-ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth() + facet_grid(. ~ job)
+ggplot(bank, aes(age, balance, color = job)) +
+  geom_point() + geom_smooth() +
+  facet_grid(. ~ job)
 ```
 
+# Facets - finding the best: smoothie
 ```{r, echo = T}
 # Smooth line is mixed with points
-ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) + geom_smooth() + facet_grid(. ~ job)
+ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
+  geom_smooth() +
+  facet_grid(. ~ job)
 ```
 
 # With facets or without facets?
 ```{r, echo = T}
 ggplot(bank, aes(previous)) + geom_histogram() + facet_grid(. ~ job)
-# v.s.
-ggplot(bank, aes(previous)) + geom_histogram(aes(fill = job)) + facet_grid(. ~ job)
-# v.s.
+```
+
+# With facets or without facets?
+facets with color
+```{r, echo = T}
+ggplot(bank, aes(previous)) + geom_histogram(aes(fill = job)) +
+  facet_grid(. ~ job)
+```
+
+# With facets or without facets?
+Use density/color on one figure
+```{r, echo = T}
 ggplot(bank, aes(previous)) + geom_density(aes(fill = job))
 ```
 
-# With facets or without facets - Case 2?
+# With facets or without facets - Case 2
 ```{r, echo = T}
-ggplot(bank, aes(previous)) + geom_histogram() + facet_grid(. ~ marital)
-# v.s.
-ggplot(bank, aes(previous)) + geom_density(aes(fill = marital))
-# v.s.
-ggplot(bank, aes(previous)) + geom_density(aes(fill = marital), alpha = 0.7) + xlim(1, 10)
+ggplot(bank, aes(previous)) + geom_histogram() +
+  facet_grid(. ~ marital)
 ```
 
-# Facets in the full power.
+# With facets or without facets: density and fill
 ```{r, echo = T}
+ggplot(bank, aes(previous)) + geom_density(aes(fill = marital))
+```
+
+# With facets or without facets: xlim
+```{r, echo = T}
+ggplot(bank, aes(previous)) +
+  geom_density(aes(fill = marital), alpha = 0.7) +
+  xlim(1, 10)
+```
+
+# Facets in full power
+```{r, echo = T, fig.show = "hide"}
 # Levels gives more control to the layer and style.
 cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
-# The age_group variable is now a categorical factor variable containing 3 levels, indicating the ranges of age.
+# The age_group variable is now a categorical factor variable containing
+# 3 levels, indicating the ranges of age.
 bank$age_group <- cut(bank$age, cutpoints)
 levels(bank$age_group)
 # Use facet_wrap to specify nrow/ncol.
 ggplot(bank, aes(age, duration)) +
   geom_point(alpha = 1/3) + 
-  facet_wrap(job ~ age_group, nrow = 2) + # ncol = number of cuts 3 = length(levels(bank$age_group))
+  facet_wrap(job ~ age_group, nrow = 2) +
+  geom_smooth(method="lm", se=FALSE, col="steelblue") + 
+  theme_bw(base_size = 10) + 
+  labs(x = "age", y = expression("log " * Duration)) + 
+  scale_y_log10() +
+  labs(title = "Bank Clients")  
+```
+
+# Facets in full power: plot
+```{r, echo = F, fig.height=6, fig.width=10}
+# Levels gives more control to the layer and style.
+cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
+# The age_group variable is now a categorical factor variable
+# containing 3 levels, indicating the ranges of age.
+bank$age_group <- cut(bank$age, cutpoints)
+# Use facet_wrap to specify nrow/ncol.
+ggplot(bank, aes(age, duration)) +
+  geom_point(alpha = 1/3) + 
+  facet_wrap(job ~ age_group, nrow = 2) +
   geom_smooth(method="lm", se=FALSE, col="steelblue") + 
   theme_bw(base_size = 10) + 
   labs(x = "age", y = expression("log " * Duration)) + 
@@ -649,16 +742,29 @@ ggplot(bank, aes(age, duration)) +
 # Add theme
 default theme is theme_gray()
 
-```{r, echo = T}
-g <- ggplot(bank, aes(x = age, y = log10(duration)))
-g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
-g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_void()
+    g <- ggplot(bank, aes(x = age, y = log10(duration)))
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_void()
+    
+    g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_minimal() +
+        labs(title = "Duration is longer with age",
+            subtitle = "some random plot",
+            caption = "from MFE") +
+        labs(x = "age", y = expression("log " * Duration))
 
-g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_minimal() +
+# Add theme: result
+
+```{r, echo = F, fig.height = 6, fig.width=10}
+g <- ggplot(bank, aes(x = age, y = log10(duration)))
+p1 <- g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
+p2 <- g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_void()
+
+p3 <- g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_minimal() +
     labs(title = "Duration is longer with age",
         subtitle = "some random plot",
         caption = "from MFE") +
     labs(x = "age", y = expression("log " * Duration))
+grid.arrange(p1,p2,p3,ncol=3)
 ```
 
 # ggthemes
@@ -679,24 +785,28 @@ library(ggthemes)
 ```
 
 # ggplot summary
-ggplot(data = <DATA>) + 
-  <GEOM_FUNCTION>(
-     mapping = aes(<MAPPINGS>),
-     stat = <STAT>, 
-     position = <POSITION>
-  ) +
-  <COORDINATE_FUNCTION> +
-  <FACET_FUNCTION>
 
-# ggplot: one more thing.
-```{r echo = FALSE}
+    ggplot(data = <DATA>) + 
+      <GEOM_FUNCTION>(
+         mapping = aes(<MAPPINGS>),
+         stat = <STAT>, 
+         position = <POSITION>
+      ) +
+      <COORDINATE_FUNCTION> +
+      <FACET_FUNCTION>
+
+# ggplot: one more thing: nz
+```{r echo = T}
 # install.packages("maps")
 library(maps)
 nz <- map_data("nz")
 ggplot(nz, aes(long, lat, group = group)) +
   geom_polygon(fill = "white", colour = "black") +
   coord_quickmap()
+```
 
+# ggplot: one more thing - world
+```{r echo = T}
 world <- map_data("world")
 ggplot(world, aes(long, lat, group = group)) +
   geom_polygon(fill = "white", colour = "black") +
@@ -704,40 +814,43 @@ ggplot(world, aes(long, lat, group = group)) +
 ```
 
 # Assignment
-- In an R Markdown document (output: html), produce 10 data insights about 5.
+- In an R Markdown document (output: html), produce 10 data insights.
     + Each with a figure and a data story.
-    + You can write about existing examples, up to 5.
+    + You can re-use about existing examples, up to 5.
 
 # Lecture 9: Shiny
 
-# Display output with `render*()` functions
+# Review: Display output with `render*()` functions
 
 - `render*()` arguments are code used to build and rebuild object
 - `render*()` function re-runs the code with every change in the input
+
+# Review: render/output pair
 
 * Static table from df, mat, etc.s
     + renderTable()/tableOutput()
 * Interactive table from data frame, matrix or other table-like structure
     + renderDataTable()/dataTableOutput() 
 * Plot generated on-the-fly
-    + renderPlot()/plotOutput() #
+    + renderPlot()/plotOutput()
 * Get continous output
-    renderPrint()/verbatimTextOutput() or textOutput()
+    + renderPrint()/verbatimTextOutput() or textOutput()
 * Get last result
-    renderText()verbatimTextOutput() or textOutput()
+    + renderText()verbatimTextOutput() or textOutput()
 * Customized UI elements
     + uiOutput()/renderUI()
 
-# render*
+# `render*`
+
 - Allow binding of one output to multiple inputs
 
-    output$hist <- renderPlot({
-      hist(data())
-    })
-
-    output$stat <- renderPlot({
-      summary(data())
-    })
+        output$hist <- renderPlot({
+          hist(data())
+        })
+    
+        output$stat <- renderPlot({
+          summary(data())
+        })
 
 ```{r, echo = F}
 # reactive()
@@ -750,20 +863,20 @@ ggplot(world, aes(long, lat, group = group)) +
 - Allow binding of multiple outputs to multiple inputs.
 - Use of `isolate` to *peek* the value not to react to its change every time.
 
-    actionButton(inputId = "go", label = "Click me")
-
-    observeEvent(input$go, {
-      # Use of isolate to *peek* the value not to react to it.
-      num_input <- isolate(input$num_input)
-
-      output$plot1 <- renderPlot({ 
-        # if we use input$num_input here, we build a direct reactive link
-        # between output$plot1 and input$num_input. This is not what we designed.
-        plot(1:number_input, runif(num_input))
-      })
-
-      output$table1 <- renderTable({ ... })
-    })
+        actionButton(inputId = "go", label = "Click me")
+    
+        observeEvent(input$go, {
+          # Use of isolate to *peek* the value not to react to it.
+          num_input <- isolate(input$num_input)
+    
+          output$plot1 <- renderPlot({ 
+            # if we use input$num_input here, we build a direct reactive link
+            # between output$plot1 and input$num_input. This is not what we designed.
+            plot(1:number_input, runif(num_input))
+          })
+    
+          output$table1 <- renderTable({ ... })
+        })
 
 ```{r, echo = F}
 # observe() function
@@ -788,10 +901,9 @@ ggplot(world, aes(long, lat, group = group)) +
 
 # `renderUI`
 - Dynamicaly creation of UI (user interface) with input and outputs.
-- Append new items to tagList()
+- Append new items to `tagList()`
 
-# Create dynamic output
-`tagList()`
+# Create dynamic output `tagList()`
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-34-renderUI.R"))
@@ -830,18 +942,25 @@ cat(htmltools::includeText("example/shiny-37-createDynamic.R"))
 If we need to generate multiple plots. ggplot has a companion package to arrange plots. 
 
 SxS: side by side
-```{r, echo = T}
+```{r, echo = T, fig.show="hide"}
 library(gridExtra)
-p1 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job), position = "fill") + coord_polar()
-p2 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = education), position = "fill") + coord_polar()
+p1 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job),
+                              position = "fill") + coord_polar()
+p2 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = education),
+                              position = "fill") + coord_polar()
+```
+
+```{r, echo = T, fig.height = 3}
 grid.arrange(p1, p2, ncol=2, nrow=1)
-grid.arrange(p1, p2, ncol=2, nrow=1, widths = c(4,2))
-grid.arrange(p1, p2, ncol=1, nrow=2, heights = c(4,2))
+```
+
+```{r, echo = T}
+grid.arrange(p1, p2, ncol=2, nrow=1, widths = c(4,3))
+grid.arrange(p1, p2, ncol=1, nrow=2, heights = c(2,4))
 ```
 
 # ggplot/gridExtra
-a bit more complicated
-```{r, echo = T}
+```{r, echo = T, fig.show = "hide"}
 library(tibble)
 library(ggplot2)
 library(gridExtra)
@@ -861,7 +980,36 @@ scatter <- ggplot(df, aes(x = x, y = y)) + geom_point()
 
 hist_right <- ggplot(df, aes(x = y)) + geom_density() + coord_flip()
 
-grid.arrange(hist_top, empty, scatter, hist_right, ncol=2, nrow=2, widths=c(3.5, 0.7), heights=c(1, 4))
+grid.arrange(hist_top, empty, scatter, hist_right,
+             ncol=2, nrow=2,
+             widths=c(3.5, 0.7), heights=c(1, 4))
+```
+
+# ggplot/gridExtra: result
+
+```{r, echo = FALSE, fig.height = 6, fig.width = 6}
+library(tibble)
+library(ggplot2)
+library(gridExtra)
+
+df <- tibble(x = rnorm(1000), y = rnorm(1000))
+
+hist_top <- ggplot(df, aes(x = x)) + geom_density()
+
+empty <-
+  ggplot()+geom_point(aes(1,1), colour="white")+
+  theme(axis.ticks=element_blank(), 
+        panel.background=element_blank(), 
+        axis.text.x=element_blank(), axis.text.y=element_blank(),
+        axis.title.x=element_blank(), axis.title.y=element_blank())
+
+scatter <- ggplot(df, aes(x = x, y = y)) + geom_point()
+
+hist_right <- ggplot(df, aes(x = y)) + geom_density() + coord_flip()
+
+grid.arrange(hist_top, empty, scatter, hist_right,
+             ncol=2, nrow=2,
+             widths=c(3.5, 0.7), heights=c(1, 4))
 ```
 
 # knitr/kableExtra
@@ -895,7 +1043,7 @@ kable("html") %>%
                 position = "left") # if full_width == F
 ```
 
-- column_spec
+# kable_styling: column_spec
 
 ```{r, echo = T}
 mtcars[1:10, , drop = F] %>%
@@ -908,7 +1056,7 @@ kable("html") %>%
     column_spec(2, width = "30em", background = "yellow")
 ```
 
-- row_spec
+# kable_styling: row_spec
 ```{r, echo = T}
 mtcars[1:10, , drop = F] %>%
 kable("html") %>%
@@ -920,10 +1068,9 @@ kable("html") %>%
     row_spec(3:5, bold = T, color = "white", background = "#D7261E")    
 ```
 
+# kable_styling: cell_spec
 
-- cell_spec
-
-```{r, echo = FALSE, out.width = "75%"}
+```{r, echo = FALSE, out.width = "45%"}
 knitr::include_graphics("imgs/virdis.png")
 ```
 
@@ -942,10 +1089,12 @@ library(kableExtra)
 gather(vol_surface, key = "delta", value = "vol", -tenor) %>%
 # cell_spec takes column vol. spec_color also takes column vol values into consideration.
 # We take half of the spectrurm - yellow to red.
-# Color specturm: "magma" (or "A"), "inferno" (or "B"), "plasma" (or "C"), and "viridis" (or "D", the default option).
+# Color specturm: "magma" (or "A"), "inferno" (or "B"),
+# "plasma" (or "C"), and "viridis" (or "D", the default option).
 mutate(vol = cell_spec(
     vol, "html", color = "black", bold = T,
-    background = spec_color(vol, begin = 0.5, end = 1, option = "A", direction = -1))) %>%
+    background = spec_color(vol, begin = 0.5, end = 1,
+                            option = "A", direction = -1))) %>%
 spread(key = "delta", value = "vol") %>%
   kable("html", escape = F, align = "c") %>%
   kable_styling("striped", full_width = F)

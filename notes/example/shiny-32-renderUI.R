@@ -26,7 +26,9 @@ server <- function(input, output, session) {
             (tags[["h6"]])(toupper("h6"))
           }
         },
-        numericInput("num_plot", "Give a number", value = round(runif(1, min = 0, max = nrow(iris)), 0), min = 0, max = nrow(iris)),
+        numericInput("num_plot", "Give a number",
+          value = round(runif(1, min = 0, max = nrow(iris)), 0),
+          min = 0, max = nrow(iris)),
         plotOutput("plot"),
         
         tags$h3("kable can't be used with tagList."),
@@ -40,7 +42,8 @@ server <- function(input, output, session) {
     # This is particularly useful for creating multiple plots and tables.
     output$plot <- renderPlot({
       if (input$num_plot > 0) {
-        ggplot(iris[1:input$num_plot, , drop = F], aes(x = Sepal.Length, y = Petal.Width)) +
+        ggplot(iris[1:input$num_plot, , drop = F],
+               aes(x = Sepal.Length, y = Petal.Width)) +
           geom_point() +
           geom_smooth() +
           theme_minimal()
