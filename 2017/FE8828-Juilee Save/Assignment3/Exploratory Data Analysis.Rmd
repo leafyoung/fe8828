@@ -1,0 +1,79 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Juilee Save <sub> <Email:juilee001@e.ntu.edu.sg> </sub>"
+date: "Nov 23, 2017"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding 1
+This data contains `r nrow(bank)` rows.
+
+# Finding 2
+The average balance in the accounts is `r round(summarise(bank, total = mean(balance)), digits = 2)` Euros.
+
+# Finding 3
+The number of distinct job categories is `r nrow(bank %>%  group_by(job) %>% summarise(count = n_distinct(job)))`
+
+# Finding 4
+The percentage of defaults is `r round(nrow(filter(bank, default == "yes"))/nrow(bank)*100, digits = 2)`%
+
+# Finding 5
+Customers grouped by education
+```{r, echo = F}
+group_by(bank, education) %>% 
+summarise(n = n()) -> res
+res
+```
+
+# Finding 6
+Mean balance of customers having loan, grouped by job
+```{r, echo = F}
+bank %>%
+group_by(job) %>%
+filter(loan == "yes") %>%
+summarise(mean(balance))
+```
+
+# Finding 7
+Maximum balance of customer in each job group, arranged in descending order
+```{r, echo = F}
+bank %>%
+group_by(job) %>%
+summarise(max_bal = max(balance)) %>%
+arrange(desc(max_bal)) -> res
+res
+```
+
+# Finding 8
+Plot age group vs mean duration of call
+```{r, echo = F}
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+summarise(mean_duration = mean(duration)) %>%
+arrange(age_group) -> res
+plot(res$age_group, res$mean_duration, xlab = "Age Group", ylab = "Duration")
+```
+
+# Finding 9
+No of customers subscribing to term deposit by campaign calls
+```{r, echo = F}
+bank %>%
+group_by(campaign, y) %>%
+filter(y == "yes") -> res
+hist(res$campaign, main = "Customers subscribing to term deposits", xlab = "No of campaign calls")
+```
+
+# Finding 10
+Mean duration of campaign calls grouped by month
+```{r, echo = F}
+bank %>%
+group_by(month) %>%
+summarise(mean_duration = mean(duration)) -> res
+res
+```

@@ -2,7 +2,7 @@ library(tibble)
 library(ggplot2)
 library(gridExtra)
 
-df <- tibble(x = rnorm(100), y = rnorm(1000))
+df <- tibble(x = rnorm(1000), y = rnorm(1000))
 
 # hist_top <- ggplot() + geom_histogram(aes(rnorm(100)))
 hist_top <- ggplot(df, aes(x = x)) + geom_density()

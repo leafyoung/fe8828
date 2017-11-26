@@ -1,0 +1,105 @@
+---
+title: "Assignment 3 Part 1"
+author: "Bryan Lim"
+date: "26 November 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+#Finding 1
+The number of total default cases is:
+```{r Finding 1, echo=FALSE}
+nrow(filter(bank, default == "yes"))
+```
+This represents (in %)
+```{r}
+nrow(filter(bank, default == "yes"))/nrow(bank) * 100
+```
+of the total cases.
+
+
+#Finding 2
+The proportion (%) of default cases that have a housing loan is:
+```{r, Finding 2, echo=FALSE}
+default_housing_balance <- filter(select(bank, default, housing, balance), default == "yes")
+nrow(filter(default_housing_balance, housing == "yes"))/nrow(default_housing_balance) * 100
+```
+
+
+#Finding 3
+The average yearly balance of cases with a housing loan is:
+```{r, Finding 3, echo=FALSE}
+housing_balance <- filter(select(bank, housing, balance),housing == "yes")
+summarize(housing_balance, mean(balance))
+
+```
+
+
+#Finding 4
+This is compared with the average for default cases with a housing loan:
+```{r, Finding 4, echo=FALSE}
+summarize(default_housing_balance, mean(balance))
+```
+
+
+#Finding 5 
+The mean, maximum and minimum age of the default cases are:
+```{r, Finding 5 , echo =FALSE}
+default_age <- filter(select(bank, default,age), default == "yes")
+summarize(default_age,mean(age))
+summarize(default_age, max(age))
+summarize(default_age,min(age))
+```
+
+
+#Finding 6
+The proportion (%) of default cases that were from unemployed persons is:
+```{r, Finding 6 , echo=FALSE}
+default_job <- filter(select(bank, default, job), default == "yes")
+nrow(filter(default_job, job == "unemployed"))/nrow(default_job) * 100
+```
+
+
+#Finding 7
+The breakdown of employment type for default cases is:
+```{r, Fiding 7, echo=FALSE}
+group_by(default_job, job) %>%
+  summarize(n=n())
+```
+
+
+#Finding 8 
+The breakdown of default cases by education levels with their respective mean balances is:
+```{r Finding 8, echo=FALSE}
+default <- filter(bank, default == "yes")
+group_by(default, education) %>%
+  summarise(count = n(),
+            mean_balance = mean(balance))
+```
+
+
+#Finding 9
+The breakdown of default cases by marital status with their respective mean balances is:
+```{r, Finding 9, echo=FALSE}
+group_by(default, marital) %>%
+  summarise(count = n(),
+            mean_balance = mean(balance))
+
+```
+
+
+#Finding 10
+The proportion of default cases that are married, have a secondary education, and have a housing loan is:
+```{r, Fiding 10, echo = FALSE}
+default_married_secondary_housing <- filter(bank, default == "yes"& marital == "married" & education == "secondary" & housing == "yes")
+nrow(default_married_secondary_housing)/nrow(default)
+```
+
