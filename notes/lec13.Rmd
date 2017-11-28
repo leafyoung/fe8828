@@ -21,6 +21,8 @@ knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache =
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+token_qd <- 'JyeshGuNBGDbbaYoNURG'
+token_av <- 'QWM66H05ENYFRDPO'
 ```
 <style type="text/css">
 code.r{ /* Code block */
@@ -163,7 +165,6 @@ with(data.model, text(balance, duration, col=cl))
 
 
 # Apply our data to model.
-
 ```{r, echo = T}
 library(modelr)
 
@@ -257,67 +258,119 @@ mod2 <- lm(y ~ x1 * x2, data = sim3)
 
 # Lecture 11: Financial Application
 
-# Option pricing
+# Starter
 
-library(fOption)
-library(fExoticOptions)
-
-Word of caution:
-- Please validate option pricing code. I found Asian Option in fExoticOptions is strange.
-
-# xts
-
-library(xts)
-xts object => store prices and retrieve.
-
-Convert from data to Xts object
-
-get data from xts object
-
-Create EWMA volatility
-
-```{r, echo = T}
-
-EWMAvol <- function(returns, lambda, rollwindow){
-  EWMA.mat = matrix(NA, nrow = nrow(returns), ncol = ncol(returns))
-  for (k in 1 : ncol(returns)){  
-    for (j in rollwindow : nrow(returns)){
-      td = returns
-      data = as.matrix(td[(j - rollwindow + 1) : j, k])
-      ewmaVar.mat = matrix()
-      ewmaVar.mat[1] = 0
-      for (i in 2 : rollwindow){
-        ewmaVar.mat[i] = lambda * ewmaVar.mat[i-1]+ (1 - lambda) * data[i]^2
-      }
-      EWMA.mat[j, k] = sqrt(ewmaVar.mat[length(ewmaVar.mat)])
-    }
-  }
-  return(EWMA.mat)
-}
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/biorhythm.R"))
 ```
 
-# Quandl
+```{r, echo = F}
+source("example/biorhythm.R")
+```
+
+# Main course
+
+- We need following packages as a start. Use c() to install multiple packages.
+      
+    install.packages(c("tidyquant", "Quandl", "fOptions", "fExoticOptions", "dygraph", "forecast"))
+
+- tidyquant is also a collection of packages: xts/quantmod
+
+- Please validate option pricing code. I found Asian Option in `fExoticOptions` is strangely implemented.
+
+# tidyquant or Quandl
+Determining factor:
+
+- tidyquant/quantmod can connect to various services: google, yahoo (retiring), av (AlphaAdvantage).
+- Quandl only connects to Quandl
+- It's subject where you can find the data.
+    - US ETF on Quandl is premium. ETF in Google/AlphaAdvantage is free.
+
+Technical details:
+
+- quantmod returns `xts` object. Quandl returns data frame or `xts`
+- quantmod use assign to create variable. Quandl returns an object
+- xts can `collapse` to daily, weekly, monthly.
+
+# Tidyquant/quantmod
 
 ```{r, echo = T}
-# with AlphaAdvantage
-# QWM66H05ENYFRDPO
-getSymbols('SPY', src = 'av', adjusted = TRUE, output.size = 'full', api.key = "QWM66H05ENYFRDPO")
+library(tidyquant)
+
+# use Google
+getSymbols('SPY', src = 'google', adjusted = TRUE, output.size = 'full')
+str(SPY)
+
+# Sign up with AlphaAdvantage to get a token
+getSymbols('SPY', src = 'av', adjusted = TRUE, output.size = 'full', api.key = token_av)
+str(SPY)
 
 head(SPY)
 tail(SPY)
+
+symbols <- c("MSFT", "AAPL")
+getSymbols(symbols, src = 'google', adjusted = TRUE, from = "2016-01-01")
+
 ```
 
+# `xts` object
+- xts is a wide format. In contrast, ggplot/tidy uses long format.
+- We have gather/spread to convert between long/wide format.
+- Create xts object: put index, date usually, aside, and store prices in columns.
+
+        library(xts)    
+        # if df is a data frame.
+        # Date | V | GS
+        xts1 <- xts(x=df[, -1, drop = F], order.by = df[1])
+
+        # coredata: returns a matrix from xts objects
+        # index: vector of any Date, POSIXct, chron, yearmon, yearqtr, or DateTime classes
+        core_data <- coredata(xts2)
+        index(xts1)
+
+# Get data from `xts` object
+
+```{r, echo = T}
+str(SPY)
+```
+
+```{r, echo = T, results = "hide"}
+SPY2003 <- SPY["2003"]
+SPY2 <- SPY["2003/2007"]
+SPY3 <- SPY["2003-03-01/2007-07-01"]
+SPY4 <- SPY["/2007-07-01"]
+SPY5 <- SPY["2007-07-01/"]
+SPY6 <- SPY["2007-07-01/", "SPY.High"]
+SPY6 <- SPY["2007-07-01/", "SPY.High/SPY.Close"]
+```
+
+# Quandl
+```{r, echo = T}
+library(Quandl)
+library(tidyverse)
+
+# Sign up with Quandl to get a token
+# token <- "xxxx"
+Quandl.api_key(token_qd)
+# You don't get SPY: SPDR 500 ETF
+rates <- Quandl(c("EOD/SPY"), start_date="2000-01-01", end_date="2013-06-07")
+# You get price for Visa
+rates <- Quandl(c("EOD/V"), start_date="2000-01-01", end_date="2013-06-07" )
+# Get price for Visa in xts
+rates <- Quandl(c("EOD/V"), start_date="2000-01-01", end_date="2013-06-07", type = "xts")
+```
+
+# Quandl
 ```{r, echo = T}
 library(Quandl)					# Quandl package
 library(ggplot2)				# Package for plotting
 library(tidyverse)				# Package for reshaping data
 
-Quandl.api_key(token)				# Authenticate your token
-token <- 'JyeshGuNBGDbbaYoNURG'  		# Sign up with Quandl to get a token
-
+Quandl.api_key(token_qd)				# Authenticate your token
 # Build vector of currencies
-rates <- Quandl(c("FRED/DEXUSAL", "FRED/DEXBZUS", "FRED/DEXUSUK", "FRED/DEXCHUS"),start_date="2000-01-01",end_date="2013-06-07" )	
-meltdf <- gather(rates, key = "CCY", value = "value", -1)
+rates <- Quandl(c("FRED/DEXUSAL", "FRED/DEXBZUS", "FRED/DEXUSUK", "FRED/DEXCHUS"),start_date="2000-01-01",end_date = "2017-11-30")
+colnames(rates) <- c("Date", "AUD/USD", "USD/BRL", "GBP/USD", "USD/CNY")
+meltdf <- gather(rates, key = "CCY", value = "Rate", -Date)
 
 ggplot(meltdf, aes(x = Date, y = value, colour = CCY, group = CCY)) +
   geom_line() +
@@ -326,374 +379,82 @@ ggplot(meltdf, aes(x = Date, y = value, colour = CCY, group = CCY)) +
   theme_minimal()
 ```
 
-Optimize for Max profit
-- Bollinger band
-- Gold and Oil
+# Quandl and forecast
 
-# 
-dataChoices <- c("WTI oil" = "FRED/DCOILWTICO", #oil data from Fred
-                  "Copper" = "ODA/PCOPP_USD", # copper data from ODA
-                  "Gold" = "CHRIS/CME_GC1") # gold data from CME
-
-
-# Object way and Data frame way
-
-```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/biorhythm.R"))
+```{r, echo = T}
+cat(htmltools::includeText("example/52-quandl-forecast.R"))
 ```
 
-# Quandl and forecast
+```{r, echo = F}
+source("example/52-quandl-forecast.R")
+```
+
+# dygraph
 
 dygraph for xts
 https://rstudio.github.io/dygraphs/shiny.html
-dygraphOutput("dygraph")
 
-dygraph(oil_combined_xts, main = "Oil Prices: Historical and Forecast") %>%
-  # Add the actual series
-  dySeries("Actual", label = "Actual") %>%
-  # Add the three forecasted series
-  dySeries(c("Lo_95", "Forecast", "Hi_95"))
+    dygraphOutput("dygraph")
 
+    dygraph(oil_combined_xts, main = "Oil Prices: Historical and Forecast") %>%
+      # Add the actual series
+      dySeries("Actual", label = "Actual") %>%
+      # Add the three forecasted series
+      dySeries(c("Lo_95", "Forecast", "Hi_95"))
 
-
-```{r, echo = T}
-library(Quandl)
-library(dplyr)
-library(xts)
-library(lubridate)
-library(forecast)
-library(dygraphs)
-
-# Start with daily data. Note that "type = raw" will download a data frame.
-oil_daily <- Quandl("FRED/DCOILWTICO", type = "raw", collapse = "daily",  
-                    start_date="2006-01-01", end_date="2017-02-28")
-# Now weekely and let's use xts as the type.
-oil_weekly <- Quandl("FRED/DCOILWTICO", type = "xts", collapse = "weekly",  
-                     start_date="2006-01-01", end_date="2017-02-28")
-# And monthly using xts as the type.
-oil_monthly <- Quandl("FRED/DCOILWTICO", type = "xts", collapse = "monthly",  
-                      start_date="2006-01-01", end_date="2017-02-28")
-
-# Have a quick look at our three  objects. 
-str(oil_daily)
-
-## 'data.frame':    2809 obs. of  2 variables:
-##  $ DATE : Date, format: "2017-02-28" "2017-02-27" ...
-##  $ VALUE: num  54 54 54 54.5 53.6 ...
-##  - attr(*, "freq")= chr "daily"
-
-str(oil_weekly)
-
-## An 'xts' object on 2006-01-08/2017-03-05 containing:
-##   Data: num [1:583, 1] 64.2 63.9 68.2 67.8 65.4 ...
-##   Indexed by objects of class: [Date] TZ: UTC
-##   xts Attributes:  
-##  NULL
-
-str(oil_monthly)
-
-## An 'xts' object on Jan 2006/Feb 2017 containing:
-##   Data: num [1:134, 1] 67.9 61.4 66.2 71.8 71.4 ...
-##   Indexed by objects of class: [yearmon] TZ: 
-##   xts Attributes:  
-##  NULL
-
-index(oil_monthly) <- seq(mdy('01/01/2006'), mdy('02/01/2017'), by = 'months')
-head(index(oil_monthly))
-
-dygraph(oil_monthly, main = "Monthly oil Prices")
-
-oil_6month <- forecast(oil_monthly, h = 6)
-
-oil_6month
-
-plot(oil_6month, main = "Oil Forecast")
-
-oil_forecast_data <- data.frame(date = seq(mdy('03/01/2017'), 
-                                           by = 'months', length.out = 6),
-                                Forecast = oil_6month$mean,
-                                Hi_95 = oil_6month$upper[,2],
-                                Lo_95 = oil_6month$lower[,2])
-
-head(oil_forecast_data)
-
-oil_forecast_xts <- xts(oil_forecast_data[,-1], order.by = oil_forecast_data[,1])
-
-# Combine the xts objects with cbind.
-oil_combined_xts <- cbind(oil_monthly, oil_forecast_xts)
-
-# Add a nicer name for the first column.
-colnames(oil_combined_xts)[1] <- "Actual"
-
-# Have a look at both the head and the tail of our new xts object. Make sure the
-# NAs are correct.
-head(oil_combined_xts)
-
-##            Actual Forecast Hi_95 Lo_95
-## 2006-01-01  67.86       NA    NA    NA
-## 2006-02-01  61.37       NA    NA    NA
-## 2006-03-01  66.25       NA    NA    NA
-## 2006-04-01  71.80       NA    NA    NA
-## 2006-05-01  71.42       NA    NA    NA
-## 2006-06-01  73.94       NA    NA    NA
-
-tail(oil_combined_xts)
-
-##            Actual Forecast    Hi_95    Lo_95
-## 2017-03-01     NA 53.99987 63.88081 44.11894
-## 2017-04-01     NA 53.99987 68.00333 39.99642
-## 2017-05-01     NA 53.99987 71.18763 36.81212
-## 2017-06-01     NA 53.99987 73.88973 34.11002
-## 2017-07-01     NA 53.99987 76.28590 31.71385
-## 2017-08-01     NA 53.99987 78.46635 29.53340
-
-dygraph(oil_combined_xts, main = "Oil Prices: Historical and Forecast") %>%
-  # Add the actual series
-  dySeries("Actual", label = "Actual") %>%
-  # Add the three forecasted series
-  dySeries(c("Lo_95", "Forecast", "Hi_95"))
-
-```
-
-# tidyquant
+# Quandl/Shiny/dygraph
 
 ```{r, echo = T}
-library("quantmod")
-symbol <- c("MSFT", "AAPL")
-getSymbols.google(symbol, env = .GlobalEnv, from = "2016-01-01")
+cat(htmltools::includeText("example/shiny-51-quandl.R"))
 ```
 
-# portfolio 1
+# Portfolio analysis
 
 ```{r, echo = T}
-library(tidyverse)
-library(tidyquant)
-library(timetk)
-
-# The symbols vector holds our tickers. 
-symbols <- c("SPY","EFA", "IJS", "EEM","AGG")
-
-# The prices object will hold our raw price data throughout this book.
-prices <- 
-  getSymbols(symbols, src = 'yahoo', from = "2005-01-01", 
-             auto.assign = TRUE, warnings = FALSE) %>% 
-  map(~Ad(get(.))) %>% 
-  reduce(merge) %>%
-  `colnames<-`(symbols)
-
-prices_monthly <- to.monthly(prices, indexAt = "last", OHLC = FALSE)
-asset_returns_xts <- na.omit(Return.calculate(prices_monthly, method = "log"))
-
-# Tidyverse method, to long, tidy format
-asset_returns_long <- prices %>% 
-  to.monthly(indexAt = "last", OHLC = FALSE) %>% 
-  tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
-  gather(asset, returns, -date) %>% 
-  group_by(asset) %>%  
-  mutate(returns = (log(returns) - log(lag(returns))))
-
-head(asset_returns_xts)
-head(asset_returns_long)
-
-w <- c(0.25, 0.25, 0.20, 0.20, 0.10)
-
-asset_weights_sanity_check <- tibble(w, symbols)
-asset_weights_sanity_check
-
-sum(asset_weights_sanity_check$w)
-
-w_1 <- w[1]
-w_2 <- w[2]
-w_3 <- w[3]
-w_4 <- w[4]
-w_5 <- w[5]
-
-asset1 <- asset_returns_xts[,1]
-asset2 <- asset_returns_xts[,2]
-asset3 <- asset_returns_xts[,3]
-asset4 <- asset_returns_xts[,4]
-asset5 <- asset_returns_xts[,5]
-
-portfolio_returns_byhand <-   
-  (w_1 * asset1) + 
-  (w_2 * asset2) + 
-  (w_3 * asset3) +
-  (w_4 * asset4) + 
-  (w_5 * asset5)
-
-names(portfolio_returns_byhand) <- "returns"
-
-portfolio_returns_xts_rebalanced_monthly <- 
-  Return.portfolio(asset_returns_xts, weights = w, rebalance_on = "months") %>%
-  `colnames<-`("returns")
-
-portfolio_returns_xts_rebalanced_yearly <- 
-  Return.portfolio(asset_returns_xts, weights = w, rebalance_on = "years") %>%
-  `colnames<-`("returns")
-
-head(portfolio_returns_byhand)
-head(portfolio_returns_xts_rebalanced_monthly)
-head(portfolio_returns_xts_rebalanced_yearly)
-
-# tidyquant way
-portfolio_returns_tq_rebalanced_monthly <- 
-  asset_returns_long %>%
-  tq_portfolio(assets_col  = asset, 
-               returns_col = returns,
-               weights     = w,
-               col_rename  = "returns",
-               rebalance_on = "months")
-
-portfolio_returns_tq_rebalanced_yearly <- 
-  asset_returns_long %>%
-  tq_portfolio(assets_col  = asset, 
-               returns_col = returns,
-               weights     = w,
-               col_rename  = "returns",
-               rebalance_on = "years")
-
-head(portfolio_returns_tq_rebalanced_monthly)
-head(portfolio_returns_tq_rebalanced_yearly)
-
+cat(htmltools::includeText("example/53-portfolio-2.R"))
 ```
 
-# portfolio 2
-
-```{r, echo = T}
-library(timetk)
-library(tidyverse)
-library(tidyquant)
-library(highcharter)
-
-symbols <- c("SPY","IJS","EFA","EEM","AGG")
-
-prices <- 
-  getSymbols(symbols, src = 'google', from = "2005-01-01", 
-             auto.assign = TRUE, warnings = FALSE) %>% 
-  map(~Cl(get(.))) %>% 
-  reduce(merge) %>%
-  `colnames<-`(symbols)
-
-prices_monthly <- to.monthly(prices, indexAt = "first", OHLC = FALSE)
-
-portfolioComponentReturns <- na.omit(Return.calculate(prices_monthly, method = "log"))
-
-w = c(0.25, 0.20, 0.20, 0.25, 0.10)
-
-covariance_matrix <- cov(portfolioComponentReturns)
-
-# Square root of transpose of the weights cross prod covariance matrix returns 
-# cross prod weights gives portfolio standard deviation.
-sd_portfolio <- sqrt(t(w) %*% covariance_matrix %*% w)
-
-# Marginal contribution of each asset. 
-marginal_contribution <- w %*% covariance_matrix / sd_portfolio[1, 1]
-
-# Component contributions to risk are the weighted marginal contributions
-component_contribution <- marginal_contribution * w 
-
-# This should equal total portfolio vol, or the object `sd_portfolio`
-components_summed <- rowSums(component_contribution)
-
-# To get the percentage contribution, divide component contribution by total sd.
-component_percentages <- component_contribution / sd_portfolio[1, 1]
-
-percentage_tibble_by_hand <- 
-  tibble(symbols, w, as.vector(component_percentages)) %>% 
-  rename(asset = symbols, 'portfolio weight' = w, 'risk contribution' = `as.vector(component_percentages)`)
-
-percentage_tibble_by_hand
-
-component_sd_pre_built <- StdDev(portfolioComponentReturns, weights = w, 
-                                 portfolio_method = "component")
-component_sd_pre_built
-
-# Port to a tibble.  
-percentages_tibble_pre_built <- component_sd_pre_built$pct_contrib_StdDev %>%
-  tk_tbl(preserve_row_names = FALSE) %>%
-  mutate(asset = symbols) %>%
-  rename('risk contribution' = data) %>% 
-  select(asset, everything(), -index)
-
-percentages_tibble_pre_built
-
-percentage_tibble_by_hand
-
-component_percent_plot <- 
-  ggplot(percentage_tibble_by_hand, aes(asset, `risk contribution`)) +
-  geom_col(fill = 'blue', colour = 'red') + 
-  scale_y_continuous(labels = scales::percent) + 
-  ggtitle("Percent Contribution to Volatility", 
-          subtitle = "") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.subtitle = element_text(hjust = 0.5)) +
-  xlab("Asset") +
-  ylab("Percent Contribution to Risk")
-
-component_percent_plot
-
-# gather
-percentage_tibble_by_hand_gather <-
-  percentage_tibble_by_hand %>% 
-  gather(type, percent, -asset)
-
-# built ggplot object
-plot_compare_weight_contribution <- 
-  ggplot(percentage_tibble_by_hand_gather, aes(x = asset, y = percent, fill = type)) +
-  geom_col(position = 'dodge') + 
-  scale_y_continuous(labels = scales::percent) + 
-  ggtitle("Percent Contribution to Volatility", 
-          subtitle = "") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  theme(plot.subtitle = element_text(hjust = 0.5))
-
-plot_compare_weight_contribution
-
-EEM_sd <- StdDev(portfolioComponentReturns$EEM)
-
-EEM_sd_overtime <- 
-  round(rollapply(portfolioComponentReturns$EEM, 20, function(x) StdDev(x)), 4) * 100
-
-highchart(type = "stock") %>%
-  hc_title(text = "EEM Volatility") %>%
-  hc_add_series(EEM_sd_overtime, name = "EEM Vol") %>%
-  hc_yAxis(labels = list(format = "{value}%"), opposite = FALSE) %>%
-  hc_navigator(enabled = FALSE) %>% 
-  hc_scrollbar(enabled = FALSE)
-```
-
-# Commodity
-
-```{r, echo = T}
-```
 # Assingment
-1. Bank management
-- Interface for adding new account/new transactions.
-- We also need to generate management report:
-    - Risk department: Total balance, total receivable, high-/low-risk client. Very active customer.
-    - Interest rate payable.
-    - ...
+Part II
+
+1. Bank management 
+- We also need to generate following monthly reports:
+    - Risk department: Total balance, Total receivable from credit, Top 10 High and low-risk client (i.e. balance - spent credit).
+    - Customer department: Top 10 balance customer, Top 10 spending customer, Top 10 saving customer.
+    - Treasury department: Interest rate payable monthly, assume annual interest is 0.25%.
 
 2. Delta Hedging
 Show case how delta hedging works as a trading strategy.
 
-- Show how one trading works
+- Show how one trade works
 - Backtest for available history.
 
 Assumption:
 
-- You hold 10000 ATM option and start to do delta hedging immediately till 2nd last day.
-- You can get your favorite stocks here. >=Three
-https://marketchameleon.com/Overview/{Stock Code}/DailyHistory/
-- IV30 is provided. Scale up for IV60 and IV90 with 252 trading days.
-- As underlying is equity, dividend yield is applicable.
-- US risk-free rate: https://www.quandl.com/data/USTREASURY/YIELD-Treasury-Yield-Curve-Rates
+- You hold 100 ATM call/put option which expires in 30 days (calendar days). You just need to do either Call or Put.
+- You start to do delta hedging daily immediately till 2nd last day. You close stock position in the last day.
+- Delta hedging: calculate the delta from option, negate it, that's the quantity what you need to hold over 1 day. Repeat for every trading day.
+- Daily PnL: (option premium change) + (stock holding quantity * price change).
 
-Strategy indicators:
+- You can get your favorite stocks here. There is one year of data.
+  https://marketchameleon.com/Overview/{Stock Code}/DailyHistory/
+  https://marketchameleon.com/Overview/GS/DailyHistory/
+- Daily IV30 is provided.
+- As underlying is equity, dividend yield is applicable for B-S valuation
+- US risk-free rate for 1M: 0.8% (annualized)
 
-- Daily PnL
-- Final PnL
-- Max Drawdown
-- Sharpe ratio
+For one trade
+
+- Daily PnL v.s. Time to expiry: split into option and stock.  
+- Final PnL: accumulative of Daily PnL. split into option and stock
+- Max Drawdown: accumulative of Daily PnL, max - min.
+- Sharpe ratio: Sharpe ratio = (Mean of Daily PnL − Risk-free rate)/Standard deviation of Daily PnL
+
+For backtest:
+
+- Distribution of Final PnL
+- Distribution of Max Drawdown
+- Final PnL v.s. Option Expiry Date
 - ...
-- Graphics
+
+- in R Markdown

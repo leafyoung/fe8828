@@ -148,7 +148,6 @@ output$rollingCorrelation <- renderDygraph({
   mini <- round(min(rolling_cor,  na.rm = T), 2)
   maxi <- round(max(rolling_cor,  na.rm = T), 2)
   
-  
   dygraph(rolling_cor, main = paste(names(commodityChoices[commodityChoices == input$commodity]),
                                     "/Gold ",
                                     names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 

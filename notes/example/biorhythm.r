@@ -17,6 +17,7 @@ biorhythm <- function(dob, target = Sys.Date()) {
     geom_vline(xintercept = as.numeric(target))
 }
 
+# I took four people's birthdays. Hope they are in good mode today.
 biorhythm("1964-01-12", Sys.Date())
 biorhythm("1971-06-28", Sys.Date())
 biorhythm("1971-10-29", Sys.Date())
