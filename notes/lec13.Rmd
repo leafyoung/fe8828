@@ -6,9 +6,37 @@ date: "Nov 30, 2017"
 # runtime: shiny
 ---
 
-# Lecture 10: Model
+```{r setup, include=FALSE}
+library(fOptions)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(maps)
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+<style type="text/css">
+code.r{ /* Code block */
+    font-size: 20px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 17px;
+}
+</style>
 
-# model
+# Lecture 10: Model
+Data modeling is find quantitative relationship between variables relating to an outcome.
+
+# Our data
+
+```{r, echo = T}
 models <- mtcars %>% 
   split(.$cyl) %>% 
   map(function(df) lm(mpg ~ wt, data = df))
@@ -16,34 +44,27 @@ models <- mtcars %>%
 models <- mtcars %>% 
   split(.$cyl) %>% 
   map(~lm(mpg ~ wt, data = .))
+```
+# Model with Modelr
 
-# model with Modelr
+First, you define a family of models that express a precise, but generic, pattern that you want to capture.
+For example, the pattern might be a straight line, or a quadatric curve. You will express the model family as
+an equation like y = a_1 * x + a_2 or y = a_1 * x ^ a_2. Here, x and y are known variables from your data,
+and a_1 and a_2 are parameters that can vary to capture different patterns.
 
-library(modelr)
+Next, you generate a fitted model by finding the model from the family that is the closest to your data.
+This takes the generic model family and makes it specific, like y = 3 * x + 7 or y = 9 * x ^ 2.
 
-mod <- lm(log(balance) ~ log(age), data = bank)
-
-bank1 <- filter(bank, default == "no" & balance > 0)
-mod <- lm(log(balance) ~ log(age), data = bank1)
-
-bank2 <- bank1 %>% 
-  add_residuals(mod) %>% 
-  mutate(resid = exp(resid))
-
-ggplot(data = bank2) + 
-  geom_point(mapping = aes(x = age, y = resid))
-
-First, you define a family of models that express a precise, but generic, pattern that you want to capture. For example, the pattern might be a straight line, or a quadatric curve. You will express the model family as an equation like y = a_1 * x + a_2 or y = a_1 * x ^ a_2. Here, x and y are known variables from your data, and a_1 and a_2 are parameters that can vary to capture different patterns.
-
-Next, you generate a fitted model by finding the model from the family that is the closest to your data. This takes the generic model family and makes it specific, like y = 3 * x + 7 or y = 9 * x ^ 2.
-
+```{r, echo = T}
 install.package("purrr", "modelr")
 library(purrr)
 library(modelr)
+```
 
 # Data set
 sim1
 
+```{r, echo = T}
 model1 <- function(a, data) {
   a[1] + data$x * a[2]
 }
@@ -57,81 +78,7 @@ best$par
 
 sim1_mod <- lm(y ~ x, data = sim1)
 coef(sim1_mod)
-
-# prediction is for the new data
-sim1 %>%
-data_grid(x) %>% # generate data set.
-add_predictions(sim1_mod) 
-
-ggplot(sim1, aes(x)) +
-  geom_point(aes(y = y)) +
-  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
-
-# residual is for the existing data
-add_residuals(sim1_mod, sim1)
-
-ggplot(sim1, aes(resid)) + 
-  geom_freqpoly(binwidth = 0.5)
-
-# apply it for the bank dataset
-ggplot(bank) + geom_bar(aes(x = age, fill = y))
-
-model_matrix(bank, y ~ age)
-
-bank_mod <- lm(y ~ age, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
-
-# add_prediction
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod)
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod) %>% ggplot(aes(x = age, y = pred)) + geom_point()
-
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
-ggplot(aes(resid)) + 
-  geom_freqpoly(binwidth = 0.05) 
-
-# 2nd model
-bank_mod <- lm(y ~ age * job, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age, job) %>%
-  add_predictions(bank_mod) %>%
-  ggplot(aes(x = age, colour = job)) + geom_line(aes(y = pred))
-
-mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
-ggplot(aes(x = age, resid, colour = job)) +
-  geom_point()
-
-# model 
-model_matrix(df, y ~ I(x^2) + x)
-
-# try age with balance?
-
-with different jobs
-
-by_job <- group_by(bank, job) %>% nest()
-job_balance <- function(df) {
-  lm(balance ~ age, data = df)
-}
-models <- mutate(by_job, model = purrr::map(data, job_balance))
-
-by_job_res <- models %>%
-  mutate(resids = map2(data, model, add_residuals))
-
-resids <- unnest(by_job_res, resids)
-
-resids %>% 
-  ggplot(aes(age, resid)) +
-    geom_line(aes(colour = job)) + 
-    geom_smooth(se = FALSE)
-
-resids %>%
-  ggplot(aes(age, resid, group = job)) +
-    geom_line(alpha = 1 / 3) + 
-    facet_wrap(~job)
-
-# natural spine
-
-mod1 <- lm(y ~ ns(x, 1), data = sim5)
-
-mod1 <- lm(y ~ x1 + x2, data = sim3)
-mod2 <- lm(y ~ x1 * x2, data = sim3)
+```
 
 # Regression Model
 ```{r, echo = T}
@@ -214,52 +161,200 @@ data.model$cl <- kmeans(data.model[, 1:2], 4)$cluster
 with(data.model, plot(balance, duration, col = cl))
 with(data.model, text(balance, duration, col=cl))
 
-# draw the 
+
+# Apply our data to model.
+
+```{r, echo = T}
+library(modelr)
+
+mod <- lm(log(balance) ~ log(age), data = bank)
+
+bank1 <- filter(bank, default == "no" & balance > 0)
+mod <- lm(log(balance) ~ log(age), data = bank1)
+
+bank2 <- bank1 %>% 
+  add_residuals(mod) %>% 
+  mutate(resid = exp(resid))
+
+ggplot(data = bank2) + 
+  geom_point(mapping = aes(x = age, y = resid))
+```
+
+# prediction is for the new data
+sim1 %>%
+data_grid(x) %>% # generate data set.
+add_predictions(sim1_mod) 
+
+ggplot(sim1, aes(x)) +
+  geom_point(aes(y = y)) +
+  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
+
+# residual is for the existing data
+add_residuals(sim1_mod, sim1)
+
+ggplot(sim1, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+# apply it for the bank dataset
+ggplot(bank) + geom_bar(aes(x = age, fill = y))
+
+model_matrix(bank, y ~ age)
+
+bank_mod <- lm(y ~ age, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
+
+# add_prediction
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod)
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod) %>% ggplot(aes(x = age, y = pred)) + geom_point()
+
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
+ggplot(aes(resid)) + 
+  geom_freqpoly(binwidth = 0.05) 
+
+# 2nd model
+bank_mod <- lm(y ~ age * job, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age, job) %>%
+  add_predictions(bank_mod) %>%
+  ggplot(aes(x = age, colour = job)) + geom_line(aes(y = pred))
+
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
+ggplot(aes(x = age, resid, colour = job)) +
+  geom_point()
+
+# model 
+model_matrix(df, y ~ I(x^2) + x)
+
+# try age with balance?
+
+with different jobs
+
+by_job <- group_by(bank, job) %>% nest()
+job_balance <- function(df) {
+  lm(balance ~ age, data = df)
+}
+models <- mutate(by_job, model = purrr::map(data, job_balance))
+
+by_job_res <- models %>%
+  mutate(resids = map2(data, model, add_residuals))
+
+resids <- unnest(by_job_res, resids)
+
+resids %>% 
+  ggplot(aes(age, resid)) +
+    geom_line(aes(colour = job)) + 
+    geom_smooth(se = FALSE)
+
+resids %>%
+  ggplot(aes(age, resid, group = job)) +
+    geom_line(alpha = 1 / 3) + 
+    facet_wrap(~job)
+
+# natural spine
+
+mod1 <- lm(y ~ ns(x, 1), data = sim5)
+
+mod1 <- lm(y ~ x1 + x2, data = sim3)
+mod2 <- lm(y ~ x1 * x2, data = sim3)
+
+# Lecture 11: Financial Application
+
+# Option pricing
+
+library(fOption)
+library(fExoticOptions)
+
+Word of caution:
+- Please validate option pricing code. I found Asian Option in fExoticOptions is strange.
+
+# xts
 
 library(xts)
 xts object => store prices and retrieve.
 
-library(fOption)
+Convert from data to Xts object
 
-Option valuation.
+get data from xts object
 
-How to value a portfolio of stocks?
+Create EWMA volatility
 
-How to value a portfolio of options?
+```{r, echo = T}
 
-How to simulate portfolio gain.
+EWMAvol <- function(returns, lambda, rollwindow){
+  EWMA.mat = matrix(NA, nrow = nrow(returns), ncol = ncol(returns))
+  for (k in 1 : ncol(returns)){  
+    for (j in rollwindow : nrow(returns)){
+      td = returns
+      data = as.matrix(td[(j - rollwindow + 1) : j, k])
+      ewmaVar.mat = matrix()
+      ewmaVar.mat[1] = 0
+      for (i in 2 : rollwindow){
+        ewmaVar.mat[i] = lambda * ewmaVar.mat[i-1]+ (1 - lambda) * data[i]^2
+      }
+      EWMA.mat[j, k] = sqrt(ewmaVar.mat[length(ewmaVar.mat)])
+    }
+  }
+  return(EWMA.mat)
+}
+```
 
-How to do SVD analysis?
+# Quandl
+
+```{r, echo = T}
+# with AlphaAdvantage
+# QWM66H05ENYFRDPO
+getSymbols('SPY', src = 'av', adjusted = TRUE, output.size = 'full', api.key = "QWM66H05ENYFRDPO")
+
+head(SPY)
+tail(SPY)
+```
+
+```{r, echo = T}
+library(Quandl)					# Quandl package
+library(ggplot2)				# Package for plotting
+library(tidyverse)				# Package for reshaping data
+
+Quandl.api_key(token)				# Authenticate your token
+token <- 'JyeshGuNBGDbbaYoNURG'  		# Sign up with Quandl to get a token
+
+# Build vector of currencies
+rates <- Quandl(c("FRED/DEXUSAL", "FRED/DEXBZUS", "FRED/DEXUSUK", "FRED/DEXCHUS"),start_date="2000-01-01",end_date="2013-06-07" )	
+meltdf <- gather(rates, key = "CCY", value = "value", -1)
+
+ggplot(meltdf, aes(x = Date, y = value, colour = CCY, group = CCY)) +
+  geom_line() +
+  scale_colour_manual(values=1:22)+
+  ggtitle("Major Currency Exchange Rates in USD") +
+  theme_minimal()
+```
+
+Optimize for Max profit
+- Bollinger band
+- Gold and Oil
+
+# 
+dataChoices <- c("WTI oil" = "FRED/DCOILWTICO", #oil data from Fred
+                  "Copper" = "ODA/PCOPP_USD", # copper data from ODA
+                  "Gold" = "CHRIS/CME_GC1") # gold data from CME
 
 
 # Object way and Data frame way
-sample option portfolio
-sample stock portfolio
 
-library(ggplot2)
-library(reshape2)
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/biorhythm.R"))
+```
 
-biorhythm <- function(dob, target = Sys.Date()) {
-  dob <- as.Date(dob)
-  target <- as.Date(target)
-  t <- round(as.numeric(difftime(target, dob)))
-  days <- (t - 14) : (t + 14)
-  period <- data.frame(Date = seq.Date(from = target - 15, by = 1, length.out = 29),
-                       Physical = sin (2 * pi * days / 23) * 100, 
-                       Emotional = sin (2 * pi * days / 28) * 100, 
-                       Intellectual = sin (2 * pi * days / 33) * 100)
-  period <- melt(period, id.vars = "Date", variable.name = "Biorhythm", value.name = "Percentage")
-  ggplot(period, aes(x = Date, y = Percentage, col = Biorhythm)) + geom_line() +  
-    ggtitle(paste("DoB:", format(dob, "%d %B %Y"))) + 
-    geom_vline(xintercept = as.numeric(target))
-}
+# Quandl and forecast
 
-biorhythm("1969-09-12", "2017-03-30")
-biorhythm("1981-11-03", "2017-03-30")
+dygraph for xts
+https://rstudio.github.io/dygraphs/shiny.html
+dygraphOutput("dygraph")
+
+dygraph(oil_combined_xts, main = "Oil Prices: Historical and Forecast") %>%
+  # Add the actual series
+  dySeries("Actual", label = "Actual") %>%
+  # Add the three forecasted series
+  dySeries(c("Lo_95", "Forecast", "Hi_95"))
 
 
-# 
-Quandl and forecast
 
 ```{r, echo = T}
 library(Quandl)
@@ -368,36 +463,9 @@ symbol <- c("MSFT", "AAPL")
 getSymbols.google(symbol, env = .GlobalEnv, from = "2016-01-01")
 ```
 
-```{r, echo = T}
-# with AlphaAdvantage
-# QWM66H05ENYFRDPO
-getSymbols('SPY', src = 'av', adjusted = TRUE, output.size = 'full', api.key = "QWM66H05ENYFRDPO")
-
-head(SPY)
-tail(SPY)
-```
-
-```{r, echo = T}
-library(Quandl)					# Quandl package
-library(ggplot2)				# Package for plotting
-library(tidyverse)				# Package for reshaping data
-
-Quandl.api_key(token)				# Authenticate your token
-token <- 'JyeshGuNBGDbbaYoNURG'  		# Sign up with Quandl to get a token
-
-# Build vector of currencies
-rates <- Quandl(c("FRED/DEXUSAL", "FRED/DEXBZUS", "FRED/DEXUSUK", "FRED/DEXCHUS"),start_date="2000-01-01",end_date="2013-06-07" )	
-meltdf <- gather(rates, key = "CCY", value = "value", -1)
-
-ggplot(meltdf, aes(x = Date, y = value, colour = CCY, group = CCY)) +
-  geom_line() +
-  scale_colour_manual(values=1:22)+
-  ggtitle("Major Currency Exchange Rates in USD") +
-  theme_minimal()
-```
-
 # portfolio 1
-```
+
+```{r, echo = T}
 library(tidyverse)
 library(tidyquant)
 library(timetk)
@@ -417,8 +485,7 @@ prices_monthly <- to.monthly(prices, indexAt = "last", OHLC = FALSE)
 asset_returns_xts <- na.omit(Return.calculate(prices_monthly, method = "log"))
 
 # Tidyverse method, to long, tidy format
-asset_returns_long <- 
-  prices %>% 
+asset_returns_long <- prices %>% 
   to.monthly(indexAt = "last", OHLC = FALSE) %>% 
   tk_tbl(preserve_index = TRUE, rename_index = "date") %>%
   gather(asset, returns, -date) %>% 
@@ -426,7 +493,6 @@ asset_returns_long <-
   mutate(returns = (log(returns) - log(lag(returns))))
 
 head(asset_returns_xts)
-
 head(asset_returns_long)
 
 w <- c(0.25, 0.25, 0.20, 0.20, 0.10)
@@ -486,63 +552,11 @@ portfolio_returns_tq_rebalanced_yearly <-
                col_rename  = "returns",
                rebalance_on = "years")
 
-
 head(portfolio_returns_tq_rebalanced_monthly)
 head(portfolio_returns_tq_rebalanced_yearly)
 
 ```
 
-```{r, echo = T}
-
-library(ggplot2)
-us_map <- map_data("state")
-head(us_map, 3)
-
-us_map %>% 
-  dplyr::filter(region %in% c("north carolina", "south carolina")) %>%
-  ggplot(aes(x = long, y = lat, group = group)) +
-  geom_path()
-  
-us_map %>% 
-  dplyr::filter(region %in% c("north carolina", "south carolina")) %>%
-  ggplot(aes(x = long, y = lat, group = group)) +
-  geom_polygon(fill = "lightblue", color = "black") + 
-  theme_void()
-
-us_map %>% 
-  ggplot(aes(x = long, y = lat, group = group)) +
-  geom_polygon(fill = "lightblue", color = "black") + 
-  theme_void()
-  
-library(dplyr)
-library(viridis)
-
-cluster::votes.repub %>%
-  tbl_df() %>%
-  mutate(state = rownames(votes.repub),
-         state = tolower(state)) %>%
-  right_join(us_map, by = c("state" = "region")) %>%
-  ggplot(aes(x = long, y = lat, group = group, fill = `X1976`)) +
-  geom_polygon(color = "black") + 
-  theme_void() + 
-  scale_fill_viridis(name = "Republican\nvotes (%)")
-
-# ggmap
-
-## install.packages("ggmap")
-library(ggmap)
-beijing <- get_map("Beijing", zoom = 12)
-ggmap(beijing)
-
-get_map("Baltimore County", zoom = 10, 
-        source = "stamen", maptype = "toner") %>%
-  ggmap() + 
-  geom_polygon(data = baltimore, aes(x = long, y = lat, group = group),
-               color = "navy", fill = "lightblue", alpha = 0.2) + 
-  geom_point(data = serial, aes(x = long, y = lat, color = tower)) + 
-  theme_void() + 
-  scale_color_manual(name = "Cell tower", values = c("black", "red"))
-```
 # portfolio 2
 
 ```{r, echo = T}
@@ -595,8 +609,7 @@ component_sd_pre_built <- StdDev(portfolioComponentReturns, weights = w,
 component_sd_pre_built
 
 # Port to a tibble.  
-percentages_tibble_pre_built <- 
-  component_sd_pre_built$pct_contrib_StdDev %>%
+percentages_tibble_pre_built <- component_sd_pre_built$pct_contrib_StdDev %>%
   tk_tbl(preserve_row_names = FALSE) %>%
   mutate(asset = symbols) %>%
   rename('risk contribution' = data) %>% 
@@ -649,394 +662,38 @@ highchart(type = "stock") %>%
   hc_scrollbar(enabled = FALSE)
 ```
 
-# Make a data visualization for different countries
-
-```{r, echo = T}
-#--#
-library(magrittr)
-library(Quandl)
-# Pass the code string to Quandl. 
-China_GDPPC <- Quandl("WWDI/CHN_NY_GDP_PCAP_KN", type = 'xts') %>% 
-  # Add a nice column name
-  `colnames<-`("GDP Per Capita")
-
-# Take a look at the result.
-tail(China_GDPPC, n = 6)
-
-#--#
-library(purrr)
-# Create a vector of economic indicators that can be passed to Quandl via map().
-# Include names and values for easy naming of xts columns.
-econIndicators <- c("GDP Per Capita" = "WWDI/CHN_NY_GDP_PCAP_KN",
-                    "GDP Per Capita Growth" = "WWDI/CHN_NY_GDP_PCAP_KD_ZG",
-                    "Real Interest Rate" = "WWDI/CHN_FR_INR_RINR",
-                    "Exchange Rate" = "WWDI/CHN_PX_REX_REER",
-                    "CPI" = "WWDI/CHN_FP_CPI_TOTL_ZG",
-                    "Labor Force Part. Rate" = "WWDI/CHN_SL_TLF_ACTI_ZS")
-
-# You might want to supply your Quandl api key. It's free to get one.
-Quandl.api_key("JyeshGuNBGDbbaYoNURG")
-
-China_all_indicators <- 
-  # Start with the vector of Quandl codes
-  econIndicators %>% 
-  # Pass them to Quandl via map(). 
-  map(Quandl, type = "xts") %>% 
-  # Use the reduce() function to combine them into one xts objects.
-  reduce(merge) %>% 
-  # Use the names from the original vector to set nicer column names.
-  `colnames<-`(names(econIndicators))
-# Have a look.
-tail(China_all_indicators, n = 6)
-
-#--#
-library(dygraphs)
-dygraph(China_all_indicators$`GDP Per Capita`, main = "GDP Per Capita")
-dygraph(China_all_indicators$`GDP Per Capita Growth`, main = "GDP Per Capita Growth")
-dygraph(China_all_indicators$`Real Interest Rate`, main = "Real Interest Rate")
-dygraph(China_all_indicators$`Exchange Rate`, main = "Exchange Rate")
-dygraph(China_all_indicators$`CPI`, main = "CPI")
-dygraph(China_all_indicators$`Labor Force Part. Rate`, main = "Labor Force Part. Rate")
-
-#--#
-library(rnaturalearth)
-library(sp)
-library(rgeos)
-world <- ne_countries(type = "countries",  returnclass = 'sf')
-
-# Take a peek at the name, gdp_md_est column and economy columns. 
-# The same way we would peek at any data frame.
-head(world[c('name', 'gdp_md_est', 'economy')], n = 6)
-
-#--#
-library(leaflet)
-# Create shading by GDP. Let's go with purples.
-gdpPal <- colorQuantile("Purples", world$gdp_md_est, n = 20)
-
-# Create popup country name and income group so that something happens
-# when a user clicks the map.
-popup <- paste0("<strong>Country: </strong>", 
-                world$name, 
-                "<br><strong>Market Stage: </strong>", 
-                world$income_grp)
-
-leaf_world <- leaflet(world) %>%
-  addProviderTiles("CartoDB.Positron") %>% 
-  setView(lng =  20, lat =  15, zoom = 2) %>%
-  addPolygons(stroke = FALSE, smoothFactor = 0.2, fillOpacity = .7, 
-              # Note the layer ID. Not a country name! It's a country code!
-              color = ~gdpPal(gdp_md_est), layerId = ~iso_a3, popup = popup)
-
-leaf_world
-```
-
 # Commodity
 
-```
----
-title: "Commodity Econ Flexdb"
-runtime: shiny
-output:
-  flexdashboard::flex_dashboard:
-    #vertical_layout: scroll
-    orientation: rows
-    source_code: embed
----
-
-```{r setup, include=FALSE}
-library(tidyverse) 
-library(Quandl)
-library(xts)
-library(dygraphs)
-```
-
-Inputs{.sidebar}
---------------------------------
-
-```{r}
-# We are choosing a few commodities and a few economic indicators. There are others, like 
-# unemployment, consumer confidence, home building, retail spending. 
-# Remember this is a commodities flexdashboard. 
-
-
-commodityChoices <- c(
-                  "Copper" = "CHRIS/CME_HG1.1", #daily 2017-5-2
-                  "WTI oil" = "FRED/DCOILWTICO.1", # daily 2017-4-24
-                  "Iron Ore" = "ODA/PIORECR_USD", # monthly, 2017-3-31
-                  "Platinum" = "LPPM/PLAT.1", #daily, 2017-5-2
-                  "Palladium" = "LPPM/PALL.1",
-                  "Silver" = "LBMA/SILVER.1") # daily 2017-5
-
-selectInput("commodity",
-            "Commodity",
-            choices = commodityChoices, 
-            selected = "Copper")
-
-econIndicatorChoices <- c(
-                  "10-Yr Yield" = "FRED/DGS10", # daily 2017-5
-                  "US CPI" = "RATEINF/INFLATION_USA",# monthly 2017-3
-                  "Japan CPI" = "RATEINF/INFLATION_JPN",
-                  "EU CPI" = "RATEINF/INFLATION_EUR") 
-
-selectInput("econIndicator",
-            "Economic Indicator",
-            choices = econIndicatorChoices, 
-            selected = "10-yr Yield")
- 
-
-dateRangeInput("dateRange",
-               "Date range",
-               start = "1990-01-01",
-               end   = "2017-03-30")
-
-ratio_indicator <- reactive({
-
-Quandl.api_key("JyeshGuNBGDbbaYoNURG")
-
-start_date <- format(input$dateRange[1])
-end_date <- format(input$dateRange[2])
-
-# Create a vector of 3 data set codes
-# 1) commodity chosen by user
-# 2) gold quandl code
-# 3) economic indicator chosen by user
-
-gold_code <- "CHRIS/CME_GC1.1"
-data_set_codes <- c(input$commodity, gold_code, input$econIndicator)
-
-# Pipe the data_set_codes vector to Quandl via the map() function
-# Note we can still set the start and end date and object type
-# as we always can with Quandl.
-
-quandlData <- data_set_codes  %>% 
-        # Pipe the datasets vector to Quandl via the map() function.
-        map(Quandl,
-            start_date = start_date,
-            end_date = end_date,
-            collapse = "monthly",
-            type = "xts") %>%
-        # Replace all NAs using map() and na.locf().
-        map(na.locf, formLast = TRUE) %>%
-        # Merge to one xts object using map() and merge().
-        reduce(merge) %>% 
-        # Add nicer column names.
-        `colnames<-`(c(names(commodityChoices[commodityChoices == input$commodity]), 
-                            "Gold",
-                            names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]))) 
-
-# Create a column and add the price ratio.
-quandlData$ratio <- quandlData[,1]/quandlData[,2]
-
-# Save just the ratio and the economic indicator data.
-ratio_indicator  <- merge(quandlData$ratio, quandlData[,3])
-
-# Add more general names.
-colnames(ratio_indicator) <- c("ratio","indicator")       
-
-return(ratio_indicator)
-})
-```
-
-Row
--------------------------------------
-    
-### Chart 1
-    
-```{r}
-dygraphOutput("ratio_indicator")
-
-output$ratio_indicator <- renderDygraph({
-  dygraph(ratio_indicator()) %>% 
-  # Add the rollPeriod for smoothing.
-  dyRoller(rollPeriod = 3) %>% 
-  # Create two independent axes.
-  dyAxis("y", label = "USD") %>%
-  dyAxis("y2", label = "Percent (%)", independentTicks = TRUE) %>%
-  # Assign each time series to an axis.
-  dySeries("ratio", axis = 'y', 
-           label = paste(names(commodityChoices[commodityChoices == input$commodity]), 
-                         "/Gold (LHS)", sep = ""), color = "blue") %>% 
-  dySeries("indicator", axis = 'y2', 
-           label = paste(names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 
-                         "(RHS)", sep = ""), color = "red")
-})
-
-```
-
-Row
--------------------------
-
-### Chart 2
-
-```{r}
-dygraphOutput("rollingCorrelation")
-
-output$rollingCorrelation <- renderDygraph({
-  
-rolling_cor <- rollapply(ratio_indicator(), 24,
-                         function(x) cor(x[, 1], x[, 2], use = "pairwise.complete.obs"),
-                         by.column = FALSE)
-
-names(rolling_cor) <- paste(names(commodityChoices[commodityChoices == input$commodity]),
-                            "/Gold ",
-                            names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 
-                            " Correlation", sep = "")
-
-  avg <- round(mean(rolling_cor,  na.rm = T), 2)
-  mini <- round(min(rolling_cor,  na.rm = T), 2)
-  maxi <- round(max(rolling_cor,  na.rm = T), 2)
-  
-
-dygraph(rolling_cor, main = paste(names(commodityChoices[commodityChoices == input$commodity]),
-                            "/Gold ",
-                            names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 
-                            " Correlation", sep = "")) %>% 
-  dyRangeSelector(dateWindow = c("2015-01-01", "2016-12-31"))  %>% 
-  dyLimit(avg, color = 'purple') %>% 
-  dyLimit(mini, color = 'red') %>% 
-  dyLimit(maxi, color = 'blue') %>% 
-  dyEvent("2016-11-08", "Trump!", labelLoc = "bottom")
-})
-
-```
-
 ```{r, echo = T}
----
-title: "Simple Quandl Commodities Flexdb"
-runtime: shiny
-output:
-  flexdashboard::flex_dashboard:
-    #vertical_layout: scroll
-    orientation: rows
-    source_code: embed
----
-
-```{r setup, include=FALSE}
-library(tidyverse) 
-library(Quandl)
-library(xts)
-library(forecast)
-library(dygraphs)
 ```
+# Assingment
+1. Bank management
+- Interface for adding new account/new transactions.
+- We also need to generate management report:
+    - Risk department: Total balance, total receivable, high-/low-risk client. Very active customer.
+    - Interest rate payable.
+    - ...
 
-Inputs{.sidebar}
---------------------------------
+2. Delta Hedging
+Show case how delta hedging works as a trading strategy.
 
-```{r}
-# Notice a tradeoff here: we're making it easy on our users because they don't need to 
-# remember the naming conventions. But, we're also forced to severely limit their choices. 
-# On page two, we'll see what it looks like to be more flexible but less efficient.
+- Show how one trading works
+- Backtest for available history.
 
- dataChoices <- c("WTI oil" = "FRED/DCOILWTICO", #oil data from Fred
-                  "Copper" = "ODA/PCOPP_USD", # copper data from ODA
-                  "Gold" = "CHRIS/CME_GC1") # gold data from CME
+Assumption:
 
- selectInput("dataSet",
-              "Commodity",
-             choices = dataChoices, #freddie mac
-                         #"BIS",  #bank of intl settlements
-                         #"ODA",  #IMF
-                         #"ISM"), #Inst of supply management
-             selected = "WTI oil")
- 
-frequencyChoices <- c("days" = "daily",
-                      "weeks" = "weekly", 
-                      "months" = "monthly")
-                     
-selectInput("frequency",
-            "freq",
-            choices = frequencyChoices, 
-            selected = "months")
-                     
-#selectInput("country", "Select country", list(
-#  "Europe" = c("Germany", "Spain"),
-#  "North America" = c("Canada", "United States" = "USA")
-#))
+- You hold 10000 ATM option and start to do delta hedging immediately till 2nd last day.
+- You can get your favorite stocks here. >=Three
+https://marketchameleon.com/Overview/{Stock Code}/DailyHistory/
+- IV30 is provided. Scale up for IV60 and IV90 with 252 trading days.
+- As underlying is equity, dividend yield is applicable.
+- US risk-free rate: https://www.quandl.com/data/USTREASURY/YIELD-Treasury-Yield-Curve-Rates
 
-dateRangeInput("dateRange",
-               "Date range",
-               start = "1980-01-01",
-               end   = Sys.Date())
+Strategy indicators:
 
-numericInput("periods", "Periods to Forecast", 6, min = 1, max = 100)
-
-commodity <- reactive({
-  Quandl.api_key("JyeshGuNBGDbbaYoNURG")
-  commodity <- Quandl(input$dataSet,
-                 start_date = format(input$dateRange[1]),
-                 end_date = format(input$dateRange[2]),
-                 order = "asc",
-                 type = "xts",
-                 collapse = as.character(input$frequency)
-                )
-})
-
-combined_xts <- reactive({
-  
-  forecasted <- forecast(commodity(), h = input$periods)
-  
-  forecast_dataframe <- data.frame(
-                        date = seq(input$dateRange[2], 
-                        by = names(frequencyChoices[frequencyChoices == input$frequency]),
-                        length.out = input$periods),
-                        Forecast = forecasted$mean,
-                        Hi_95 = forecasted$upper[,2],
-                        Lo_95 = forecasted$lower[,2])
-  
-  forecast_xts <- xts(forecast_dataframe[,-1], order.by = forecast_dataframe[,1])
-  
-  combined_xts <- cbind(commodity(), forecast_xts)
-
-  # Add a nicer name for the first column.
-
-  colnames(combined_xts)[1] <- "Actual"
-  
-  combined_xts
-})
-```
-
-
-Row
--------------------------------------
-    
-### Chart 1
-    
-```{r}
-dygraphOutput("commodity")
-
-output$commodity <- renderDygraph({
-  dygraph(commodity(), 
-          main = paste("Price history of", names(dataChoices[dataChoices==input$dataSet]), 
-                       sep = " ")) %>%
-    dyAxis("y", label = "$") %>%
-    dyOptions(axisLineWidth = 1.5, fillGraph = TRUE, drawGrid = TRUE)
-})
-
-```
-
-Row
--------------------------
-
-### Chart 2
-
-```{r}
-
-dygraphOutput("forecasted")
-
-output$forecasted <- renderDygraph({
-
-start_date <- tail(seq(input$dateRange[2], by = "-1 months", length = 6), 1)
-
-end_date <- tail(seq(input$dateRange[2], by = names(frequencyChoices[frequencyChoices == input$frequency]), length = input$periods), 1)
-
-dygraph(combined_xts(), 
-        main = paste(names(dataChoices[dataChoices==input$dataSet]), 
-                     ": Historical and Forecast", sep = "")) %>%
-  # Add the actual series
-  dySeries("Actual", label = "Actual") %>%
-  # Add the three forecasted series
-  dySeries(c("Lo_95", "Forecast", "Hi_95")) %>% 
-  #a range selector to focus on the forecasted
-  dyRangeSelector(dateWindow = c(start_date, end_date))
-})
-```
+- Daily PnL
+- Final PnL
+- Max Drawdown
+- Sharpe ratio
+- ...
+- Graphics

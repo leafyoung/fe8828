@@ -1,0 +1,83 @@
+---
+title: "LZ3.2"
+author: "Liu Zhe"
+date: "24 November 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(knitr)
+library(fOptions)
+option <- read.csv("https://dl.dropboxusercontent.com/s/9hbehm86t5597s3/options.csv", sep=",")
+price <- read.csv("https://dl.dropboxusercontent.com/s/3rojacpqmlttmh8/AMZNprice.csv", sep=",")
+```
+
+# Q2
+## Part 1: Display the table
+```{r processTable, echo = FALSE}
+Counter <- nrow(option)
+IDSeq <- seq(1, Counter)
+DateSeq <- rep(as.Date("2017-11-24"), Counter)
+StrikeSeq <- select(option, Strike)
+QuantSeq <- select(option, Quantity)
+UnderlyingSeq <- rep("AMZN", Counter)
+LongShortSeq <- rep(1, Counter)
+CallPutSeq <- select(option, CallPut)
+ExpDateSeq <- rep(as.Date("2018-01-18"), Counter)
+
+StockPriceSeq <- rep(1160, Counter)
+PriceSeq <- select(option, Price)
+
+FullTable <- data.frame(ID = IDSeq, Price = PriceSeq, Date = DateSeq, 
+                        Strike = StrikeSeq, Quantity = QuantSeq, Underlying = UnderlyingSeq, 
+                        Long_Short = LongShortSeq, CallPut = CallPutSeq, 
+                        Expiration = ExpDateSeq, StockPrice = StockPriceSeq)
+
+```
+
+```{r displayTable, echo = FALSE }
+knitr::kable(select(FullTable,-1), caption = "Options")
+```
+
+## Part 2a: Count total value of Call/Put
+### "Total Valuation" calculated by: Quantity (i.e. Open Int) * Price
+```{r Valuation, echo = FALSE, warning = FALSE}
+NewTable <- ungroup((dplyr::filter(FullTable, !is.na(Price)) %>%
+rowwise() %>% 
+mutate(Value = Price*Quantity)))
+
+group_by(NewTable, CallPut) %>% summarize(TotalOpitonValue = sum(Value))
+```
+
+## Part 2b: Count total value of Call and Put
+```{r totalValue, echo = FALSE}
+group_by(NewTable, Underlying) %>% summarize(TotalOptionValue= sum(Value))
+```
+
+## Part 3: Find in-the-money options
+```{r findInTheMoney, echo = FALSE}
+InMoneyTable <- 
+  dplyr::filter(FullTable, 
+                ((CallPut=="Call")&(as.numeric(Strike)<as.numeric(StockPrice))) |
+                  ((CallPut=="Put")&(as.numeric(Strike)>as.numeric(StockPrice))))
+knitr::kable(InMoneyTable, caption = "In-The-Money Options")
+```
+
+## Part 4: Plot Volatitily Curve
+### The plot did not did not involve calls whose Strike is smaller than current stock price (took this additional note from Nov 23rd class)
+```{r plotSmile, echo = FALSE}
+bufferTable = (dplyr::filter(FullTable, (CallPut == "Put") | 
+                                           ((CallPut == "Call")&(as.numeric(Strike)>as.numeric(StockPrice))))) 
+VolaTable <- 
+rowwise(bufferTable) %>%
+mutate(Volat = GBSVolatility(Price, tolower(substring(CallPut,1,1)),as.numeric(StockPrice), as.numeric(Strike),
+as.numeric(Expiration) - as.numeric(Date), 0.01, 0)) 
+
+plot(VolaTable$Strike, VolaTable$Volat)
+```
+
+
