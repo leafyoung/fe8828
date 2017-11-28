@@ -1,0 +1,222 @@
+# Lecture 10: Model
+Data modeling is find quantitative relationship between variables relating to an outcome.
+
+# Our data
+
+```{r, echo = T}
+models <- mtcars %>% 
+  split(.$cyl) %>% 
+  map(function(df) lm(mpg ~ wt, data = df))
+
+models <- mtcars %>% 
+  split(.$cyl) %>% 
+  map(~lm(mpg ~ wt, data = .))
+```
+# Model with Modelr
+
+First, you define a family of models that express a precise, but generic, pattern that you want to capture.
+For example, the pattern might be a straight line, or a quadatric curve. You will express the model family as
+an equation like y = a_1 * x + a_2 or y = a_1 * x ^ a_2. Here, x and y are known variables from your data,
+and a_1 and a_2 are parameters that can vary to capture different patterns.
+
+Next, you generate a fitted model by finding the model from the family that is the closest to your data.
+This takes the generic model family and makes it specific, like y = 3 * x + 7 or y = 9 * x ^ 2.
+
+```{r, echo = T}
+install.package("purrr", "modelr")
+library(purrr)
+library(modelr)
+```
+
+# Data set
+sim1
+
+```{r, echo = T}
+model1 <- function(a, data) {
+  a[1] + data$x * a[2]
+}
+
+measure_distance <- function(mod, data) {
+  diff <- data$y - model1(mod, data)
+  sqrt(mean(diff ^ 2))
+}
+best <- optim(c(0, 0), measure_distance, data = sim1)
+best$par
+
+sim1_mod <- lm(y ~ x, data = sim1)
+coef(sim1_mod)
+```
+
+# Regression Model
+```{r, echo = T}
+library(ggplot2)
+
+set.seed(123)
+N <- 1000
+x <- rnorm(N)
+f <- function(x) 50*x^2/(1 + 4*x) # data-simulating function
+
+y <- f(x) + rnorm(N, sd=3)
+
+point_data <- data.frame(x, y)
+
+library(tidyverse)
+
+ggplot(point_data, aes(x=x, y=y)) + 
+  geom_point() + 
+  ylim(-100, 100) + 
+  ggtitle("simulated data points")
+
+fit_pade <- function(point_data){
+  fit <- lm(y ~ x + I(x^2) + I(y*x) + I(y*x^2), point_data)
+  lm_coef <- as.list(coef(fit))
+  names(lm_coef) <- c("a0", paste0(rep(c('a','b'), each=2), 1:2))
+  
+  with(lm_coef, function(x)(a0 + a1*x + a2*x^2)/(1 - b1*x - b2*x^2))
+}
+
+plot_fitted_function <- function(x_data, fitted_fun, title){
+  x_data$y_hat <- fitted_fun(x_data$x)
+  g <- ggplot(x_data, aes(x=x, y=y)) + 
+    geom_point() + ylim(-100, 100) +
+    geom_line(aes(y=y_hat), col="red", size=1) + 
+    ggtitle(title)
+  
+  plot(g)
+}
+
+pade_approx <- fit_pade(point_data)
+
+plot_fitted_function(point_data, pade_approx, title="fitted function")
+
+function_list <- list(
+  function(x) (100 - 50*x - 100*x^2)/(1 - 50*x - 5*x^2),
+  function(x) (100 - 50*x - 100*x^2)/(1 - 10*x - 5*x^2),
+  function(x) (100 - 50*x - 100*x^2)/(1 - 10*x - 10*x^2)
+)
+
+for (f in function_list){
+  sim_data <- point_data %>% mutate(y=f(x) + 
+                                      rnorm(nrow(point_data), sd=3))
+  plot_fitted_function(sim_data, fit_pade(sim_data), 
+                       title=as.character(deparse(f))[2])
+}
+```
+
+# K-means
+# K-means between two categorical variables
+dev.off()
+data.model <- select(bank, balance, education) %>% mutate(education = factor(education))
+plot(data.model)
+combination <- model.matrix(~ . - 1, data.model)
+data.model$cl <- kmeans(combination, 4)$cluster
+with(data.model, plot(balance, education, col = cl))
+
+# K-means between one categorical variable + one numeric variable
+dev.off()
+data.model <- select(bank, job, education) %>% mutate(job = factor(job), education = factor(education))
+plot(data.model)
+combination <- model.matrix(~ . - 1, data.model)
+data.model$cl <- kmeans(combination, 2)$cluster
+with(data.model, plot(job, education, col = cl))
+
+# K-means between two numeric variables
+dev.off()
+data.model <- select(bank, balance, duration)
+plot(data.model)
+data.model$cl <- kmeans(data.model[, 1:2], 4)$cluster
+with(data.model, plot(balance, duration, col = cl))
+with(data.model, text(balance, duration, col=cl))
+
+
+# Apply our data to model.
+```{r, echo = T}
+library(modelr)
+
+mod <- lm(log(balance) ~ log(age), data = bank)
+
+bank1 <- filter(bank, default == "no" & balance > 0)
+mod <- lm(log(balance) ~ log(age), data = bank1)
+
+bank2 <- bank1 %>% 
+  add_residuals(mod) %>% 
+  mutate(resid = exp(resid))
+
+ggplot(data = bank2) + 
+  geom_point(mapping = aes(x = age, y = resid))
+```
+
+# prediction is for the new data
+sim1 %>%
+data_grid(x) %>% # generate data set.
+add_predictions(sim1_mod) 
+
+ggplot(sim1, aes(x)) +
+  geom_point(aes(y = y)) +
+  geom_line(aes(y = pred), data = grid, colour = "red", size = 1)
+
+# residual is for the existing data
+add_residuals(sim1_mod, sim1)
+
+ggplot(sim1, aes(resid)) + 
+  geom_freqpoly(binwidth = 0.5)
+
+# apply it for the bank dataset
+ggplot(bank) + geom_bar(aes(x = age, fill = y))
+
+model_matrix(bank, y ~ age)
+
+bank_mod <- lm(y ~ age, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
+
+# add_prediction
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod)
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age) %>% add_predictions(bank_mod) %>% ggplot(aes(x = age, y = pred)) + geom_point()
+
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
+ggplot(aes(resid)) + 
+  geom_freqpoly(binwidth = 0.05) 
+
+# 2nd model
+bank_mod <- lm(y ~ age * job, data = mutate(bank, y = ifelse(y == "yes", 1, 0)))
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% data_grid(age, job) %>%
+  add_predictions(bank_mod) %>%
+  ggplot(aes(x = age, colour = job)) + geom_line(aes(y = pred))
+
+mutate(bank, y = ifelse(y == "yes", 1, 0)) %>% add_residuals(bank_mod) %>%
+ggplot(aes(x = age, resid, colour = job)) +
+  geom_point()
+
+# model 
+model_matrix(df, y ~ I(x^2) + x)
+
+# try age with balance?
+
+with different jobs
+
+by_job <- group_by(bank, job) %>% nest()
+job_balance <- function(df) {
+  lm(balance ~ age, data = df)
+}
+models <- mutate(by_job, model = purrr::map(data, job_balance))
+
+by_job_res <- models %>%
+  mutate(resids = map2(data, model, add_residuals))
+
+resids <- unnest(by_job_res, resids)
+
+resids %>% 
+  ggplot(aes(age, resid)) +
+    geom_line(aes(colour = job)) + 
+    geom_smooth(se = FALSE)
+
+resids %>%
+  ggplot(aes(age, resid, group = job)) +
+    geom_line(alpha = 1 / 3) + 
+    facet_wrap(~job)
+
+# natural spine
+
+mod1 <- lm(y ~ ns(x, 1), data = sim5)
+
+mod1 <- lm(y ~ x1 + x2, data = sim3)
+mod2 <- lm(y ~ x1 * x2, data = sim3)
