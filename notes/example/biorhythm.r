@@ -1,3 +1,5 @@
+# biorhythm.R
+
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -14,7 +16,8 @@ biorhythm <- function(dob, target = Sys.Date()) {
   period <- gather(period, key = "Biorhythm", value = "Percentage", -Date)
   ggplot(period, aes(x = Date, y = Percentage, col = Biorhythm)) + geom_line() +  
     ggtitle(paste("DoB:", format(dob, "%d %B %Y"))) + 
-    geom_vline(xintercept = as.numeric(target))
+    geom_vline(xintercept = as.numeric(target)) +
+    theme(legend.position = "bottom")
 }
 
 # I took four people's birthdays. Hope they are in good mode today.
