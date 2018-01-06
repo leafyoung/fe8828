@@ -1,0 +1,19 @@
+Assignment 1 = 90
+
+Assignment 2 = 100 * 0.3 + 70 * 0.7
+Part 1: 100
+
+Part 2: 70
+# Coupon rate should be divided by coupon frequency
+
+    # C*(1-1/(1+(Y/f)/100)^f*N)/(Y/f)/100+(100/(1+(Y/f)/100)^f*N)
+    C / f *(1-1/(1+(Y/f)/100)^(f*N))/((Y/f)/100)+(100/(1+(Y/f)/100)^(f*N))
+
+Assignment 3 = 100 * 0.05 + 90 * 0.25 + 80 * 0.7
+Part 1: 100
+Part 2: 90
+In the money check for payoff is different for Call and Put.
+
+Part 3: 80
+
+Assignment 4 = 90

@@ -51,7 +51,7 @@ knitr::include_graphics("imgs/main-qimg-bf859b506013fd60589a28be4c3f9e47.png")
 
 # ggplot system
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # library(ggplot2)
 ggplot(airquality, aes(Temp, Ozone)) + 
         geom_point() + 
@@ -99,23 +99,44 @@ If you don't know the column name, use `aes_string` to pass variable name as str
 
     ggplot(bank, aes_string("age", "balance", color = "job")) + geom_point()
 
+Example of `aes_string`
+
+```{r, include = FALSE}
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+ggplot(bank, aes(age, balance)) + geom_point()
+
+plot_bank <- function(x, y) {
+  ggplot(bank, aes_string(x, y)) + geom_point()
+}
+
+plot_bank("age", "duration")
+
+# in a Shiny app
+selectInput("column", "col", choices = c("balance", "duration"))
+plot_bank("age", input$col)
+
+ggplot(data = filter(bank, job == "entrepreneur"),
+       aes(age, duration)) + geom_point() +
+  geom_smooth(method = "lm") + facet_grid(. ~ job)
+```
+
 # For non-numeric data: default and age
 
     ggplot(bank, aes(default, age)) + geom_point()
     ggplot(bank, aes(age, default)) + geom_point()
     ggplot(bank, aes(job, age)) + geom_point()
 
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(default, age)) + geom_point()
 ```
 
 # For non-numeric data: age and default
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(age, default)) + geom_point()
 ```
 
 # For non-numeric data: job and age
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(job, age)) + geom_point()
 ```
 
@@ -132,14 +153,14 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1.35,2))
 
 # Pass `aes` down
 `geom_*` functions has a default parameter of `inherit.aes = T`.
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(x = age, y = duration)) +
 geom_smooth() +
 geom_point()
 ```
 
 # Pass `aes` down
-```{r, echo = T}
+```{r, echo = TRUE}
 # This is equivalent to below. But this is a bit repeating.
 ggplot(bank) +
 geom_point(aes(x = age, y = duration)) +
@@ -161,7 +182,7 @@ geom_smooth(data = dplyr::filter(bank, job != "entrepreneur"),
 ```
 
 # Adjustment: legend bottom
-```{r, echo = T}
+```{r, echo = TRUE}
 # adjust legend position
 ggplot(bank, aes(x = age, y = duration, color = job)) +
 geom_point() +
@@ -169,7 +190,7 @@ theme(legend.position="bottom")
 ```
 
 # Adjustment: legend left
-```{r, echo = T}
+```{r, echo = TRUE}
 # legend to the left
 ggplot(bank, aes(x = age, y = duration, color = job)) +
 geom_point() +
@@ -177,7 +198,7 @@ theme(legend.position="left")
 ```
 
 # Adjustment: coordinate flip
-```{r, echo = T}
+```{r, echo = TRUE}
 # Flip the x and y axis
 # Different feeling?
 ggplot(bank, aes(x = age, y = duration, color = job)) +
@@ -187,7 +208,7 @@ coord_flip()
 ```
 
 # Adjustment: log scale
-```{r, echo = T}
+```{r, echo = TRUE}
 # Make y as log scaled.
 # Note that before flip, x is y, so we use scale_y_log10()
 ggplot(bank, aes(x = age, y = duration, color = job)) +
@@ -220,7 +241,7 @@ grid.arrange(g1, g2, g3, ncol = 3)
       geom_point() + geom_smooth()
 
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # This is equivalent to above
 g <- ggplot(bank, aes(x = age, y = duration))
 g + geom_point() + geom_smooth()
@@ -244,7 +265,7 @@ g + geom_point() + geom_smooth()
     g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 
 
-```{r, echo = F}
+```{r, echo = FALSE}
 g + geom_point(aes(color = job), size = 4, alpha = 1/2)
 ```
 
@@ -255,7 +276,7 @@ g + geom_point(aes(color = job), size = 4, alpha = 1/2)
     g + geom_point(aes(color = job), size = 4, alpha = 1/2)
     g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 
-```{r, echo = F}
+```{r, echo = FALSE}
 g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 ```
 
@@ -266,7 +287,7 @@ g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2)
     g + geom_point(aes(color = job), size = 4, alpha = 1/2)
     g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 
-```{r, echo = F}
+```{r, echo = FALSE}
 g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
 ```
 
@@ -277,41 +298,41 @@ g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
     g + geom_point(aes(color = job), size = 4, alpha = 1/2)
     g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 
-```{r, echo = F}
+```{r, echo = FALSE}
 g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
 ```
 
 # Differentiate groups - `shape`
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # Use shape
 ggplot(bank) +
   geom_point(aes(age, duration, shape = contact))
 ```
 
 # Differentiate groups - `color`
-```{r, echo = T}
+```{r, echo = TRUE}
 # Use color
 ggplot(bank) +
   geom_point(aes(age, duration, color = contact))
 ```
 
 # Differentiate groups - `size`
-```{r, echo = T}
+```{r, echo = TRUE}
 # Use size
 ggplot(bank) +
   geom_point(aes(age, duration, size = contact))
 ```
 
 # Differentiate groups - `alpha`
-```{r, echo = T}
+```{r, echo = TRUE}
 # Use alpha - transparency
 ggplot(bank) +
   geom_point(aes(age, duration, alpha = contact))
 ```
 
 # Differentiate groups - `group`
-```{r, echo = T}
+```{r, echo = TRUE}
 # Use group.
 ggplot(bank) +
   geom_point(aes(age, duration, group = contact))
@@ -319,7 +340,7 @@ ggplot(bank) +
 
 # Enforce color, put things outside `aes`
 
-```{r, echo = T}
+```{r, echo = TRUE}
 ## you can also enforce color, put things outside aes
 ggplot(bank) +
   geom_point(aes(age, duration), color = "blue", size = 10, alpha = 0.4)
@@ -355,7 +376,7 @@ ggplot(bank) +
 
 # Exercise
 1. What does this figure mean?
-```{r, echo = T}
+```{r, echo = TRUE}
 # Note: Reverse a categorical variable, we use rev(levels(...)).
 # Note: Reverse a continous numerical variable, we use scale_x_reverse().
 ggplot(bank, aes(age, job)) +
@@ -364,14 +385,14 @@ scale_y_discrete(limit = rev(levels(bank$job)))
 ```
 
 # Exercise 
-```{r, echo = T}
+```{r, echo = TRUE}
 # y labels without sort.
 ggplot(bank, aes(age, job)) + geom_point()
 ```
 
 # Exercise 
 2. I tried to plot between job, loan and age. Any better idea? 
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(age, job, color = loan)) + geom_point()
 ```
 
@@ -386,53 +407,53 @@ ggplot(bank, aes(age, job, color = loan, size = loan)) + geom_point()
 - geom_bar()
 
 # Boxplot: job and duration
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(job, duration)) + geom_boxplot()
 ```
 
 # Boxplot: job and age
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(job, age)) + geom_boxplot()
 ```
 
 # Density: balance and job
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(balance, color = job)) + geom_density()
 ```
 
 # Density: balance and job wtih fill
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(duration, fill = job)) + geom_density()
 ```
 
 # Density: age and job wtih alpha
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(age, color = job, alpha = 0.3)) + geom_density()
 ```
 
 # Density: age and job wtih alpha and fill and color
-```{r, echo = T}
+```{r, echo = TRUE}
 # Which is better?
 ggplot(bank, aes(age, color = job, fill = job, alpha = 0.3)) + geom_density()
 ```
 
 # histogram: duration and job and binwidth = 2
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 2)
 ```
 
 # histogram: duration and job and binwidth = 100
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 100)
 ```
 
 # histogram: age and job and fill
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = age, fill = job)) + geom_histogram(binwidth = 10)
 ```
 
 # histogram: age and job and colour
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = age, colour = job)) + geom_freqpoly(binwidth = 10)
 ```
 
@@ -443,13 +464,13 @@ ggplot(data = bank, mapping = aes(x = age, colour = job)) + geom_freqpoly(binwid
 ggplot(bank) + geom_bar(mapping = aes(x = age))
 ```
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # We can skip mapping
 ggplot(bank) + geom_bar(aes(x = age))
 ```
 
 # geom_bar with fill: job
-```{r, echo = T}
+```{r, echo = TRUE}
 # comparing to colour, for Bar, we better use fill
 # ggplot(data = bank, ) + geom_bar(aes(x = age, colour = job))
 ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
@@ -470,26 +491,26 @@ grid.arrange(p1, p2, ncol = 2, widths = c(2, 2))
 ```
 
 # Position for bar
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
 ```
 
 # Position for bar: fill
-```{r, echo = T}
+```{r, echo = TRUE}
 # fill to 100%
 ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job),
                         position = "fill")
 ```
 
 # Position for bar: dodge
-```{r, echo = T}
+```{r, echo = TRUE}
 # dodge means "adaptive width of the bar"
 ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job),
                         position = "dodge")
 ```
 
 # Variations: coord_flip
-```{r, echo = T}
+```{r, echo = TRUE}
 # Switch x and y axis.
 # Note any adjustment on x or y axis is effective on the original name.
 ggplot(bank) +
@@ -498,14 +519,14 @@ coord_flip()
 ```
 
 # Variations: coord_polar
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank) +
 geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
 coord_polar()
 ```
 
 # Variations: scale_x_reverse
-```{r, echo = T}
+```{r, echo = TRUE}
 # scale_x_reverse works on continous variable (numeric, date, etc.)
 ggplot(bank) +
 geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
@@ -514,27 +535,27 @@ scale_x_reverse()
 ```
 
 # geom_bar: better serves for categorical data
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = job, fill = education)) +
   geom_bar() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 ```
 
 # geom_bar: coord_flip
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = job, fill = education)) +
   geom_bar() + coord_flip()
 ```
 
 # geom_bar: sort job by mean age
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = mean),
        fill = education)) +
   geom_bar() + coord_flip()
 ```
 
 # geom_bar: sort job by alphabetical order
-```{r, echo = T}
+```{r, echo = TRUE}
 # If we want to order job according to alphabetical order.
 # use rev(levels(...))
 ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),
@@ -562,7 +583,7 @@ ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),
 ```
 
 # Bar with composite data: plot
-```{r, echo = F}
+```{r, echo = FALSE}
 ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = education)) +
   geom_bar() +
   # If we want to sort the job acccording to median age
@@ -576,7 +597,7 @@ ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = ed
 ```
 
 # Data with statistical
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank) + 
   stat_summary(
     mapping = aes(x = age, y = balance),
@@ -598,7 +619,7 @@ ggplot(data = bank) +
 ```
 
 # Facets: facet_wrap
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank) + 
   geom_point(mapping = aes(x = age, y = duration)) + 
   facet_wrap(~ education, nrow = 2)
@@ -606,7 +627,7 @@ ggplot(data = bank) +
 
 # Facets: facet_wrap multi-dimension
 
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(data = bank) + 
   geom_point(mapping = aes(x = age, y = duration)) + 
   facet_wrap(loan ~ education ~ housing, nrow = 2)
@@ -614,44 +635,44 @@ ggplot(data = bank) +
 ```
 
 # Facets - finding the best
-```{r, echo = T}
+```{r, echo = TRUE}
 # doesn't look great because we have so many jobs.
 ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(job ~ .)
 ```
 
 # Facets - finding the best. trying.
-```{r, echo = T}
+```{r, echo = TRUE}
 # Not a good choice, neither
 ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(. ~ job)
 ```
 
 # Facets - finding the best. better
-```{r, echo = T}
+```{r, echo = TRUE}
 # Can we do better?
 ggplot(bank, aes(campaign)) + geom_histogram() + facet_grid(. ~ job)
 ```
 
 # Facets - finding the best. trying another
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(duration)) + geom_histogram(aes(color = job)) +
   facet_grid(. ~ job)
 ```
 
 # Facets - finding the best: points
-```{r, echo = T}
+```{r, echo = TRUE}
 # facet with points is good
 ggplot(bank, aes(balance, age)) + geom_point() + facet_grid(. ~ job)
 ```
 
 # Facets - finding the best: better with color
-```{r, echo = T}
+```{r, echo = TRUE}
 # do better
 ggplot(bank, aes(balance, age)) + geom_point(aes(color = job)) +
   facet_grid(. ~ job)
 ```
 
 # Facets - finding the best: points
-```{r, echo = T}
+```{r, echo = TRUE}
 # Can we apply points between age and balance?
 ggplot(bank, aes(age, balance, color = job)) +
   geom_point() + geom_smooth() +
@@ -659,7 +680,7 @@ ggplot(bank, aes(age, balance, color = job)) +
 ```
 
 # Facets - finding the best: smoothie
-```{r, echo = T}
+```{r, echo = TRUE}
 # Smooth line is mixed with points
 ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
   geom_smooth() +
@@ -667,36 +688,36 @@ ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
 ```
 
 # With facets or without facets?
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_histogram() + facet_grid(. ~ job)
 ```
 
 # With facets or without facets?
 facets with color
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_histogram(aes(fill = job)) +
   facet_grid(. ~ job)
 ```
 
 # With facets or without facets?
 Use density/color on one figure
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_density(aes(fill = job))
 ```
 
 # With facets or without facets - Case 2
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_histogram() +
   facet_grid(. ~ marital)
 ```
 
 # With facets or without facets: density and fill
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_density(aes(fill = marital))
 ```
 
 # With facets or without facets: xlim
-```{r, echo = T}
+```{r, echo = TRUE}
 ggplot(bank, aes(previous)) +
   geom_density(aes(fill = marital), alpha = 0.7) +
   xlim(1, 10)
@@ -770,7 +791,7 @@ grid.arrange(p1,p2,p3,ncol=3)
 # ggthemes
 - package `ggthemes` provides many other themes.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 library(ggthemes)
 ## [1] "theme_base" "theme_calc"
 ## [3] "theme_economist" "theme_economist_white"
@@ -852,7 +873,7 @@ ggplot(world, aes(long, lat, group = group)) +
           summary(data())
         })
 
-```{r, echo = F}
+```{r, echo = FALSE}
 # reactive()
 # data <- reactive({
 # hist(rnorm(input$num))
@@ -878,7 +899,7 @@ ggplot(world, aes(long, lat, group = group)) +
           output$table1 <- renderTable({ ... })
         })
 
-```{r, echo = F}
+```{r, echo = FALSE}
 # observe() function
 # observe({ print(input$go) }) reacts to whatever are changed in the code block.
 
@@ -953,7 +974,7 @@ p2 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = education),
 grid.arrange(p1, p2, ncol=2, nrow=1)
 ```
 
-```{r, echo = T}
+```{r, echo = TRUE}
 grid.arrange(p1, p2, ncol=2, nrow=1, widths = c(4,3))
 grid.arrange(p1, p2, ncol=1, nrow=2, heights = c(2,4))
 ```
@@ -1033,7 +1054,7 @@ https://cran.r-project.org/web/packages/kableExtra/vignettes/awesome_table_in_ht
 
 - style
 
-```{r, echo = T}
+```{r, echo = TRUE}
 mtcars[1:10, , drop = F] %>%
 kable("html") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
@@ -1044,7 +1065,7 @@ kable("html") %>%
 
 # kable_styling: column_spec
 
-```{r, echo = T}
+```{r, echo = TRUE}
 mtcars[1:10, , drop = F] %>%
 kable("html") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
@@ -1056,7 +1077,7 @@ kable("html") %>%
 ```
 
 # kable_styling: row_spec
-```{r, echo = T}
+```{r, echo = TRUE}
 mtcars[1:10, , drop = F] %>%
 kable("html") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
@@ -1073,7 +1094,7 @@ kable("html") %>%
 knitr::include_graphics("imgs/virdis.png")
 ```
 
-```{r, echo = T}
+```{r, echo = TRUE}
 vol_surface <- tibble(tenor = c("1M", "2M", "3M", "6M"),
                       `0.1` = c(0.472, 0.435, 0.391, 0.29),
                       `0.25` = c(0.431, 0.41, 0.337, 0.28),

@@ -763,7 +763,7 @@ bank &lt;- read.csv(&quot;https://goo.gl/PBQnBt&quot;, sep = &quot;;&quot;)
 This data contains `r nrow(data)` rows.
 
 # Finding #2
-```{r, echo = F}
+```{r, echo = FALSE}
 # Find the big age group
 bank %&gt;% 
   group_by(age_group = (age %/% 10) * 10) %&gt;%

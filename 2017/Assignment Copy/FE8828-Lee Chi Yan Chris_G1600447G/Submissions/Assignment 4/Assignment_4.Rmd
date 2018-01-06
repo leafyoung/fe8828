@@ -1,0 +1,61 @@
+#import Titanic Dataset
+
+df<-read.csv("https://raw.githubusercontent.com/Geoyi/Cleaning-Titanic-Data/master/titanic_clean.csv", sep=",")
+
+df<-mutate(df, age_round=floor(age))
+
+df$pclass<-as.factor(df$pclass)
+df$survived<-as.factor(df$survived)
+df$sex<-as.factor(df$sex)
+df$embarked<-as.factor(df$embarked)
+df$age<-as.factor(df$age)
+
+
+
+#Finding 1- Survial Rate - More people died from the Titanic incident than survived.
+
+ggplot(df, aes(x=survived)) + geom_bar() + theme_bw() + labs(y="passenger count", title="Titanic survival count")
+
+#Finding 2 - Survival Rate by Gender - Females have a much higher chance of survival than males.
+
+ ggplot(df, aes(x= sex, fill = survived)) + geom_bar()+ labs(y="passenger count", title="Titanic survival count by sex")
+ 
+ 
+#Finding 3 - Survival Rate by class of ticket - The survivial rate of passengers from class 1 and 2 are far higher than class 3.
+
+ ggplot(df, aes(x=pclass, fill=survived)) + geom_bar() + labs(y="passenger count", title="Titanic survival by ticket class")
+ 
+#finding 4 - survival Rate by sex AND class of ticket - the survival rate of females from the first class is the highest, while the male survival rate of males in the 3rd class are the lowest.
+
+ggplot(df, aes(x=sex, fill=survived)) + facet_wrap(~ pclass) + geom_bar() + labs(y="passenger count", title="Titanic survival by sex and ticket class")
+
+
+#Finding 5 - Age distribution of passengers - disproportionately high number of passengers who are aged ~30 years old
+
+ggplot(data = df, mapping = aes(x = age, fill = survived)) + geom_histogram(binwidth = 5)
+
+#Finding 6 - young male children in 2nd class disproportionately survive compared to their older male counterparts in the same class
+
+df1 <- df[!is.na(df$pclass), ]
+
+ggplot(df1, aes(x=age, fill=survived)) + facet_wrap(sex ~ pclass) + geom_density(alpha=0.5)
+
+#Finding 7 - all females in the first class stand a disproportionately huge probability of survival
+
+ggplot(df1, aes(x=age, fill=survived)) + facet_wrap(sex ~ pclass) + geom_histogram(binwidth = 5)
+
+#Finding 8 - no discernable differences between fare paid by males & females across age groups
+
+ggplot(df1, aes(age, fare, color = sex)) +
+    geom_point() + geom_smooth() +
+    facet_grid(. ~ sex)
+
+#Finding 9 - Those who got on a boat almost surely survived.
+
+ggplot(data = df1, mapping = aes(x = boat,fill = survived)) + geom_bar() 
+
+#Finding 10 - Median age of those who survived & died are similar
+
+ggplot(df1, aes(x=survived, y=age)) + geom_boxplot()
+
+

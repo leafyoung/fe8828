@@ -1,0 +1,128 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: 'Toh Zhao Zhi <sub> <Email: tohz0016pg@e.ntu.edu.sg> </sub>'
+date: "Nov 19, 2017"
+output:
+  html_document: default
+---
+
+```{r setup, include =FALSE}
+library(dplyr)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = T)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+#Finding #1
+This data contains `r nrow(bank)` number of data points.
+
+#Finding #2 Marital Status Demographics of Sample
+Proportion of data sample for each marital status:
+```{r, echo = TRUE}
+# Find Percentage of people with different marital status
+MARITAL.summary<- group_by(bank, marital) %>% summarise(n = n())
+
+MARITAL.summary
+
+# Marital Status and dependent variable
+MARITAL.summary2<- group_by(bank, marital, y) %>% summarise(percentage = n()/nrow(bank)*100)
+
+ggplot() + labs(x = "Marital Status", y = "Percentage of Sample (%)") + geom_bar(aes(y = percentage, x = marital, fill = y), data = MARITAL.summary2, stat = "identity") + ggtitle("Percentage of Sample for each Marital Status")
+  
+```
+528 of the people in the sample are divorced, 2797 are married and 1196 are single of which majority of the people in each category have not subscribed to the term deposit.
+
+#Finding #3 Age Demographics of Sample
+```{r, echo = TRUE}
+bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n(), balance_mean = mean(balance)) %>%
+  arrange(age_group) -> AGE.Summary
+
+plot(AGE.Summary$age_group, AGE.Summary$count, type = "b", ylab = "Number of people",  xlab = "Age Group", main = "Plot of Number of People in Each Age Groups in Data Sample")
+```
+In the above analysis, people in the sample were categorized into age groups of 10+, 20+, 30+,..., 80+. It can be seen that the majority of the data sample is made up of people in their 30s and the second largest group would be the people in their 40s.
+
+#Finding #4 Mean Balance across Age Groups
+```{r, echo = TRUE}
+plot(AGE.Summary$age_group, AGE.Summary$balance_mean, type = "b", ylab = "Mean Balance", xlab = "Age Group", main = "Plot of Mean Balance of Different Age Groups")
+AGE.Summary
+```
+The above plot shows the mean balance across different age groups and it can be observed that on average, people above 60 years old have higher balances as compared to people below 60 years old. People in their 70s have highest mean balance, while people aged 10+ have the lowest mean balance.
+
+#Finding #5 Likelihood of default in each job category
+```{r, echo = TRUE}
+bank %>%
+  group_by(job) %>%
+  summarise(default_count = sum(ifelse(default == "no", 0,1)), total = sum(ifelse(loan == "yes" | housing == "yes", 0,1)), likelihood.default = default_count/total*100) -> JOB.Summary
+JOB.Summary
+
+barplot(JOB.Summary$likelihood.default, names.arg = JOB.Summary$job, las = 2, col = "red")
+```
+The above bar chart shows the default likelihood across different job categories. It can be seen that entrepreneurs have the highest possibility of defaulting on their loans, while unknown, students and retired have the lowest possibility of defaulting on their loans.
+
+#Finding #6 Education-Job Relationship
+```{r, echo = TRUE}
+bank %>% 
+  group_by(job, education) %>%
+  summarise(n = n()) %>% mutate(percent = n/sum(n)*100) -> JOBxEDU.Summary
+
+ggplot() + labs(x = "Job", y = "% of People in each Job") + geom_bar(aes(y = percent, x = job, fill = education), data = JOBxEDU.Summary, stat = "identity") + coord_flip() +  ggtitle("Composition of Education Levels in Each Job Category")
+
+names(JOBxEDU.Summary)[4] = "Percentage in Job Category"
+JOBxEDU.Summary
+```
+The above chart shows the composition of Education Levels in Each Job Category. It can be seen that management level jobs are mostly taken up by people with tertiary education level, while services, admin, services, technicians are mostly taken up by people with secondary education. Housemaids is mainly composed of people with primary education.
+
+#Finding #7 Job-Age Relationship
+```{r, echo = TRUE}
+bank %>% mutate(age_group = (age %/% 10) * 10) -> temp
+
+temp %>%  group_by(job, age_group) %>%
+  summarise(n = n()) %>% mutate(percent = n/sum(n)*100) -> JOBxAGE.Summary
+
+ggplot() + labs(x = "Job", y = "% of People in each Job") + geom_bar(aes(y = percent, x = job, fill = age_group), data = JOBxAGE.Summary, stat = "identity") + coord_flip() +  ggtitle("Composition of Age Groups in Each Job Category") 
+names(JOBxAGE.Summary)[4] = "Percentage in Job Category"
+JOBxAGE.Summary
+```
+The above chart shows the age composition in the different job categories. It can be observed that students are mostly composed of people between 20-40 years old, with the bulk being in their 20s. Retired are mainly people older than 60 years old. Managerial roles are generally taken up by people in their 30s and 40s.
+
+#Finding #8 Min and Max Balance in each job category
+```{r, echo = TRUE}
+bank %>%
+  group_by(job) %>%
+  summarize(min_balance = min(balance), max_balance = max(balance), mean_balance = mean(balance)) -> JOBxBALANCE.Summary
+
+JOBxBALANCE.Summary
+
+ggplot(data=bank, aes(x=job, y=balance, fill=job)) + 
+geom_violin() + coord_flip()
+```
+The above plot shows the distribution of balance in the different job categories. The maximum balance of the sample comes from the retired category (71188), while the minimum balance of the sample comes from the self-employed category (-3313).
+
+#Finding #9 Age range of people with housing loan
+```{r, echo = TRUE}
+bank %>% 
+  group_by(age, housing) %>%
+  summarize(n = n()) %>%
+  filter(housing == "yes") -> AGExHOUSING.Summary
+
+barplot(AGExHOUSING.Summary$n, names.arg = AGExHOUSING.Summary$age, main = "Age Distribution of People with Housing Loan", xlab = "Age", ylab = "Number of People", col = "red")
+
+AGExHOUSING.Summary
+```
+The above chart shows the age distribution of people with housing loan. The age range of people with housing loan is 21 to 75. It can be seen that the bulk of people with housing loans are aged 30-42, with the age 34 having the most people with a housing loan. In general, as age increases/decreases from the 30s, the number of people having housing loans decreases.
+
+#Finding #10 Age range of people with personal loan
+```{r, echo = TRUE}
+bank %>% 
+  group_by(age, loan) %>%
+  summarize(n = n()) %>%
+  filter(loan == "yes") -> AGExLOAN.Summary
+
+barplot(AGExLOAN.Summary$n, names.arg = AGExLOAN.Summary$age, main = "Age Distribution of People with Personal Loan", xlab = "Age", ylab = "Number of People", col = "red")
+AGExLOAN.Summary
+```
+The above chart shows the age distribution of the people with personal loans. The age range of people with personal loans is 22 to 61. The age with the most people having personal loans is similar to that having housing loans at age 34. However, the number of people with personal loans decreases less gradually as age increases. In fact, the number of people with personal loans are relatively equal for ages 40 to 58.

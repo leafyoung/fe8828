@@ -1,0 +1,303 @@
+---
+title: "bank account"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(tidyr)
+library(quantmod)
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+filter <- dplyr::filter
+```
+
+## Account function
+
+```{r}
+createAccount <- function(Account, newName, newCredit){
+  newAccount = data.frame(AccountNo = paste0("AAA", sprintf("%05d", nrow(Account)+1)),
+                          Name = newName, Credit = newCredit, 
+                          stringsAsFactors = FALSE)
+  x = rbind(Account, newAccount)
+  x
+}
+```
+
+## Transaction function
+
+```{r}
+createTrans <- function(Transaction, newDate, newAccountNo, newTransType, newAmount, newCurrency){
+  Transaction %>% filter(Date == newDate) %>% nrow() -> N
+  newTrans = data.frame(TransactionNo = paste0(sprintf("%08d",N),format(as.Date(newDate), "%y%m%d")),
+                        Date = newDate,
+                        AccountNo = newAccountNo,TransactionType = newTransType,Amount = newAmount, Currency = newCurrency,
+                        stringsAsFactors = FALSE)
+  x = rbind(Transaction, newTrans)
+  x
+}
+```
+
+## Report function
+
+```{r}
+GenerateReport <- function(x, FXConvTable, AccountNo.i, Account_Credit){
+  x %>% filter(AccountNo == AccountNo.i) %>% left_join(FXConvTable, by = c("Date", "Currency"))-> x1
+  x1 %>% filter(TransactionType !=  "Spend") %>% arrange(Date) -> x.SavingsAC
+  x1 %>% filter(TransactionType == "Spend") %>% arrange(Date) -> x.CreditAC
+  
+  DepositBal = rep(0,nrow(x.SavingsAC))
+  for(i in 1:nrow(x.SavingsAC))
+    {
+    x.SavingsAC$`Amount in SGD`[i] = x.SavingsAC$Conversion[i] * x.SavingsAC$Amount[i] 
+    DepositBal[i] = sum(x.SavingsAC[1:i,"Amount in SGD"])
+  }
+  
+  CreditBal = rep(0,nrow(x.CreditAC))
+  for(i in 1:nrow(x.CreditAC))
+    {
+    x.CreditAC$`Amount in SGD`[i] = x.CreditAC$Conversion[i] * x.CreditAC$Amount[i] 
+    CreditBal[i] = Account_Credit + sum(x.CreditAC[1:i, "Amount in SGD"])
+  }
+  
+  x.CreditAC$DepositBalance = NA
+  x.CreditAC$CreditBalance = CreditBal
+  x.SavingsAC$DepositBalance = DepositBal
+  x.SavingsAC$CreditBalance = NA
+  
+  rbind(x.CreditAC, x.SavingsAC) %>% arrange(Date) -> x2
+  
+  if(is.na(x2$DepositBalance[1]))
+    x2$DepositBalance[1] = 0
+  if(is.na(x2$CreditBalance[1]))
+    x2$CreditBalance[1] = Account_Credit
+  
+  for(j in 2:nrow(x2)){
+    if(is.na(x2$DepositBalance[j])){
+      x2$DepositBalance[j] = x2$DepositBalance[j-1]
+    }
+    if(is.na(x2$CreditBalance[j])){
+      x2$CreditBalance[j] = x2$CreditBalance[j-1]
+    }
+  }
+  x2
+}
+```
+
+#Data Initialization
+## Create 3 Currencies
+
+```{r}
+curr = c("CNY","USD","SGD")
+getFX(c("USD/SGD","CNY/SGD", "SGD/SGD"), from = "2017-07-01", to = "2017-09-30")
+USD.SGD = as.data.frame(USDSGD)
+USD.SGD$Currency = "USD"
+USD.SGD$Date = row.names(USD.SGD)
+USD.SGD = USD.SGD[,c(2,1,3)]
+names(USD.SGD)[2] = "Conversion"
+row.names(USD.SGD) = NULL
+CNY.SGD = as.data.frame(CNYSGD)
+CNY.SGD$Currency = "CNY"
+CNY.SGD$Date = row.names(CNY.SGD)
+CNY.SGD = CNY.SGD[,c(2,1,3)]
+names(CNY.SGD)[2] = "Conversion"
+row.names(CNY.SGD) = NULL
+SGD.SGD = as.data.frame(SGDSGD)
+SGD.SGD$Currency = "SGD"
+SGD.SGD$Date = row.names(SGD.SGD)
+SGD.SGD = SGD.SGD[,c(2,1,3)]
+names(SGD.SGD)[2] = "Conversion"
+row.names(SGD.SGD) = NULL
+FXConvTable = rbind(CNY.SGD, USD.SGD, SGD.SGD)
+
+```
+
+## Create 10 Accounts and intialize the balance
+
+```{r}
+#Initialize Different Data Frames
+Account <- data.frame(AccountNo = character(0), Name = character(0), Credit = numeric(0), stringsAsFactors = FALSE)
+Transaction <- data.frame(TransactionNo = character(0), Date = character(0), AccountNo = character(0),
+                          TransactionType = character(0), Amount = numeric(0), Currency = character(0), 
+                          stringsAsFactors = FALSE)
+
+AccountNames = c("Bryan", "Steve", "Harry", "Benz", "Kaibin","Jia Yuan","Zhoazhi","Deborah", "Ronjia", "Deborah")
+AccountCredit = sample(1000:50000, 10, replace = TRUE)
+for(i in 1:10) {
+  Account = createAccount(Account, AccountNames[i], AccountCredit[i]);
+}
+Account
+```
+
+## Initial Random Deposit
+
+```{r}
+for(i in 1:10){
+  AccountNo <- Account$AccountNo[i]
+  dep_amt <- sample(100:5000,1)
+  Transaction <- createTrans(Transaction, "2017-07-01", AccountNo, "Deposit", dep_amt, "SGD")
+}
+Transaction
+```
+
+##Generate Random Transaction Data
+
+```{r}
+#Transaction for each account within a month
+for(t in 7:9){
+  #Set Month Range
+  month = seq(as.Date(paste0("2017-",t,"-01")), as.Date(paste0("2017-",t+1,"-01")), by = "day")
+  month = month[-length(month)]
+  
+#Transaction in each month of each account
+  for(i in 1:10){
+    AccountNo.i = Account$AccountNo[i]
+    
+    #Deposit
+      deposit = sample(100:50000,1)
+      Transaction = createTrans(Transaction, as.character(sample(month,1)), AccountNo.i, "Deposit", deposit, 
+                                curr[sample(c(1,2,3),1)])
+    
+    #Withdrawal 
+    for(k in month){
+      with_bool = sample(c(0,1), 1, prob = c(0.7,0.3))
+      if(with_bool){
+        filter(Transaction, AccountNo == AccountNo.i, Date <= as.Date(k), TransactionType != "Spend") %>% 
+          left_join(., FXConvTable, by = c("Currency","Date")) %>%   
+          summarize(Balance = sum(Amount*Conversion)) -> Bal.AfterDep 
+        
+        Bal = Bal.AfterDep$Balance
+        C = curr[sample(c(1,2,3),1)]
+        C_Rate = FXConvTable[FXConvTable$Date == as.Date(k) & FXConvTable$Currency == C,"Conversion"]
+        withdraw = -round(runif(1, 0.01, Bal/5),2)/C_Rate
+        if(withdraw < -0.1)
+          Transaction = createTrans(Transaction, as.character(as.Date(k)), AccountNo.i, "Withdraw", withdraw, C)
+      }
+    }
+      
+    #Spending
+    for(k in month){
+      spend_bool = sample(c(0,1), 1, prob = c(0.7,0.3))
+      if(spend_bool){
+        Transaction %>% filter(AccountNo == AccountNo.i, Date < as.Date(k), TransactionType == "Spend") %>%
+          left_join(., FXConvTable, by = c("Currency","Date")) %>%
+          summarize(Total = -sum(Amount*Conversion)) -> Amt_Spent
+        CreditBal = Account[Account$AccountNo == AccountNo.i, "Credit"]- Amt_Spent$Total
+        
+        C = curr[sample(c(1,2,3),1)]
+        C_Rate = FXConvTable[FXConvTable$Date == as.Date(k) & FXConvTable$Currency == C,"Conversion"]
+        spend_amt = -round(runif(1, 0.01, CreditBal/5),2)/C_Rate
+       
+        if(spend_amt < -0.1)
+          Transaction = createTrans(Transaction, as.character(as.Date(k)), AccountNo.i, "Spend", spend_amt, C)
+      }
+    }
+  }
+}
+```
+
+###Report End of the three month of one random account
+
+```{r, results = 'asis', echo = FALSE}
+options(knitr.kable.NA = ' ')
+
+Transaction %>% left_join(FXConvTable, by = c("Currency", "Date")) %>% mutate(`Amount in SGD` = Amount*Conversion) %>%
+  group_by(AccountNo) %>% arrange(AccountNo, Date)-> Trans.df
+
+AccountSummary = data.frame()
+for(i in 1:10){
+    AccountNo.i = Account$AccountNo[i]
+    Account_Credit = Account[Account$AccountNo == AccountNo.i, "Credit"]
+    AccountNo.i = Account$AccountNo[i]
+    AccountSummary = rbind(AccountSummary, GenerateReport(Transaction, FXConvTable, AccountNo.i, Account_Credit))
+}
+
+#create random number between 1 and 10
+i=sample(1:10,1)
+
+for(t in 7:9){
+    month = seq(as.Date(paste0("2017-",t,"-01")), as.Date(paste0("2017-",t+1,"-01")), by = "day")
+    AccountSummary %>% filter(AccountNo == Account$AccountNo[i] & Date >= as.Date(month[1]) & Date < as.Date(month[length(month)])) -> MonthEndReport
+    
+    # create header name
+    ClientHeader = c(" " = 1,  " "  = 1, " " = 5)
+    MonthHeader = c(" " = 1, " " = 1, " " = 5)
+    names(ClientHeader) = c("Client Name: ", AccountNames[i], " ")
+    names(MonthHeader) = c("Month: ", format(as.Date(month[1]), "%B"), " ")
+    
+    MonthEndReport = add_row(MonthEndReport, DepositBalance = MonthEndReport$DepositBalance[nrow(MonthEndReport)], CreditBalance = 
+                            MonthEndReport$CreditBalance[nrow(MonthEndReport)])
+    
+    MonthEndReport %>%  select(Date, TransactionType, Amount, Currency, `Amount in SGD`, DepositBalance, CreditBalance) %>%
+      kable(.,format = "html", align=c(rep('c',times=10)), digits = 2) %>% 
+      kable_styling(bootstrap_options = c("striped", "hover", "condensed"),font_size = 14, full_width = F, position = "left") %>%
+      add_header_above(header = MonthHeader) %>%
+      add_header_above(header = ClientHeader) %>% 
+      group_rows("Month End Balance ",nrow(MonthEndReport),nrow(MonthEndReport))-> MonthEndStatement
+    
+    print(MonthEndStatement)
+
+}
+```
+
+
+### Risk department
+
+```{r, echo = FALSE}
+#Total balance daily
+AccountSummary %>%
+  group_by(Date , AccountNo) %>% filter(row_number() == n()) %>% arrange(Date) %>% ungroup() %>%
+  group_by(Date) %>% summarize(TotalBalance = sum(DepositBalance))
+
+#Total receivable from credit daily
+AccountSummary %>% filter(TransactionType == "Spend") %>%
+  mutate(InterestRec = abs((exp(0.0025*as.numeric(as.Date("2017-09-30")-as.Date(Date))/365)-1)*Amount)) %>%
+  summarize(TotalInterest = sum(InterestRec))
+
+#Top 10 High and Low Risk Client
+AccountSummary %>% mutate(Month = format(as.Date(Date), "%B")) %>% group_by(Month, AccountNo) %>% 
+  # Added arrange: assumed data order in Date. Better to enforce it with arrange.
+  arrange(Month, AccountNo, Date) %>% filter(row_number() == n()) %>%
+  mutate(AccountCredit = (Account$Credit[Account$AccountNo == AccountNo])) %>% 
+  summarize(Risk = DepositBalance - (AccountCredit - CreditBalance)) %>%
+  arrange(Month, Risk)
+```
+
+
+###Customer department
+
+```{r, echo = FALSE}
+#Top 10 Customer with large balance
+AccountSummary %>% mutate(Month = format(as.Date(Date), "%B")) %>% group_by(Month, AccountNo) %>% filter(row_number() == n()) %>%
+select(AccountNo, Month, DepositBalance) %>% arrange(Month,DepositBalance)
+
+#Top 10 spending customer (spend)
+AccountSummary %>% mutate(Month = format(as.Date(Date), "%B")) %>% group_by(Month, AccountNo) %>% filter(TransactionType == "Spend") %>% summarize(TotalSpending = sum(Amount)) %>% arrange(TotalSpending)
+
+#Top 10 saving customer (deposit)
+AccountSummary %>% mutate(Month = format(as.Date(Date), "%B")) %>% group_by(Month, AccountNo) %>% filter(TransactionType == "Deposit") %>% summarize(TotalSaving = sum(Amount)) %>% arrange(Month,TotalSaving)
+
+```
+
+
+### Treasury department
+
+```{r, echo = FALSE}
+#Interest that all customers need to pay for three months
+AccountSummary %>%
+  group_by(Date , AccountNo) %>% filter(row_number() == n()) %>% arrange(Date) %>% ungroup() %>%
+  group_by(Date) %>% summarize(TotalBal = sum(DepositBalance)) %>% ungroup() %>%
+  mutate(Month = format(as.Date(Date), "%B")) %>% group_by(Month) %>% filter(row_number() == n()) %>% select(Month, TotalBal) %>%
+  mutate(InterestPayable = 0.25/100/12*TotalBal)
+```
+
+
+
+
+
+
+
+
+
+

@@ -1,7 +1,7 @@
 # Time
 
 Convert time to date, be aware of timezone. Use the current timezone, "+08"
-```{r, echo = T}
+```{r, echo = TRUE}
 Sys.time()
 [1] "2017-10-30 22:50:22 +08"
 

@@ -3,7 +3,7 @@ Data modeling is find quantitative relationship between variables relating to an
 
 # Our data
 
-```{r, echo = T}
+```{r, echo = TRUE}
 models <- mtcars %>% 
   split(.$cyl) %>% 
   map(function(df) lm(mpg ~ wt, data = df))
@@ -22,7 +22,7 @@ and a_1 and a_2 are parameters that can vary to capture different patterns.
 Next, you generate a fitted model by finding the model from the family that is the closest to your data.
 This takes the generic model family and makes it specific, like y = 3 * x + 7 or y = 9 * x ^ 2.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 install.package("purrr", "modelr")
 library(purrr)
 library(modelr)
@@ -31,7 +31,7 @@ library(modelr)
 # Data set
 sim1
 
-```{r, echo = T}
+```{r, echo = TRUE}
 model1 <- function(a, data) {
   a[1] + data$x * a[2]
 }
@@ -48,7 +48,7 @@ coef(sim1_mod)
 ```
 
 # Regression Model
-```{r, echo = T}
+```{r, echo = TRUE}
 library(ggplot2)
 
 set.seed(123)
@@ -130,7 +130,7 @@ with(data.model, text(balance, duration, col=cl))
 
 
 # Apply our data to model.
-```{r, echo = T}
+```{r, echo = TRUE}
 library(modelr)
 
 mod <- lm(log(balance) ~ log(age), data = bank)

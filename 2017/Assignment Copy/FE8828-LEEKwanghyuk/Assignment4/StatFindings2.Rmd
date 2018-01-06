@@ -1,0 +1,111 @@
+---
+title: "StatFindings2"
+author: "Harry"
+date: "11/26/2017"
+output: html_document
+---
+[10 data insights]
+
+0. setup
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+bank <- read.csv("https://goo.gl/PBQnBt", sep=";")
+```
+
+1. Defualt and age
+```{r}
+ggplot(bank, aes(default, age)) + geom_point()
+
+```
+<p>
+- We can see that people who default are between the age of 10 to 60.
+
+
+2. Job category and age
+```{r}
+ggplot(bank, aes(job, age)) + geom_point()
+```
+<p>
+- The group of retired and the group of students has a skewed age distribution to old and young ages, for each.
+- Besides, we can observe that Management, Housemaid, Bluecollar groups sometimes work even after their 70's.
+
+
+3.Different duration depending on age and by contact group
+```{r}
+ggplot(bank) + geom_point(aes(age, duration, alpha = contact))
+
+```
+<p>
+- Telephone using group has shorter duration compared to cellular using group and unknown group.
+
+
+4.Density of age group depending on different job category
+```{r}
+ggplot(bank, aes(age, color=job, fill=job, alpha = 0.3)) + geom_density()
+```
+<p>
+- Student and retired group has most of population age at 20's and 60's for each.
+- Many groups including technician, services and self-employed have population age mainly between 30's and 40's.
+
+
+5. Sort job by mean age and education
+```{r}
+ggplot(data = bank, mapping=aes(x=reorder(job, age, FUN=mean), fill=education))+
+  geom_bar()+coord_flip()
+```
+<p>
+- Blue-collar group has the laregest portion of people who got primary education whereas management group has the largest portion of people who got tertiary education.
+
+
+6. Box plot of balance depending on age group and employment group
+```{r}
+group_by(bank , age_group = ntile(age, 4)) %>%
+  mutate(., employment_group = !(job %in% c("unemployed", "student", "retired", "unknown"))) %>%
+  select(., age_group, employment_group, balance) %>%
+  ggplot(., aes(x=factor(age_group), y = balance, fill = employment_group))+
+  geom_boxplot()+
+  scale_y_continuous(name = "Balance",
+                     limits=c(0, 1000))
+```
+<p>
+- In case of 3rd quarter age group, unemployed group has more balance than unemployeed group.
+
+
+7. Count of month
+```{r}
+df = bank
+levels(df$month) <- levels(df$month)[c(5,4,8,1,9,7,6,2,12,11,10,3)]
+ggplot(df, aes(x=month)) +
+  geom_bar()
+```
+<p>
+- September is the most frequent month.
+
+
+8. Plot of balance depending on age, grouped by housing and marital status
+```{r}
+ggplot(data = bank) +
+geom_point(mapping = aes(x = age, y = balance)) +
+facet_wrap(marital ~ housing, nrow = 1)
+```
+<p>
+- Divorced and no housing group has lowest balance in average, compared to other groups.
+
+
+9. Age group and contact methods
+```{r}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age, fill = contact), position = "fill") +
+coord_polar()
+```
+<p>
+- Older age group(over 70's)tends to use more telephone rather than younger age group.
+
+
+10. Loan and education
+```{r}
+ggplot(bank, aes(age, loan, color = education)) + geom_point()
+```
+<p>
+- Most of the loanmakers are in younger generation, with higher than secondary education.

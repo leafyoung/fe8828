@@ -1,0 +1,65 @@
+install.packages("tidyverse")
+library(tidyverse)
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep=";")
+
+## 10 findings
+#1. # of ppl with loan and no housing
+nrow(filter(bank, loan == "yes" & housing %in% "no"))
+#2. Job distribution. 
+group_by(bank, job) %>% summarise(n = n())
+#3. education category
+distinct(bank, education)
+#4. # of married couple/housing status
+v1 = c(nrow(filter(bank, (marital == "married") & (housing == "yes"))), nrow(filter(bank, (marital == "married") & !(housing == "yes"))))
+v2 = c(nrow(filter(bank, !(marital == "married") & (housing == "yes"))), nrow(filter(bank, !(marital == "married") & !(housing == "yes"))))
+df = as.data.frame(rbind(v1,v2))
+rownames(df) = c("married", "single")
+colnames(df) = c("housing", "no housing")
+df
+#5. histogram of balance
+rng <- range(arrange(bank, balance)$balance)
+hist(arrange(bank, balance)$balance, xlim=rng, nclass=10, xlab="balance", main="Histogram of balance")
+
+#6 # of success outcome depnding on contact group
+group_by(bank, contact) %>%
+  summarise(balance_mean = mean(balance),
+            count = n(),
+            success_count = sum(ifelse(poutcome == "success", 1, 0)))
+
+#7. max/min of balance volatility by age group
+group_by(bank, age) %>%
+  mutate(stdev_balance = sd(balance)) %>%
+  distinct(stdev_balance) %>%
+  na.omit(.)%>%
+  filter(.,stdev_balance==max(.$stdev_balance) | stdev_balance == min(.$stdev_balance))
+
+#8. previous customer ~ default rate
+df <- group_by(bank, previous==1) %>%
+  summarise(count = n(),
+            mean_age = mean(age),
+            sum_balance =sum(balance),
+            count_loan = sum(ifelse(loan == "yes", 1, 0)),
+            count_default = sum(ifelse(default == "yes", 1, 0)))
+colnames(df)[1] = "revisit_customer"
+transmute(df,
+          revisit_customer,
+          count,
+          mean_age,
+          sum_balance,
+          default_rate = count_default/count_loan)
+
+#9.histogram of months
+df = bank
+levels(df$month) <- levels(df$month)[c(5,4,8,1,9,7,6,2,12,11,10,3)]
+ggplot(df, aes(x=month)) +
+  geom_bar()
+
+#10.box plot(age, employment, balance)
+group_by(bank , age_group = ntile(age, 4)) %>%
+  mutate(., employment_group = !(job %in% c("unemployed", "student", "retired", "unknown"))) %>%
+  select(., age_group, employment_group, balance) %>%
+  ggplot(., aes(x=factor(age_group), y = balance, fill = employment_group))+
+  geom_boxplot()+
+  scale_y_continuous(name = "Balance",
+                     limits=c(0, 1000))

@@ -108,7 +108,7 @@ Technical details:
 
 # Tidyquant/quantmod
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # library(tidyquant)
 
 # use Google
@@ -121,7 +121,7 @@ str(SPY)
 ```
 
 # Tidyquant/quantmod
-```{r, echo = T}
+```{r, echo = TRUE}
 # What's get returned?
 head(SPY)
 tail(SPY)
@@ -154,7 +154,7 @@ getSymbols(symbols, src = 'google', adjusted = TRUE, from = "2016-01-01")
 
 # Get data from `xts` object
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # What price history is stored here.
 str(SPY)
 ```
@@ -170,7 +170,7 @@ SPY7 <- SPY["2007-07-01/", c("SPY.High", "SPY.Close")]
 ```
 
 # Quandl
-```{r, echo = T}
+```{r, echo = TRUE}
 library(Quandl)
 library(tidyverse)
 

@@ -1,0 +1,218 @@
+---
+title: 'FE8828: Delta Hedging Assignment'
+author: "Juilee Save <sub> <Email: juilee001@e.ntu.edu.sg> </sub>  <br /> Toh Zhao Zhi <sub> <Email: tohz0016pg@e.ntu.edu.sg> </sub> <br /> Toh Jia Yuan <sub> <Email: jtoh008pg@e.ntu.edu.sg> </sub> <br /> Zhou Xueming <sub> <Email: zhou0301@e.ntu.edu.sg> </sub>"
+output:
+  # html_notebook: default
+  html_document: default
+---
+
+```{r, include = FALSE}
+library(quantmod)
+library(fOptions)
+library(timeSeries)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse=TRUE, cache=TRUE)
+```
+
+###Max Drawdown Function
+```{r}
+#To calculate max drawdown in dollars
+maxDD_Dollar = function(DailyPnL){
+  PnL = cumsum(DailyPnL)
+  mDD = 0
+  
+  for(i in 2:length(PnL)){
+    M = max(PnL[1:i])
+    DD = M - PnL[i]
+    
+    if(DD > mDD)
+      mDD = DD
+  }
+  
+  mDD
+}
+
+#To calculate max drawdown in % using gross returns
+maxDD_Ret = function(DailyRet){
+  Ret = cumprod(DailyRet+1)
+  mDD = 0
+  
+  for(i in 2:length(Ret)){
+    M = max(Ret[1:i])
+    DD = M - Ret[i]
+    
+    if(DD > mDD)
+      mDD = DD
+  }
+  
+  mDD
+}
+```
+
+###Read Data
+```{r}
+data = read.csv("FBData.csv", sep=",", stringsAsFactors = FALSE) #Read stock and options data from csv file into dataframe
+data.xts = xts(x = data[,-1, drop = F],order.by = as.Date(data[,1], "%d-%B-%y")) #Create xts object to store data from dataframe
+dates = index(data.xts) #pick a date range using xts object
+last_test_date = max(dates) - 29 #Hedge over 29 days for a 30day option
+last_date_index = sum(dates <= last_test_date)
+```
+
+###Perform Analysis for one trade
+####Set details of Option
+```{r}
+start_date = dates[1]
+end_date = start_date + 29 #hedging period is 29 days for a 30day option
+start_price = as.numeric(data.xts[start_date,"Close"]) #current stock price
+start_volatility = data.xts[start_date,"IV30"] #volatility
+Strike = as.numeric(start_price) #strike price
+vol = as.numeric(start_volatility)/100 #volatility
+rf = 0.8/100 #risk-free rate
+Q = 100 #quantity of options
+```
+
+####Store Data in dataframe and Compute Option Price, Delta, and PnLs (stock, option and both)
+```{r}
+df = tibble(dates[dates<=end_date & dates>=start_date]) #Using tibble for better representation of the dataframe
+names(df) = "Date"
+df$Close = as.numeric(data.xts[paste0(start_date,"/",end_date), "Close"]) #using xts object to select dates
+
+
+df %>% #mutate to add columns to dataframe df
+  mutate(Time = as.numeric(end_date - Date)/365, #Time to expiry for option price calculation
+         premium = GBSOption(TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol)@price, #Calculating call option price for stock without dividend
+         delta = GBSGreeks("delta", TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol), #Calculating option delta
+         Option_DoD_PnL = ifelse(Date == start_date, 0, Q*(premium - lag(premium))), #daily option PnL in dollars
+         Option_DoD_Ret = ifelse(Date == start_date, 0, (premium - lag(premium))/lag(premium)), #daily option PnL expressed as returns
+         Hedge_DoD_PnL = ifelse(Date == start_date | Date == end_date, 0, Q*lag(delta)*(lag(Close)-Close)), #daily hedging PnL in dollars
+         Hedge_DoD_Ret = ifelse(Date == start_date | Date == end_date, 0, (lag(Close)-Close)/Close), #daily hedging PnL expressed as returns
+         Daily_PnL = Option_DoD_PnL + Hedge_DoD_PnL, #total daily PnL in dollars
+         Daily_Ret = ifelse(Date == start_date,0 ,Daily_PnL/(Close + lag(premium))) #total daily PnL expressed as returns
+         ) -> df #
+df
+```
+
+####Calculation of maxDD in Dollar Terms
+```{r}
+#summing daily PnL to get total PnL at the end of hedging duration
+df %>% summarize(Option_PnL = sum(Option_DoD_PnL), Option_maxDD = maxDD_Dollar(Option_DoD_PnL), Stock_PnL = sum(Hedge_DoD_PnL), Stock_maxDD = maxDD_Dollar(Hedge_DoD_PnL), PnL = sum(Daily_PnL), maxDrawDown = maxDD_Dollar(Daily_PnL)) 
+```
+
+####Calculation of Sharpe Ratio
+```{r}
+#Calcuating Sharpe ratio using returns
+df %>% summarize(Option_Sharpe = (mean(Option_DoD_Ret)-exp(rf/365)+1)/sd(Option_DoD_Ret), Stock_Sharpe = (mean(Hedge_DoD_Ret) - exp(rf/365)+1)/sd(Hedge_DoD_Ret), Sharpe = (mean(Daily_Ret) - exp(rf/365)+1)/sd(Daily_Ret))
+```
+
+####Plot of Daily PnL
+```{r}
+#Using line graphs to track the movements of stock, option and total daily PnL over time
+ggplot(df) + geom_line(aes(Date,Daily_PnL, color = "Daily PnL")) + geom_line(aes(Date, Hedge_DoD_PnL, color = "Stock PnL")) + geom_line(aes(Date, Option_DoD_PnL, color = "Option PnL")) + ggtitle("Plot of Daily PnL") +   scale_color_manual(name = "Daily PnL", values = c("Daily PnL" = "green", "Stock PnL"="red", "Option PnL"="blue"))
+```
+From the plots, we see that stock PnL and option PnL are volatile and move in opposite directions. Delta hedging reduces risk associated with price movement of the underlying stock. The daily PnL hovers around 0.
+
+####Plot of Cumulative PnL
+```{r}
+#cumsum returns the cumulative sum of PnL from day 1 to current day 
+df %>% mutate(cum_Option_PnL = cumsum(Option_DoD_PnL), cum_Stock_PnL = cumsum(Hedge_DoD_PnL), cum_PnL = cumsum(Daily_PnL)) -> df2
+
+#to track total cumulative PnL over time
+ggplot(df2) +geom_line(aes(Date,cum_PnL, color = "Overall PnL")) + geom_line(aes(Date, cum_Stock_PnL, color = "Stock PnL")) + geom_line(aes(Date, cum_Option_PnL, color = "Option PnL")) + ggtitle("Plot of Cumulative PnL") +   scale_color_manual(name = "Cumulative Daily PnL", values = c("Overall PnL" = "green", "Stock PnL"="red", "Option PnL"="blue")) + ylab("Cumulative PnL")
+```
+From the cumulative PnL plot, we observe that although delta hedging reduces the volatility in total PnL, the hedge is not perfect. While fluctation in PnL is reduced, the cumulative PnL tends to the negative region.  This is because perfect delta hedging requires continuous-time rebalancing. Therefore in reality, a delta-neutral portfolio is only immunized against small changes in stock price. Furthermore, one limitation of this exercise is that option price and delta are calculated assuming that volatility is constant (using implied volatility on the first day).  
+
+
+####Final PnL
+```{r}
+df2 %>%select(cum_PnL, cum_Stock_PnL, cum_Option_PnL) -> Final_PnL_df
+Final_PnL_df[nrow(Final_PnL_df),]
+```
+
+###Generate Backtest Results
+```{r}
+#Using a for loop to backtest the remaining days of the data 
+BackTestResult = data.frame(StartDate = character(0),FinalPnL = numeric(0), StockPnL = numeric(0), OptionPnL = numeric(0),maxDrawDown = numeric(0), OverallSharpe = numeric(0), StockSharpe = numeric(0), OptionSharpe = numeric(0), stringsAsFactors = FALSE) #generate
+for(i in 1:last_date_index){
+  #Set details of Option
+  start_date = dates[i]
+  end_date = start_date + 29
+  start_price = as.numeric(data.xts[start_date,"Close"])
+  start_volatility = data.xts[start_date,"IV30"]
+  Strike = as.numeric(start_price)
+  vol = as.numeric(start_volatility)/100
+  rf = 0.8/100
+  Q = 100
+  
+  df.bt = tibble(dates[dates<=end_date & dates>=start_date]) #for nicer representation of dataframe
+  names(df.bt) = "Date"
+  df.bt$Close = as.numeric(data.xts[paste0(start_date,"/",end_date), "Close"])
+  
+  #Compute Option Price, Delta, and PnLs (stock, option and both)
+  df.bt %>% #Similar to df, df.bt stores prices, delta and PnLs after computation
+    mutate(Time = as.numeric(end_date - Date)/365, 
+           premium = GBSOption(TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol)@price, 
+           delta = GBSGreeks("delta", TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol), 
+           Option_DoD_PnL = ifelse(Date == start_date, 0, Q*(premium - lag(premium))),
+           Option_DoD_Ret = ifelse(Date == start_date, 0, (premium - lag(premium))/lag(premium)),
+           Hedge_DoD_PnL = ifelse(Date == start_date | Date == end_date, 0, Q*lag(delta)*(lag(Close)-Close)),
+           Hedge_DoD_Ret = ifelse(Date == start_date | Date == end_date, 0, (lag(Close)-Close)/Close),
+           Daily_PnL = Option_DoD_PnL + Hedge_DoD_PnL,
+           Daily_Ret = ifelse(Date == start_date,0 ,Daily_PnL/(Close + lag(premium)))
+    ) -> df.bt
+  df.bt
+  
+  #Calculation of maxDD in Dollar Terms
+  df.bt %>% summarize(Option_PnL = sum(Option_DoD_PnL), Option_maxDD = maxDD_Dollar(Option_DoD_PnL), Stock_PnL = sum(Hedge_DoD_PnL), Stock_maxDD = maxDD_Dollar(Hedge_DoD_PnL), PnL = sum(Daily_PnL), maxDrawDown = maxDD_Dollar(Daily_PnL)) -> maxDD.bt
+  
+  #Calculation of Sharpe Ratio
+  df.bt %>% summarize(Option_Sharpe = (mean(Option_DoD_Ret)-exp(rf/365)+1)/sd(Option_DoD_Ret), Stock_Sharpe = (mean(Hedge_DoD_Ret) - exp(rf/365)+1)/sd(Hedge_DoD_Ret), Sharpe = (mean(Daily_Ret) - exp(rf/365)+1)/sd(Daily_Ret)) ->Sharpe.bt
+  
+  #Plot of Cumulative PnL
+  df.bt %>% mutate(cum_Option_PnL = cumsum(Option_DoD_PnL), cum_Stock_PnL = cumsum(Hedge_DoD_PnL), cum_PnL = cumsum(Daily_PnL)) %>% filter(row_number() == n()) -> PnL.bt
+
+  #Appending backtesting data to dataframe 
+  BackTestResult = add_row(BackTestResult, StartDate = as.character(start_date), FinalPnL = PnL.bt$cum_PnL[1], StockPnL = PnL.bt$cum_Stock_PnL[1], OptionPnL = PnL.bt$cum_Option_PnL[1], maxDrawDown = maxDD.bt$maxDrawDown[1], OverallSharpe = Sharpe.bt$Sharpe, StockSharpe = Sharpe.bt$Stock_Sharpe, OptionSharpe = Sharpe.bt$Option_Sharpe)
+  }
+  
+BackTestResult
+
+```
+
+###Analysis of Results from Backtesting
+####Final PnL Distribution
+```{r}
+ggplot(data = BackTestResult, aes(FinalPnL)) + geom_histogram(binwidth = 100, aes(y = ..density..)) +  stat_function(fun = dnorm, 
+                args = list(mean = mean(BackTestResult$FinalPnL), sd = sd(BackTestResult$FinalPnL)), 
+                lwd = 1, 
+                col = 'red') + 
+  xlab("Final PnL") + ylab("Density") + ggtitle("Final PnL Distribution")
+```
+Backtesting results show that total PnL has a mean of 0, concurring with our earlier findings using the data set of the first 29 days. 
+
+####PnLs Distributions
+```{r}
+ggplot(data = BackTestResult) + geom_density(aes(FinalPnL, fill = "Overall PnL"), alpha = 0.5) + geom_density(aes(StockPnL, fill = "Stock PnL"), alpha = 0.5) + geom_density(aes(OptionPnL, fill = "Option PnL"), alpha = 0.5) + scale_fill_manual(name = "Final PnL", values = c("Overall PnL" = "green", "Stock PnL"="red", "Option PnL"="blue"))
+```
+For distributions of all 3 PnLs, the mean is 0. However, it can be observed that the total PnL has the smallest standard deviation, with data tightly clustered around the mean. This agrees with the rationale of delta hedging, which is to reduce volatility of total PnL. 
+
+####Sharpe Distributions
+```{r}
+ggplot(data = BackTestResult) + geom_density(aes(OverallSharpe, fill = "Overall Sharpe"), alpha = 0.5) + geom_density(aes(StockSharpe, fill = "Stock Sharpe"), alpha = 0.5) + geom_density(aes(OptionSharpe, fill = "Option Sharpe"), alpha = 0.5) + scale_fill_manual(name = "Sharpe Ratios", values = c("Overall Sharpe" = "green", "Stock Sharpe"="red", "Option Sharpe"="blue"))
+```
+From the Sharpe ratio distribution, we observe that the original Sharpe ratio of the stock has a lower mean than the combined overall Sharpe ratio when options are added to the delta-hedge portfolio. Hence, Sharpe ratio can be improved through delta-hedging strategies.
+
+####Max Drawdown Distribution
+```{r}
+ggplot(data = BackTestResult, aes(maxDrawDown)) + geom_histogram(binwidth = 100) + geom_density(aes(y = ..density..*30000), color = "blue") + ggtitle("Max Drawdown Distribution") + xlab("Max Drawdown") + ylab("Count")
+```
+The max drawdown distribution is skewed to the right. This means that the median max drawdown is lower than the mean max drawdown. The peak of the max drawdown distribution is about 500dollars. 
+
+####Final PnL Against Option Expiry Date
+```{r}
+ ggplot(BackTestResult) + geom_line(aes(as.Date(StartDate)+29,FinalPnL), color = "red") + xlab("Option Expiry Date") + ylab("Final PnL") + ggtitle("Final PnL Against Option Expiry Date")
+```
+
+We see that final PnL does not vary significantly with option expiry dates (except for the last segment of the graph.)
+

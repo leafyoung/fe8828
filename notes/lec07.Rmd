@@ -103,7 +103,7 @@ Table `Customer`:
 - full_join(a, b): Find all combinations between table a and b.
 - anti_join(a, b): Find those in a but not in b.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # All possible combination between job and education
 x <- full_join(distinct(bank, job) %>% mutate(dummy = 1),
                distinct(bank, education) %>% mutate(dummy = 1),
@@ -143,7 +143,7 @@ Note: I often forgot there are existing functions that resort to longer versions
 
 # `group_by` / `summarize`: Examples
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # Add paramter na.rm, if there is NA among the data.
 df <- data.frame(a = c(1, 3, 4, NA))
 summarise(df, total = sum(a))
@@ -154,19 +154,19 @@ summarise(df, total = mean(a, na.rm = T))
 
 # `group_by` / `summarize`: Examples
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # count number of people in each age group
 group_by(bank, age) %>% summarise(n = n())
 ```
 
 # `group_by` / `summarize`: Examples
 
-```{r, echo = T}
+```{r, echo = TRUE}
 group_by(bank, age) %>% summarise(n = n()) %>% plot
 ```
 
 # `group_by` / `summarize`: Examples
-```{r, echo = T}
+```{r, echo = TRUE}
 bank1 <- group_by(bank, age) %>%
   summarise(balance_mean = mean(balance),
             count = n(),
@@ -176,7 +176,7 @@ head(bank1)
 ```
 
 # `group_by` / `summarize`: Examples
-```{r, echo = T}
+```{r, echo = TRUE}
 # If combined with ggplot, to be learnt in next session
 ggplot(bank1, aes(x = age, y = balance_mean)) +
   geom_point(aes(size = count), alpha = 1/4, color = "red") +
@@ -185,7 +185,7 @@ ggplot(bank1, aes(x = age, y = balance_mean)) +
 ```
 
 # Group filter
-```{r, echo = T}
+```{r, echo = TRUE}
 # Find the maximum and minimum balance on each age.
 bank %>% 
   group_by(age) %>%
@@ -196,7 +196,7 @@ bank %>%
 # Count for condition
 TRUE => 1, FALSE => 0
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # Generate a report for balance and job
 d1 <- group_by(bank, job) %>%
   summarise(`balance > 500` = sum(balance > 500))
@@ -218,7 +218,7 @@ d
 
 # `group_by`
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # mutate with group_by
 group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>%
   mutate(b = a / sum(a))
@@ -226,20 +226,20 @@ group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>%
 
 # `group_by` / 2
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # filter with group_by
 group_by(bank, age) %>% filter(balance == max(balance))
 ```
 
 # `summarize/summarise`
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # summarise with group_by
 group_by(data.frame(a = 1:10), quartile = ntile(a, 2)) %>%
   summarise(b = sum(a))
 ```
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # summarise without a group_by
 summarise(bank, with_housing = sum(housing == "yes") / n(),
           age_min = min(age),
@@ -250,7 +250,7 @@ summarise(bank, with_housing = sum(housing == "yes") / n(),
 `ungroup()` removes group definition, restores the "ungrouped"" data frame back to entire data.
 Because `group_by` will leave a trace 
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # wrong
 group_by(bank, age) %>%
   filter(balance == max(balance)) %>%
@@ -266,7 +266,7 @@ group_by(bank, age) %>%
 
 # group_by/rowwise/ungroup
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # We can't remove age
 # R will prompt for "Adding missing grouping variables: `age`"
 group_by(bank, age) %>%
@@ -284,7 +284,7 @@ group_by(bank, age) %>%
 Sometimes, we need to use `rowwise()` which is a special `group_by` which just makes every one row a group.
 Use case, it applies to complex logic that can't be applied as a group.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 df <- data.frame(throw_dices = 1:10)
 rowwise(df) %>% mutate( mean = mean(sample(1:6, throw_dices, replace = T)))
 ```
@@ -292,7 +292,7 @@ rowwise(df) %>% mutate( mean = mean(sample(1:6, throw_dices, replace = T)))
 # `bind_rows`
 - bind_rows is the `+` operator for data frames.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # add empty data frame is the same.
 bind_rows(data.frame(a = 3:4), data.frame())
 bind_rows(data.frame(), data.frame(a = 3:4))
@@ -322,7 +322,7 @@ I usually use bind_rows to collect results. For example,
 
 If row order matters, bind_row can be used to re-order/splice and recombine.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # Get head and tail
 # Note: use { } to use the .
 arrange(bank, age) %>%
@@ -330,7 +330,7 @@ arrange(bank, age) %>%
 ```
 
 # `bind_rows`: Use case
-```{r, echo = T}
+```{r, echo = TRUE}
 # summary
 summarise_if(bank, is.numeric, mean)
 # add summary to the records
@@ -338,7 +338,7 @@ tail(bind_rows(bank, summarise_if(bank, is.numeric, mean)), n = 1)
 ```
 
 # `bind_rows`: Use case
-```{r, echo = T}
+```{r, echo = TRUE}
 # bind_rows can match column names and type.
 # let's adjust the column order.
 # As due-deligence, better to check the result.
@@ -355,19 +355,19 @@ Use cases
 - It copies the columns
 - I usually find it useful to generate data frame for reports.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 dt1 <- bind_cols(select(bank, job), select(bank, education))
 dt1[1:3,]
 ```
 
 # bind_cols
-```{r, echo = T}
+```{r, echo = TRUE}
 dt2 <- bind_cols(dt1, dt1)
 dt2[1:3,]
 ```
 
 # bind_cols: Use cases
-```{r, echo = T}
+```{r, echo = TRUE}
 d1 <- filter(bank, month == "sep") %>%
   summarize(duration = mean(duration)) %>%
   rename(`Duration Sep` = duration)
@@ -384,19 +384,16 @@ bind_cols(d1, d2, d3)
 # Exercise
 
 1. How to know the row number of the wrong date
-```{r, echo = T}
+```{r, echo = TRUE}
 df <- data.frame(x = c("2017-10-01", "2017-31-12", "2017-03-17", "2017-02-29", "2017-09-30"))
 df
 ```
 
-   Output:
-```{r, echo = F}
-df %>%
-  ungroup() %>%
-  mutate(nnn = 1:n()) %>%
-  mutate(x = as.Date(x)) %>%
-  filter(is.na(x)) %>%
-  { cat(paste0("Wrong dates on: ", paste0(.$nnn, collapse = ", "))) }
+Output:
+```{r, echo = FALSE}
+mutate(df, nnn = 1:n(), x1 = as.Date(x)) %>%
+filter(is.na(x)) %>%
+{ cat(paste0("Wrong dates on: ", paste0(.$nnn, collapse = ", "))) }
 ```
 
 # Exercise
@@ -415,7 +412,7 @@ df %>%
 
 3. To evaluate a portfolio of options for its total value.
 
-```{r, echo = T}
+```{r, echo = TRUE}
 GBSOption(TypeFlag = "p", S = 3500, X = 3765,
           Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
 df <- data.frame(type = sample(c("c", "p"), 100, replace = T),
@@ -492,7 +489,7 @@ wfmt %>%
   inner_join(wfmt, ., by = "date")
 ```
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # although this works...
 # Hard coding of column names "Copper_qty Gold_qty Silver_qty".
 wfmt %>% mutate(total = Copper_qty + Gold_qty + Silver_qty)
@@ -589,7 +586,7 @@ cat(htmltools::includeText("example/assignment.Rmd"))
 
 1.4. Plot the volatility curve, strike v.s. vol
 
-```{r, echo = T}
+```{r, echo = TRUE}
 # GBSVolatility(price, TypeFlag, S, X, Time, r, b, tol, maxiter)
 # Use Price to back-out implied volatility
 GBSVolatility(867.30, "c", 1135.67, 240,
@@ -621,7 +618,7 @@ Write follow functions and use them to initialize the data.
 1. Create 10 accounts with initial random deposit and credit in SGD.
 2. Create 3 currencies: CNY, USD, SGD. Download their conversion rate between 2017-07-01 and 2017-09-30.
 3. Generate random transaction data for 10 accounts during 2017-07-01 and 2017-09-30.
-   Make it more realistic, deposite is 1-2 times per month, a random number of 3000-5000.
+   Make it more realistic, deposit is 1-2 times per month, a random number of 3000-5000.
    Spend/Withdraw can be any times and any amount.
    Deposit is positive, Withdraw/Spend is negative.
    You can't withdraw more than the deposit, can't spend more than credit + deposit.

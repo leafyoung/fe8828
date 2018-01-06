@@ -9,7 +9,8 @@ output: html_document
 library(tidyverse)
 library(lubridate)
 library(bizdays)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
 bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 ```
 
@@ -17,7 +18,7 @@ bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 This data contains `r nrow(data)` rows.
 
 # Finding #2
-```{r, echo = F}
+```{r}
 # Find the big age group
 bank %>% 
   group_by(age_group = (age %/% 10) * 10) %>%

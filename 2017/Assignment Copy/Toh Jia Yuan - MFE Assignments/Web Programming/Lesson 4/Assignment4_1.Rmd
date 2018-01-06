@@ -1,0 +1,128 @@
+---
+title: "Assignment4(1)"
+author: "Toh Jia Yuan"
+date: "3 December 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse=TRUE, cache=T)
+# bank <- read.csv("C:/Users/JY Toh/Desktop/MFE/Mini Term 3/Web programming/bank.csv", sep=";")
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Markdown
+
+#Finding 1
+Number of customers per age group who are single, married or divorced:
+
+It is observed that the proportion of single customers decline with age and proportion of married/divorced customers increases with age. 28 years old is the age where the ratio is about 50:50.
+
+```{r find1, echo=TRUE}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age, fill=marital))
+```
+
+#Finding 2
+Proportion of customers with housing for each occupation:
+
+Results show that for customers with unstable jobs, a large proportion of them do not have housing. One unexpected finding is that about 50% of management does not have housing as well. The data set may be biased or insufficient for a firm conclusion.
+
+```{r finding1, echo=TRUE}
+ggplot(data = bank, mapping = aes(x = job, fill = housing)) +
+geom_bar() + coord_flip()
+```
+
+#Finding 3
+The number and age of customers who default, relative to their education level:
+
+Results show that the customers who default have a good mix of educational backgrounds. However, all of those who default are below 60 years old. 
+
+```{r finding3, echo=TRUE}
+ggplot(bank, aes(x = age, y = default, color = education)) +
+geom_point() +
+theme(legend.position="left")
+```
+
+#Finding 4
+Distribution of customers who default for each age group:
+
+Results show that for each age, the number of customers who default only make up a small population.
+
+```{r finding4, echo=TRUE}
+ggplot(data = bank, mapping = aes(x = age, fill = default)) +
+geom_bar() 
+```
+
+#Finding 5
+Age distribution of customers with and without loans, according to their occupations. 
+
+It can be observed that the younger and older ends of each spectrum do not have loans. For customers who hold jobs with lower or uncertain pay, a smaller proportion take loans.
+
+```{r finding5,echo=TRUE}
+ggplot(bank) +
+geom_point(aes(job, age, alpha = loan)) + coord_flip()
+```
+
+#Finding 6
+Distribution of occupation for each age group:
+
+Results show that customers of 20 years old and below are mostly students while 65 years old and above are mostly retired. The proportion of customers in each age group who are management increases with age. 
+
+```{r finding6,echo=TRUE}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
+coord_polar()
+```
+
+
+#Finding 7
+Facet grids to examine the trend between age and balance for different occupations: 
+
+The general trend is that across most occupations, bank account balance increases with age. Blue-collar, management and technicians are the top 3 occupations with largest bank account balance. 
+We can also observe the age distribution for each occupation. 
+Account balance for entrepreneurs tends to have a large spread (ie. std dev) since their earnings are less predictable. 
+```{r finding7, echo=TRUE}
+# Smooth line is mixed with points
+ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
+geom_smooth() +
+facet_grid(. ~ job)
+## `geom_smooth()` using method = 'loess'
+```
+
+#Finding 8
+Another representation of Finding 7. To use histograms to determine the balance distribution for different occupations:
+
+As before, it is observed that the balance distributions for blue-collar, management and technicians are the greatest. Students and housemaids earn the least. 
+
+```{r finding8, echo=TRUE}
+ggplot(bank, aes(balance)) + geom_histogram(aes(color = job)) +
+facet_grid(. ~ job)
+```
+
+#Finding 9
+A third way of representation of Finding 7: 
+
+This allows us to observe the spread between the account balance in the same occupation and age groups. Unemployed, students, self-employed groups have low balance with low standard deviation. (This means that most customers in that group have similar balance.) Entrepreneurs and retired groups have a wider spread, as noted in Finding 7.
+
+```{r finding9, echo=TRUE}
+ggplot(data = bank) +
+geom_point(mapping = aes(x = age, y = balance)) +
+facet_wrap(~ job, nrow = 2)
+```
+
+#Finding 10
+A forth way of representation of Finding 7: 
+
+Results show that balance is generally higher for the working population. It can also be observed that there are fewer customers above 65 years old and most of them have low balance. They are also mostly retired. 
+The bulk of the customers lie in the middle portion of the spectrum.
+
+```{r finding10, echo=TRUE}
+g <- ggplot(bank, aes(x = age, y = balance))
+g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_minimal() +
+labs(x = "age", y = expression("balance"))
+```

@@ -1,0 +1,88 @@
+---
+title: "Assignment 3"
+author: "Chris Lee"
+date: "December 17, 2017"
+output: html_document
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+
+bank<-read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+#Finding 1: 
+
+
+The data contains `nrow(bank)` of data.
+The data contains the following fields - `colnames(bank)`
+
+#Finding 2
+
+Sample breakdown by age - a significant % of the respondents are between the age of 30-60
+
+```{r}
+group_by(bank, age) %>% summarise (n=n()) %>% plot
+```
+
+#Finding 3
+
+Mean balance across the age group reveals that variation in balances are greater in older age groups (>60) than (<60).
+
+```{r}
+group_by(bank, age) %>% summarise (balance_mean=mean(balance)) %>% plot()
+```
+
+#Finding 4
+
+Relationship between Education and balance - Tertiary & unknown groups tend to have a higher bank balance on average
+
+```{r}
+group_by(bank, education) %>% summarise(balance_mean=mean(balance)) %>% plot()
+```
+
+#Finding 5
+
+Married customers are more likely to default on a loan than divorced & single customers.
+
+```{r}
+df_default<-filter(bank, default=="yes")
+group_by(df_default, marital) %>% summarise(n=n()) %>% plot()
+```
+
+#Finding 6
+
+The last contact of 78.6% of the respondents were for periods of 1 year or less, followed by ~15.5% between for periods between 1 & 2 years. 
+
+```{r}
+duration_df<-mutate(bank, duration_bin= floor(duration/365))
+group_by(duration_df, duration_bin) %>% summarise(count=n())
+```
+
+#Finding 7
+
+Significant unknown outcome of the previous marketing campaign.
+
+```{r}
+group_by(bank, poutcome) %>% summarise(count=n()) %>% plot()
+```
+
+#Finding 8
+
+Management, blue-collar & technician forms a significant part of the customer base (~59%). 
+
+```{r}
+group_by(bank, job) %>% summarise(count=n()) %>% arrange(desc(count))
+```
+
+#Finding 9 & 10
+
+Generally, success/ failure in the previous marketing campaign does not have a strong relationship with probability of subscription to term deposit.
+
+The only exception is however, when previous marketing campaign is a failure - under such a scenario, the probability of subscription to term deposit is sinificantly lower.
+
+```{r}
+filter(bank, poutcome==c("failure", "other", "success")) %>% group_by(y, poutcome) %>% summarise(count=n())
+```

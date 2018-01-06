@@ -1,0 +1,31 @@
+Hi, Chen Zheng
+
+Below is your assignment feedback. You did well in the course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 90
+
+Assignment 2 = 100 * 0.3 + 70 * 0.7
+Part 1: 100
+
+Part 2: 70
+# Coupon rate should be divided by coupon frequency
+# Missing a pair of brackets
+
+    # C*(1-1/(1+(Y/f)/100)^f*N)/(Y/f)/100+(100/(1+(Y/f)/100)^f*N)
+    C / f *(1-1/(1+(Y/f)/100)^(f*N))/((Y/f)/100)+(100/(1+(Y/f)/100)^(f*N))
+    
+Assignment 3 = 100 * 0.05 + 100 * 0.25 + 90 * 0.7
+Part 1: 100
+Part 2: 100
+
+Part 3: 90
+My best: finding 10: Plot -> age vs sum(balance) of who single and married
+
+Assignment 4 = 80
+
+
+
+
