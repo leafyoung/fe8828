@@ -19,7 +19,7 @@ prices <-
   reduce(merge) %>%
   `colnames<-`(symbols)
 
-prices_monthly <- to.monthly(prices, indexAt = "first", OHLC = FALSE)
+prices_monthly <- to.monthly(prices, indexAt = "startof", OHLC = FALSE)
 portfolioComponentReturns <- na.omit(Return.calculate(prices_monthly, method = "log"))
 
 plot_ticker <- function(ticker) {
