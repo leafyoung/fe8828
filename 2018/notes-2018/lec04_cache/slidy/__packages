@@ -1,0 +1,16 @@
+base
+tidyverse
+ggplot2
+tibble
+tidyr
+readr
+purrr
+dplyr
+shiny
+lubridate
+bizdays
+timeDate
+timeSeries
+fBasics
+fOptions
+bindrcpp
