@@ -18,7 +18,7 @@ slidy_presentation:
   highlight: pygments
   duration: 180
   font_adjustment: +1
-  footer: "FE8828 Programming Web Applications in Finance. Copyright (c) 2017, Yang Ye"
+  footer: "FE8828 Programming Web Applications in Finance. Copyright (c) 2018, Yang Ye"
   df_print: paged # paged kable
   fig_height: 4
   fig_width: 6  

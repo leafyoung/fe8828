@@ -2,8 +2,7 @@
 title: "FE8828 Programming Web Applications in Finance"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Oct 29, 2018"
-subtitle: <sub> Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud
-  <br> R Markdown and Shiny layout </sub>
+subtitle: <sub> Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud <br> R Markdown and Shiny layout </sub>
 ---
 
 ```{r setup, include=FALSE}
@@ -13,7 +12,6 @@ knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
-
 
 # Where does this course stands on?
 * It's about "Data science"
@@ -34,25 +32,25 @@ knitr::include_graphics("new/tidyverse.png")
 - TidyVerse with a finance flavour
 - Reference book
 
-```{r, echo = FALSE, out.width = "75%"}
+```{r, echo = FALSE, out.width = "60%"}
 knitr::include_graphics("new/tidy1.png")
 ```
 
 # Where does this course stands on?
 - Our course
 
-```{r, echo = FALSE, out.width = "75%"}
+```{r, echo = FALSE, out.width = "60%"}
 knitr::include_graphics("new/tidy2.png")
 ```
 
-# Introduction: Objective
+# Objective
 1. Know the way of Internet: the network, the cloud and the application.
 2. Use data manipulation and data visualization to do exploratory data analysis.
 3. To do option valuation, and trading strategy performance analysis.
 4. Build real-world data-driven reports and dashboard, data visualization.
 5. Latest technology in cryptocurrency and payment system like Bitcoin and Blockchain.
 
-# Introduction: What does it take?
+# What does it take?
 * Programming is our tool
     - Intermidiate level R
     - R is a system that has been designed to process data.
@@ -85,12 +83,18 @@ knitr::include_graphics("new/tidy2.png")
 - Week 6:
     * Further topics on Blockchain
     
-# Introduction: Assingments
+# Assingments
 - Week 1: A static website. A front page, a about page and a description page. (due by week 2)
 - Week 2: Shiny application. (due by week 3)
 - Week 3: Data analysis (due by week 4)
 - Week 4: Data visualization (due by week 5)
 - Week 6: Group project
+- You can submit your assignment with me by Dropbox/Google drive. My account: leafyoung@gmail.com (Google/Dropbox)
+- Please organize your assignments into directories.
+
+```{r, echo = FALSE, out.width = "70%"}
+knitr::include_graphics("new/assignment-org.png")
+```
 
 # Keep calm and code on
 ```{r, echo = FALSE, out.width = "40%"}
@@ -149,13 +153,13 @@ knitr::include_graphics("imgs/cables.jpg")
 
 TCP Session
 
-```{r, echo = FALSE, out.width = "31%"}
+```{r, echo = FALSE, out.width = "26%"}
 knitr::include_graphics("imgs/375px-TCP_CLOSE.svg.png")
 ```
 
 DHCP Session
 
-```{r, echo = FALSE, out.width = "20%"}
+```{r, echo = FALSE, out.width = "18%"}
 knitr::include_graphics("imgs/DHCP_session.svg.png")
 ```
 
@@ -191,17 +195,17 @@ knitr::include_graphics("imgs/tcp-ip.png")
 
 # This is why and how Internet growed in size
 A well-defined network protocles.
-```{r, echo = FALSE, out.width = "85%"}
+```{r, echo = FALSE, out.width = "75%"}
 knitr::include_graphics("imgs/internet-host-count.png")
 ```
 
-IETF (Internet Engineering Task Force) maintains and still get new protocol approved.
-```{r, echo = FALSE, out.width = "40%"}
+IETF (Internet Engineering Task Force) maintains and still gets new protocol approved.
+```{r, echo = FALSE, out.width = "30%"}
 knitr::include_graphics("new/ietf-card.png")
 ```
 
 # What happens after ~~plugging cable~~, turning on Wi-Fi?
-We have talked about what runs inside the cable?
+* We have talked about what runs inside the cable?
 * Every network device has a hardware address
 * Dynamic Host Configuration Protocol (DHCP) protocol:
     * DHCP client, a component of the operating system sends out a DHCP request and recieves an offer from a DHCP server running on the router.
@@ -216,19 +220,19 @@ We have talked about what runs inside the cable?
     - One kind of attack to Internet is to hijack/brings down Root Domain Servers for Global (8 of them) or a country's root DNS.
     - Demo with nslookup.
 
-```{r, echo = FALSE, out.width = "20%"}
+```{r, echo = FALSE, out.width = "14%"}
 knitr::include_graphics("imgs/jediocto.jpg")
 ```
 
 # When it wants to visit someone on the network? 2/2
 * Then, your device creates and send the packet "request". Wait for response.
 * Router and gateway will relay the packets to the receiver.
-```{r, echo = FALSE, out.width = "62%"}
+```{r, echo = FALSE, out.width = "57%"}
 knitr::include_graphics("imgs/India_Post_Letter_Box.jpg")
 ```
 
 # HTTP/HTML
-Now we shall have an idea of how Internet works, let's move on to Web.
+- Now we shall have an idea of how Internet works, let's move on to Web.
 - Initiated by Tim Berners-Lee at CERN (where big collison happens in "The Large Hadron Collider") in 1989.
 - HTML was also invented by Tim, "HTML tags"
 
@@ -251,7 +255,6 @@ Now we shall have an idea of how Internet works, let's move on to Web.
         ETag: "3f80f-1b6-3e1cb03b"
         Accept-Ranges: bytes
         Connection: close
-
         <html>
         <head>
             <title>An Example Page</title>
@@ -266,7 +269,7 @@ Now we shall have an idea of how Internet works, let's move on to Web.
 - It's a clear text protocol. That's why we need to use HTTPS (HTTP on SSL) to secure the communication.
 - In browser, you can see the green lock in address bar. This is about digital certificate, associated with crytography and authentication. Another topic.
 
-```{r, echo = FALSE, out.width = "42%"}
+```{r, echo = FALSE, out.width = "35%"}
 knitr::include_graphics("imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firefox.png")
 ```
 
@@ -335,8 +338,7 @@ knitr::include_graphics("imgs/heisencat.png")
 - Launch EC2
 - Running R
 
-
-# Lecture 3: R Markdown and Shiny (layout)
+# Lecture 3: R Markdown and Shiny/1: layout
 ## Introduction
 - *Markdown* is a format that is easy to read and can be converted to other formats, HTML, PDF, Word, Slides.
 - R Studio extends it further to create R notebook, interactive document and web application, which is *R Markdown*.
@@ -362,7 +364,7 @@ knitr::include_graphics("imgs/Markdown-mark.svg.png")
 cat(htmltools::includeText("example/markdown-example.md"))
 ```
 
-# Markdown doc example
+# Markdown Output example
 ```{r, echo = FALSE, out.width = "47%"}
 knitr::include_graphics("imgs/markdown-doc-preview.png")
 ```
@@ -418,7 +420,6 @@ Put four more spaces for each level.
         + pears
     * vegetables
         + broccoli
-        + chard
 
 * fruits
     + apples
@@ -427,7 +428,6 @@ Put four more spaces for each level.
     + pears
 * vegetables
     + broccoli
-    + chard
 
 # Markdown: Ordered Lists
 
@@ -440,7 +440,7 @@ Put 4 more spaces for each level.
     #. Chapter 3
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/professortocat.png")
+knitr::include_graphics("imgs/gangnamtocat.png")
 ```
 
 #. Chapter 1
@@ -458,7 +458,7 @@ knitr::include_graphics("imgs/professortocat.png")
     | zebra stripes | are neat      |    $1 |
 
 ```{r, echo = FALSE, out.width = "12%"}
-knitr::include_graphics("imgs/professortocat.png")
+knitr::include_graphics("imgs/ironocto.png")
 ```
 
 | Tables        | Are           | Cool  |
@@ -480,7 +480,7 @@ To emphasize some text, surround it with *s or _, like this:
     This is \*\*strong emphasis\*\* and \_\_with underscores\_\_.
 
 ```{r, echo = FALSE, out.width = "7%"}
-knitr::include_graphics("imgs/professortocat.png")
+knitr::include_graphics("imgs/megacat-2.png")
 ```
 
 This text is _emphasized with underscores_, and this is *emphasized with asterisks*.
@@ -503,10 +503,6 @@ H\~2\~O is a liquid.  2\^10\^ is 1024. H~2~O is a liquid.  2^10^ is 1024.
 
 Use backtick \`. What is the difference between \`>>=\` and \`>>\`?  What is the difference between `>>=` and `>>`?
 
-```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/professortocat.png")
-```
-
 Note:
 
 * If the verbatim text includes a backtick, use two backticks.
@@ -517,7 +513,7 @@ Note:
     <http://google.com>
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/professortocat.png")
+knitr::include_graphics("imgs/ninjacat.jpg")
 ```
 
 <http://google.com>
@@ -529,7 +525,7 @@ A link immediately preceded by a ! will be treated as an image. The link text wi
     ![Pizza](imgs/bitcoin-pizza.png)
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/professortocat.png")
+knitr::include_graphics("imgs/ski-octo.png")
 ```
 
 ![Pizza](imgs/bitcoin-pizza.png){width=40%}
@@ -611,12 +607,8 @@ It’s usually best to give each code chunk a name, for easier debug.
         plot(a)
         `r chunk`
 
-
-```{r cars, echo = TRUE}
+```{r plot, echo = FALSE, out.width = "40%"}
 a <- runif(100, 0, 1)
-```
-
-```{r plot, echo = FALSE, out.width = "20%"}
 plot(a)
 ```
 
@@ -636,7 +628,7 @@ knitr::kable(
 )
 ```
 
-# R Markdown example: plot
+# R Markdown example: Plot
 
     `r chunk`{r plot1, echo = FALSE}
     a <- filter(cars, speed > 4)
@@ -648,6 +640,8 @@ a <- filter(cars, speed > 4)
 plot(a)
 ```
 
+# R Markdown: Practice
+
 # R Shiny
 - To start, use R Studio.
 - File > New File > Shiny Web App...
@@ -656,14 +650,14 @@ plot(a)
 - Ctrl+Shift+S or “Run App”
 
 # UI First
-I removed everything in functions `server` and `ui`. This is the minimal Shiny.
+I removed everything in functions `server` and `ui`. This is the minimal Shiny. (shiny-1-empty.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-1-empty.R"))
 ```
 
 # Sidebar Layout
-Let's add a minimal sidebarLayout
+Let's add a minimal sidebarLayout (shiny-2-sidebar.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-2-sidebar.R"))
@@ -671,7 +665,7 @@ cat(htmltools::includeText("example/shiny-2-sidebar.R"))
 
 # `fluidPage`
 - fluidPage means to place the controls from left-right, top-down order.
-- `fluidPage` function can take any number of input parameter.
+- `fluidPage` function can take any number of input parameters.
 
 
         fluidPage(sidebarLayout(
@@ -679,11 +673,11 @@ cat(htmltools::includeText("example/shiny-2-sidebar.R"))
             mainPanel()
         ))
 
-# Add some things
-- `titlePanel("Hello Shiny!")`, `h1("Introduction to Layout")`, `h2("Sidebar Layout")`
+# Add some items
+- `titlePanel("Hello Shiny!")`, `h1("Introduction to Layout")`, `h2("Sidebar Layout")` (shiny-3-sidebar-min.R)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-3-sidebar.R"))
+cat(htmltools::includeText("example/shiny-3-sidebar-min.R"))
 ```
 
 # Sidebar layout with bar on the right
@@ -696,7 +690,12 @@ cat(htmltools::includeText("example/shiny-3-sidebar.R"))
     )
 
 # More tags
-Each tag is a function.
+Sidebar with more tags (shiny-3-sidebar.R)
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-3-sidebar.R"))
+```
+
+# Each tag is a function.
 
     h1("A header")
     p("some text as a paragraph")
@@ -711,31 +710,32 @@ Note:
 * tags is a list of functions. To avoid name conflict, I prefer to use `tags$img()`, even `img()` is available to use.
 
 # Panels
-`titlePanel()` and `wellPanel()`
+`titlePanel()` and `wellPanel()` (shiny-4-wellPanel.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-4-wellPanel.R"))
 ```
 
-# Navlist panel
+# Navlist panel (shiny-5-navPanel.R)
 
-```{r echo = FALSE, comment = ""}
+```{r echo = FALSE, comment = ""} 
 cat(htmltools::includeText("example/shiny-5-navPanel.R"))
 ```
 
-# tabPanel
+
+# tabPanel (shiny-6-tabPanel.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-6-tabPanel.R"))
 ```
 
-# navBar
+# navBar (shiny-7-navbar.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-7-navbar.R"))
 ```
 
-# Column-based layout
+# Column-based layout (shiny-8-column.R)
 - Caveat: There is fluidRow, but no fluidColumn.
 - Column counts always add up to 12 = 4 + 6 + 2; otherwise, it will appear in the next line.
 
@@ -743,13 +743,13 @@ cat(htmltools::includeText("example/shiny-7-navbar.R"))
 cat(htmltools::includeText("example/shiny-8-column.R"))
 ```
 
-# Composition layout: Top and Down
+# Composition layout: Top and Down (shiny-10-composite.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-10-composite.R"))
 ```
 
-# R Markdown can also contain Shiny
+# R Markdown can also contain Shiny (shiny-mfe-example.Rmd)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-mfe-example.Rmd"))
@@ -770,7 +770,6 @@ This is interactive document.
     - Create three pages. Name the pages depending on what you want to do. e.g. Product, About Us and Contact Us
     - Use different layouts for the pages: sideBar, column-based layout, Navlist.
     - Be creative!
-- Create a Dropbox directory and share with me at leafyoung@yahoo.com.
 
 # 
 ```{r, echo = FALSE, out.width = "75%"}

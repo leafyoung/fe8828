@@ -1,0 +1,331 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={FE8828 Programming Web Applications in Finance},
+            pdfauthor={Dr.~Yang Ye  \textless{}Email:yy@runchee.com\textgreater{}},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\usepackage[normalem]{ulem}
+% avoid problems with \sout in headers with hyperref:
+\pdfstringdefDisableCommands{\renewcommand{\sout}{}}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{FE8828 Programming Web Applications in Finance}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \subtitle{Final Assignment - Supplementary material}
+  \author{Dr.~Yang Ye
+\textless{}Email:\href{mailto:yy@runchee.com}{\nolinkurl{yy@runchee.com}}\textgreater{}}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{Nov 26, 2018}
+
+
+\begin{document}
+\maketitle
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Bank management
+\end{enumerate}
+
+\begin{itemize}
+\item
+  Design of the data frames
+
+\begin{verbatim}
+Data frame 1: Account 
+| AcountNo | Name | Credit |
+
+Data frame 2: Transaction
+| TransactionNo | Date | AccountNo | TransactionType | Amount | Currency |
+
+Data frame 3: Currency to SGD
+| Currency | Conversion | Date |
+\end{verbatim}
+\item
+  There are three kinds of TransctionType: Deposit/Withdraw/Spend.
+  Amount is of sign +/-/- respectively.
+\item
+  Deposit / Withdraw is paired up. You can't withdraw more than deposit.
+\item
+  Credit / Spend is paired up. You can't spend more than credit.
+  (Simplified than earlier version of \sout{spendt \textless{}= credit +
+  deposit})
+\item
+  Assume credit lasts from 2017-07-01 and 2017-09-30. The monthly
+  repayment of credit is out of scope of this project.
+\item
+  Example Sections in the solution
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Generate test data in three data frames.
+  \item
+    Pick one random AcountNo to show the monthly statement.
+  \item
+    Pick a random date between 2017-07-01 and 2017-09-30 to do
+
+    \begin{itemize}
+    \tightlist
+    \item
+      Risk department:
+
+      \begin{itemize}
+      \tightlist
+      \item
+        Total balance daily
+      \item
+        Total receivable from credit daily
+      \item
+        Top 10 High and low-risk client (i.e.~balance - spent ).
+      \end{itemize}
+    \end{itemize}
+  \item
+    Show what's by the end of the period, on the end of day of
+    2017-09-30.
+
+    \begin{itemize}
+    \tightlist
+    \item
+      Customer department:
+
+      \begin{itemize}
+      \tightlist
+      \item
+        Top 10 customer with large balance (deposit - withdraw)
+      \item
+        Top 10 spending customer (spend)
+      \item
+        Top 10 saving customer (deposit)
+      \end{itemize}
+    \item
+      Treasury department:
+
+      \begin{itemize}
+      \tightlist
+      \item
+        Interest that all customers need to pay for three months
+      \item
+        Assume annual interest is 0.25\%
+      \item
+        Interest starts when customer spends.
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+  Delta Hedging
+\end{enumerate}
+
+Show case how delta hedging works as a trading strategy.
+
+\begin{itemize}
+\tightlist
+\item
+  Show how one trade works
+\item
+  Backtest for available history.
+\end{itemize}
+
+Assumption:
+
+\begin{itemize}
+\item
+  You hold 100 ATM call/put option which expires in 30 days (calendar
+  days). You just need to do either Call or Put.
+\item
+  You start to do delta hedging daily immediately till 2nd last day. You
+  close stock position in the last day.
+\item
+  Delta hedging: calculate the delta from option, negate it, that's the
+  quantity what you need to hold over 1 day. Repeat for every trading
+  day.
+\item
+  Daily PnL: (option premium change) + (stock holding quantity * price
+  change).
+\item
+  You can get your favorite stocks here. There is one year of data.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \textless{}\url{https://marketchameleon.com/Overview/\%7BStock}
+    Code\}/DailyHistory/\textgreater{}
+  \item
+    e.g.: \url{https://marketchameleon.com/Overview/GS/DailyHistory/}
+  \end{itemize}
+\item
+  Daily IV30 is provided.
+\item
+  As underlying is equity, dividend yield is applicable for B-S
+  valuation.
+\item
+  US risk-free rate for 1M: 0.8\% (annualized)
+\item
+  Create xts object from the data from website.
+\item
+  One trade analysis
+
+  \begin{itemize}
+  \item
+    Pick a date range using xts object.
+  \item
+    Get starting date and end date.
+
+\begin{verbatim}
+  dates <- index(xts_obj)
+  start_date <- min(dates)
+  end_date <- max(dates)
+  start_price <- xts_obj[start_date, "Close"]
+  start_volatility <- xts_obj[start_date, "IV30"]
+\end{verbatim}
+  \item
+    create a df with date column
+
+\begin{verbatim}
+  df <- tibble(date = dates)
+  df$Close <- coredata(xts_obj[, "Close"])
+\end{verbatim}
+  \item
+    Daily Profit and Loss (``DoD PnL'')
+
+    \begin{itemize}
+    \item
+      Option side:
+
+\begin{verbatim}
+X <- start_price
+sigma = start_volatility
+r <- 0.8 / 100
+# Vary S and Time everyday
+S <- Close
+Time <- (end_date - date) / 365
+GBSOption(TypeFlag, S, X, Time, r, b, sigma)@price
+
+df_opt <- rowwise(df) %>%
+          mutate(premium = GBSOption(TypeFlag = "...",
+                                     S = Close,
+                                     X = start_price,
+                                     Time = (end_date - date) / 365,
+                                     r = ..., # interest rate
+                                     b = ..., # dividend yield
+                                     sigma = start_volatility)@price) %>%
+          ungroup %>%
+          mutate(Option_DoD_PnL = ifelse(date == start_date,
+          # On the 1st date, we count the cost of buying the option
+                                         premium * (-1), 
+                                         premium - lag(premium)))
+\end{verbatim}
+    \item
+      Hedging side:
+
+\begin{verbatim}
+rowwise() %>%
+mutate(delta_hedge = GBSGreeks("delta", TypeFlag, S, X, Time, r, b, sigma) *
+                     quantity * (-1)) %>%
+ungroup() %>%
+mutate(Hedging_DoD_Pnl = ifelse(date == start_date,
+                                0,
+                                delta_hedge * (Close - lag(Close))))
+\end{verbatim}
+    \item
+      Daily PnL (combined):
+
+\begin{verbatim}
+mutate(DoD_PnL = Option_DoD_PnL + Hedging_DoD_Pnl)
+\end{verbatim}
+    \end{itemize}
+  \end{itemize}
+\item
+  Max Drawdown: accumulative of Daily PnL, max - min.
+
+\begin{verbatim}
+ungroup() %>%
+mutate(PnL = cumsum(DoD_PnL)) %>%
+{
+  xs <- .$PnL
+  max(cummax(xs) - cummin(xs))
+}
+\end{verbatim}
+\end{itemize}
+
+
+\end{document}

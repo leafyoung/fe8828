@@ -2,7 +2,7 @@
 title: "FE8828 Programming Web Applications in Finance"
 subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 1 </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 09, 2017"
+date: "Nov 5, 2018"
 # runtime: shiny
 ---
 
