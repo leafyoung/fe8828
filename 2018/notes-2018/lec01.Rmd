@@ -1,9 +1,9 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud <br> R Markdown and Shiny layout </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Oct 29, 2018"
-# runtime: shiny
+subtitle: <sub> Week 1 <br> What's Internet? What's Web? <br> Launch into the Cloud
+  <br> R Markdown and Shiny layout </sub>
 ---
 
 ```{r setup, include=FALSE}
@@ -26,7 +26,7 @@ knitr::include_graphics("imgs/data-science-explore.png")
 # Where does this course stands on? (updated in 2018)
 New version in 2018.
 
-```{r, echo = FALSE, out.width = "75%"}
+```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("new/tidyverse.png")
 ```
 
@@ -59,8 +59,7 @@ knitr::include_graphics("new/tidy2.png")
     - Use R in other MFE courses
     - Later in career you will learn Python, Julia, Hadoop. The principle and idea is the same.
       Since you have practiced the full pipeline, easier to master the idea.
-* Take a habit of good analyst's research - Use notebook-style.
-
+* Take a habit of good analyst - Use notebook-style research, reproducible
 * Take a mind of data exploration
 * Take a mind of analysis - answer is not fixed but open-ended. You need to draw conclusion and make suggestion.
 * Take a mind of strategy thinking
@@ -130,16 +129,16 @@ knitr::include_graphics("imgs/Common-network-topologies.png")
 - Fully-connected network is the most costly and robust. Ring is the cheapest but vulnerable.
 
 # Network talks
-After laying down the wires, what runs inside?
+What runs inside the cables?
 
 ```{r, echo = FALSE, out.width = "62%"}
 knitr::include_graphics("imgs/cables.jpg")
 ```
 
-# Network talks
-1. Information turns to *packet*
-2. Protocol designs the packet and process
-3. Infrastructure is to route the packets to the destination.
+# Network talks with Network Protocol
+1. Information turns to *packet* according to protocol speicification
+2. Protocol also specifies the process
+3. Infrastructure is to route the *packets* to the destination.
 
 # Packet
 1. Information turns to packet
@@ -150,13 +149,13 @@ knitr::include_graphics("imgs/cables.jpg")
 
 TCP Session
 
-```{r, echo = FALSE, out.width = "20%"}
+```{r, echo = FALSE, out.width = "31%"}
 knitr::include_graphics("imgs/375px-TCP_CLOSE.svg.png")
 ```
 
 DHCP Session
 
-```{r, echo = FALSE, out.width = "18%"}
+```{r, echo = FALSE, out.width = "20%"}
 knitr::include_graphics("imgs/DHCP_session.svg.png")
 ```
 
@@ -165,46 +164,61 @@ knitr::include_graphics("imgs/DHCP_session.svg.png")
 <center>![](imgs/wireshark-packets.jpg "Wireshark capture of the network"){width=85%}</center>
 
 # TCP/IP and Internet
-The Defense Advanced Research Projects Agency (DARPA) created the TCP/IP model in the 1970s to build ARPANET.
-ARPANET is a wide area network that preceded the internet.
+- The Defense Advanced Research Projects Agency (DARPA) created the TCP/IP model in the 1970s to build ARPANET.
+- ARPANET is a wide area network that preceded the internet.
 
 # What does TCP/IP gives?
-1. IP (Internet Protocol, IP address)
+A family of protocols but what's most famous/"fundamental" is IP and TCP.
+1. IP (Internet Protocol)
+    - IP address.
 ```{r, echo = FALSE, out.height = "30%"}
 knitr::include_graphics("imgs/internet-partial.png")
 ```
-2. TCP (Transmission Control Protocol) 
-TCP provides reliable, ordered, and error-checked delivery of a stream
+
+2. TCP (Transmission Control Protocol) / UDP (User Datagram Protocol)
+    - TCP provides reliable, ordered, and error-checked delivery of a stream
+    - UDP provides real-time transmission which can accept failure.
 
 # TCP/IP
 * Four Layers
 
-<center>![](imgs/640px-UDP_encapsulation.svg.png "TCP/IP"){width=32%}</center>
+<center>![](imgs/640px-UDP_encapsulation.svg.png "UDP"){width=32%}</center>
 
 * Application layer runs many protocols
-
-<center>![](imgs/tcp-ip.png "TCP/IP"){width=20%}</center>
+```{r, echo = FALSE, out.width = "25%"}
+knitr::include_graphics("imgs/tcp-ip.png")
+```
 
 # This is why and how Internet growed in size
+A well-defined network protocles.
 ```{r, echo = FALSE, out.width = "85%"}
 knitr::include_graphics("imgs/internet-host-count.png")
 ```
 
+IETF (Internet Engineering Task Force) maintains and still get new protocol approved.
+```{r, echo = FALSE, out.width = "40%"}
+knitr::include_graphics("new/ietf-card.png")
+```
+
 # What happens after ~~plugging cable~~, turning on Wi-Fi?
+We have talked about what runs inside the cable?
 * Every network device has a hardware address
-* DHCP client, a component of the operating system sends out a DHCP request and recieves an offer from a DHCP server running on the router.
-* Device accepts the IP address and use it to label for itself. Router also knows where to send the packet.
+* Dynamic Host Configuration Protocol (DHCP) protocol:
+    * DHCP client, a component of the operating system sends out a DHCP request and recieves an offer from a DHCP server running on the router.
+* Device accepts the IP address and uses it to label for itself. Router also knows where to send the packet.
 
 # When it wants to visit someone on the network? 1/2
 * Domain Name System:
     - We don't use 123.456.789.012 but www.google.com.
     - DNS is the directory service for internet.
     - Your device also receives One or more DNS server addresses so the computer knows where to send DNS requests.
+    - DNS server would return the actual IP address of the domain name.
+    - One kind of attack to Internet is to hijack/brings down Root Domain Servers for Global (8 of them) or a country's root DNS.
+    - Demo with nslookup.
 
 ```{r, echo = FALSE, out.width = "20%"}
 knitr::include_graphics("imgs/jediocto.jpg")
 ```
-Demo with nslookup.
 
 # When it wants to visit someone on the network? 2/2
 * Then, your device creates and send the packet "request". Wait for response.
@@ -214,7 +228,8 @@ knitr::include_graphics("imgs/India_Post_Letter_Box.jpg")
 ```
 
 # HTTP/HTML
-- Initiated by Tim Berners-Lee at CERN in 1989.
+Now we shall have an idea of how Internet works, let's move on to Web.
+- Initiated by Tim Berners-Lee at CERN (where big collison happens in "The Large Hadron Collider") in 1989.
 - HTML was also invented by Tim, "HTML tags"
 
 # HTTP Request/Response
@@ -247,13 +262,13 @@ knitr::include_graphics("imgs/India_Post_Letter_Box.jpg")
         </html>
 
 # HTTP/HTML
-- Hypertext Transfer Protocol (HTTP) but obviously, it does file, music, anything now.
+- Hypertext Transfer Protocol (HTTP) but obviously, it does file, music, anything else now.
 - It's a clear text protocol. That's why we need to use HTTPS (HTTP on SSL) to secure the communication.
+- In browser, you can see the green lock in address bar. This is about digital certificate, associated with crytography and authentication. Another topic.
 
 ```{r, echo = FALSE, out.width = "42%"}
 knitr::include_graphics("imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firefox.png")
 ```
-In browser, you can see the green lock in address bar. App doesn't show it, we just trust that they are using HTTPS.
 
 # Web
 When you have HTML and URL (Uniform Resource Locator), Web is born.
@@ -289,34 +304,37 @@ knitr::include_graphics("imgs/HTML5_CSS_JavaScript.png")
 
 # Web application
 - Why it is important?
+    + Needless to say. It is not 1995 anymore.
+    + Easy to deploy: no copy needed
+    + Runs fast: every browser is optimized
+    + Easy to develop: less effort than App and cross-platform.
 
 ```{r, echo = FALSE, out.width = "25%"}
 knitr::include_graphics("imgs/heisencat.png")
 ```
 
-- Needless to say. It is not 1995 anymore.
-- Easy to develop
-- Easy to deploy
-- Runs fast
-
 # To recap
 ## Why the Internet succeeded?
 - Information flows by packet.
     + IP protocol sets the address for the device
-    + TCP protocol transmit the packet reliably
-    + UDP, for real-time transmission which can accept failure.
+    + TCP protocol transmits the packet reliably
+    + UDP protocol does real-time transmission which can accept failure.
 - Local device just needs to send the packet
-- Transmission is done by the network devices
-- Efficient and scalable
+- Nework routers/gateways does the route/transmission to the destination.
+- Scalable and Efficient
 
 # To recap
 ## Web application
 - Browser => HTML/CSS/JavaScript => HTTP => TCP => IP => Network physical.
 
-- We will write in R, which subsequently writes HTML/CSS/JavaScript.
+- We will write in R Shiny, which subsequently output HTML/CSS/JavaScript to be run in browser.
 
-# Lecture 2: Amazon Web Services
-Outline goes here.
+# Lecture 2: Amazon Web Services: Launch into the Cloud
+- Sign-up for AWS Account
+- Setup AWS for EC2
+- Launch EC2
+- Running R
+
 
 # Lecture 3: R Markdown and Shiny (layout)
 ## Introduction
