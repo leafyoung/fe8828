@@ -99,7 +99,6 @@ server <- function(input, output, session) {
       dyOptions(axisLineWidth = 1.5, fillGraph = TRUE, drawGrid = TRUE) %>%
       dyRangeSelector()
   })
-
 }
 
 shinyApp(ui, server)
