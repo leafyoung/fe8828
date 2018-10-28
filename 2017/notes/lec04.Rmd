@@ -114,11 +114,11 @@ runif(3)
 
 ```{r, echo = TRUE}
 # Sample
-sample(1:10, 10, replace = F)
+sample(1:10, 10, replace = FALSE)
 # To Be/Not to Be
-sample(c(T, F), 10, replace = T)
+sample(c(T, F), 10, replace = TRUE)
 # Throw a dice
-sample(1:6, 10, replace = T)
+sample(1:6, 10, replace = TRUE)
 ```
 
 # Print
@@ -225,7 +225,7 @@ dt2 <- Sys.Date()
 dt2
 ```
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 library(lubridate)
 ```
 
@@ -273,7 +273,7 @@ day(x) <- days_in_month(x)
 # Business days
 Use package `bizdays`
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 # install.packages("bizdays")
 library(bizdays)
 ```
@@ -308,7 +308,7 @@ bizdays("2017-10-13", "2017-10-30", "Singapore")
 # Write function
 Input parameters
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 func1 <- function() { }
 
 func2 <- function(input1, input2) { }
@@ -333,7 +333,7 @@ func5 <- function(in1, in2) {
 
 # Write function
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 
 # The last value before function finishes will be returned automatically. No need to use return.
 func5 <- function(in1, in2) {
@@ -653,7 +653,7 @@ Common functions for data frame
 - With different weights to the month
 - N simulation
 
-```{r, echo = F, cache = TRUE}
+```{r, echo = FALSE, cache = TRUE}
 sample_bday <- function(dummy) {
   a <- trunc(runif(365, min=1, max=13))
   bday <- rep(FALSE, 12)
@@ -676,12 +676,12 @@ hist(result, xlim=c(0,100), freq=3)
 
 # Fastest Fish Problem
 
-```{r, echo = F, cache = T}
+```{r, echo = FALSE, cache = TRUE}
 
 N <- 10
 
 survi <- function() {
-  queue <- sample(1:N, N, replace = F)
+  queue <- sample(1:N, N, replace = FALSE)
   qori <- queue
   fastest <- queue[1]
   for (n in 2:N) {

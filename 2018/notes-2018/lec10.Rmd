@@ -89,7 +89,7 @@ knitr::include_graphics("imgs/ggplot2-basics.png")
     ggplot(bank, aes(age, balance)) + geom_point()
 
 
-```{r, echo = F, fig.width=10, fig.height=5}
+```{r, echo = FALSE, fig.width=10, fig.height=5}
 ggplot(bank, aes(age, balance)) + geom_point()
 ```
 
@@ -110,11 +110,15 @@ plot_bank <- function(x, y) {
 }
 
 plot_bank("age", "duration")
+```
 
+```{r eval = FALSE, include = TRUE, echo = TRUE}
 # in a Shiny app
 selectInput("column", "col", choices = c("balance", "duration"))
 plot_bank("age", input$col)
+```
 
+```{r, include = FALSE}
 ggplot(data = filter(bank, job == "entrepreneur"),
        aes(age, duration)) + geom_point() +
   geom_smooth(method = "lm") + facet_grid(. ~ job)
@@ -145,7 +149,7 @@ ggplot(bank, aes(job, age)) + geom_point()
     ggplot(bank, aes(age, balance)) + geom_point() + geom_smooth()
     ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth()
 
-```{r, echo = F, fig.width=10, fig.height = 4}
+```{r, echo = FALSE, fig.width=10, fig.height = 4}
 p1 <- ggplot(bank, aes(age, balance)) + geom_point() + geom_smooth()
 p2 <- ggplot(bank, aes(age, balance, color = job)) + geom_point() + geom_smooth()
 grid.arrange(p1, p2, ncol = 2, widths = c(1.35,2))
@@ -227,7 +231,7 @@ scale_y_log10()
     # This is really empty.
     g <- ggplot()
 
-```{r, echo = F, fig.width=10, fig.height = 4}
+```{r, echo = FALSE, fig.width=10, fig.height = 4}
 # Nearly empty chart.
 g1 <- ggplot(bank, aes(x = age, y = duration))
 g2 <- ggplot(bank)
@@ -396,7 +400,7 @@ ggplot(bank, aes(age, job)) + geom_point()
 ggplot(bank, aes(age, job, color = loan)) + geom_point()
 ```
 
-```{r, echo = F, fig.show = "hide"}
+```{r, echo = FALSE, fig.show = "hide"}
 ggplot(bank, aes(age, job, color = loan, size = loan)) + geom_point()
 ```
 
@@ -484,7 +488,7 @@ ggplot(bank) + geom_bar(mapping = aes(x = age, fill = job))
     ggplot(bank) +
       geom_bar(mapping = aes(x = job, fill = age)) 
 
-```{r, echo = F, fig.height=5, fig.width=10}
+```{r, echo = FALSE, fig.height=5, fig.width=10}
 p1 <- ggplot(bank) + geom_bar(mapping = aes(x = job))
 p2 <- ggplot(bank) + geom_bar(mapping = aes(x = job, fill = age)) 
 grid.arrange(p1, p2, ncol = 2, widths = c(2, 2))
@@ -743,7 +747,7 @@ ggplot(bank, aes(age, duration)) +
 ```
 
 # Facets in full power: plot
-```{r, echo = F, fig.height=6, fig.width=10}
+```{r, echo = FALSE, fig.height=6, fig.width=10}
 # Levels gives more control to the layer and style.
 cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
 # The age_group variable is now a categorical factor variable
@@ -775,7 +779,7 @@ default theme is theme_gray()
 
 # Add theme: result
 
-```{r, echo = F, fig.height = 6, fig.width=10}
+```{r, echo = FALSE, fig.height = 6, fig.width=10}
 g <- ggplot(bank, aes(x = age, y = log10(duration)))
 p1 <- g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_bw()
 p2 <- g + geom_point(aes(color = job), size = 4, alpha = 1/2) + theme_void()
@@ -1071,8 +1075,8 @@ kable("html") %>%
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"),
                 font_size = 12,
                 full_width = F, # True for left-to-right width
-                position = "left") %>% # if full_width == F
-    column_spec(1, bold = T, border_right = T) %>%
+                position = "left") %>% # if full_width == FALSE
+    column_spec(1, bold = T, border_right = TRUE) %>%
     column_spec(2, width = "30em", background = "yellow")
 ```
 
@@ -1084,7 +1088,7 @@ kable("html") %>%
                 font_size = 12,
                 full_width = F, # True for left-to-right width
                 position = "left") %>% # if full_width == F
-    column_spec(5:7, bold = T) %>%
+    column_spec(5:7, bold = TRUE) %>%
     row_spec(3:5, bold = T, color = "white", background = "#D7261E")    
 ```
 
@@ -1117,5 +1121,5 @@ mutate(vol = cell_spec(
                             option = "A", direction = -1))) %>%
 spread(key = "delta", value = "vol") %>%
   kable("html", escape = F, align = "c") %>%
-  kable_styling("striped", full_width = F)
+  kable_styling("striped", full_width = FALSE)
 ```

@@ -23,13 +23,13 @@ library(lubridate)
 library(bizdays)
 library(fOptions)
 library(ggplot2)
-knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
 
 # Lecture 4: Intermediate R Programming
-Let's review some R basics.
+Let's review some R basics and cover some intermediate R programming.
 
 - Vector/Matrix/String/Date/Time
 - Anonymous function
@@ -80,15 +80,15 @@ data <- 10:1
 match(c(1, 3), data)
 data[match(c(1, 3), data)]
 which(1 == data | 3 == data)
-data[which(1== data | 3 == data)]
+data[which(1 == data | 3 == data)]
 ```
 
 # Check whether element exists
-- False case when element doesn't exist
+- `FALSE` case when element doesn't exist
 
 ```{r, echo = TRUE}
 match(c(11, 31), 10:1)
-which(11== 10:1 | 31 == 10:1)
+which(11 == 10:1 | 31 == 10:1)
 ```
 
 ```{r, echo = TRUE}
@@ -114,11 +114,11 @@ runif(3)
 
 ```{r, echo = TRUE}
 # Sample
-sample(1:10, 10, replace = F)
+sample(1:10, 10, replace = FALSE)
 # To Be/Not to Be
-sample(c(T, F), 10, replace = T)
+sample(c(T, F), 10, replace = TRUE)
 # Throw a dice
-sample(1:6, 10, replace = T)
+sample(1:6, 10, replace = TRUE)
 ```
 
 # Print
@@ -156,21 +156,21 @@ toupper("big")
 tolower("LOWER")
 ```
 
-# Find/Replace string in string
+# Find/Replace String in String
 
 ```{r, echo = TRUE}
 # grepl: Find, returns T or F
-grepl("A", "ABC", fixed = T)
-grepl("D", "ABC", fixed = T)
+grepl("A", "ABC", fixed = TRUE)
+grepl("D", "ABC", fixed = TRUE)
 ```
 
 ```{r, echo = TRUE}
 # sub: replace for one time
 # sub(pattern, replace, string,...)
-# fixed = T means use fixed string. Not regular expression
-sub("D", "ABC", "DDD", fixed = T)
+# fixed = TRUE means use fixed string. Not regular expression
+sub("D", "ABC", "DDD", fixed = TRUE)
 # gsub: replace for all
-gsub("D", "ABC", "DDD", fixed = T)
+gsub("D", "ABC", "DDD", fixed = TRUE)
 ```
 
 # Find/Replace String with Regular Expression (RE)
@@ -225,7 +225,7 @@ dt2 <- Sys.Date()
 dt2
 ```
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 library(lubridate)
 ```
 
@@ -273,7 +273,7 @@ day(x) <- days_in_month(x)
 # Business days
 Use package `bizdays`
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 # install.packages("bizdays")
 library(bizdays)
 ```
@@ -285,8 +285,8 @@ bizdays("2017-10-16", "2017-10-30", "weekends")
 # add bizdays
 add.bizdays("2017-11-03", 5, "weekends")
 
-# generate all business days between.
-# You will find this useful for later financial application.
+# generate all business days between two dates.
+# You will find this useful for financial application.
 bizseq("2017-11-10", "2017-12-01", "weekends")
 ```
 
@@ -305,10 +305,10 @@ bizdays("2017-10-13", "2017-10-30", "weekends")
 bizdays("2017-10-13", "2017-10-30", "Singapore")
 ```
 
-# Write function
+# Functions
 Input parameters
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 func1 <- function() { }
 
 func2 <- function(input1, input2) { }
@@ -331,9 +331,9 @@ func5 <- function(in1, in2) {
 }
 ```
 
-# Write function
+# Functions
 
-```{r, echo = T, results = "hide"}
+```{r, echo = TRUE, results = "hide"}
 
 # The last value before function finishes will be returned automatically. No need to use return.
 func5 <- function(in1, in2) {
@@ -362,7 +362,7 @@ Write functions to do
 
 - Determine leap year?
 - Print the list of month names in abbreviation or full
-- How many working days in Singapore in 2017?
+- Write a function to count how many working days in a year, given 1) the year 2) list of holidays?
 
 # Time
 Convert time to character/string
@@ -395,7 +395,7 @@ x
 
 # List
 ```{r, echo = TRUE}
-# Create list with list() function
+# Create a list with list() function
 # Nameless list
 # list[_n_] => item by order
 a <- list(3, 4)
@@ -506,7 +506,7 @@ res$b
 
 ```{r, echo = TRUE}
 # Case 2: configuration
-app_config <- list(MAX = 10, MIN = 10, DISPLAY_RESULT = T)
+app_config <- list(MAX = 10, MIN = 10, DISPLAY_RESULT = TRUE)
 
 do_lots_of_work <- function(app_config) {
   app_config$MAX
@@ -514,6 +514,8 @@ do_lots_of_work <- function(app_config) {
 ```
 
 # Object
+S3 Object System in R
+
 ```{r, echo = TRUE}
 # Object
 # Define class with attributes.
@@ -553,6 +555,8 @@ head(res1, n = 4)
 # Alternatively to sapply, we can use map* functions from purrr package
 # map is a generic function that returns a list
 # map_dbl is for result of double, it would return a vector
+library(purrr)
+
 res2 <- purrr::map_dbl(opts, function(o) {
   (GBSOption(o@type, o@underlying, o@strike, Time = 1,
              r = 0.01, b = 0, sigma = 0.3))@price
@@ -580,6 +584,8 @@ head(res2, n = 4)
 
 # purrr::map and sapply Function
 ```{r, echo = TRUE}
+library(purrr) # install.packages("purrr")
+
 # These two are equivalent.
 res1 <- purrr::map(1:10, function(x) { rnorm(x, n = 10) })
 # function(x) func(x) can be simplied as func.
@@ -589,25 +595,26 @@ head(res1, n = 1)
 ```
 ```{r, echo = TRUE}
 # This is what we really want to do. Generate ten normal distribution and get their mean.
-# rnorm(n, mean = 0, sd = 1). Where doesn't input go to?
+# rnorm(n, mean = 0, sd = 1). Where does the input go to?
 res <- purrr::map(1:10, rnorm, n = 1000)
 map_dbl(res, mean)
 
 # sapply achieves the same as purrr::map, a bit slower.
 # Package purrr succeeds original R base.
 sapply(1:10, function(x) x ^ 2 )
-sapply(1:10, function(x) `^`(x, 2) )
-sapply(1:10, function(x) `^`(2, x) )
+sapply(1:10, function(x) `^` (x, 2) )
+sapply(1:10, function(x) `^` (2, x) )
 ```
 
 # Read/Write data
-
-    # set working directory
-    setwd("C:/TEMP")
-    # Save this_is_var1 to a file
-    saveRDS(this_is_var1, file = "C:/TEMP/DATA/data.Rds")
-    # Load a variable from a file. `new_loaded` is the name given to it.
-    new_loaded <- readRDS(file = "C:/TEMP/DATA/data.Rds")
+```{r eval = FALSE, include = TRUE, echo = TRUE}
+# set working directory
+setwd("C:/TEMP")
+# Save this_is_var1 to a file
+saveRDS(this_is_var1, file = "C:/TEMP/DATA/data.Rds")
+# Load a variable from a file. `new_loaded` is the name given to it.
+new_loaded <- readRDS(file = "C:/TEMP/DATA/data.Rds")
+```
 
 - On Windows, use double slashes `\\` or single backslash `/`. e.g. `C:\\TEMP\\DATA`, `C:/TEMP/DATA`
 - On Mac, use backslash `/Users/.../`
@@ -619,10 +626,10 @@ The basic structure of a data frame:
 - Each column represents a variable, a measure, feature, or characteristic of that observation. 
 - In summary, **2D table**
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, results = "hide"}
 df <- data_frame(
   date = seq(as.Date("2017-01-01"), as.Date("2017-01-10"), by = "day"),
-  stock = replicate(10, paste0(sample(LETTERS, 3, replace = T), collapse = "")),
+  stock = replicate(10, paste0(sample(LETTERS, 3, replace = TRUE), collapse = "")),
   quantity = round(runif(10) * 10000 ,0))
 # df["date"]: gives a data frame
 # df[["date"]]: gives value
@@ -632,7 +639,7 @@ df <- data_frame(
 df[c(3, 6, 9), , drop = F]
 ```
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, results = "hide"}
 # Get three columns
 df[, 1, drop = F]
 # This would return a vector
@@ -645,20 +652,22 @@ df[, c("date", "quantity"), drop = F]
 # R: data frame
 Common functions for data frame
 
-    View()
-    head()
-    tail()
-    str()
-    nrow()
-    ncol()
-    dim() # returns both nrow and ncol
-    colnames()/rownames()
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+View()
+head()
+tail()
+str()
+nrow()
+ncol()
+dim() # returns both nrow and ncol
+colnames()/rownames()
+```
 
 # Birthday Problem
 - With different weights to the month
 - N simulation
 
-```{r, echo = F, cache = TRUE}
+```{r, echo = FALSE, cache = TRUE}
 sample_bday <- function(dummy) {
   a <- trunc(runif(365, min=1, max=13))
   bday <- rep(FALSE, 12)
@@ -681,12 +690,11 @@ hist(result, xlim=c(0,100), freq=3)
 
 # Fastest Fish Problem
 
-```{r, echo = F, cache = T}
-
+```{r, echo = FALSE, cache = TRUE}
 N <- 10
 
 survi <- function() {
-  queue <- sample(1:N, N, replace = F)
+  queue <- sample(1:N, N, replace = FALSE)
   qori <- queue
   fastest <- queue[1]
   for (n in 2:N) {
@@ -702,7 +710,7 @@ survi <- function() {
 
 # plot((survi())$queue, 1:10, col = "skyblue2", pch = "\u2653", cex = 2)
 
-plot(1:10,1:10,type="n")
+plot(1:10, 1:10, type="n")
 res <- survi()
 for (i in 1:10) {
   if (is.na(res$queue[i])) {
@@ -729,77 +737,104 @@ cat(paste("res_ana:", res_ana, "\n"))
 hist(sim_sample)
 ```
 
+# How long to make a choice?
+Step 1: make_choice <- function(N, split_number)
+
+1. Generate a list `input_list` of `N` long with integer 1 to N at random position
+2. Split the list `input_list` into two: evaluation group and selection group.
+3. Remember the best number from evaluaton group and match the first number in selection group, >= than best.
+4. Returns this number
+
+Run this function for a few (hundred) times and find the probability of getting N
+
+Step 2: find_optimal, calls Step 1 a few (hundred) times for each of the split number from 1 to N/2.
+So we can find the optimal value for the split for the N.
+
+Answer: I suggest to find the solution for N = 3, and N = 10, then move straight on to N = 100.
+
 # Lecture 5: Shiny/2: R Web Framework
 
 # Minimalist
     
-    library(shiny)
-    ui <- fluidPage("Hello World")
-    server <- function(input, output, session) { }
-    shinyApp(ui = ui, server = server)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+library(shiny)
+ui <- fluidPage("Hello World")
+server <- function(input, output, session) { }
+shinyApp(ui = ui, server = server)
+```
 
 # Think around Input and Outputs
 
-    ui <- fluidPage(
-      titlePanel("Hello World with a Histogram"),
-      # Input() functions
-      numericInput("num", "Number of Sample", value = 30),
-      # Output() functions
-      plotOutput("hist")
-    )
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+ui <- fluidPage(
+  titlePanel("Hello World with a Histogram"),
+  # Input() functions
+  numericInput("num", "Number of Sample", value = 30),
+  # Output() functions
+  plotOutput("hist")
+)
+```
 
 # Input
 
 All input function follow such function signature except for input-specific parameters.
 
-    inputXXX(inputId = "input name", label = "label to display", ...)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+inputXXX(inputId = "input name", label = "label to display", ...)
+```
 
-- numericInput
-- textInput
-- passwordInput
-- slideInput
-- selectInput
-- dateInput
+- `numericInput`
+- `textInput`
+- `passwordInput`
+- `slideInput`
+- `selectInput`
+- `dateInput`
 
-Reference: https://shiny.rstudio.com/reference/shiny/1.0.5/
+Reference: https://shiny.rstudio.com/reference/shiny/1.1.0/
 
 # Output
 
-All output function follow such pattern.
+All output functions follow such pattern.
 
-    yyyOutput(outputId = "output name")
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+yyyOutput(outputId = "output name")
+```
 
-- textOutput("text")
-- verbatimTextOutput("text_orignal")
-- tableOutput("t1")
-- dataTableOutput("t2")
-- plotOutput(outputId = "hist", width = "400px", height = "400px")
-- uiOutput("uiX")
+- `textOutput("text")`
+- `verbatimTextOutput("text_orignal")`
+- `tableOutput("t1")`
+- `dataTableOutput("t2")`
+- `plotOutput(outputId = "hist", width = "400px", height = "400px")`
+- `uiOutput("uiX")`
 
-plotOutput: I suggest to set width and height to fixed size so we need extra parameters.
-For others, outputId is good enough.
+For plotOutput, I suggest to set width and height to fixed size so we need extra parameters.
+For other kinds of outputs, only `outputId` is good enough.
 
 # Server
 Sever is to fill the content of output
 
-    server <- function(input, output, session) {
-      # Enable either one of two
-      output$hist <- renderPlot({ hist(rnorm(100)) })
-      
-      if (FALSE) {
-        output$hist <- renderPlot({
-          title("a normal random number histogram")
-          hist(rnorm(input$num))
-        })
-      }
-    }
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+server <- function(input, output, session) {
+  # Enable either one of two
+  output$hist <- renderPlot({ hist(rnorm(100)) })
+  
+  if (FALSE) {
+    output$hist <- renderPlot({
+      title("a normal random number histogram")
+      hist(rnorm(input$num))
+    })
+  }
+}
+```
 
 ## shinyApp = UI + Server
-UI and Server combines to be a ShinyApp.
-UI is to run the same for each browser/client.
-Server is separate between different users.
+- UI and Server combine to be a ShinyApp.
+- UI is to run the same for each browser/client.
+- Server is separate between different users.
 
-    shinyApp(ui, server)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+shinyApp(ui, server)
+```
 
 # Reactivity Kicks In
 - Reactivity: `input$num ------> output$p1`
@@ -811,22 +846,23 @@ Reactive values work together with reactive functions.
 2. Reactive value notifies. `input$x => expression() => output$y`
 
 # Reactivity - 1
-Reactivity is enabled by placing inputXXX in renderXXX function.
+Reactivity is enabled by placing input `inputXXX` inside `renderXXX` function. (shiny-21.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-21.R"))
 ```
 
 # Reactivity - 2
+- Button represents a manual trigger of the action.
 - We use `observeEvent` to observe button action, and `isolate` to cut down the link of `inputXXX` in `renderXXX`, so button can work.
-- If we remove `isolate`?
+- If we remove `isolate`? (shiny-22.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-22.R"))
 ```
 
 # Reactivity - 3
-We can add a reactiveValue with `eventReactive`
+We can add a reactiveValue with `eventReactive`. (shiny-23.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-23.R"))
@@ -836,30 +872,38 @@ cat(htmltools::includeText("example/shiny-23.R"))
 
 For tableOutput
 
-    output$t1 <- renderTable(iris)
-    
-    output$t1 <- renderTable({
-      some input..
-      output is a data frame.
-    })
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+output$t1 <- renderTable(iris)
+
+output$t1 <- renderTable({
+  some input..
+  output is a data frame.
+})
+```
 
 For dataTableOutput (Dynamic table)
 
-    output$t2 <- renderDataTable(iris)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+output$t2 <- renderDataTable(iris)
+```
 
 For plotOutput
-    
-    output$p2 <- renderPlot({ plot(runif(1000), runif(1000)) })
+
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+output$p2 <- renderPlot({ plot(runif(1000), runif(1000)) })
+```
 
 For textOutput and verbatimTextOutput
 
-    output$t3 <-  renderText({ "foo" })
-    output$t4 <- renderPrint({
-      print("foo")
-      print("bar")
-    })
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+output$t3 <-  renderText({ "foo" })
+output$t4 <- renderPrint({
+  print("foo")
+  print("bar")
+})
+```
 
-# Example: Shiny-24
+# Example: (Shiny-24.R)
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-24.R"))
@@ -876,9 +920,11 @@ cat(htmltools::includeText("example/shiny-24.R"))
 - Connect from trigger: button, isolate to create a Chinese wall
 
 # Shiny Assignment
-1. Add a selectInput for different color names, returned from `colors()`.
-    
-    plot(1:10, pch = 19, cex = 1, col = "skyblue1")
+1. For Shiny-24.R, add a selectInput for different color names, returned from `colors()`.
+
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+plot(1:10, pch = 19, cex = 1, col = "skyblue1")
+```
 
 2. Create a Bond Schedule
   + Inputs: start date, tenor, coupon rate, coupon frequency, and yield to maturity.
@@ -901,45 +947,48 @@ knitr::include_graphics("imgs/tidyverse.png")
 ```
 
 # SQL
-Let's start from SQL, which first appeared in 1974; 43 years ago.
+- Let's briefly mention SQL, which first appeared in 1974, which is 43 years ago.
+- It was invented by Edgar Codd
 
 ```{r, echo = FALSE, out.width = "75%"}
 knitr::include_graphics("imgs/edgar-codd.png")
 ```
 
-# CRUD: Create Read Update Delete
+# CRUD: Create | Read | Update | Delete
 Data engineering was born around 70s with SQL.
 
 <center>![](imgs/CRUD.png "CRUD"){width=45%}</center>
 
 # SQL does CRUD
 
-    # Select everything from Shops.
-    SELECT * FROM Shops;
+```{sql eval=FALSE, include=TRUE, echo = TRUE}
+# Select everything from Shops.
+SELECT * FROM Shops;
 
-    # Select with a filter
-    SELECT * FROM Shops WHERE size = "Big";
+# Select with a filter
+SELECT * FROM Shops WHERE size = "Big";
 
-    # Select with a filter and order
-    SELECT * FROM Shops WHERE size = "Big" ORDER BY Name;
+# Select with a filter and order
+SELECT * FROM Shops WHERE size = "Big" ORDER BY Name;
 
-    # Select with a filter, order, group and summary function `sum`
-    SELECT Region, sum(Sales) FROM Shops WHERE size = "Medium" GROUP BY Region;
+# Select with a filter, order, group and summary function `sum`
+SELECT Region, sum(Sales) FROM Shops WHERE size = "Medium" GROUP BY Region;
 
-    # Insert a new record to Shops.
-    INSERT into Shops (Name, Region, Sales) VALUES ("Costco", "North", 123456, ...);
+# Insert a new record to Shops.
+INSERT into Shops (Name, Region, Sales) VALUES ("Costco", "North", 123456, ...);
 
-    # Update a field
-    UPDATE Shops SET Sales = Sales + 1000 WHERE Name = "Costco";
+# Update a field
+UPDATE Shops SET Sales = Sales + 1000 WHERE Name = "Costco";
 
-    # Delete from Shops with a filter
-    DELETE from Shops WHERE Sales < 1000
+# Delete from Shops with a filter
+DELETE from Shops WHERE Sales < 1000
+```
 
 # Data frame does CRUD
 
-```{r, echo = TRUE}
+```{r, echo = TRUE, results = "hide"}
 df <- data.frame(a = 1:10, b = 10:1)
-# Filter:
+# Select (aka Filter)
 df[which(df$a == 3 | df$b == 3), , drop = T] 
 df[match(3, df$a), , drop = T]
 df[, match("b", colnames(df)), drop = T] 
@@ -955,7 +1004,7 @@ df[which(df$a == 3 | df$b == 3), 2] <- 3
 ```
 
 # dplyr
-dplyr package from tidyverse is a high-performance package to deal with data frame.
+dplyr package from tidyverse is a high-performance package to deal data in data frame.
 
 ```{r, echo = TRUE}
 # tidyverse is a bundle of packages.
@@ -1002,8 +1051,11 @@ library(tidyverse)
 # Sample dataset
 
 ## A data-driven approach to predict the success of 
+
 telemarketing
+
 ### Author: Sérgio Moroa; Paulo Cortezb; Paulo Ritaa
+
 #### <http://dx.doi.org/10.1016/j.dss.2014.03.001>
 
 I chose this data set of a Portuguese retail bank clients profile
@@ -1060,7 +1112,9 @@ bank <- read_delim("example/data-bank/bank.csv",
                     ";", escape_double = FALSE, trim_ws = TRUE)
 ```
 
-    View(bank)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+View(bank)
+```
 
 # `select`
 `select(df, ...)`, ... can be
@@ -1083,9 +1137,8 @@ subset <- select(bank, contains("p"))
 ```
 
 # `select` as a re-arrangement of columns.
-```{r, echo = TRUE}
+```{r, echo = TRUE, results = "hide"}
 job_first <- select(bank, job, everything())
-bank
 ```
 
 # `filter`
@@ -1129,7 +1182,7 @@ df <- rename(bank, `Age in Bank` = age)
 ```
 
 # arrange
-```{r, echo = TRUE}
+```{r, echo = TRUE, results = "hide"}
 # arrange is sort
 arrange(bank, job)
 arrange(bank, default, job)
@@ -1144,7 +1197,9 @@ NB: Missing values are always sorted at the end.
 
 - How could you use arrange() to sort all missing values to the start? (Hint: use is.na()).
 
-    arrange(bank, !is.na(a), a)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+arrange(bank, !is.na(a), a)
+```
 
 - Find the longest duration?
 - Find the eldest?
@@ -1207,29 +1262,35 @@ ntile(y, 2)
 # %>%
 We may write such code.
 
-    df <- select(df, x)
-    df <- mutate(df, a = 1)
-    df <- rename(df, a = b)
-    df <- arrange(df, x)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+df <- select(df, x)
+df <- mutate(df, a = 1)
+df <- rename(df, a = b)
+df <- arrange(df, x)
 
-    # This is effectively,
-    arrange(rename(mutate(select(df, x), a = 1), a = b), x)
+# This is effectively,
+arrange(rename(mutate(select(df, x), a = 1), a = b), x)
 
-    third(second(first(x)))
+third(second(first(x)))
+```
 
 How about this?
 
-    df %>% select %>% mutate %>% rename %>% arrange
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+df %>% select %>% mutate %>% rename %>% arrange
+```
 
 # %>% Benefits
 
 `%>%` operator allows you to transform the flow from nesting to left-to-right fashion, i.e.
 
-    first(x) %>% second() %>% third()
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+first(x) %>% second() %>% third()
 
-    x %>% first() %>% second() %>% third() # this could also do.
-    
-    x %>% first(.) %>% second(.) %>% third(.) # . represents the input
+x %>% first() %>% second() %>% third() # this could also do.
+
+x %>% first(.) %>% second(.) %>% third(.) # . represents the input
+```
 
 What's the output of below?
 
@@ -1247,49 +1308,53 @@ c(1, 3, 7, 9) %>% {
 
 %>% ... %>%
 
-    # Feed the data for multiple processing
-    {
-      v <- .
-      cn <- colnames(v)
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+# Feed the data for multiple processing
+{
+  v <- .
+  cn <- colnames(v)
 
-      v <- select(v, u, z)
-      colnames(v) <- cn[1:3]
-      v
-    } 
+  v <- select(v, u, z)
+  colnames(v) <- cn[1:3]
+  v
+} 
 
-    # How to return multiple value
+# How to return multiple value
 
-    %>% {
-      assign("data_name", data, envir = parent.env(environment()) )
-    } %>% {
-      select(., z < 0.4)
-    }
+%>% {
+  assign("data_name", data, envir = parent.env(environment()) )
+} %>% {
+  select(., z < 0.4)
+}
 
-    # or, we use list
-    %>% {
-      list(a, b)
-    }  %>% {
-      v <- .
-      v$a
-      v$b
-    }
+# or, we use list
+%>% {
+  list(a, b)
+}  %>% {
+  v <- .
+  v$a
+  v$b
+}
+```
 
 # Code pattern with Pipe
 
-    df %>%
-    ... %>%
-    ... %>%
-    ... %>%
-    {
-      v <- .
-      ggplot(data = v) + 
-        # full data is used here
-        geom_line(data = v) +
-        # partial data needs to be hightlighted.
-        geom_line(data = filter(., some condition), color = "red")
-    }
+```{r eval=FALSE, include=TRUE, echo = TRUE}
+df %>%
+... %>%
+... %>%
+... %>%
+{
+  v <- .
+  ggplot(data = v) + 
+    # full data is used here
+    geom_line(data = v) +
+    # partial data needs to be hightlighted.
+    geom_line(data = filter(., some condition), color = "red")
+}
+```
 
-# Use of Caution
+# Use of Caution for Pipe (%>%)
 
 Pros:
 
@@ -1306,6 +1371,7 @@ Cons:
 - Pipes are fundamentally linear and expressing complex relationships with them will typically yield confusing code.
 
 # Environment
+
 Environment is where your data resides. Use `local()` to isolate.
 
 ```{r, echo = TRUE}

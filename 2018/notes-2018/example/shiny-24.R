@@ -21,7 +21,7 @@ ui <- fluidPage(
 options(error = function() traceback(2))
 
 server <- function(input, output, session) {
-  output$t1 <- renderTable(iris[1:10,], striped = T, hover = T)
+  output$t1 <- renderTable(iris[1:10,], striped = TRUE, hover = TRUE)
   output$dt1 <- renderDataTable(iris, options = list( pageLength = 5))
   output$x4 <- renderPrint({
       s = input$dt1_rows_selected

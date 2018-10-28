@@ -10,7 +10,8 @@ server <- function(input, output, session) {
   data <- eventReactive(input$go, {
     hist(rnorm(input$num))
   })
-
+  # Variable data becomes a reactive variable.
+  # What changes to it will trigger the output.
   output$p1 <- renderPlot({ data() })
 }
 
