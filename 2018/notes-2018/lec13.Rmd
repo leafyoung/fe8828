@@ -1,8 +1,8 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 5 <br> Applications </sub>"
+subtitle: "<sub> Week 5 <br> Building Financial Applications </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 30, 2017"
+date: "Nov 26, 2018"
 # output: html_document
 ---
 
@@ -36,7 +36,7 @@ pre { /* Code block - determines code spacing between lines */
 }
 </style>
 
-# Lecture 10: Building Financial Application
+# Lecture 10: Building Financial Applications
 
 # Starter
 

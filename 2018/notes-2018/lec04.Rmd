@@ -1,6 +1,6 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 2 <br> Data, visualization, and web: part 1 </sub>"
+subtitle: "<sub> Week 2 <br> Intermediate R Programming <br> Shiny/2: R Web Framework <br> Data Manipulation and EDA (Exploratory Data Analysis)/1 </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Nov 5, 2018"
 # runtime: shiny
@@ -28,7 +28,7 @@ chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
 
-# Lecture 4: R catch-up
+# Lecture 4: Intermediate R Programming
 Let's review some R basics.
 
 - Vector/Matrix/String/Date/Time
@@ -430,13 +430,15 @@ if (is.null(a$c)) {
 
 # List
 
-```{r}
+```{r, echo = TRUE, results="hide"}
 list <- list(elem = 1, c1 = "a", c2 = "b")
 
 # access the list
 list[[1]]
 list$elem
+```
 
+```{r, echo = TRUE}
 # add new member to the list
 list$new_elem <- 3
 # update member in the list
@@ -444,6 +446,9 @@ list$c1 <- 3
 
 # Delete c1 in the list
 list$c1 <- NULL
+
+list
+```
 
 # List's Usage - 1
 
@@ -724,7 +729,7 @@ cat(paste("res_ana:", res_ana, "\n"))
 hist(sim_sample)
 ```
 
-# Lecture 5: Shiny - R Web Framework - 1/2
+# Lecture 5: Shiny/2: R Web Framework
 
 # Minimalist
     
@@ -885,7 +890,7 @@ $NPV = \frac{Cashflow 1}{(1 + yield)^1} + \frac{Cashflow 2}{(1 + yield)^2} + ...
 For a Bond with fixed coupon
 $Bond Price = Coupon * \frac{1 - (\frac{1}{(1 + yield)^n})}{yield} + \Big[MaturityValue * \frac{1}{(1 + yield)^n}\Big]$
 
-# Lecture 6: Data Manipulation and Exploratory Data Analysis 1/2
+# Lecture 6: Data Manipulation and EDA (Exploratory Data Analysis)/1
 
 # Tidyverse
 
@@ -1154,13 +1159,21 @@ df1 <- mutate(bank, y = ifelse(y == "yes", T, F))
 df2 <- mutate(bank, duration_diff = duration - mean(duration, na.rm = TRUE))
 
 # case_when is a function to deal multiple choices.
-mutate(bank, age_group = case_when(
+df2_age_group <- mutate(bank, age_group = case_when(
   age < 20 ~ "youth",
   age < 40 ~ "middle-age",
   age < 50 ~ "senior",
   TRUE ~ "happy"
 ))
 
+df2_age_group_res <-
+  group_by(df2_age_group, age_group) %>%
+  summarise(mean_age = mean(age)) %>%
+  transmute(mean_age_diff = mean_age - lag(mean_age))
+```
+
+# mutate/2
+```{r, echo = TRUE}
 firstup <- function(x) {
   substr(x, 1, 1) <- toupper(substr(x, 1, 1))
   x
@@ -1173,12 +1186,6 @@ df3 <- mutate(bank, month_name = factor(firstup(as.character(month)), levels = m
 df5 <- transmute(bank, 
                   duration_trend = duration - mean(duration, na.rm = TRUE),
                   balance_trend = balance - mean(balance, na.rm = TRUE))
-```
-
-```{r}
-group_by(df, age_group) %>%
-  summarise(mean_age = mean(age)) %>%
-  transmute(mean_age_diff = mean_age - lag(mean_age))
 ```
 
 # What you can do with `mutate`
@@ -1361,12 +1368,12 @@ pass_out(environment())
 x
 
 # assign data to pass it out of function
-extra_layer <- function() {
-  pass_out()
+extra_layer <- function(env) {
+  pass_out(env)
 }
 
 x <- 1
-extra_layer()
+extra_layer(env = environment())
 x
 
 extra_layer_g <- function() {

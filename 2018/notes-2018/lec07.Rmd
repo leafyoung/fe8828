@@ -1,8 +1,8 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 3 <br> Data, visualization, and web: part 2 </sub>"
+subtitle: "<sub> Week 3 <br> Data Manipulation and EDA/2 </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 16, 2017"
+date: "Nov 12, 2018"
 # runtime: shiny
 ---
 
@@ -27,7 +27,7 @@ inline <- function(x = "") paste0("`` `r ", x, "` ``")
 bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 ```
 
-# Lecture 7: Data Manipulation and Exploratory Data Analysis 2/2
+# Lecture 7: Data Manipulation and EDA/2
 
 # Joins
 

@@ -70,18 +70,18 @@ knitr::include_graphics("new/tidy2.png")
 - Week 2:
     * Intermediate R Programming
     * Shiny/2: R Web Framework
-    * Data Manipulation and Exploratory Data Analysis/1
+    * Data Manipulation and EDA (Exploratory Data Analysis)/1
 - Week 3:
-    * Data Manipulation and Exploratory Data Analysis/2
+    * Data Manipulation and EDA/2
 
 # Course Outline: Week 4-6
 - Week 4
-    * Data Visualization
+    * Data Visualization and EDA
     * Shiny/3: Advanced
 - Week 5
-    * Build Applications
+    * Building Financial Applications
 - Week 6:
-    * Further topics on Blockchain
+    * Further topics: Blockchain
     
 # Assingments
 - Week 1: A static website. A front page, a about page and a description page. (due by week 2)
@@ -173,6 +173,7 @@ knitr::include_graphics("imgs/DHCP_session.svg.png")
 
 # What does TCP/IP gives?
 A family of protocols but what's most famous/"fundamental" is IP and TCP.
+
 1. IP (Internet Protocol)
     - IP address.
 ```{r, echo = FALSE, out.height = "30%"}
@@ -195,11 +196,13 @@ knitr::include_graphics("imgs/tcp-ip.png")
 
 # This is why and how Internet growed in size
 A well-defined network protocles.
+
 ```{r, echo = FALSE, out.width = "75%"}
 knitr::include_graphics("imgs/internet-host-count.png")
 ```
 
 IETF (Internet Engineering Task Force) maintains and still gets new protocol approved.
+
 ```{r, echo = FALSE, out.width = "30%"}
 knitr::include_graphics("new/ietf-card.png")
 ```

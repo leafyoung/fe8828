@@ -1,8 +1,8 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Week 4 <br> Data, visualization, and web: part 3 </sub>"
+subtitle: "<sub> Week 4 <br> Data Visualization and EDA <br> Shiny/3: Advanced </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 23, 2017"
+date: "Nov 19, 2018"
 # runtime: shiny
 ---
 
@@ -32,7 +32,7 @@ pre { /* Code block - determines code spacing between lines */
 }
 </style>
 
-# Lecture 8: Data Visualization
+# Lecture 8: Data Visualization and EDA
 
 `library(ggplot)`, author Hadley Wickham. First release on June 10, 2007.
 
@@ -839,7 +839,7 @@ ggplot(world, aes(long, lat, group = group)) +
     + Each with a figure and a data story.
     + You can re-use about existing examples, up to 5.
 
-# Lecture 9: Shiny - Web Programming Part 2
+# Lecture 9: Shiny/3: Advanced
 
 # Review: Display output with `render*()` functions
 

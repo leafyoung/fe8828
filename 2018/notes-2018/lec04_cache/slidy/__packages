@@ -14,3 +14,5 @@ timeSeries
 fBasics
 fOptions
 bindrcpp
+stringr
+forcats
