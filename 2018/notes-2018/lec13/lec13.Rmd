@@ -2,7 +2,7 @@
 title: "FE8828 Programming Web Applications in Finance"
 subtitle: "<sub> Week 5 <br> Building Financial Applications </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 26, 2018"
+date: "Nov 19, 2018"
 # output: html_document
 output: pdf_document
 ---
@@ -199,7 +199,7 @@ Quandl.api_key(token_qd)				# Authenticate your token
 # Build vector of currencies
 rates <- Quandl(c("FRED/DEXUSAL", "FRED/DEXBZUS", "FRED/DEXUSUK", "FRED/DEXCHUS"),
                 start_date="2000-01-01",
-                end_date = "2017-11-30")
+                end_date = "2018-11-28")
 colnames(rates) <- c("Date", "AUD/USD", "USD/BRL", "GBP/USD", "USD/CNY")
 meltdf <- gather(rates, key = "CCY", value = "Rate", -Date)
 
@@ -263,7 +263,7 @@ oil_forecast_xts1 <- xts(oil_forecast_data1[,-1],
 ```
 
 ```{r, echo = TRUE, eval = FALSE}
-forebase2 <- oil_weekly["/2017-09-01"]
+forebase2 <- oil_weekly["/2018-11-30"]
 forecast2 <- forecast(forebase2, h = 4 * 3)
 
 plot(forecast2, main = "Oil Forecast2")
@@ -423,6 +423,7 @@ shinyApp(ui, server)
 ```{r, echo = TRUE, eval = FALSE}
 # 53-portfolio-2.R
 
+library(purrr)
 library(tidyverse)
 library(tidyquant)
 library(dygraphs)
@@ -438,7 +439,7 @@ symbols <- c("SPY","IJS","EFA","EEM","AGG")
 prices <- 
   getSymbols(symbols, src = 'yahoo', from = "2005-01-01", 
              auto.assign = TRUE, warnings = FALSE) %>% 
-  map(~Cl(get(.))) %>%  # Cl is from quantmod: get Close price
+  purrr::map(~Cl(get(.))) %>%  # Cl is from quantmod: get Close price
   reduce(merge) %>%
   `colnames<-`(symbols)
 

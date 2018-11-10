@@ -2,7 +2,7 @@
 title: "FE8828 Programming Web Applications in Finance"
 subtitle: "<sub> Week 4 <br> Data Visualization and EDA <br> Shiny/3: Advanced </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 19, 2018"
+date: "Nov 16, 2018"
 # runtime: shiny
 ---
 
@@ -17,6 +17,7 @@ library(gridExtra)
 library(maps)
 library(knitr)
 library(kableExtra)
+library(shiny)
 knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
@@ -34,12 +35,20 @@ pre { /* Code block - determines code spacing between lines */
 
 # Lecture 8: Data Visualization and EDA
 
-`library(ggplot)`, author Hadley Wickham. First release on June 10, 2007.
+- `library(ggplot)`, author Hadley Wickham. First release on June 10, 2007.
+- gg stands for "Grammar of Graphics"
 
 <https://qz.com/1007328/all-hail-ggplot2-the-code-powering-all-those-excellent-charts-is-10-years-old/>
 
+
 ```{r, echo = FALSE, out.width = "55%"}
 knitr::include_graphics("imgs/ggplot2-10.png")
+```
+
+# ggplot2 Examples
+
+```{r, echo = FALSE, out.width = "75%"}
+knitr::include_graphics("new/ggplot2-examples.png")
 ```
 
 # Why do we need ggplot?
@@ -59,15 +68,14 @@ ggplot(airquality, aes(Temp, Ozone)) +
 ```
 
 # Syntax of ggplot
-
-```{r, echo = FALSE, out.width = "53%"}
-knitr::include_graphics("imgs/ggplot2-basics.png")
-```
-
 - Definition of data + Definitions of layers
 
         ggplot(data = <DATA>, ...) + 
           <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
+
+```{r, echo = FALSE, out.width = "53%"}
+knitr::include_graphics("imgs/ggplot2-basics.png")
+```
 
 # Syntax of ggplot
 
@@ -118,7 +126,7 @@ selectInput("column", "col", choices = c("balance", "duration"))
 plot_bank("age", input$col)
 ```
 
-```{r, include = FALSE}
+```{r, include = TRUE}
 ggplot(data = filter(bank, job == "entrepreneur"),
        aes(age, duration)) + geom_point() +
   geom_smooth(method = "lm") + facet_grid(. ~ job)
@@ -134,7 +142,7 @@ ggplot(data = filter(bank, job == "entrepreneur"),
 ggplot(bank, aes(default, age)) + geom_point()
 ```
 
-# For non-numeric data: age and default
+# For non-numeric data: age and default (make it landscape)
 ```{r, echo = TRUE}
 ggplot(bank, aes(age, default)) + geom_point()
 ```
@@ -159,8 +167,8 @@ grid.arrange(p1, p2, ncol = 2, widths = c(1.35,2))
 `geom_*` functions has a default parameter of `inherit.aes = T`.
 ```{r, echo = TRUE}
 ggplot(bank, aes(x = age, y = duration)) +
-geom_smooth() +
-geom_point()
+geom_smooth() + # same as geom_smooth(aes(x = age, y = duration))
+geom_point() # same as geom_point(aes(x = age, y = duration))
 ```
 
 # Pass `aes` down
@@ -261,7 +269,7 @@ g + geom_point() + geom_smooth()
         g + geom_point(aes(color = job), size = 4, alpha = 1/2)
         g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 
-# `g`: mix and match
+# `g`: mix and match: which figure?
 
     g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
     g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
@@ -273,7 +281,7 @@ g + geom_point() + geom_smooth()
 g + geom_point(aes(color = job), size = 4, alpha = 1/2)
 ```
 
-# `g`: mix and match
+# `g`: mix and match: which figure?
 
     g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
     g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
@@ -284,7 +292,7 @@ g + geom_point(aes(color = job), size = 4, alpha = 1/2)
 g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2) 
 ```
 
-# `g`: mix and match
+# `g`: mix and match: which figure?
 
     g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
     g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
@@ -295,7 +303,7 @@ g + geom_point() + geom_point(aes(color = job), size = 4, alpha = 1/2)
 g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
 ```
 
-# `g`: mix and match
+# `g`: mix and match: which figure?
 
     g + geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job)
     g + geom_point(color = "steelblue", size = 4, alpha = 1/2)
@@ -425,17 +433,17 @@ ggplot(bank, aes(job, age)) + geom_boxplot()
 ggplot(bank, aes(balance, color = job)) + geom_density()
 ```
 
-# Density: balance and job wtih fill
+# Density: balance and job with fill
 ```{r, echo = TRUE}
 ggplot(bank, aes(duration, fill = job)) + geom_density()
 ```
 
-# Density: age and job wtih alpha
+# Density: age and job with alpha
 ```{r, echo = TRUE}
 ggplot(bank, aes(age, color = job, alpha = 0.3)) + geom_density()
 ```
 
-# Density: age and job wtih alpha and fill and color
+# Density: age and job with alpha and fill and color
 ```{r, echo = TRUE}
 # Which is better?
 ggplot(bank, aes(age, color = job, fill = job, alpha = 0.3)) + geom_density()
@@ -531,7 +539,7 @@ coord_polar()
 
 # Variations: scale_x_reverse
 ```{r, echo = TRUE}
-# scale_x_reverse works on continous variable (numeric, date, etc.)
+# scale_x_reverse works on continous variable (numeric, date, etc.). Make it big to small.
 ggplot(bank) +
 geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
 coord_flip() +
@@ -622,14 +630,14 @@ ggplot(data = bank) +
   facet_grid( ~ education)
 ```
 
-# Facets: facet_wrap
+# Facets - facet_wrap
 ```{r, echo = TRUE}
 ggplot(data = bank) + 
   geom_point(mapping = aes(x = age, y = duration)) + 
   facet_wrap(~ education, nrow = 2)
 ```
 
-# Facets: facet_wrap multi-dimension
+# Facets - facet_wrap multi-dimension
 
 ```{r, echo = TRUE}
 ggplot(data = bank) + 
@@ -644,7 +652,7 @@ ggplot(data = bank) +
 ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(job ~ .)
 ```
 
-# Facets - finding the best. trying.
+# Facets - finding the best. still trying.
 ```{r, echo = TRUE}
 # Not a good choice, neither
 ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(. ~ job)
@@ -656,26 +664,26 @@ ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(. ~ job)
 ggplot(bank, aes(campaign)) + geom_histogram() + facet_grid(. ~ job)
 ```
 
-# Facets - finding the best. trying another
+# Facets - finding the best. try another
 ```{r, echo = TRUE}
 ggplot(bank, aes(duration)) + geom_histogram(aes(color = job)) +
   facet_grid(. ~ job)
 ```
 
-# Facets - finding the best: points
+# Facets - finding the best. Try points
 ```{r, echo = TRUE}
 # facet with points is good
 ggplot(bank, aes(balance, age)) + geom_point() + facet_grid(. ~ job)
 ```
 
-# Facets - finding the best: better with color
+# Facets - finding the best. Better with color
 ```{r, echo = TRUE}
 # do better
 ggplot(bank, aes(balance, age)) + geom_point(aes(color = job)) +
   facet_grid(. ~ job)
 ```
 
-# Facets - finding the best: points
+# Facets - finding the best. Try Points
 ```{r, echo = TRUE}
 # Can we apply points between age and balance?
 ggplot(bank, aes(age, balance, color = job)) +
@@ -683,7 +691,7 @@ ggplot(bank, aes(age, balance, color = job)) +
   facet_grid(. ~ job)
 ```
 
-# Facets - finding the best: smoothie
+# Facets - finding the best. Try Smoothie
 ```{r, echo = TRUE}
 # Smooth line is mixed with points
 ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
@@ -856,7 +864,7 @@ ggplot(world, aes(long, lat, group = group)) +
     + renderTable()/tableOutput()
 * Interactive table from data frame, matrix or other table-like structure
     + renderDataTable()/dataTableOutput() 
-* Plot generated on-the-fly
+* Plot
     + renderPlot()/plotOutput()
 * Get continous output
     + renderPrint()/verbatimTextOutput() or textOutput()
@@ -865,7 +873,7 @@ ggplot(world, aes(long, lat, group = group)) +
 * Customized UI elements
     + uiOutput()/renderUI()
 
-# `render*`
+# Review: `render*`
 
 - Allow binding of one output to multiple inputs
 
@@ -884,7 +892,7 @@ ggplot(world, aes(long, lat, group = group)) +
 # })
 ```
 
-# observeEvent
+# Review: observeEvent
 - Allow binding of multiple outputs to multiple inputs.
 - Use of `isolate` to *peek* the value not to react to its change every time.
 
@@ -919,10 +927,25 @@ ggplot(world, aes(long, lat, group = group)) +
 # button -> change the data -> renderPlot
 ```
 
-# When codes gets to run.
-- ui: client. run once per user per session.
-- server: run once per session
+# Review: When codes gets to run.
+- `ui`: client. run once per user per session.
+- `server`: run once per session
 - code inside a reactive function runs with every input change.
+
+# Advanced Shiny
+- Input: `update***Input` functions (You can update output with new content.)
+- Dynamic UI to create inputs and outputs dynamically.
+- Graphics output: gridExtra
+- Table output: kableExtra
+
+# `update***Input`
+- Update various input values
+    - updateSelectionInput(...)
+    - updateNumericInput(...)
+
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("example/shiny-36-update.R"))
+```
 
 # `renderUI`
 - Dynamicaly creation of UI (user interface) with input and outputs.
@@ -935,7 +958,7 @@ cat(htmltools::includeText("example/shiny-34-renderUI.R"))
 ```
 
 # Create dynamic output 2
-You can use newly created UI immeidately
+You can use newly created UI immediately
 
 ```{r echo = FALSE, comment = ""}
 cat(htmltools::includeText("example/shiny-35-renderUI-2.R"))

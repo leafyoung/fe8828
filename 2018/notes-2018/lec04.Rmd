@@ -17,6 +17,7 @@ pre { /* Code block - determines code spacing between lines */
 </style>
 
 ```{r setup, include=FALSE}
+# Annual revision: review the year from 2017 to 2019
 library(tidyverse)
 library(shiny)
 library(lubridate)
@@ -318,7 +319,7 @@ func3 <- function(input1 = 1, input2) { }
 
 func4 <- function(input1, input_type = c("int", "char"))
 {
-  # This would check wheher input_type is set to one of the pre-set values.
+  # This would check whether input_type is set to one of the pre-set values.
   input_type = match.arg(input_type) 
 }
 

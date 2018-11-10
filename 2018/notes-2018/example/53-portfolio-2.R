@@ -1,5 +1,6 @@
 # 53-portfolio-2.R
 
+library(purrr)
 library(tidyverse)
 library(tidyquant)
 library(dygraphs)

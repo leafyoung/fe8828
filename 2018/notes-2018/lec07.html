@@ -82,23 +82,98 @@ pre { /* Code block - determines code spacing between lines */
 </div>
 <div id="left_right_anti_full_join" class="slide section level1">
 <h1><code>left_/right_/anti_/full_join</code></h1>
-<pre><code>| Position_id | Buy/Sell | Quantity | Risk Factor |
-| ----------- |----------|----------|-------------|</code></pre>
+<p>Sample data:</p>
+<ul>
+<li><p>data_day1</p>
+<table>
+<thead>
+<tr class="header">
+<th>Date</th>
+<th>Position_id</th>
+<th>Buy/Sell</th>
+<th>Quantity</th>
+<th>Risk Factor</th>
+<th>Traded Price</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2018-11-07</td>
+<td>00010001</td>
+<td>B</td>
+<td>100</td>
+<td>DCE_IO_1901</td>
+<td>505.3</td>
+</tr>
+<tr class="even">
+<td>2018-11-07</td>
+<td>00010002</td>
+<td>B</td>
+<td>100</td>
+<td>DCE_IO_1901</td>
+<td>506.8</td>
+</tr>
+</tbody>
+</table></li>
+<li><p>data_day2</p>
+<table>
+<thead>
+<tr class="header">
+<th>Date</th>
+<th>Position_id</th>
+<th>Buy/Sell</th>
+<th>Quantity</th>
+<th>Risk Factor</th>
+<th>Traded Price</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>2018-11-07</td>
+<td>00010001</td>
+<td>B</td>
+<td>100</td>
+<td>DCE_IO_1901</td>
+<td>505.3</td>
+</tr>
+<tr class="even">
+<td>2018-11-07</td>
+<td>00010002</td>
+<td>B</td>
+<td>100</td>
+<td>DCE_IO_1901</td>
+<td>506.8</td>
+</tr>
+<tr class="odd">
+<td>2018-11-08</td>
+<td>00010003</td>
+<td>S</td>
+<td>-100</td>
+<td>DCE_IO_1901</td>
+<td>507.9</td>
+</tr>
+</tbody>
+</table></li>
+</ul>
 <p>Positions are additive (to close a position, we won’t change the original position but to do a new reverse trade). Suppose we have two days of position data.</p>
-<pre><code>new_data &lt;- filter(position, date == new_date)
-old_data &lt;- filter(position, date == old_date)</code></pre>
+</div>
+<div id="left_right_anti_full_join-1" class="slide section level1">
+<h1><code>left_/right_/anti_/full_join</code></h1>
 <p>In order to find the new positions. We will use:</p>
-<pre><code># order matters, new_data needs to be placed first.
-anti_join(new_data, old_data, by = &quot;position_id&quot;)</code></pre>
+<pre><code># order matters, data_day2 needs to be placed first.
+# anti_join is like &quot;data_day2 - data_day1&quot;
+anti_join(data_day2, data_day1, by = &quot;position_id&quot;)</code></pre>
 <p>In order to find old positions, we will use:</p>
 <pre><code># inner_join ignores order
-inner_join(new_data, old_data, by = &quot;position_id&quot;)
-left_join(old_data, new_data, by = &quot;position_id&quot;) # produce the same result
-right_join(new_data, old_data, by = &quot;position_id&quot;) # produce the same result</code></pre>
+# find the common positions
+inner_join(data_day2, data_day1, by = &quot;position_id&quot;)
+left_join(data_day1, data_day2, by = &quot;position_id&quot;) # produce the same result
+right_join(data_day1, data_day2, by = &quot;position_id&quot;) # produce the same result
+left_join(data_day2, data_day1, by = &quot;position_id&quot;) # produce all items in data_day2</code></pre>
 </div>
 <div id="left_join-right_join" class="slide section level1">
 <h1><code>left_join / right_join</code></h1>
-<p>Can be used to do mapping table (aka. vlookup)</p>
+<p>They can be used to do mapping table (aka. vlookup)</p>
 <p>Table <code>Product</code>:</p>
 <pre><code>| type_code | type_name |
 | 1         | orange    |
@@ -135,6 +210,42 @@ left_join(Customer, by = &quot;customer_id&quot;)
 <li>full_join(a, b): Find all combinations between table a and b.</li>
 <li>anti_join(a, b): Find those in a but not in b.</li>
 </ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># From something simple</span>
+df &lt;-<span class="st"> </span><span class="kw">full_join</span>(<span class="kw">data_frame</span>(<span class="dt">a =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>), <span class="kw">data_frame</span>(<span class="dt">a =</span> <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>), <span class="dt">by =</span> <span class="st">&quot;a&quot;</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">a</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span><span class="kw">anti_join</span>(<span class="kw">data_frame</span>(<span class="dt">a =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">2</span>), <span class="kw">data_frame</span>(<span class="dt">a =</span> <span class="dv">2</span><span class="op">:</span><span class="dv">4</span>), <span class="dt">by =</span> <span class="st">&quot;a&quot;</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">a</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># All possible combination between job and education</span>
 x &lt;-<span class="st"> </span><span class="kw">full_join</span>(<span class="kw">distinct</span>(bank, job) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">dummy =</span> <span class="dv">1</span>),
                <span class="kw">distinct</span>(bank, education) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">dummy =</span> <span class="dv">1</span>),
@@ -147,18 +258,16 @@ y &lt;-<span class="st"> </span><span class="kw">distinct</span>(bank, job, educ
 <span class="kw">nrow</span>(y)
 ## [1] 48
 
-<span class="kw">anti_join</span>(x, y, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;job&quot;</span>, <span class="st">&quot;education&quot;</span>))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[2],"type":["fctr"],"align":["left"]}],"data":[],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">anti_join</span>(y, x, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;job&quot;</span>, <span class="st">&quot;education&quot;</span>))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[2],"type":["fctr"],"align":["left"]}],"data":[],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df1 &lt;-<span class="st"> </span><span class="kw">anti_join</span>(x, y, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;job&quot;</span>, <span class="st">&quot;education&quot;</span>))
+df2 &lt;-<span class="st"> </span><span class="kw">anti_join</span>(y, x, <span class="dt">by =</span> <span class="kw">c</span>(<span class="st">&quot;job&quot;</span>, <span class="st">&quot;education&quot;</span>))</code></pre></div>
+<ul>
+<li>Empty result</li>
+</ul>
+<p>job education —- ———-</p>
+<ul>
+<li>Empty result</li>
+</ul>
+<p>job education —- ———-</p>
 </div>
 <div id="join-is-a-set-operation" class="slide section level1">
 <h1>Join is a set operation</h1>
@@ -171,56 +280,139 @@ y &lt;-<span class="st"> </span><span class="kw">distinct</span>(bank, job, educ
 </div>
 <div id="group_by-summarize" class="slide section level1">
 <h1><code>group_by</code> / <code>summarize</code></h1>
-<p>Group_by is our way leading to analyze the data.</p>
+<p><code>group_by</code> is the way leading to analyze the data at high-dimension. <code>group_by</code> is used together with <code>summarize</code></p>
 <pre><code>group_by(df, ...) ... is the list of variables
 summarize(df, new_field = some_func_can_process_bulk_data())</code></pre>
-<p>Function can process bulk data: Note: I often forgot there are existing functions that resort to longer versions.</p>
+<p>Functions can process bulk data:</p>
 <ul>
 <li>sum/mean/median/sd: basic statistics</li>
 <li>min(x), quantile(x, 0.25), max(x): min/max/quantile</li>
 <li>n()/n_distinct(): count and count distint</li>
 <li>ntile: a rough divide into a few groups</li>
-<li>first(x), nth(x, 2), last(x):</li>
+<li>first(x), last(x), nth(x, 2)</li>
+<li>…</li>
 </ul>
 </div>
 <div id="group_by-summarize-examples" class="slide section level1">
 <h1><code>group_by</code> / <code>summarize</code>: Examples</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Add paramter na.rm, if there is NA among the data.</span>
-df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="ot">NA</span>))
-<span class="kw">summarise</span>(df, <span class="dt">total =</span> <span class="kw">sum</span>(a))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["total"],"name":[1],"type":["dbl"],"align":["right"]}],"data":[{"1":"NA"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="kw">c</span>(<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="ot">NA</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">a</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summarise</span>(df, <span class="dt">total =</span> <span class="kw">sum</span>(a))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summarise</span>(df, <span class="dt">total =</span> <span class="kw">sum</span>(a, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["total"],"name":[1],"type":["dbl"],"align":["right"]}],"data":[{"1":"8"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">8</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summarise</span>(df, <span class="dt">total =</span> <span class="kw">mean</span>(a))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["total"],"name":[1],"type":["dbl"],"align":["right"]}],"data":[{"1":"NA"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">NA</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summarise</span>(df, <span class="dt">total =</span> <span class="kw">mean</span>(a, <span class="dt">na.rm =</span> <span class="ot">TRUE</span>))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["total"],"name":[1],"type":["dbl"],"align":["right"]}],"data":[{"1":"2.666667"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">2.666667</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="group_by-summarize-examples-1" class="slide section level1">
 <h1><code>group_by</code> / <code>summarize</code>: Examples</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># count number of people in each age group</span>
 <span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">summarise</span>(<span class="dt">n =</span> <span class="kw">n</span>())</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["n"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"19","2":"4"},{"1":"20","2":"3"},{"1":"21","2":"7"},{"1":"22","2":"9"},{"1":"23","2":"20"},{"1":"24","2":"24"},{"1":"25","2":"44"},{"1":"26","2":"77"},{"1":"27","2":"94"},{"1":"28","2":"103"},{"1":"29","2":"97"},{"1":"30","2":"150"},{"1":"31","2":"199"},{"1":"32","2":"224"},{"1":"33","2":"186"},{"1":"34","2":"231"},{"1":"35","2":"180"},{"1":"36","2":"188"},{"1":"37","2":"161"},{"1":"38","2":"159"},{"1":"39","2":"130"},{"1":"40","2":"142"},{"1":"41","2":"135"},{"1":"42","2":"141"},{"1":"43","2":"115"},{"1":"44","2":"105"},{"1":"45","2":"112"},{"1":"46","2":"119"},{"1":"47","2":"108"},{"1":"48","2":"114"},{"1":"49","2":"112"},{"1":"50","2":"101"},{"1":"51","2":"91"},{"1":"52","2":"86"},{"1":"53","2":"94"},{"1":"54","2":"71"},{"1":"55","2":"90"},{"1":"56","2":"74"},{"1":"57","2":"91"},{"1":"58","2":"85"},{"1":"59","2":"71"},{"1":"60","2":"47"},{"1":"61","2":"16"},{"1":"62","2":"7"},{"1":"63","2":"8"},{"1":"64","2":"7"},{"1":"65","2":"6"},{"1":"66","2":"9"},{"1":"67","2":"5"},{"1":"68","2":"2"},{"1":"69","2":"6"},{"1":"70","2":"7"},{"1":"71","2":"6"},{"1":"72","2":"4"},{"1":"73","2":"6"},{"1":"74","2":"3"},{"1":"75","2":"6"},{"1":"76","2":"2"},{"1":"77","2":"6"},{"1":"78","2":"3"},{"1":"79","2":"4"},{"1":"80","2":"6"},{"1":"81","2":"1"},{"1":"83","2":"4"},{"1":"84","2":"1"},{"1":"86","2":"1"},{"1":"87","2":"1"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="right">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">19</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="right">20</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="right">21</td>
+<td align="right">7</td>
+</tr>
+<tr class="even">
+<td align="right">22</td>
+<td align="right">9</td>
+</tr>
+<tr class="odd">
+<td align="right">23</td>
+<td align="right">20</td>
+</tr>
+<tr class="even">
+<td align="right">24</td>
+<td align="right">24</td>
+</tr>
+<tr class="odd">
+<td align="right">…</td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="group_by-summarize-examples-2" class="slide section level1">
 <h1><code>group_by</code> / <code>summarize</code>: Examples</h1>
@@ -229,22 +421,94 @@ df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class=
 </div>
 <div id="group_by-summarize-examples-3" class="slide section level1">
 <h1><code>group_by</code> / <code>summarize</code>: Examples</h1>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">bank1 &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarise</span>(<span class="dt">balance_mean =</span> <span class="kw">mean</span>(balance),
-            <span class="dt">count =</span> <span class="kw">n</span>(),
-            <span class="dt">default_count =</span> <span class="kw">sum</span>(<span class="kw">ifelse</span>(default <span class="op">==</span><span class="st"> &quot;no&quot;</span>, <span class="dv">0</span>, <span class="dv">1</span>)))
-
-<span class="kw">head</span>(bank1)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["balance_mean"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["count"],"name":[3],"type":["int"],"align":["right"]},{"label":["default_count"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"19","2":"393.5000","3":"4","4":"0"},{"1":"20","2":"661.3333","3":"3","4":"0"},{"1":"21","2":"1774.2857","3":"7","4":"0"},{"1":"22","2":"1455.3333","3":"9","4":"0"},{"1":"23","2":"2117.9500","3":"20","4":"1"},{"1":"24","2":"634.6250","3":"24","4":"1"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">bank_age &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
+<span class="st">         </span><span class="kw">summarise</span>(<span class="dt">balance_mean =</span> <span class="kw">mean</span>(balance),
+                   <span class="dt">count =</span> <span class="kw">n</span>(),
+                   <span class="dt">default_count =</span> <span class="kw">sum</span>(<span class="kw">ifelse</span>(default <span class="op">==</span><span class="st"> &quot;no&quot;</span>, <span class="dv">0</span>, <span class="dv">1</span>)))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="right">balance_mean</th>
+<th align="right">count</th>
+<th align="right">default_count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">19</td>
+<td align="right">393.5000</td>
+<td align="right">4</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">20</td>
+<td align="right">661.3333</td>
+<td align="right">3</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">21</td>
+<td align="right">1774.2857</td>
+<td align="right">7</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="right">22</td>
+<td align="right">1455.3333</td>
+<td align="right">9</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="right">23</td>
+<td align="right">2117.9500</td>
+<td align="right">20</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">24</td>
+<td align="right">634.6250</td>
+<td align="right">24</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">25</td>
+<td align="right">1240.0682</td>
+<td align="right">44</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="right">26</td>
+<td align="right">788.5584</td>
+<td align="right">77</td>
+<td align="right">3</td>
+</tr>
+<tr class="odd">
+<td align="right">27</td>
+<td align="right">851.7766</td>
+<td align="right">94</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="right">28</td>
+<td align="right">1025.0971</td>
+<td align="right">103</td>
+<td align="right">1</td>
+</tr>
+<tr class="odd">
+<td align="right">…</td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="group_by-summarize-examples-4" class="slide section level1">
 <h1><code>group_by</code> / <code>summarize</code>: Examples</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># If combined with ggplot, to be learnt in next session</span>
-<span class="kw">ggplot</span>(bank1, <span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> balance_mean)) <span class="op">+</span>
+bank_age <span class="op">%&gt;%</span>
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> age, <span class="dt">y =</span> balance_mean)) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">size =</span> count), <span class="dt">alpha =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">4</span>, <span class="dt">color =</span> <span class="st">&quot;red&quot;</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_point</span>(<span class="kw">aes</span>(<span class="dt">size =</span> default_count), <span class="dt">alpha =</span> <span class="dv">1</span><span class="op">/</span><span class="dv">3</span>, <span class="dt">color =</span> <span class="st">&quot;blue&quot;</span>) <span class="op">+</span>
 <span class="st">  </span><span class="kw">geom_smooth</span>(<span class="dt">se =</span> <span class="ot">FALSE</span>)
@@ -254,15 +518,244 @@ df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class=
 <div id="group-filter" class="slide section level1">
 <h1>Group filter</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Find the maximum and minimum balance on each age.</span>
-bank <span class="op">%&gt;%</span><span class="st"> </span>
+df &lt;-<span class="st"> </span>bank <span class="op">%&gt;%</span><span class="st"> </span>
 <span class="st">  </span><span class="kw">group_by</span>(age) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">filter</span>(<span class="kw">min_rank</span>(balance) <span class="op">==</span><span class="st"> </span><span class="dv">1</span> <span class="op">|</span><span class="st"> </span><span class="kw">min_rank</span>(<span class="kw">desc</span>(balance)) <span class="op">==</span><span class="st"> </span><span class="dv">1</span>) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">arrange</span>(age, balance)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["int"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["int"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["int"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["int"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["int"],"align":["right"]},{"label":["previous"],"name":[15],"type":["int"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"19","2":"student","3":"single","4":"unknown","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"11","11":"feb","12":"123","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"19","2":"student","3":"single","4":"unknown","5":"no","6":"1169","7":"no","8":"no","9":"cellular","10":"6","11":"feb","12":"463","13":"18","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"20","2":"student","3":"single","4":"secondary","5":"no","6":"291","7":"no","8":"no","9":"telephone","10":"11","11":"may","12":"172","13":"5","14":"371","15":"5","16":"failure","17":"no"},{"1":"20","2":"student","3":"single","4":"secondary","5":"no","6":"1191","7":"no","8":"no","9":"cellular","10":"12","11":"feb","12":"274","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"21","2":"student","3":"single","4":"secondary","5":"no","6":"6","7":"no","8":"no","9":"unknown","10":"9","11":"may","12":"622","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"21","2":"student","3":"single","4":"secondary","5":"no","6":"6844","7":"no","8":"no","9":"cellular","10":"14","11":"aug","12":"126","13":"3","14":"127","15":"7","16":"other","17":"no"},{"1":"22","2":"student","3":"single","4":"unknown","5":"no","6":"47","7":"no","8":"no","9":"cellular","10":"3","11":"jul","12":"69","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"22","2":"admin.","3":"single","4":"secondary","5":"no","6":"4111","7":"no","8":"yes","9":"cellular","10":"19","11":"aug","12":"65","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"23","2":"technician","3":"single","4":"secondary","5":"no","6":"-306","7":"yes","8":"no","9":"unknown","10":"4","11":"jun","12":"217","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"23","2":"student","3":"single","4":"secondary","5":"no","6":"9216","7":"no","8":"no","9":"cellular","10":"5","11":"jun","12":"471","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"24","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"-254","7":"yes","8":"yes","9":"unknown","10":"27","11":"may","12":"290","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"24","2":"services","3":"married","4":"secondary","5":"no","6":"4500","7":"yes","8":"no","9":"cellular","10":"11","11":"may","12":"733","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"25","2":"blue-collar","3":"married","4":"primary","5":"yes","6":"-589","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"233","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"25","2":"entrepreneur","3":"single","4":"tertiary","5":"no","6":"16874","7":"yes","8":"yes","9":"cellular","10":"15","11":"may","12":"117","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"26","2":"blue-collar","3":"single","4":"primary","5":"no","6":"-887","7":"yes","8":"no","9":"cellular","10":"18","11":"may","12":"827","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"26","2":"services","3":"single","4":"secondary","5":"no","6":"5533","7":"yes","8":"no","9":"cellular","10":"7","11":"may","12":"582","13":"2","14":"283","15":"4","16":"failure","17":"no"},{"1":"27","2":"services","3":"married","4":"secondary","5":"no","6":"-1202","7":"yes","8":"no","9":"unknown","10":"4","11":"jun","12":"749","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"27","2":"student","3":"single","4":"secondary","5":"no","6":"8366","7":"no","8":"no","9":"cellular","10":"7","11":"may","12":"458","13":"2","14":"349","15":"1","16":"other","17":"no"},{"1":"28","2":"services","3":"single","4":"secondary","5":"no","6":"-427","7":"yes","8":"yes","9":"unknown","10":"21","11":"may","12":"965","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"28","2":"student","3":"single","4":"secondary","5":"no","6":"11555","7":"no","8":"no","9":"cellular","10":"8","11":"apr","12":"125","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"29","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"-478","7":"no","8":"yes","9":"cellular","10":"8","11":"jul","12":"528","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"29","2":"admin.","3":"married","4":"secondary","5":"no","6":"22171","7":"yes","8":"no","9":"cellular","10":"18","11":"may","12":"44","13":"1","14":"355","15":"3","16":"failure","17":"no"},{"1":"30","2":"technician","3":"single","4":"tertiary","5":"no","6":"-970","7":"no","8":"yes","9":"cellular","10":"21","11":"aug","12":"194","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"30","2":"management","3":"single","4":"tertiary","5":"no","6":"19358","7":"no","8":"no","9":"cellular","10":"19","11":"nov","12":"258","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"31","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"-617","7":"yes","8":"no","9":"unknown","10":"2","11":"jun","12":"115","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"31","2":"housemaid","3":"single","4":"primary","5":"no","6":"26965","7":"no","8":"no","9":"cellular","10":"21","11":"apr","12":"654","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"32","2":"technician","3":"married","4":"tertiary","5":"no","6":"-1053","7":"yes","8":"no","9":"cellular","10":"21","11":"jul","12":"357","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"32","2":"technician","3":"married","4":"unknown","5":"no","6":"14533","7":"no","8":"no","9":"cellular","10":"31","11":"dec","12":"646","13":"3","14":"198","15":"2","16":"success","17":"no"},{"1":"33","2":"technician","3":"married","4":"tertiary","5":"no","6":"-988","7":"yes","8":"yes","9":"cellular","10":"15","11":"jul","12":"83","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"33","2":"housemaid","3":"single","4":"tertiary","5":"no","6":"23663","7":"yes","8":"no","9":"cellular","10":"16","11":"apr","12":"199","13":"2","14":"146","15":"2","16":"failure","17":"no"},{"1":"34","2":"blue-collar","3":"divorced","4":"secondary","5":"no","6":"-566","7":"yes","8":"no","9":"unknown","10":"26","11":"may","12":"248","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"34","2":"blue-collar","3":"single","4":"secondary","5":"no","6":"13683","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"115","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"35","2":"blue-collar","3":"divorced","4":"primary","5":"no","6":"-587","7":"yes","8":"no","9":"unknown","10":"26","11":"may","12":"111","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"35","2":"technician","3":"married","4":"secondary","5":"no","6":"13658","7":"yes","8":"no","9":"telephone","10":"9","11":"dec","12":"220","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"36","2":"unemployed","3":"married","4":"secondary","5":"no","6":"-872","7":"yes","8":"yes","9":"cellular","10":"20","11":"nov","12":"153","13":"1","14":"183","15":"1","16":"failure","17":"no"},{"1":"36","2":"management","3":"married","4":"tertiary","5":"no","6":"27359","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"71","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"37","2":"admin.","3":"single","4":"secondary","5":"no","6":"-296","7":"yes","8":"no","9":"cellular","10":"20","11":"apr","12":"81","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"37","2":"management","3":"married","4":"primary","5":"no","6":"22856","7":"no","8":"no","9":"cellular","10":"2","11":"jul","12":"154","13":"1","14":"388","15":"1","16":"failure","17":"no"},{"1":"38","2":"services","3":"married","4":"secondary","5":"no","6":"-762","7":"yes","8":"yes","9":"unknown","10":"30","11":"may","12":"408","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"38","2":"management","3":"single","4":"tertiary","5":"no","6":"16957","7":"yes","8":"no","9":"telephone","10":"29","11":"jan","12":"208","13":"1","14":"247","15":"2","16":"failure","17":"no"},{"1":"39","2":"technician","3":"married","4":"secondary","5":"no","6":"-735","7":"yes","8":"no","9":"cellular","10":"30","11":"jan","12":"144","13":"5","14":"248","15":"2","16":"failure","17":"no"},{"1":"39","2":"management","3":"single","4":"tertiary","5":"no","6":"12437","7":"no","8":"no","9":"telephone","10":"18","11":"nov","12":"40","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"40","2":"management","3":"married","4":"tertiary","5":"no","6":"-1212","7":"yes","8":"no","9":"cellular","10":"15","11":"may","12":"1259","13":"2","14":"333","15":"18","16":"failure","17":"no"},{"1":"40","2":"self-employed","3":"married","4":"tertiary","5":"no","6":"13669","7":"no","8":"no","9":"cellular","10":"15","11":"oct","12":"138","13":"1","14":"136","15":"8","16":"other","17":"no"},{"1":"41","2":"blue-collar","3":"married","4":"primary","5":"no","6":"-516","7":"no","8":"yes","9":"telephone","10":"8","11":"jul","12":"554","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"41","2":"admin.","3":"married","4":"secondary","5":"no","6":"21515","7":"yes","8":"no","9":"unknown","10":"5","11":"jun","12":"87","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"42","2":"technician","3":"married","4":"secondary","5":"no","6":"-1310","7":"yes","8":"yes","9":"unknown","10":"28","11":"may","12":"162","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"42","2":"entrepreneur","3":"married","4":"tertiary","5":"no","6":"42045","7":"no","8":"no","9":"cellular","10":"8","11":"aug","12":"205","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"43","2":"management","3":"single","4":"secondary","5":"yes","6":"-1164","7":"yes","8":"yes","9":"cellular","10":"18","11":"jul","12":"76","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"43","2":"technician","3":"single","4":"tertiary","5":"no","6":"27733","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"164","13":"7","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"44","2":"management","3":"married","4":"secondary","5":"no","6":"-1746","7":"yes","8":"no","9":"unknown","10":"20","11":"jun","12":"218","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"44","2":"management","3":"married","4":"tertiary","5":"no","6":"17361","7":"no","8":"no","9":"unknown","10":"18","11":"jun","12":"476","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"45","2":"services","3":"married","4":"secondary","5":"no","6":"-839","7":"yes","8":"no","9":"unknown","10":"28","11":"may","12":"68","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"45","2":"blue-collar","3":"married","4":"primary","5":"no","6":"13117","7":"no","8":"no","9":"unknown","10":"11","11":"jun","12":"42","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"46","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"-1400","7":"yes","8":"no","9":"telephone","10":"6","11":"may","12":"309","13":"3","14":"355","15":"4","16":"failure","17":"no"},{"1":"46","2":"management","3":"married","4":"secondary","5":"no","6":"12186","7":"no","8":"no","9":"unknown","10":"20","11":"jun","12":"29","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"47","2":"technician","3":"divorced","4":"tertiary","5":"no","6":"-1148","7":"yes","8":"yes","9":"unknown","10":"27","11":"may","12":"62","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"47","2":"self-employed","3":"divorced","4":"secondary","5":"no","6":"8515","7":"yes","8":"no","9":"unknown","10":"20","11":"nov","12":"14","13":"7","14":"112","15":"4","16":"other","17":"no"},{"1":"48","2":"services","3":"married","4":"primary","5":"yes","6":"-583","7":"yes","8":"no","9":"unknown","10":"2","11":"jun","12":"25","13":"7","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"48","2":"technician","3":"married","4":"secondary","5":"no","6":"10655","7":"no","8":"no","9":"telephone","10":"31","11":"jul","12":"5","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"49","2":"technician","3":"married","4":"secondary","5":"yes","6":"-1680","7":"yes","8":"yes","9":"unknown","10":"27","11":"jun","12":"92","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"49","2":"retired","3":"single","4":"primary","5":"no","6":"25824","7":"no","8":"no","9":"unknown","10":"17","11":"jun","12":"94","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"50","2":"technician","3":"divorced","4":"secondary","5":"no","6":"-701","7":"yes","8":"yes","9":"cellular","10":"24","11":"jul","12":"148","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"50","2":"services","3":"married","4":"secondary","5":"no","6":"26394","7":"no","8":"no","9":"cellular","10":"25","11":"aug","12":"206","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"51","2":"entrepreneur","3":"married","4":"secondary","5":"yes","6":"-2082","7":"no","8":"yes","9":"cellular","10":"28","11":"jul","12":"123","13":"6","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"51","2":"housemaid","3":"married","4":"unknown","5":"no","6":"21244","7":"no","8":"yes","9":"cellular","10":"4","11":"aug","12":"166","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"52","2":"management","3":"married","4":"tertiary","5":"no","6":"-1224","7":"yes","8":"no","9":"cellular","10":"7","11":"may","12":"253","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"52","2":"housemaid","3":"married","4":"secondary","5":"no","6":"14363","7":"no","8":"no","9":"unknown","10":"5","11":"jun","12":"132","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"53","2":"services","3":"divorced","4":"secondary","5":"no","6":"-905","7":"yes","8":"no","9":"unknown","10":"28","11":"may","12":"213","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"53","2":"entrepreneur","3":"married","4":"tertiary","5":"no","6":"22370","7":"yes","8":"no","9":"unknown","10":"15","11":"may","12":"106","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"54","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"-932","7":"yes","8":"no","9":"unknown","10":"7","11":"may","12":"799","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"54","2":"management","3":"divorced","4":"tertiary","5":"no","6":"26306","7":"yes","8":"no","9":"cellular","10":"11","11":"feb","12":"27","13":"1","14":"84","15":"3","16":"failure","17":"no"},{"1":"55","2":"retired","3":"married","4":"primary","5":"no","6":"-966","7":"no","8":"yes","9":"cellular","10":"14","11":"may","12":"104","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"55","2":"management","3":"divorced","4":"tertiary","5":"no","6":"9756","7":"yes","8":"no","9":"cellular","10":"5","11":"jun","12":"103","13":"2","14":"95","15":"1","16":"other","17":"yes"},{"1":"56","2":"retired","3":"married","4":"secondary","5":"no","6":"-1206","7":"yes","8":"no","9":"cellular","10":"15","11":"jun","12":"382","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"56","2":"services","3":"married","4":"secondary","5":"no","6":"22196","7":"yes","8":"no","9":"cellular","10":"21","11":"nov","12":"189","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"57","2":"self-employed","3":"married","4":"tertiary","5":"yes","6":"-3313","7":"yes","8":"yes","9":"unknown","10":"9","11":"may","12":"153","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"57","2":"technician","3":"married","4":"tertiary","5":"no","6":"27069","7":"no","8":"yes","9":"unknown","10":"20","11":"jun","12":"174","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"58","2":"technician","3":"divorced","4":"secondary","5":"no","6":"-123","7":"no","8":"no","9":"cellular","10":"5","11":"aug","12":"131","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"58","2":"management","3":"married","4":"tertiary","5":"no","6":"16264","7":"no","8":"no","9":"telephone","10":"17","11":"nov","12":"215","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"59","2":"retired","3":"married","4":"primary","5":"no","6":"-47","7":"yes","8":"no","9":"cellular","10":"27","11":"aug","12":"84","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"59","2":"retired","3":"married","4":"secondary","5":"no","6":"9976","7":"yes","8":"no","9":"unknown","10":"29","11":"may","12":"57","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"60","2":"admin.","3":"married","4":"secondary","5":"no","6":"-396","7":"yes","8":"no","9":"cellular","10":"11","11":"may","12":"443","13":"1","14":"350","15":"1","16":"failure","17":"no"},{"1":"60","2":"retired","3":"married","4":"primary","5":"no","6":"71188","7":"no","8":"no","9":"cellular","10":"6","11":"oct","12":"205","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"61","2":"retired","3":"married","4":"secondary","5":"no","6":"76","7":"yes","8":"no","9":"cellular","10":"15","11":"jul","12":"195","13":"7","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"61","2":"self-employed","3":"divorced","4":"tertiary","5":"no","6":"6610","7":"no","8":"no","9":"cellular","10":"24","11":"feb","12":"481","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"62","2":"retired","3":"divorced","4":"tertiary","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"13","11":"nov","12":"227","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"62","2":"management","3":"married","4":"tertiary","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"13","11":"oct","12":"78","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"62","2":"management","3":"married","4":"tertiary","5":"no","6":"1859","7":"no","8":"no","9":"telephone","10":"6","11":"aug","12":"245","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"63","2":"retired","3":"married","4":"tertiary","5":"no","6":"133","7":"yes","8":"no","9":"cellular","10":"13","11":"feb","12":"104","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"63","2":"retired","3":"married","4":"primary","5":"no","6":"8044","7":"no","8":"no","9":"cellular","10":"12","11":"nov","12":"702","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"64","2":"retired","3":"married","4":"primary","5":"no","6":"43","7":"no","8":"no","9":"cellular","10":"11","11":"mar","12":"117","13":"1","14":"91","15":"1","16":"success","17":"no"},{"1":"64","2":"retired","3":"married","4":"unknown","5":"no","6":"2923","7":"no","8":"no","9":"cellular","10":"12","11":"mar","12":"120","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"65","2":"retired","3":"divorced","4":"unknown","5":"no","6":"300","7":"no","8":"no","9":"cellular","10":"2","11":"aug","12":"245","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"65","2":"unknown","3":"married","4":"unknown","5":"no","6":"300","7":"no","8":"no","9":"cellular","10":"12","11":"jan","12":"105","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"65","2":"unknown","3":"married","4":"unknown","5":"no","6":"4717","7":"no","8":"no","9":"telephone","10":"6","11":"aug","12":"256","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"66","2":"retired","3":"married","4":"primary","5":"no","6":"206","7":"no","8":"no","9":"cellular","10":"9","11":"feb","12":"479","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"66","2":"admin.","3":"single","4":"secondary","5":"no","6":"10177","7":"no","8":"no","9":"cellular","10":"5","11":"may","12":"272","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"67","2":"retired","3":"married","4":"unknown","5":"no","6":"696","7":"no","8":"no","9":"telephone","10":"17","11":"aug","12":"119","13":"1","14":"105","15":"2","16":"failure","17":"no"},{"1":"67","2":"retired","3":"married","4":"unknown","5":"no","6":"696","7":"no","8":"no","9":"telephone","10":"4","11":"may","12":"77","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"67","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"16353","7":"no","8":"no","9":"cellular","10":"27","11":"oct","12":"223","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"68","2":"retired","3":"divorced","4":"secondary","5":"no","6":"4189","7":"no","8":"no","9":"telephone","10":"14","11":"jul","12":"897","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"68","2":"retired","3":"married","4":"secondary","5":"no","6":"19317","7":"yes","8":"no","9":"cellular","10":"4","11":"aug","12":"249","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"69","2":"retired","3":"married","4":"primary","5":"no","6":"279","7":"no","8":"no","9":"telephone","10":"12","11":"aug","12":"26","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"69","2":"retired","3":"single","4":"tertiary","5":"no","6":"2144","7":"no","8":"no","9":"cellular","10":"29","11":"jul","12":"417","13":"1","14":"184","15":"4","16":"success","17":"yes"},{"1":"70","2":"retired","3":"married","4":"secondary","5":"no","6":"616","7":"no","8":"no","9":"cellular","10":"27","11":"apr","12":"149","13":"2","14":"182","15":"1","16":"failure","17":"no"},{"1":"70","2":"retired","3":"married","4":"tertiary","5":"no","6":"15834","7":"no","8":"no","9":"cellular","10":"5","11":"apr","12":"172","13":"3","14":"186","15":"1","16":"failure","17":"no"},{"1":"71","2":"retired","3":"divorced","4":"tertiary","5":"no","6":"261","7":"no","8":"no","9":"cellular","10":"12","11":"aug","12":"1117","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"71","2":"retired","3":"married","4":"tertiary","5":"no","6":"14220","7":"yes","8":"no","9":"cellular","10":"9","11":"sep","12":"397","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"72","2":"retired","3":"married","4":"primary","5":"no","6":"763","7":"no","8":"no","9":"cellular","10":"24","11":"apr","12":"384","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"72","2":"blue-collar","3":"married","4":"primary","5":"no","6":"4415","7":"no","8":"no","9":"telephone","10":"13","11":"oct","12":"120","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"73","2":"retired","3":"married","4":"secondary","5":"no","6":"19","7":"no","8":"no","9":"cellular","10":"5","11":"nov","12":"509","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"73","2":"retired","3":"married","4":"primary","5":"no","6":"1388","7":"no","8":"no","9":"cellular","10":"20","11":"jul","12":"146","13":"3","14":"190","15":"3","16":"success","17":"no"},{"1":"74","2":"retired","3":"married","4":"secondary","5":"no","6":"921","7":"no","8":"no","9":"telephone","10":"17","11":"apr","12":"394","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"74","2":"retired","3":"divorced","4":"secondary","5":"no","6":"4079","7":"no","8":"no","9":"cellular","10":"19","11":"oct","12":"343","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"75","2":"retired","3":"divorced","4":"primary","5":"no","6":"852","7":"no","8":"no","9":"cellular","10":"15","11":"mar","12":"341","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"75","2":"retired","3":"married","4":"secondary","5":"no","6":"26452","7":"no","8":"no","9":"telephone","10":"15","11":"jul","12":"219","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"76","2":"retired","3":"divorced","4":"primary","5":"no","6":"86","7":"no","8":"no","9":"cellular","10":"12","11":"aug","12":"192","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"76","2":"retired","3":"married","4":"primary","5":"no","6":"2590","7":"no","8":"no","9":"telephone","10":"9","11":"feb","12":"68","13":"12","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"77","2":"retired","3":"married","4":"tertiary","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"16","11":"oct","12":"847","13":"1","14":"60","15":"1","16":"success","17":"yes"},{"1":"77","2":"retired","3":"married","4":"tertiary","5":"no","6":"7802","7":"no","8":"no","9":"telephone","10":"4","11":"may","12":"421","13":"1","14":"92","15":"2","16":"success","17":"yes"},{"1":"78","2":"retired","3":"married","4":"tertiary","5":"no","6":"226","7":"no","8":"no","9":"telephone","10":"6","11":"nov","12":"136","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"78","2":"housemaid","3":"married","4":"secondary","5":"no","6":"499","7":"no","8":"no","9":"telephone","10":"16","11":"mar","12":"80","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"79","2":"retired","3":"married","4":"primary","5":"no","6":"429","7":"no","8":"no","9":"telephone","10":"8","11":"jul","12":"1006","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"79","2":"retired","3":"married","4":"primary","5":"no","6":"8556","7":"no","8":"no","9":"telephone","10":"18","11":"jan","12":"326","13":"2","14":"272","15":"2","16":"success","17":"yes"},{"1":"80","2":"housemaid","3":"married","4":"primary","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"23","11":"feb","12":"639","13":"1","14":"189","15":"1","16":"failure","17":"yes"},{"1":"80","2":"retired","3":"married","4":"secondary","5":"no","6":"8304","7":"no","8":"no","9":"telephone","10":"9","11":"jun","12":"712","13":"1","14":"64","15":"12","16":"failure","17":"yes"},{"1":"80","2":"retired","3":"married","4":"secondary","5":"no","6":"8304","7":"no","8":"no","9":"telephone","10":"6","11":"apr","12":"681","13":"1","14":"118","15":"11","16":"success","17":"no"},{"1":"81","2":"retired","3":"married","4":"secondary","5":"no","6":"1","7":"no","8":"no","9":"cellular","10":"19","11":"aug","12":"65","13":"5","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"83","2":"retired","3":"married","4":"secondary","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"18","11":"mar","12":"140","13":"10","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"83","2":"retired","3":"divorced","4":"primary","5":"no","6":"0","7":"no","8":"no","9":"telephone","10":"31","11":"may","12":"664","13":"1","14":"77","15":"3","16":"success","17":"no"},{"1":"83","2":"retired","3":"divorced","4":"primary","5":"no","6":"1097","7":"no","8":"no","9":"telephone","10":"5","11":"mar","12":"181","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"84","2":"retired","3":"divorced","4":"primary","5":"no","6":"639","7":"no","8":"no","9":"telephone","10":"18","11":"may","12":"353","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"86","2":"retired","3":"married","4":"secondary","5":"no","6":"1503","7":"no","8":"no","9":"telephone","10":"18","11":"mar","12":"165","13":"3","14":"101","15":"1","16":"other","17":"no"},{"1":"87","2":"retired","3":"married","4":"primary","5":"no","6":"230","7":"no","8":"no","9":"cellular","10":"30","11":"oct","12":"144","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">19</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+<td align="right">0</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">11</td>
+<td align="left">feb</td>
+<td align="right">123</td>
+<td align="right">3</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">19</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+<td align="right">1169</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">6</td>
+<td align="left">feb</td>
+<td align="right">463</td>
+<td align="right">18</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">20</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">291</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">11</td>
+<td align="left">may</td>
+<td align="right">172</td>
+<td align="right">5</td>
+<td align="right">371</td>
+<td align="right">5</td>
+<td align="left">failure</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">20</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">1191</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">12</td>
+<td align="left">feb</td>
+<td align="right">274</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">21</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">6</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">unknown</td>
+<td align="right">9</td>
+<td align="left">may</td>
+<td align="right">622</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">21</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">6844</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">14</td>
+<td align="left">aug</td>
+<td align="right">126</td>
+<td align="right">3</td>
+<td align="right">127</td>
+<td align="right">7</td>
+<td align="left">other</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">22</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+<td align="right">47</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">3</td>
+<td align="left">jul</td>
+<td align="right">69</td>
+<td align="right">3</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">22</td>
+<td align="left">admin.</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">4111</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">cellular</td>
+<td align="right">19</td>
+<td align="left">aug</td>
+<td align="right">65</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">23</td>
+<td align="left">technician</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">-306</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">unknown</td>
+<td align="right">4</td>
+<td align="left">jun</td>
+<td align="right">217</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">23</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">9216</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">5</td>
+<td align="left">jun</td>
+<td align="right">471</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">…</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right"></td>
+<td align="left"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="count-for-condition" class="slide section level1">
 <h1>Count for condition</h1>
@@ -272,23 +765,102 @@ d1 &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, job) <sp
 <span class="st">  </span><span class="kw">summarise</span>(<span class="st">`</span><span class="dt">balance &gt; 500</span><span class="st">`</span> =<span class="st"> </span><span class="kw">sum</span>(balance <span class="op">&gt;</span><span class="st"> </span><span class="dv">500</span>))
 d2 &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, job) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarise</span>(<span class="st">`</span><span class="dt">balance &lt;= 500</span><span class="st">`</span> =<span class="st"> </span><span class="kw">sum</span>(balance <span class="op">&lt;=</span><span class="st"> </span><span class="dv">500</span>))
-<span class="co"># d collects all jobs, in case some jobs is missing from d1 or d2</span>
-d &lt;-<span class="st"> </span><span class="kw">distinct</span>(bank, job) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">arrange</span>(job)
-d &lt;-<span class="st"> </span><span class="kw">left_join</span>(d, d1, <span class="dt">by =</span> <span class="st">&quot;job&quot;</span>)
-d &lt;-<span class="st"> </span><span class="kw">left_join</span>(d, d2, <span class="dt">by =</span> <span class="st">&quot;job&quot;</span>)
-d &lt;-<span class="st"> </span><span class="kw">mutate</span>(d, <span class="dt">total =</span> <span class="st">`</span><span class="dt">balance &gt; 500</span><span class="st">`</span> <span class="op">+</span><span class="st"> `</span><span class="dt">balance &lt;= 500</span><span class="st">`</span>)
-d</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["balance > 500"],"name":[2],"type":["int"],"align":["right"]},{"label":["balance <= 500"],"name":[3],"type":["int"],"align":["right"]},{"label":["total"],"name":[4],"type":["int"],"align":["right"]}],"data":[{"1":"admin.","2":"226","3":"252","4":"478"},{"1":"blue-collar","2":"423","3":"523","4":"946"},{"1":"entrepreneur","2":"74","3":"94","4":"168"},{"1":"housemaid","2":"42","3":"70","4":"112"},{"1":"management","2":"521","3":"448","4":"969"},{"1":"retired","2":"127","3":"103","4":"230"},{"1":"self-employed","2":"89","3":"94","4":"183"},{"1":"services","2":"154","3":"263","4":"417"},{"1":"student","2":"41","3":"43","4":"84"},{"1":"technician","2":"353","3":"415","4":"768"},{"1":"unemployed","2":"63","3":"65","4":"128"},{"1":"unknown","2":"21","3":"17","4":"38"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+<span class="co"># df collects all jobs, in case some jobs are missing from either d1 or d2</span>
+<span class="co"># This is a typical example for collecting data.</span>
+df &lt;-<span class="st"> </span><span class="kw">distinct</span>(bank, job) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">arrange</span>(job)
+df &lt;-<span class="st"> </span><span class="kw">left_join</span>(df, d1, <span class="dt">by =</span> <span class="st">&quot;job&quot;</span>)
+df &lt;-<span class="st"> </span><span class="kw">left_join</span>(df, d2, <span class="dt">by =</span> <span class="st">&quot;job&quot;</span>)
+df &lt;-<span class="st"> </span><span class="kw">mutate</span>(df, <span class="dt">total =</span> <span class="st">`</span><span class="dt">balance &gt; 500</span><span class="st">`</span> <span class="op">+</span><span class="st"> `</span><span class="dt">balance &lt;= 500</span><span class="st">`</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">job</th>
+<th align="right">balance &gt; 500</th>
+<th align="right">balance &lt;= 500</th>
+<th align="right">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">admin.</td>
+<td align="right">226</td>
+<td align="right">252</td>
+<td align="right">478</td>
+</tr>
+<tr class="even">
+<td align="left">blue-collar</td>
+<td align="right">423</td>
+<td align="right">523</td>
+<td align="right">946</td>
+</tr>
+<tr class="odd">
+<td align="left">entrepreneur</td>
+<td align="right">74</td>
+<td align="right">94</td>
+<td align="right">168</td>
+</tr>
+<tr class="even">
+<td align="left">housemaid</td>
+<td align="right">42</td>
+<td align="right">70</td>
+<td align="right">112</td>
+</tr>
+<tr class="odd">
+<td align="left">management</td>
+<td align="right">521</td>
+<td align="right">448</td>
+<td align="right">969</td>
+</tr>
+<tr class="even">
+<td align="left">retired</td>
+<td align="right">127</td>
+<td align="right">103</td>
+<td align="right">230</td>
+</tr>
+<tr class="odd">
+<td align="left">self-employed</td>
+<td align="right">89</td>
+<td align="right">94</td>
+<td align="right">183</td>
+</tr>
+<tr class="even">
+<td align="left">services</td>
+<td align="right">154</td>
+<td align="right">263</td>
+<td align="right">417</td>
+</tr>
+<tr class="odd">
+<td align="left">student</td>
+<td align="right">41</td>
+<td align="right">43</td>
+<td align="right">84</td>
+</tr>
+<tr class="even">
+<td align="left">technician</td>
+<td align="right">353</td>
+<td align="right">415</td>
+<td align="right">768</td>
+</tr>
+<tr class="odd">
+<td align="left">unemployed</td>
+<td align="right">63</td>
+<td align="right">65</td>
+<td align="right">128</td>
+</tr>
+<tr class="even">
+<td align="left">unknown</td>
+<td align="right">21</td>
+<td align="right">17</td>
+<td align="right">38</td>
+</tr>
+</tbody>
+</table>
 </div>
-</div>
-<div id="group_by-and-summarisesummarize-further-expository" class="slide section level1">
-<h1><code>group_by</code> and <code>summarise/summarize</code>: Further expository</h1>
+<div id="group_by-and-summarisesummarize-further-explain" class="slide section level1">
+<h1><code>group_by</code> and <code>summarise/summarize</code>: Further explain</h1>
 <ul>
 <li><code>group_by</code> is a like folding a paper without tearing it later.</li>
-<li><code>summarise</code> will tear the paper.</li>
+<li><code>summarise</code> tears the paper to do individual pieces.</li>
 <li>Therefore, <code>group_by</code> can be used with other verbs, <code>mutate</code>, <code>filter</code>, which will work within the group.</li>
 <li><code>summarise</code> can be used without group_by, then it will apply to entire data as one whole group.</li>
 </ul>
@@ -296,104 +868,728 @@ d</code></pre></div>
 <div id="group_by" class="slide section level1">
 <h1><code>group_by</code></h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># mutate with group_by</span>
-<span class="kw">group_by</span>(<span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>), <span class="dt">quartile =</span> <span class="kw">ntile</span>(a, <span class="dv">2</span>)) <span class="op">%&gt;%</span>
+df &lt;-<span class="st"> </span><span class="kw">group_by</span>(<span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>), <span class="dt">quantile =</span> <span class="kw">ntile</span>(a, <span class="dv">2</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">mutate</span>(<span class="dt">b =</span> a <span class="op">/</span><span class="st"> </span><span class="kw">sum</span>(a))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["a"],"name":[1],"type":["int"],"align":["right"]},{"label":["quartile"],"name":[2],"type":["int"],"align":["right"]},{"label":["b"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"1","3":"0.06666667"},{"1":"2","2":"1","3":"0.13333333"},{"1":"3","2":"1","3":"0.20000000"},{"1":"4","2":"1","3":"0.26666667"},{"1":"5","2":"1","3":"0.33333333"},{"1":"6","2":"2","3":"0.15000000"},{"1":"7","2":"2","3":"0.17500000"},{"1":"8","2":"2","3":"0.20000000"},{"1":"9","2":"2","3":"0.22500000"},{"1":"10","2":"2","3":"0.25000000"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">a</th>
+<th align="right">quantile</th>
+<th align="right">b</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">0.0666667</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">0.1333333</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">0.2000000</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="right">0.2666667</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">0.3333333</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="right">2</td>
+<td align="right">0.1500000</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="right">2</td>
+<td align="right">0.1750000</td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="right">2</td>
+<td align="right">0.2000000</td>
+</tr>
+<tr class="odd">
+<td align="right">9</td>
+<td align="right">2</td>
+<td align="right">0.2250000</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="right">2</td>
+<td align="right">0.2500000</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="group_by-2" class="slide section level1">
 <h1><code>group_by</code> / 2</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># filter with group_by</span>
-<span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(balance <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(balance))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["int"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["int"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["int"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["int"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["int"],"align":["right"]},{"label":["previous"],"name":[15],"type":["int"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"22","2":"admin.","3":"single","4":"secondary","5":"no","6":"4111","7":"no","8":"yes","9":"cellular","10":"19","11":"aug","12":"65","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"78","2":"housemaid","3":"married","4":"secondary","5":"no","6":"499","7":"no","8":"no","9":"telephone","10":"16","11":"mar","12":"80","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"23","2":"student","3":"single","4":"secondary","5":"no","6":"9216","7":"no","8":"no","9":"cellular","10":"5","11":"jun","12":"471","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"46","2":"management","3":"married","4":"secondary","5":"no","6":"12186","7":"no","8":"no","9":"unknown","10":"20","11":"jun","12":"29","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"64","2":"retired","3":"married","4":"unknown","5":"no","6":"2923","7":"no","8":"no","9":"cellular","10":"12","11":"mar","12":"120","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"77","2":"retired","3":"married","4":"tertiary","5":"no","6":"7802","7":"no","8":"no","9":"telephone","10":"4","11":"may","12":"421","13":"1","14":"92","15":"2","16":"success","17":"yes"},{"1":"39","2":"management","3":"single","4":"tertiary","5":"no","6":"12437","7":"no","8":"no","9":"telephone","10":"18","11":"nov","12":"40","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"28","2":"student","3":"single","4":"secondary","5":"no","6":"11555","7":"no","8":"no","9":"cellular","10":"8","11":"apr","12":"125","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"81","2":"retired","3":"married","4":"secondary","5":"no","6":"1","7":"no","8":"no","9":"cellular","10":"19","11":"aug","12":"65","13":"5","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"33","2":"housemaid","3":"single","4":"tertiary","5":"no","6":"23663","7":"yes","8":"no","9":"cellular","10":"16","11":"apr","12":"199","13":"2","14":"146","15":"2","16":"failure","17":"no"},{"1":"40","2":"self-employed","3":"married","4":"tertiary","5":"no","6":"13669","7":"no","8":"no","9":"cellular","10":"15","11":"oct","12":"138","13":"1","14":"136","15":"8","16":"other","17":"no"},{"1":"31","2":"housemaid","3":"single","4":"primary","5":"no","6":"26965","7":"no","8":"no","9":"cellular","10":"21","11":"apr","12":"654","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"30","2":"management","3":"single","4":"tertiary","5":"no","6":"19358","7":"no","8":"no","9":"cellular","10":"19","11":"nov","12":"258","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"67","2":"blue-collar","3":"married","4":"secondary","5":"no","6":"16353","7":"no","8":"no","9":"cellular","10":"27","11":"oct","12":"223","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"49","2":"retired","3":"single","4":"primary","5":"no","6":"25824","7":"no","8":"no","9":"unknown","10":"17","11":"jun","12":"94","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"72","2":"blue-collar","3":"married","4":"primary","5":"no","6":"4415","7":"no","8":"no","9":"telephone","10":"13","11":"oct","12":"120","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"66","2":"admin.","3":"single","4":"secondary","5":"no","6":"10177","7":"no","8":"no","9":"cellular","10":"5","11":"may","12":"272","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"80","2":"retired","3":"married","4":"secondary","5":"no","6":"8304","7":"no","8":"no","9":"telephone","10":"9","11":"jun","12":"712","13":"1","14":"64","15":"12","16":"failure","17":"yes"},{"1":"73","2":"retired","3":"married","4":"primary","5":"no","6":"1388","7":"no","8":"no","9":"cellular","10":"20","11":"jul","12":"146","13":"3","14":"190","15":"3","16":"success","17":"no"},{"1":"43","2":"technician","3":"single","4":"tertiary","5":"no","6":"27733","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"164","13":"7","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"32","2":"technician","3":"married","4":"unknown","5":"no","6":"14533","7":"no","8":"no","9":"cellular","10":"31","11":"dec","12":"646","13":"3","14":"198","15":"2","16":"success","17":"no"},{"1":"20","2":"student","3":"single","4":"secondary","5":"no","6":"1191","7":"no","8":"no","9":"cellular","10":"12","11":"feb","12":"274","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"70","2":"retired","3":"married","4":"tertiary","5":"no","6":"15834","7":"no","8":"no","9":"cellular","10":"5","11":"apr","12":"172","13":"3","14":"186","15":"1","16":"failure","17":"no"},{"1":"51","2":"housemaid","3":"married","4":"unknown","5":"no","6":"21244","7":"no","8":"yes","9":"cellular","10":"4","11":"aug","12":"166","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"86","2":"retired","3":"married","4":"secondary","5":"no","6":"1503","7":"no","8":"no","9":"telephone","10":"18","11":"mar","12":"165","13":"3","14":"101","15":"1","16":"other","17":"no"},{"1":"36","2":"management","3":"married","4":"tertiary","5":"no","6":"27359","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"71","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"74","2":"retired","3":"divorced","4":"secondary","5":"no","6":"4079","7":"no","8":"no","9":"cellular","10":"19","11":"oct","12":"343","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"80","2":"retired","3":"married","4":"secondary","5":"no","6":"8304","7":"no","8":"no","9":"telephone","10":"6","11":"apr","12":"681","13":"1","14":"118","15":"11","16":"success","17":"no"},{"1":"62","2":"management","3":"married","4":"tertiary","5":"no","6":"1859","7":"no","8":"no","9":"telephone","10":"6","11":"aug","12":"245","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"54","2":"management","3":"divorced","4":"tertiary","5":"no","6":"26306","7":"yes","8":"no","9":"cellular","10":"11","11":"feb","12":"27","13":"1","14":"84","15":"3","16":"failure","17":"no"},{"1":"24","2":"services","3":"married","4":"secondary","5":"no","6":"4500","7":"yes","8":"no","9":"cellular","10":"11","11":"may","12":"733","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"59","2":"retired","3":"married","4":"secondary","5":"no","6":"9976","7":"yes","8":"no","9":"unknown","10":"29","11":"may","12":"57","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"53","2":"entrepreneur","3":"married","4":"tertiary","5":"no","6":"22370","7":"yes","8":"no","9":"unknown","10":"15","11":"may","12":"106","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"55","2":"management","3":"divorced","4":"tertiary","5":"no","6":"9756","7":"yes","8":"no","9":"cellular","10":"5","11":"jun","12":"103","13":"2","14":"95","15":"1","16":"other","17":"yes"},{"1":"37","2":"management","3":"married","4":"primary","5":"no","6":"22856","7":"no","8":"no","9":"cellular","10":"2","11":"jul","12":"154","13":"1","14":"388","15":"1","16":"failure","17":"no"},{"1":"35","2":"technician","3":"married","4":"secondary","5":"no","6":"13658","7":"yes","8":"no","9":"telephone","10":"9","11":"dec","12":"220","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"71","2":"retired","3":"married","4":"tertiary","5":"no","6":"14220","7":"yes","8":"no","9":"cellular","10":"9","11":"sep","12":"397","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"42","2":"entrepreneur","3":"married","4":"tertiary","5":"no","6":"42045","7":"no","8":"no","9":"cellular","10":"8","11":"aug","12":"205","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"50","2":"services","3":"married","4":"secondary","5":"no","6":"26394","7":"no","8":"no","9":"cellular","10":"25","11":"aug","12":"206","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"38","2":"management","3":"single","4":"tertiary","5":"no","6":"16957","7":"yes","8":"no","9":"telephone","10":"29","11":"jan","12":"208","13":"1","14":"247","15":"2","16":"failure","17":"no"},{"1":"63","2":"retired","3":"married","4":"primary","5":"no","6":"8044","7":"no","8":"no","9":"cellular","10":"12","11":"nov","12":"702","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"47","2":"self-employed","3":"divorced","4":"secondary","5":"no","6":"8515","7":"yes","8":"no","9":"unknown","10":"20","11":"nov","12":"14","13":"7","14":"112","15":"4","16":"other","17":"no"},{"1":"79","2":"retired","3":"married","4":"primary","5":"no","6":"8556","7":"no","8":"no","9":"telephone","10":"18","11":"jan","12":"326","13":"2","14":"272","15":"2","16":"success","17":"yes"},{"1":"29","2":"admin.","3":"married","4":"secondary","5":"no","6":"22171","7":"yes","8":"no","9":"cellular","10":"18","11":"may","12":"44","13":"1","14":"355","15":"3","16":"failure","17":"no"},{"1":"19","2":"student","3":"single","4":"unknown","5":"no","6":"1169","7":"no","8":"no","9":"cellular","10":"6","11":"feb","12":"463","13":"18","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"58","2":"management","3":"married","4":"tertiary","5":"no","6":"16264","7":"no","8":"no","9":"telephone","10":"17","11":"nov","12":"215","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"87","2":"retired","3":"married","4":"primary","5":"no","6":"230","7":"no","8":"no","9":"cellular","10":"30","11":"oct","12":"144","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"25","2":"entrepreneur","3":"single","4":"tertiary","5":"no","6":"16874","7":"yes","8":"yes","9":"cellular","10":"15","11":"may","12":"117","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"76","2":"retired","3":"married","4":"primary","5":"no","6":"2590","7":"no","8":"no","9":"telephone","10":"9","11":"feb","12":"68","13":"12","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"52","2":"housemaid","3":"married","4":"secondary","5":"no","6":"14363","7":"no","8":"no","9":"unknown","10":"5","11":"jun","12":"132","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"68","2":"retired","3":"married","4":"secondary","5":"no","6":"19317","7":"yes","8":"no","9":"cellular","10":"4","11":"aug","12":"249","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"61","2":"self-employed","3":"divorced","4":"tertiary","5":"no","6":"6610","7":"no","8":"no","9":"cellular","10":"24","11":"feb","12":"481","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"26","2":"services","3":"single","4":"secondary","5":"no","6":"5533","7":"yes","8":"no","9":"cellular","10":"7","11":"may","12":"582","13":"2","14":"283","15":"4","16":"failure","17":"no"},{"1":"60","2":"retired","3":"married","4":"primary","5":"no","6":"71188","7":"no","8":"no","9":"cellular","10":"6","11":"oct","12":"205","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"56","2":"services","3":"married","4":"secondary","5":"no","6":"22196","7":"yes","8":"no","9":"cellular","10":"21","11":"nov","12":"189","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"57","2":"technician","3":"married","4":"tertiary","5":"no","6":"27069","7":"no","8":"yes","9":"unknown","10":"20","11":"jun","12":"174","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"34","2":"blue-collar","3":"single","4":"secondary","5":"no","6":"13683","7":"yes","8":"no","9":"unknown","10":"3","11":"jun","12":"115","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"48","2":"technician","3":"married","4":"secondary","5":"no","6":"10655","7":"no","8":"no","9":"telephone","10":"31","11":"jul","12":"5","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"44","2":"management","3":"married","4":"tertiary","5":"no","6":"17361","7":"no","8":"no","9":"unknown","10":"18","11":"jun","12":"476","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"41","2":"admin.","3":"married","4":"secondary","5":"no","6":"21515","7":"yes","8":"no","9":"unknown","10":"5","11":"jun","12":"87","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"75","2":"retired","3":"married","4":"secondary","5":"no","6":"26452","7":"no","8":"no","9":"telephone","10":"15","11":"jul","12":"219","13":"2","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"69","2":"retired","3":"single","4":"tertiary","5":"no","6":"2144","7":"no","8":"no","9":"cellular","10":"29","11":"jul","12":"417","13":"1","14":"184","15":"4","16":"success","17":"yes"},{"1":"84","2":"retired","3":"divorced","4":"primary","5":"no","6":"639","7":"no","8":"no","9":"telephone","10":"18","11":"may","12":"353","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"21","2":"student","3":"single","4":"secondary","5":"no","6":"6844","7":"no","8":"no","9":"cellular","10":"14","11":"aug","12":"126","13":"3","14":"127","15":"7","16":"other","17":"no"},{"1":"65","2":"unknown","3":"married","4":"unknown","5":"no","6":"4717","7":"no","8":"no","9":"telephone","10":"6","11":"aug","12":"256","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"27","2":"student","3":"single","4":"secondary","5":"no","6":"8366","7":"no","8":"no","9":"cellular","10":"7","11":"may","12":"458","13":"2","14":"349","15":"1","16":"other","17":"no"},{"1":"83","2":"retired","3":"divorced","4":"primary","5":"no","6":"1097","7":"no","8":"no","9":"telephone","10":"5","11":"mar","12":"181","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"45","2":"blue-collar","3":"married","4":"primary","5":"no","6":"13117","7":"no","8":"no","9":"unknown","10":"11","11":"jun","12":"42","13":"2","14":"-1","15":"0","16":"unknown","17":"no"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">filter</span>(balance <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(balance))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">22</td>
+<td align="left">admin.</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">4111</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">cellular</td>
+<td align="right">19</td>
+<td align="left">aug</td>
+<td align="right">65</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">78</td>
+<td align="left">housemaid</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">499</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">16</td>
+<td align="left">mar</td>
+<td align="right">80</td>
+<td align="right">4</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">23</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">9216</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">5</td>
+<td align="left">jun</td>
+<td align="right">471</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">46</td>
+<td align="left">management</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">12186</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">unknown</td>
+<td align="right">20</td>
+<td align="left">jun</td>
+<td align="right">29</td>
+<td align="right">3</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">64</td>
+<td align="left">retired</td>
+<td align="left">married</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+<td align="right">2923</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">12</td>
+<td align="left">mar</td>
+<td align="right">120</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">77</td>
+<td align="left">retired</td>
+<td align="left">married</td>
+<td align="left">tertiary</td>
+<td align="left">no</td>
+<td align="right">7802</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">4</td>
+<td align="left">may</td>
+<td align="right">421</td>
+<td align="right">1</td>
+<td align="right">92</td>
+<td align="right">2</td>
+<td align="left">success</td>
+<td align="left">yes</td>
+</tr>
+<tr class="odd">
+<td align="right">39</td>
+<td align="left">management</td>
+<td align="left">single</td>
+<td align="left">tertiary</td>
+<td align="left">no</td>
+<td align="right">12437</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">18</td>
+<td align="left">nov</td>
+<td align="right">40</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">28</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">11555</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">8</td>
+<td align="left">apr</td>
+<td align="right">125</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">81</td>
+<td align="left">retired</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">1</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">19</td>
+<td align="left">aug</td>
+<td align="right">65</td>
+<td align="right">5</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">33</td>
+<td align="left">housemaid</td>
+<td align="left">single</td>
+<td align="left">tertiary</td>
+<td align="left">no</td>
+<td align="right">23663</td>
+<td align="left">yes</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">16</td>
+<td align="left">apr</td>
+<td align="right">199</td>
+<td align="right">2</td>
+<td align="right">146</td>
+<td align="right">2</td>
+<td align="left">failure</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">40</td>
+<td align="left">self-employed</td>
+<td align="left">married</td>
+<td align="left">tertiary</td>
+<td align="left">no</td>
+<td align="right">13669</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">15</td>
+<td align="left">oct</td>
+<td align="right">138</td>
+<td align="right">1</td>
+<td align="right">136</td>
+<td align="right">8</td>
+<td align="left">other</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">31</td>
+<td align="left">housemaid</td>
+<td align="left">single</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">26965</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">21</td>
+<td align="left">apr</td>
+<td align="right">654</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+<tr class="odd">
+<td align="right">30</td>
+<td align="left">management</td>
+<td align="left">single</td>
+<td align="left">tertiary</td>
+<td align="left">no</td>
+<td align="right">19358</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">19</td>
+<td align="left">nov</td>
+<td align="right">258</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">67</td>
+<td align="left">blue-collar</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">16353</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">27</td>
+<td align="left">oct</td>
+<td align="right">223</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">49</td>
+<td align="left">retired</td>
+<td align="left">single</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">25824</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">unknown</td>
+<td align="right">17</td>
+<td align="left">jun</td>
+<td align="right">94</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">…</td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="left"></td>
+<td align="right"></td>
+<td align="left"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="right"></td>
+<td align="left"></td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="summarizesummarise" class="slide section level1">
 <h1><code>summarize/summarise</code></h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise with group_by</span>
-<span class="kw">group_by</span>(<span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>), <span class="dt">quartile =</span> <span class="kw">ntile</span>(a, <span class="dv">2</span>)) <span class="op">%&gt;%</span>
+df &lt;-<span class="st"> </span><span class="kw">group_by</span>(<span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>), <span class="dt">quantile =</span> <span class="kw">ntile</span>(a, <span class="dv">2</span>)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarise</span>(<span class="dt">b =</span> <span class="kw">sum</span>(a))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["quartile"],"name":[1],"type":["int"],"align":["right"]},{"label":["b"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"1","2":"15"},{"1":"2","2":"40"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+<table>
+<thead>
+<tr class="header">
+<th align="right">quantile</th>
+<th align="right">b</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">15</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">40</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise without a group_by. It will treat entire df as a whole.</span>
+df &lt;-<span class="st"> </span><span class="kw">summarise</span>(bank,
+                <span class="dt">with_housing =</span> <span class="kw">sum</span>(housing <span class="op">==</span><span class="st"> &quot;yes&quot;</span>) <span class="op">/</span><span class="st"> </span><span class="kw">n</span>(),
+                <span class="dt">age_min =</span> <span class="kw">min</span>(age),
+                <span class="dt">duration_mean =</span> <span class="kw">mean</span>(duration))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">with_housing</th>
+<th align="right">age_min</th>
+<th align="right">duration_mean</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0.5660252</td>
+<td align="right">19</td>
+<td align="right">263.9613</td>
+</tr>
+</tbody>
+</table>
 </div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summarise without a group_by</span>
-<span class="kw">summarise</span>(bank, <span class="dt">with_housing =</span> <span class="kw">sum</span>(housing <span class="op">==</span><span class="st"> &quot;yes&quot;</span>) <span class="op">/</span><span class="st"> </span><span class="kw">n</span>(),
-          <span class="dt">age_min =</span> <span class="kw">min</span>(age),
-          <span class="dt">duration_mean =</span> <span class="kw">mean</span>(duration))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["with_housing"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["age_min"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["duration_mean"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"0.5660252","2":"19","3":"263.9613"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
-</div>
-<div id="group_byrowwiseungroup" class="slide section level1">
-<h1>group_by/rowwise/ungroup</h1>
+<div id="group_byungroup" class="slide section level1">
+<h1>group_by/ungroup</h1>
 <p><code>ungroup()</code> removes group definition, restores the “ungrouped”&quot; data frame back to entire data. Because <code>group_by</code> will leave a trace</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># wrong</span>
-<span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
+df_wrong &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">filter</span>(balance <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(balance)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">balance =</span> <span class="kw">mean</span>(balance)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">head</span>(<span class="dt">n =</span> <span class="dv">3</span>)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["balance"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"19","2":"1169"},{"1":"20","2":"1191"},{"1":"21","2":"6844"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+<span class="st">  </span><span class="kw">head</span>(<span class="dt">n =</span> <span class="dv">3</span>)
+
 <span class="co"># correct</span>
-<span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
+df_correct &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">filter</span>(balance <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(balance)) <span class="op">%&gt;%</span>
 <span class="st">  </span>ungroup <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">balance =</span> <span class="kw">mean</span>(balance))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["balance"],"name":[1],"type":["dbl"],"align":["right"]}],"data":[{"1":"13541.21"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="right">balance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">19</td>
+<td align="right">1169</td>
+</tr>
+<tr class="even">
+<td align="right">20</td>
+<td align="right">1191</td>
+</tr>
+<tr class="odd">
+<td align="right">21</td>
+<td align="right">6844</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr class="header">
+<th align="right">balance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">13541.21</td>
+</tr>
+</tbody>
+</table>
 </div>
-</div>
-<div id="group_byrowwiseungroup-1" class="slide section level1">
-<h1>group_by/rowwise/ungroup</h1>
+<div id="group_byungroup-1" class="slide section level1">
+<h1>group_by/ungroup</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># We can't remove age</span>
 <span class="co"># R will prompt for &quot;Adding missing grouping variables: `age`&quot;</span>
-<span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
+df1 &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">filter</span>(balance <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(balance)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>age) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dt">n =</span> <span class="dv">3</span>)
-## Adding missing grouping variables: `age`</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["int"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["int"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["int"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["int"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["int"],"align":["right"]},{"label":["previous"],"name":[15],"type":["int"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"22","2":"admin.","3":"single","4":"secondary","5":"no","6":"4111","7":"no","8":"yes","9":"cellular","10":"19","11":"aug","12":"65","13":"1","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"78","2":"housemaid","3":"married","4":"secondary","5":"no","6":"499","7":"no","8":"no","9":"telephone","10":"16","11":"mar","12":"80","13":"4","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"23","2":"student","3":"single","4":"secondary","5":"no","6":"9216","7":"no","8":"no","9":"cellular","10":"5","11":"jun","12":"471","13":"2","14":"-1","15":"0","16":"unknown","17":"no"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">
+## Adding missing grouping variables: `age`
+
 <span class="co"># We can remove age with ungroup</span>
-<span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
+df2 &lt;-<span class="st"> </span><span class="kw">group_by</span>(bank, age) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">filter</span>(balance <span class="op">==</span><span class="st"> </span><span class="kw">max</span>(balance)) <span class="op">%&gt;%</span>
 <span class="st">  </span>ungroup <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(<span class="op">-</span>age) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">head</span>(<span class="dt">n =</span> <span class="dv">3</span>)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[5],"type":["int"],"align":["right"]},{"label":["housing"],"name":[6],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[9],"type":["int"],"align":["right"]},{"label":["month"],"name":[10],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[11],"type":["int"],"align":["right"]},{"label":["campaign"],"name":[12],"type":["int"],"align":["right"]},{"label":["pdays"],"name":[13],"type":["int"],"align":["right"]},{"label":["previous"],"name":[14],"type":["int"],"align":["right"]},{"label":["poutcome"],"name":[15],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[16],"type":["fctr"],"align":["left"]}],"data":[{"1":"admin.","2":"single","3":"secondary","4":"no","5":"4111","6":"no","7":"yes","8":"cellular","9":"19","10":"aug","11":"65","12":"1","13":"-1","14":"0","15":"unknown","16":"no"},{"1":"housemaid","2":"married","3":"secondary","4":"no","5":"499","6":"no","7":"no","8":"telephone","9":"16","10":"mar","11":"80","12":"4","13":"-1","14":"0","15":"unknown","16":"no"},{"1":"student","2":"single","3":"secondary","4":"no","5":"9216","6":"no","7":"no","8":"cellular","9":"5","10":"jun","11":"471","12":"2","13":"-1","14":"0","15":"unknown","16":"no"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">22</td>
+<td align="left">admin.</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">4111</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">cellular</td>
+<td align="right">19</td>
+<td align="left">aug</td>
+<td align="right">65</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">78</td>
+<td align="left">housemaid</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">499</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">16</td>
+<td align="left">mar</td>
+<td align="right">80</td>
+<td align="right">4</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">23</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">9216</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">5</td>
+<td align="left">jun</td>
+<td align="right">471</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr class="header">
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">admin.</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">4111</td>
+<td align="left">no</td>
+<td align="left">yes</td>
+<td align="left">cellular</td>
+<td align="right">19</td>
+<td align="left">aug</td>
+<td align="right">65</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="left">housemaid</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">499</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">16</td>
+<td align="left">mar</td>
+<td align="right">80</td>
+<td align="right">4</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">9216</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">5</td>
+<td align="left">jun</td>
+<td align="right">471</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="rowwise" class="slide section level1">
-<h1>rowwise</h1>
-<p>Sometimes, we need to use <code>rowwise()</code> which is a special <code>group_by</code> which just makes every one row a group. Use case, it applies to complex logic that can’t be applied as a group.</p>
+<h1><code>rowwise</code></h1>
+<p>Sometimes, we need to use <code>rowwise()</code> which is a special <code>group_by</code> which makes every one row a group. <code>rowwise()</code> use case, it applies to complex logic that can’t be applied as a group.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">throw_dices =</span> <span class="dv">1</span><span class="op">:</span><span class="dv">10</span>)
-<span class="kw">rowwise</span>(df) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>( <span class="dt">mean =</span> <span class="kw">mean</span>(<span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>, throw_dices, <span class="dt">replace =</span> <span class="ot">TRUE</span>)))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["throw_dices"],"name":[1],"type":["int"],"align":["right"]},{"label":["mean"],"name":[2],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"1.000000"},{"1":"2","2":"6.000000"},{"1":"3","2":"2.000000"},{"1":"4","2":"3.750000"},{"1":"5","2":"4.000000"},{"1":"6","2":"5.000000"},{"1":"7","2":"3.428571"},{"1":"8","2":"3.500000"},{"1":"9","2":"3.444444"},{"1":"10","2":"2.900000"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df &lt;-<span class="st"> </span><span class="kw">rowwise</span>(df) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>( <span class="dt">mean =</span> <span class="kw">mean</span>(<span class="kw">sample</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">6</span>, throw_dices, <span class="dt">replace =</span> <span class="ot">TRUE</span>)))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">throw_dices</th>
+<th align="right">mean</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">1</td>
+<td align="right">6.000000</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">4.500000</td>
+</tr>
+<tr class="odd">
+<td align="right">3</td>
+<td align="right">3.666667</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+<td align="right">4.250000</td>
+</tr>
+<tr class="odd">
+<td align="right">5</td>
+<td align="right">5.000000</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="right">2.666667</td>
+</tr>
+<tr class="odd">
+<td align="right">7</td>
+<td align="right">3.857143</td>
+</tr>
+<tr class="even">
+<td align="right">8</td>
+<td align="right">3.125000</td>
+</tr>
+<tr class="odd">
+<td align="right">9</td>
+<td align="right">4.444444</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="right">3.600000</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_rows" class="slide section level1">
 <h1><code>bind_rows</code></h1>
@@ -401,18 +1597,38 @@ d</code></pre></div>
 <li>bind_rows is the <code>+</code> operator for data frames.</li>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># add empty data frame is the same.</span>
-<span class="kw">bind_rows</span>(<span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">3</span><span class="op">:</span><span class="dv">4</span>), <span class="kw">data.frame</span>())</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["a"],"name":[1],"type":["int"],"align":["right"]}],"data":[{"1":"3"},{"1":"4"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">bind_rows</span>(<span class="kw">data.frame</span>(), <span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">3</span><span class="op">:</span><span class="dv">4</span>))</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["a"],"name":[1],"type":["int"],"align":["right"]}],"data":[{"1":"3"},{"1":"4"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df1 &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(<span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">3</span><span class="op">:</span><span class="dv">4</span>), <span class="kw">data.frame</span>())</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">a</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df2 &lt;-<span class="st"> </span><span class="kw">bind_rows</span>(<span class="kw">data.frame</span>(), <span class="kw">data.frame</span>(<span class="dt">a =</span> <span class="dv">3</span><span class="op">:</span><span class="dv">4</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">a</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">3</td>
+</tr>
+<tr class="even">
+<td align="right">4</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_rows-use-case" class="slide section level1">
 <h1><code>bind_rows</code>: Use case</h1>
@@ -431,37 +1647,307 @@ for (i in length(dates)-1) {
                              anti_join(new_data, old_data, by = &quot;position_id&quot;))
 }
 
-# new_positions contains all new positions on day 1</code></pre>
+# new_positions contains all new positions on their day 1</code></pre>
 </div>
 <div id="bind_rows-use-case-1" class="slide section level1">
 <h1><code>bind_rows</code>: Use case</h1>
 <p>If row order matters, bind_row can be used to re-order/splice and recombine.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Get head and tail</span>
 <span class="co"># Note: use { } to use the .</span>
-<span class="kw">arrange</span>(bank, age) <span class="op">%&gt;%</span>
-{ <span class="kw">bind_rows</span>(<span class="kw">head</span>(., <span class="dt">n =</span> <span class="dv">5</span>), <span class="kw">tail</span>(., <span class="dt">n =</span> <span class="dv">5</span>)) }</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["int"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["int"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["int"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["int"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["int"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["int"],"align":["right"]},{"label":["previous"],"name":[15],"type":["int"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"19","2":"student","3":"single","4":"primary","5":"no","6":"103","7":"no","8":"no","9":"cellular","10":"10","11":"jul","12":"104","13":"2","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"19","2":"student","3":"single","4":"unknown","5":"no","6":"0","7":"no","8":"no","9":"cellular","10":"11","11":"feb","12":"123","13":"3","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"19","2":"student","3":"single","4":"secondary","5":"no","6":"302","7":"no","8":"no","9":"cellular","10":"16","11":"jul","12":"205","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"19","2":"student","3":"single","4":"unknown","5":"no","6":"1169","7":"no","8":"no","9":"cellular","10":"6","11":"feb","12":"463","13":"18","14":"-1","15":"0","16":"unknown","17":"no"},{"1":"20","2":"student","3":"single","4":"secondary","5":"no","6":"502","7":"no","8":"no","9":"cellular","10":"30","11":"apr","12":"261","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"83","2":"retired","3":"divorced","4":"primary","5":"no","6":"0","7":"no","8":"no","9":"telephone","10":"31","11":"may","12":"664","13":"1","14":"77","15":"3","16":"success","17":"no"},{"1":"83","2":"retired","3":"divorced","4":"primary","5":"no","6":"1097","7":"no","8":"no","9":"telephone","10":"5","11":"mar","12":"181","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"84","2":"retired","3":"divorced","4":"primary","5":"no","6":"639","7":"no","8":"no","9":"telephone","10":"18","11":"may","12":"353","13":"3","14":"-1","15":"0","16":"unknown","17":"yes"},{"1":"86","2":"retired","3":"married","4":"secondary","5":"no","6":"1503","7":"no","8":"no","9":"telephone","10":"18","11":"mar","12":"165","13":"3","14":"101","15":"1","16":"other","17":"no"},{"1":"87","2":"retired","3":"married","4":"primary","5":"no","6":"230","7":"no","8":"no","9":"cellular","10":"30","11":"oct","12":"144","13":"1","14":"-1","15":"0","16":"unknown","17":"yes"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df &lt;-<span class="st"> </span><span class="kw">arrange</span>(bank, age) <span class="op">%&gt;%</span>
+<span class="st">      </span>{ <span class="kw">bind_rows</span>(<span class="kw">head</span>(., <span class="dt">n =</span> <span class="dv">5</span>), <span class="kw">tail</span>(., <span class="dt">n =</span> <span class="dv">5</span>)) }</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">19</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">103</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">10</td>
+<td align="left">jul</td>
+<td align="right">104</td>
+<td align="right">2</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+<tr class="even">
+<td align="right">19</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+<td align="right">0</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">11</td>
+<td align="left">feb</td>
+<td align="right">123</td>
+<td align="right">3</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">19</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">302</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">16</td>
+<td align="left">jul</td>
+<td align="right">205</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+<tr class="even">
+<td align="right">19</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+<td align="right">1169</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">6</td>
+<td align="left">feb</td>
+<td align="right">463</td>
+<td align="right">18</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">20</td>
+<td align="left">student</td>
+<td align="left">single</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">502</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">30</td>
+<td align="left">apr</td>
+<td align="right">261</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+<tr class="even">
+<td align="right">83</td>
+<td align="left">retired</td>
+<td align="left">divorced</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">0</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">31</td>
+<td align="left">may</td>
+<td align="right">664</td>
+<td align="right">1</td>
+<td align="right">77</td>
+<td align="right">3</td>
+<td align="left">success</td>
+<td align="left">no</td>
+</tr>
+<tr class="odd">
+<td align="right">83</td>
+<td align="left">retired</td>
+<td align="left">divorced</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">1097</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">5</td>
+<td align="left">mar</td>
+<td align="right">181</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+<tr class="even">
+<td align="right">84</td>
+<td align="left">retired</td>
+<td align="left">divorced</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">639</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">18</td>
+<td align="left">may</td>
+<td align="right">353</td>
+<td align="right">3</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+<tr class="odd">
+<td align="right">86</td>
+<td align="left">retired</td>
+<td align="left">married</td>
+<td align="left">secondary</td>
+<td align="left">no</td>
+<td align="right">1503</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">telephone</td>
+<td align="right">18</td>
+<td align="left">mar</td>
+<td align="right">165</td>
+<td align="right">3</td>
+<td align="right">101</td>
+<td align="right">1</td>
+<td align="left">other</td>
+<td align="left">no</td>
+</tr>
+<tr class="even">
+<td align="right">87</td>
+<td align="left">retired</td>
+<td align="left">married</td>
+<td align="left">primary</td>
+<td align="left">no</td>
+<td align="right">230</td>
+<td align="left">no</td>
+<td align="left">no</td>
+<td align="left">cellular</td>
+<td align="right">30</td>
+<td align="left">oct</td>
+<td align="right">144</td>
+<td align="right">1</td>
+<td align="right">-1</td>
+<td align="right">0</td>
+<td align="left">unknown</td>
+<td align="left">yes</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_rows-use-case-2" class="slide section level1">
 <h1><code>bind_rows</code>: Use case</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># summary</span>
-<span class="kw">summarise_if</span>(bank, is.numeric, mean)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["age"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["balance"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["day"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["duration"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["campaign"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["pdays"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["previous"],"name":[7],"type":["dbl"],"align":["right"]}],"data":[{"1":"41.1701","2":"1422.658","3":"15.91528","4":"263.9613","5":"2.79363","6":"39.76664","7":"0.5425791"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df1 &lt;-<span class="st"> </span><span class="kw">summarise_if</span>(bank, is.numeric, mean)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">age</th>
+<th align="right">balance</th>
+<th align="right">day</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">41.1701</td>
+<td align="right">1422.658</td>
+<td align="right">15.91528</td>
+<td align="right">263.9613</td>
+<td align="right">2.79363</td>
+<td align="right">39.76664</td>
+<td align="right">0.5425791</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># add summary to the records</span>
-<span class="kw">tail</span>(<span class="kw">bind_rows</span>(bank, <span class="kw">summarise_if</span>(bank, is.numeric, mean)), <span class="dt">n =</span> <span class="dv">1</span>)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["age"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["previous"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"41.1701","2":"NA","3":"NA","4":"NA","5":"NA","6":"1422.658","7":"NA","8":"NA","9":"NA","10":"15.91528","11":"NA","12":"263.9613","13":"2.79363","14":"39.76664","15":"0.5425791","16":"NA","17":"NA","_rn_":"4522"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df2&lt;-<span class="st"> </span><span class="kw">tail</span>(<span class="kw">bind_rows</span>(bank, <span class="kw">summarise_if</span>(bank, is.numeric, mean)), <span class="dt">n =</span> <span class="dv">1</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">age</th>
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4522</td>
+<td align="right">41.1701</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="right">1422.658</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="right">15.91528</td>
+<td align="left">NA</td>
+<td align="right">263.9613</td>
+<td align="right">2.79363</td>
+<td align="right">39.76664</td>
+<td align="right">0.5425791</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_rows-use-case-3" class="slide section level1">
 <h1><code>bind_rows</code>: Use case</h1>
@@ -469,37 +1955,125 @@ for (i in length(dates)-1) {
 <span class="co"># let's adjust the column order.</span>
 <span class="co"># As due-deligence, better to check the result.</span>
 <span class="co"># I remember earlier version of dplyr doesn't do match.</span>
-<span class="kw">tail</span>(<span class="kw">bind_rows</span>(bank, <span class="kw">summarise_if</span>(bank, is.numeric, mean) <span class="op">%&gt;%</span>
+df &lt;-<span class="st"> </span><span class="kw">tail</span>(<span class="kw">bind_rows</span>(bank, <span class="kw">summarise_if</span>(bank, is.numeric, mean) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">select</span>(balance, day, <span class="kw">everything</span>())), <span class="dt">n =</span> <span class="dv">1</span>) </code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["age"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["job"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["marital"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[4],"type":["fctr"],"align":["left"]},{"label":["default"],"name":[5],"type":["fctr"],"align":["left"]},{"label":["balance"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["housing"],"name":[7],"type":["fctr"],"align":["left"]},{"label":["loan"],"name":[8],"type":["fctr"],"align":["left"]},{"label":["contact"],"name":[9],"type":["fctr"],"align":["left"]},{"label":["day"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["month"],"name":[11],"type":["fctr"],"align":["left"]},{"label":["duration"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["campaign"],"name":[13],"type":["dbl"],"align":["right"]},{"label":["pdays"],"name":[14],"type":["dbl"],"align":["right"]},{"label":["previous"],"name":[15],"type":["dbl"],"align":["right"]},{"label":["poutcome"],"name":[16],"type":["fctr"],"align":["left"]},{"label":["y"],"name":[17],"type":["fctr"],"align":["left"]}],"data":[{"1":"41.1701","2":"NA","3":"NA","4":"NA","5":"NA","6":"1422.658","7":"NA","8":"NA","9":"NA","10":"15.91528","11":"NA","12":"263.9613","13":"2.79363","14":"39.76664","15":"0.5425791","16":"NA","17":"NA","_rn_":"4522"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">age</th>
+<th align="left">job</th>
+<th align="left">marital</th>
+<th align="left">education</th>
+<th align="left">default</th>
+<th align="right">balance</th>
+<th align="left">housing</th>
+<th align="left">loan</th>
+<th align="left">contact</th>
+<th align="right">day</th>
+<th align="left">month</th>
+<th align="right">duration</th>
+<th align="right">campaign</th>
+<th align="right">pdays</th>
+<th align="right">previous</th>
+<th align="left">poutcome</th>
+<th align="left">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>4522</td>
+<td align="right">41.1701</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="right">1422.658</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+<td align="right">15.91528</td>
+<td align="left">NA</td>
+<td align="right">263.9613</td>
+<td align="right">2.79363</td>
+<td align="right">39.76664</td>
+<td align="right">0.5425791</td>
+<td align="left">NA</td>
+<td align="left">NA</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_cols" class="slide section level1">
 <h1>bind_cols</h1>
 <ul>
 <li>bind_cols is to extend the data frame in width.</li>
 </ul>
-<p>Use cases - It’s a lazyman’s <code>left_join</code> or <code>select</code> - It copies the columns - I usually find it useful to generate data frame for reports.</p>
+<p>Use cases</p>
+<ul>
+<li>It’s a lazyman’s <code>left_join</code> or <code>select</code></li>
+<li>It copies the columns</li>
+<li>I usually find it useful to generate data frame for reports.</li>
+</ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt1 &lt;-<span class="st"> </span><span class="kw">bind_cols</span>(<span class="kw">select</span>(bank, job), <span class="kw">select</span>(bank, education))
 dt1[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>,]</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[2],"type":["fctr"],"align":["left"]}],"data":[{"1":"unemployed","2":"primary","_rn_":"1"},{"1":"services","2":"secondary","_rn_":"2"},{"1":"management","2":"tertiary","_rn_":"3"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">job</th>
+<th align="left">education</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">unemployed</td>
+<td align="left">primary</td>
+</tr>
+<tr class="even">
+<td align="left">services</td>
+<td align="left">secondary</td>
+</tr>
+<tr class="odd">
+<td align="left">management</td>
+<td align="left">tertiary</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_cols-1" class="slide section level1">
 <h1>bind_cols</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">dt2 &lt;-<span class="st"> </span><span class="kw">bind_cols</span>(dt1, dt1)
 dt2[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>,]</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["job"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["education"],"name":[2],"type":["fctr"],"align":["left"]},{"label":["job1"],"name":[3],"type":["fctr"],"align":["left"]},{"label":["education1"],"name":[4],"type":["fctr"],"align":["left"]}],"data":[{"1":"unemployed","2":"primary","3":"unemployed","4":"primary","_rn_":"1"},{"1":"services","2":"secondary","3":"services","4":"secondary","_rn_":"2"},{"1":"management","2":"tertiary","3":"management","4":"tertiary","_rn_":"3"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">job</th>
+<th align="left">education</th>
+<th align="left">job1</th>
+<th align="left">education1</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">unemployed</td>
+<td align="left">primary</td>
+<td align="left">unemployed</td>
+<td align="left">primary</td>
+</tr>
+<tr class="even">
+<td align="left">services</td>
+<td align="left">secondary</td>
+<td align="left">services</td>
+<td align="left">secondary</td>
+</tr>
+<tr class="odd">
+<td align="left">management</td>
+<td align="left">tertiary</td>
+<td align="left">management</td>
+<td align="left">tertiary</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="bind_cols-use-cases" class="slide section level1">
 <h1>bind_cols: Use cases</h1>
@@ -513,27 +2087,56 @@ d3 &lt;-<span class="st"> </span><span class="kw">filter</span>(bank, month <spa
 <span class="st">  </span><span class="kw">summarize</span>(<span class="dt">duration =</span> <span class="kw">mean</span>(duration)) <span class="op">%&gt;%</span>
 <span class="st">  </span><span class="kw">rename</span>(<span class="st">`</span><span class="dt">Duration Nov</span><span class="st">`</span> =<span class="st"> </span>duration)
 
-<span class="kw">bind_cols</span>(d1, d2, d3)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["Duration Sep"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["Duration Oct"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Duration Nov"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"215.7308","2":"272.8","3":"272.0668"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df &lt;-<span class="st"> </span><span class="kw">bind_cols</span>(d1, d2, d3)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="right">Duration Sep</th>
+<th align="right">Duration Oct</th>
+<th align="right">Duration Nov</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">215.7308</td>
+<td align="right">272.8</td>
+<td align="right">272.0668</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="exercise" class="slide section level1">
 <h1>Exercise</h1>
 <ol style="list-style-type: decimal">
 <li>How to know the row number of the wrong date</li>
 </ol>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">x =</span> <span class="kw">c</span>(<span class="st">&quot;2017-10-01&quot;</span>, <span class="st">&quot;2017-31-12&quot;</span>, <span class="st">&quot;2017-03-17&quot;</span>, <span class="st">&quot;2017-02-29&quot;</span>, <span class="st">&quot;2017-09-30&quot;</span>))
-df</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["x"],"name":[1],"type":["fctr"],"align":["left"]}],"data":[{"1":"2017-10-01"},{"1":"2017-31-12"},{"1":"2017-03-17"},{"1":"2017-02-29"},{"1":"2017-09-30"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">dt =</span> <span class="kw">c</span>(<span class="st">&quot;2018-10-01&quot;</span>, <span class="st">&quot;2018-31-12&quot;</span>, <span class="st">&quot;2018-03-17&quot;</span>, <span class="st">&quot;2018-02-29&quot;</span>, <span class="st">&quot;2018-09-30&quot;</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">dt</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-10-01</td>
+</tr>
+<tr class="even">
+<td align="left">2018-31-12</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-03-17</td>
+</tr>
+<tr class="even">
+<td align="left">2018-02-29</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-09-30</td>
+</tr>
+</tbody>
+</table>
 <p>Output:</p>
-<pre><code>## Wrong dates on:</code></pre>
+<pre><code>## Wrong dates on rows: 2, 4</code></pre>
 </div>
 <div id="exercise-1" class="slide section level1">
 <h1>Exercise</h1>
@@ -607,72 +2210,417 @@ df &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class=
 <div id="wide-v.s.-long" class="slide section level1">
 <h1>Wide v.s. Long</h1>
 <h2 id="wide-format">Wide format</h2>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["Copper_qty"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Gold_qty"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Silver_qty"],"name":[4],"type":["dbl"],"align":["right"]}],"data":[{"1":"2017-01-01","2":"524","3":"908","4":"222"},{"1":"2017-01-02","2":"344","3":"381","4":"138"},{"1":"2017-01-03","2":"148","3":"713","4":"281"},{"1":"2017-01-04","2":"898","3":"44","4":"131"},{"1":"2017-01-05","2":"388","3":"189","4":"750"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">wfmt &lt;-<span class="st"> </span><span class="kw">data_frame</span>(<span class="dt">date =</span> <span class="kw">seq</span>(<span class="dt">from =</span> <span class="kw">as.Date</span>(<span class="st">&quot;2018-01-01&quot;</span>), <span class="dt">by =</span> <span class="st">&quot;day&quot;</span>, <span class="dt">length.out =</span> <span class="dv">5</span>),
+                   <span class="dt">Copper_qty =</span> <span class="kw">round</span>(<span class="kw">runif</span>(<span class="dv">5</span>) <span class="op">*</span><span class="st"> </span><span class="dv">1000</span>, <span class="dv">0</span>),
+                   <span class="dt">Gold_qty =</span> <span class="kw">round</span>(<span class="kw">runif</span>(<span class="dv">5</span>) <span class="op">*</span><span class="st"> </span><span class="dv">1000</span>, <span class="dv">0</span>),
+                   <span class="dt">Silver_qty =</span> <span class="kw">round</span>(<span class="kw">runif</span>(<span class="dv">5</span>) <span class="op">*</span><span class="st"> </span><span class="dv">1000</span>, <span class="dv">0</span>))</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="right">Copper_qty</th>
+<th align="right">Gold_qty</th>
+<th align="right">Silver_qty</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-01-01</td>
+<td align="right">433</td>
+<td align="right">170</td>
+<td align="right">454</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-02</td>
+<td align="right">232</td>
+<td align="right">880</td>
+<td align="right">623</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-03</td>
+<td align="right">502</td>
+<td align="right">183</td>
+<td align="right">202</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-04</td>
+<td align="right">433</td>
+<td align="right">231</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-05</td>
+<td align="right">133</td>
+<td align="right">394</td>
+<td align="right">259</td>
+</tr>
+</tbody>
+</table>
 </div>
+<div id="wide-v.s.-long-1" class="slide section level1">
+<h1>Wide v.s. Long</h1>
 <h2 id="long-format">Long format</h2>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["key"],"name":[2],"type":["chr"],"align":["left"]},{"label":["value"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"2017-01-01","2":"Copper_qty","3":"524"},{"1":"2017-01-02","2":"Copper_qty","3":"344"},{"1":"2017-01-03","2":"Copper_qty","3":"148"},{"1":"2017-01-04","2":"Copper_qty","3":"898"},{"1":"2017-01-05","2":"Copper_qty","3":"388"},{"1":"2017-01-01","2":"Gold_qty","3":"908"},{"1":"2017-01-02","2":"Gold_qty","3":"381"},{"1":"2017-01-03","2":"Gold_qty","3":"713"},{"1":"2017-01-04","2":"Gold_qty","3":"44"},{"1":"2017-01-05","2":"Gold_qty","3":"189"},{"1":"2017-01-01","2":"Silver_qty","3":"222"},{"1":"2017-01-02","2":"Silver_qty","3":"138"},{"1":"2017-01-03","2":"Silver_qty","3":"281"},{"1":"2017-01-04","2":"Silver_qty","3":"131"},{"1":"2017-01-05","2":"Silver_qty","3":"750"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyr)
+df &lt;-<span class="st"> </span><span class="kw">gather</span>(wfmt, key, value, <span class="op">-</span>date)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="left">key</th>
+<th align="right">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-01-01</td>
+<td align="left">Copper_qty</td>
+<td align="right">433</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-02</td>
+<td align="left">Copper_qty</td>
+<td align="right">232</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-03</td>
+<td align="left">Copper_qty</td>
+<td align="right">502</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-04</td>
+<td align="left">Copper_qty</td>
+<td align="right">433</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-05</td>
+<td align="left">Copper_qty</td>
+<td align="right">133</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-01</td>
+<td align="left">Gold_qty</td>
+<td align="right">170</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-02</td>
+<td align="left">Gold_qty</td>
+<td align="right">880</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-03</td>
+<td align="left">Gold_qty</td>
+<td align="right">183</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-04</td>
+<td align="left">Gold_qty</td>
+<td align="right">231</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-05</td>
+<td align="left">Gold_qty</td>
+<td align="right">394</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-01</td>
+<td align="left">Silver_qty</td>
+<td align="right">454</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-02</td>
+<td align="left">Silver_qty</td>
+<td align="right">623</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-03</td>
+<td align="left">Silver_qty</td>
+<td align="right">202</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-04</td>
+<td align="left">Silver_qty</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-05</td>
+<td align="left">Silver_qty</td>
+<td align="right">259</td>
+</tr>
+</tbody>
+</table>
 </div>
-</div>
-<div id="spreadgather-conversion-for-wide-format-long-format" class="slide section level1">
-<h1><code>spread/gather</code> conversion for Wide format &lt;=&gt; Long format</h1>
+<div id="spreadgather-convert-for-wide-format-long-format" class="slide section level1">
+<h1><code>spread/gather</code> convert for Wide format &lt;=&gt; Long format</h1>
 <pre><code>gather(data, key, value, ...)</code></pre>
-<p>… is where you want to make as independent columns. You need to specify all columns that should be gathers (or remove all columns that should _not_be gathered): pdf</p>
+<p>… is where you want to make as independent columns. You need to specify all columns that should be <code>gather</code>ed (or before <code>gather</code>, remove all columns that should <em>not</em> be <code>gather</code>ed).</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">mini_iris &lt;-<span class="st"> </span>iris[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>,]
-<span class="kw">gather</span>(mini_iris,
-       <span class="dt">key =</span> flower_att,
-       <span class="dt">value =</span> measurement,
-       <span class="op">-</span>Species)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["Species"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["flower_att"],"name":[2],"type":["chr"],"align":["left"]},{"label":["measurement"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"setosa","2":"Sepal.Length","3":"5.1"},{"1":"setosa","2":"Sepal.Length","3":"4.9"},{"1":"setosa","2":"Sepal.Length","3":"4.7"},{"1":"setosa","2":"Sepal.Width","3":"3.5"},{"1":"setosa","2":"Sepal.Width","3":"3.0"},{"1":"setosa","2":"Sepal.Width","3":"3.2"},{"1":"setosa","2":"Petal.Length","3":"1.4"},{"1":"setosa","2":"Petal.Length","3":"1.4"},{"1":"setosa","2":"Petal.Length","3":"1.3"},{"1":"setosa","2":"Petal.Width","3":"0.2"},{"1":"setosa","2":"Petal.Width","3":"0.2"},{"1":"setosa","2":"Petal.Width","3":"0.2"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
+df &lt;-<span class="st"> </span><span class="kw">gather</span>(mini_iris,
+             <span class="dt">key =</span> flower_att,
+             <span class="dt">value =</span> measurement,
+             <span class="op">-</span>Species)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Species</th>
+<th align="left">flower_att</th>
+<th align="right">measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Sepal.Length</td>
+<td align="right">5.1</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Sepal.Length</td>
+<td align="right">4.9</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Sepal.Length</td>
+<td align="right">4.7</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Sepal.Width</td>
+<td align="right">3.5</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Sepal.Width</td>
+<td align="right">3.0</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Sepal.Width</td>
+<td align="right">3.2</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Petal.Length</td>
+<td align="right">1.4</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Petal.Length</td>
+<td align="right">1.4</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Petal.Length</td>
+<td align="right">1.3</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Petal.Width</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Petal.Width</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Petal.Width</td>
+<td align="right">0.2</td>
+</tr>
+</tbody>
+</table>
 </div>
-</div>
-<div id="spreadgather-what-columns-to-removeadd" class="slide section level1">
-<h1><code>spread/gather</code> what columns to remove/add</h1>
+<div id="spreadgather-which-columns-to-removeadd" class="slide section level1">
+<h1><code>spread/gather</code> which columns to remove/add</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lfmt &lt;-<span class="st"> </span><span class="kw">gather</span>(mini_iris,
                <span class="dt">key =</span> flower_att,
                <span class="dt">value =</span> measurement,
                Sepal.Length, Sepal.Width, Petal.Length, Petal.Width)
 lfmt</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["Species"],"name":[1],"type":["fctr"],"align":["left"]},{"label":["flower_att"],"name":[2],"type":["chr"],"align":["left"]},{"label":["measurement"],"name":[3],"type":["dbl"],"align":["right"]}],"data":[{"1":"setosa","2":"Sepal.Length","3":"5.1"},{"1":"setosa","2":"Sepal.Length","3":"4.9"},{"1":"setosa","2":"Sepal.Length","3":"4.7"},{"1":"setosa","2":"Sepal.Width","3":"3.5"},{"1":"setosa","2":"Sepal.Width","3":"3.0"},{"1":"setosa","2":"Sepal.Width","3":"3.2"},{"1":"setosa","2":"Petal.Length","3":"1.4"},{"1":"setosa","2":"Petal.Length","3":"1.4"},{"1":"setosa","2":"Petal.Length","3":"1.3"},{"1":"setosa","2":"Petal.Width","3":"0.2"},{"1":"setosa","2":"Petal.Width","3":"0.2"},{"1":"setosa","2":"Petal.Width","3":"0.2"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">Species</th>
+<th align="left">flower_att</th>
+<th align="right">measurement</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Sepal.Length</td>
+<td align="right">5.1</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Sepal.Length</td>
+<td align="right">4.9</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Sepal.Length</td>
+<td align="right">4.7</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Sepal.Width</td>
+<td align="right">3.5</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Sepal.Width</td>
+<td align="right">3.0</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Sepal.Width</td>
+<td align="right">3.2</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Petal.Length</td>
+<td align="right">1.4</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Petal.Length</td>
+<td align="right">1.4</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Petal.Length</td>
+<td align="right">1.3</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Petal.Width</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="odd">
+<td align="left">setosa</td>
+<td align="left">Petal.Width</td>
+<td align="right">0.2</td>
+</tr>
+<tr class="even">
+<td align="left">setosa</td>
+<td align="left">Petal.Width</td>
+<td align="right">0.2</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="spread" class="slide section level1">
-<h1>Spread</h1>
+<h1>spread</h1>
 <pre><code>spread(lfmt, key, value)</code></pre>
 <p>Example: get row sum.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(tidyr)
-wfmt <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">gather</span>(key, value, <span class="op">-</span>date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">group_by</span>(date) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">summarize</span>(<span class="dt">value1 =</span> <span class="kw">sum</span>(value)) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">rename</span>(<span class="dt">value =</span> value1) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">key =</span> <span class="st">&quot;Total&quot;</span>) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">spread</span>(<span class="dt">key =</span> key, <span class="dt">value =</span> value) <span class="op">%&gt;%</span>
-<span class="st">  </span><span class="kw">inner_join</span>(wfmt, ., <span class="dt">by =</span> <span class="st">&quot;date&quot;</span>)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["Copper_qty"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Gold_qty"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Silver_qty"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["Total"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"2017-01-01","2":"524","3":"908","4":"222","5":"1654"},{"1":"2017-01-02","2":"344","3":"381","4":"138","5":"863"},{"1":"2017-01-03","2":"148","3":"713","4":"281","5":"1142"},{"1":"2017-01-04","2":"898","3":"44","4":"131","5":"1073"},{"1":"2017-01-05","2":"388","3":"189","4":"750","5":"1327"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+df &lt;-<span class="st"> </span>wfmt <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">gather</span>(key, value, <span class="op">-</span>date) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">group_by</span>(date) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">summarize</span>(<span class="dt">value1 =</span> <span class="kw">sum</span>(value)) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">rename</span>(<span class="dt">value =</span> value1) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">mutate</span>(<span class="dt">key =</span> <span class="st">&quot;Total&quot;</span>) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">spread</span>(<span class="dt">key =</span> key, <span class="dt">value =</span> value) <span class="op">%&gt;%</span>
+<span class="st">      </span><span class="kw">inner_join</span>(wfmt, ., <span class="dt">by =</span> <span class="st">&quot;date&quot;</span>)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="right">Copper_qty</th>
+<th align="right">Gold_qty</th>
+<th align="right">Silver_qty</th>
+<th align="right">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-01-01</td>
+<td align="right">433</td>
+<td align="right">170</td>
+<td align="right">454</td>
+<td align="right">1057</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-02</td>
+<td align="right">232</td>
+<td align="right">880</td>
+<td align="right">623</td>
+<td align="right">1735</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-03</td>
+<td align="right">502</td>
+<td align="right">183</td>
+<td align="right">202</td>
+<td align="right">887</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-04</td>
+<td align="right">433</td>
+<td align="right">231</td>
+<td align="right">2</td>
+<td align="right">666</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-05</td>
+<td align="right">133</td>
+<td align="right">394</td>
+<td align="right">259</td>
+<td align="right">786</td>
+</tr>
+</tbody>
+</table>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># although this works...</span>
-<span class="co"># Hard coding of column names &quot;Copper_qty Gold_qty Silver_qty&quot;.</span>
-wfmt <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">total =</span> Copper_qty <span class="op">+</span><span class="st"> </span>Gold_qty <span class="op">+</span><span class="st"> </span>Silver_qty)</code></pre></div>
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["date"],"name":[1],"type":["date"],"align":["right"]},{"label":["Copper_qty"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["Gold_qty"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["Silver_qty"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["total"],"name":[5],"type":["dbl"],"align":["right"]}],"data":[{"1":"2017-01-01","2":"524","3":"908","4":"222","5":"1654"},{"1":"2017-01-02","2":"344","3":"381","4":"138","5":"863"},{"1":"2017-01-03","2":"148","3":"713","4":"281","5":"1142"},{"1":"2017-01-04","2":"898","3":"44","4":"131","5":"1073"},{"1":"2017-01-05","2":"388","3":"189","4":"750","5":"1327"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
-  </script>
-</div>
+<span class="co"># It takes &quot;Hard coding&quot; of column names &quot;Copper_qty Gold_qty Silver_qty&quot;.</span>
+df &lt;-<span class="st"> </span>wfmt <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">total =</span> Copper_qty <span class="op">+</span><span class="st"> </span>Gold_qty <span class="op">+</span><span class="st"> </span>Silver_qty)</code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="right">Copper_qty</th>
+<th align="right">Gold_qty</th>
+<th align="right">Silver_qty</th>
+<th align="right">total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2018-01-01</td>
+<td align="right">433</td>
+<td align="right">170</td>
+<td align="right">454</td>
+<td align="right">1057</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-02</td>
+<td align="right">232</td>
+<td align="right">880</td>
+<td align="right">623</td>
+<td align="right">1735</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-03</td>
+<td align="right">502</td>
+<td align="right">183</td>
+<td align="right">202</td>
+<td align="right">887</td>
+</tr>
+<tr class="even">
+<td align="left">2018-01-04</td>
+<td align="right">433</td>
+<td align="right">231</td>
+<td align="right">2</td>
+<td align="right">666</td>
+</tr>
+<tr class="odd">
+<td align="left">2018-01-05</td>
+<td align="right">133</td>
+<td align="right">394</td>
+<td align="right">259</td>
+<td align="right">786</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div id="separateunite" class="slide section level1">
 <h1><code>separate/unite</code></h1>
@@ -695,13 +2643,13 @@ separate(df, rate, into = c(&quot;cases&quot;, &quot;population&quot;), convert 
 unite(df, century, year) # default sep is &quot;_&quot;
 unite(df, century, year, sep = &quot;&quot;) # seamless unite</code></pre>
 </div>
-<div id="rules-of-thumb-for-design-data-storage" class="slide section level1">
-<h1>Rules of Thumb for design data storage</h1>
+<div id="rules-of-thumb-for-use-list-of-data-frame" class="slide section level1">
+<h1>Rules of Thumb for use list of data frame</h1>
 <ul>
-<li>Use list to store app data, i.e. configuration.</li>
-<li>User data frame to store repeating data of similar structure</li>
-<li>Every data frame is better to have a column with the function of <strong>item_id</strong>. It can be number or character. Make it unique. If <strong>item_id</strong> is a number, when insert new record to the data frame, we need to increment it somewhere. So, store it somewhere.</li>
-<li><p>Delete is not good for customer data. add a column name with a common name, e.g. SYS_DEL.</p>
+<li>Use list to store app data, i.e. configuration. <code>conf &lt;- list(use_calendar_days = TRUE, do_fx_conversion = FALSE, year_convention = 252)</code></li>
+<li>User data frame to store repeating data of similar structure.</li>
+<li>Every data frame is better to have a id column, like <strong>item_id</strong>. It can be number or character. Make it unique. If <strong>item_id</strong> is a number, when insert new record to the data frame, we need to increment it somewhere. So, use a variable to keep it somewhere, or use <code>max(item_id) + 1</code> (It will do calculation for all ids. Performance still good with small data set)</li>
+<li><p>Delete is not good for enterprise. We need to leave an audit trail. And we can prevent from wrong operation. Add a column name with a common name, e.g. SYS_DEL. Its default value is FALSE, when you want to delete it, set it to TRUE. When extracting data, use <code>filter(df1, !SYS_DEL)</code>. The advanced version involves the user and datetime, i.e. SYS_DEL_USER, SYS_DEL_DATETIME.</p>
 <pre><code>| position_id | call_put | amount | strike | SYS_DEL |
 | X123        |          |        |        |</code></pre></li>
 </ul>
@@ -721,6 +2669,7 @@ unite(df, century, year, sep = &quot;&quot;) # seamless unite</code></pre>
 <li>Use either data frame way or mutate.</li>
 </ul>
 <pre><code># get all row numbers for students
+# . refers to the output of the pipe %&gt;%. .$nnn =&gt; df$nnn
 row_nums &lt;- mutate(bank, nnn = 1:n()) %&gt;%
             filter(job == &quot;student&quot; &amp; age &lt; 22) %&gt;%
             select(nnn) %&gt;%
@@ -736,7 +2685,7 @@ distinct(bank1, taxable)</code></pre>
 <p>Delete:</p>
 <ul>
 <li>Use filter to exclude the row(s).</li>
-<li>(Advanced version) Create a column <code>DELETED</code> of logic type, if we need to delete the row, set it T. We need to change all read commands to have <code>!DELETED</code></li>
+<li>(Advanced version) Create a column <code>SYS_DEL</code> of logic type, described in detail in previous slide.</li>
 </ul>
 </div>
 <div id="assignment" class="slide section level1">
@@ -786,28 +2735,32 @@ plot(res$age_group, res$count)
 <ol start="2" style="list-style-type: decimal">
 <li>Book option trades</li>
 </ol>
-<p>1.1 Store the options from <a href="https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&amp;ei=iIoAWvDmF8GqugSsj5mICw">https://finance.google.com/finance/option_chain?q=NASDAQ%3AAMZN&amp;ei=iIoAWvDmF8GqugSsj5mICw</a></p>
-<pre><code>    | Date | Strike | Quantity | Underlying | Long/Short | Call/Put
+<p>1.1 Copy the options data from <a href="https://www.nasdaq.com/symbol/goog/option-chain?dateindex=1" class="uri">https://www.nasdaq.com/symbol/goog/option-chain?dateindex=1</a></p>
+<pre><code>Gather data for &quot;Dec 14, 2018&quot; and store into following data frame format.
+
+    | Expiry Date | Strike | Open Interest | Underlying | Call/Put | Bid | Ask
     </code></pre>
-<p>1.2 Count the total valuation of call alone, put alone, call and put.</p>
-<p>1.3 Find those in the money.</p>
-<p>1.4. Plot the volatility curve, strike v.s. vol</p>
+<p>1.2 Count the total valuation of 1) call alone, 2) put alone, 3) call and put. <code>Open Interest * (Bid + Ask) / 2</code></p>
+<p>1.3 Find those in the money and get their total <code>Open Interest</code>.</p>
+<p>1.4. Plot the volatility curve, strike v.s. vol. For strike &lt; current price, use puts’ price; for strike &gt; current price, use calls’ price.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># GBSVolatility(price, TypeFlag, S, X, Time, r, b, tol, maxiter)</span>
-<span class="co"># Use Price to back-out implied volatility</span>
+<span class="co"># Use Price to back-out implied volatility. Assume r = 0.03</span>
+<span class="co"># Example:</span>
+
 <span class="kw">GBSVolatility</span>(<span class="fl">867.30</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="dv">240</span>,
-              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
-## [1] 8.101273e-18
+              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-12-07&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2018-11-10&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.03</span>, <span class="dt">b =</span> <span class="dv">0</span>)
+## [1] 1.059735e-16
 <span class="kw">GBSVolatility</span>(<span class="fl">256.50</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="fl">880.00</span>,
-              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
-## [1] 0.3107899
+              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-12-07&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2018-11-10&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.03</span>, <span class="dt">b =</span> <span class="dv">0</span>)
+## [1] 0.4889352
 <span class="kw">GBSVolatility</span>(<span class="fl">53.62</span>, <span class="st">&quot;c&quot;</span>, <span class="fl">1135.67</span>, <span class="fl">1120.00</span>,
-              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-01-19&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2017-11-15&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.01</span>, <span class="dt">b =</span> <span class="dv">0</span>)
-## [1] 0.2394823</code></pre></div>
+              <span class="kw">as.numeric</span>((<span class="kw">as.Date</span>(<span class="st">&quot;2018-12-07&quot;</span>) <span class="op">-</span><span class="st"> </span><span class="kw">as.Date</span>(<span class="st">&quot;2018-11-10&quot;</span>)))<span class="op">/</span><span class="dv">365</span>, <span class="dt">r =</span> <span class="fl">0.03</span>, <span class="dt">b =</span> <span class="dv">0</span>)
+## [1] 0.371771</code></pre></div>
 </div>
 <div id="assignment-2" class="slide section level1">
 <h1>Assignment</h1>
 <ol start="3" style="list-style-type: decimal">
-<li><p>Bank (Group - choose a coordinator to send me the report) This is the 1st installment of the assignment. There will be more installment. Due on 6th week. Please pace your group.</p>
+<li><p>Bank</p>
 <pre><code>Data frame 1: Account 
 | AcountNo | Name |
 
@@ -817,11 +2770,11 @@ Data frame 2: Transaction
 Data frame 3: Currency to SGD
 | Currency | Conversion | Date |</code></pre></li>
 </ol>
-<p>TransactionType can be: Withdraw/Deposit/Spend Write follow functions and use them to initialize the data.</p>
+<p>TransactionType can be: Withdraw/Deposit/Spend Write follow functions and combine them to form a small program</p>
 <ol style="list-style-type: decimal">
 <li>Create 10 accounts with initial random deposit and credit in SGD.</li>
-<li>Create 3 currencies: CNY, USD, SGD. Download their conversion rate between 2017-07-01 and 2017-09-30.</li>
-<li>Generate random transaction data for 10 accounts during 2017-07-01 and 2017-09-30. Make it more realistic, deposit is 1-2 times per month, a random number of 3000-5000. Spend/Withdraw can be any times and any amount. Deposit is positive, Withdraw/Spend is negative. You can’t withdraw more than the deposit, can’t spend more than credit + deposit.</li>
+<li>Create 3 currencies: CNY, USD, SGD. Download their conversion rate between 2018-07-01 and 2018-09-30.</li>
+<li>Generate random transaction data for 10 accounts during 2018-07-01 and 2018-09-30. Make it more realistic, deposit is 1-2 times per month, a random number of 3000-5000, any of three currencies. Spend/Withdraw can be any times [0, 60] and any amount, any currencies. Deposit is positive, Withdraw/Spend is negative. Constraint: You can’t withdraw more than the deposit, can’t spend more than credit + deposit.</li>
 <li><p>Generate report for transaction as month-end statement in SGD.</p>
 <pre><code>{ Client Name }
 { Month }
@@ -841,9 +2794,10 @@ TransactionType | Amount |
 ...</code></pre></li>
 </ol>
 <p>Submission:</p>
+<p>R Markdown document, containing:</p>
 <ol style="list-style-type: decimal">
-<li>A report describing interesting learning points on design and coding (1-2 pages, just be concise)</li>
-<li>Code with decent amount of comments</li>
+<li>describing design</li>
+<li>Code and explaination of result</li>
 <li>Example running result.</li>
 </ol>
 </div>

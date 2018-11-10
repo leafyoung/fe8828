@@ -3,21 +3,16 @@
 library(shiny)
 
 ui <- fluidPage(
-  uiOutput("p1"),
+  numericInput("shock", "Shock", value = round(runif(1) * 1000), 0),
+  actionButton("add", "Add"),
+  checkboxGroupInput("scenarios", "Scenarios", choices = c(), selected = c()),
+
   verbatimTextOutput("o1")
 )
 
 scenarios <- c(-100, -50, 0, 50, 100)
 
 server <- function(input, output, session) {
-  output$p1 <- renderUI({
-    tagList(
-      numericInput("shock", "Shock", value = round(runif(1) * 1000), 0),
-      actionButton("add", "Add"),
-      checkboxGroupInput("scenarios", "Scenarios", choices = c(), selected = c())
-    )
-  })
-  
   updateCheckboxGroupInput(session, "scenarios",
                            choices = scenarios,
                            selected = scenarios)  

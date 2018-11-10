@@ -1,4 +1,8 @@
 base
+timeDate
+timeSeries
+fBasics
+fOptions
 tidyverse
 ggplot2
 tibble
@@ -8,12 +12,7 @@ purrr
 dplyr
 stringr
 forcats
-shiny
 lubridate
 bizdays
-timeDate
-timeSeries
-fBasics
-fOptions
+knitr
 bindrcpp
-reshape2

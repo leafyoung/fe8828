@@ -1,4 +1,8 @@
 {
   "r.lintr.enabled": false,
-  "cSpell.language": "en"
+  "cSpell.language": "en",
+  "editor.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "editor.fontWeight": "400",  // Medium
+  "editor.fontSize": 13
 }
