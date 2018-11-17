@@ -17,8 +17,14 @@ library(ggthemes)
 library(gridExtra)
 library(maps)
 library(knitr)
-library(kableExtra)
 library(tidyquant)
+
+# Following line is added according to
+# pg.3
+# https://haozhu233.github.io/kableExtra/awesome_table_in_pdf.pdf
+options(kableExtra.latex.load_packages = FALSE)
+library(kableExtra)
+
 knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
@@ -68,7 +74,7 @@ biorhythm <- function(dob, target = Sys.Date()) {
 
 # Starter - Result
 ```{r, echo = FALSE, fig.width=10}
-source("example/biorhythm.R")
+source("../example/biorhythm.R")
 ```
 
 ```{r, echo = TRUE, fig.width=10}
@@ -562,4 +568,3 @@ plot_bband <- function(ticker, n_days = 93) {
 
 plot_bband("SPY")
 ```
-

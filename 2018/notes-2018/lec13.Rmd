@@ -17,8 +17,14 @@ library(ggthemes)
 library(gridExtra)
 library(maps)
 library(knitr)
-library(kableExtra)
 library(tidyquant)
+
+# Following line is added according to
+# pg.3
+# https://haozhu233.github.io/kableExtra/awesome_table_in_pdf.pdf
+options(kableExtra.latex.load_packages = FALSE)
+library(kableExtra)
+
 knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")

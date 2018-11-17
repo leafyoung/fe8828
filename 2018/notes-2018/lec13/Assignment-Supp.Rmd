@@ -2,14 +2,13 @@
 title: "FE8828 Programming Web Applications in Finance"
 subtitle: "Final Assignment - Supplementary material"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
-date: "Nov 26, 2018"
+date: "Nov 17, 2018"
 output: pdf_document
 ---
 
 1. Bank management 
 
 - Design of the data frames
-
 
         Data frame 1: Account 
         | AcountNo | Name | Credit |
@@ -46,7 +45,13 @@ output: pdf_document
 
 ******
 
-2. Delta Hedging
+2. Option trading
+
+To illustrate the Idea of following.
+
+
+
+3. Delta Hedging
 
 Show case how delta hedging works as a trading strategy.
 
