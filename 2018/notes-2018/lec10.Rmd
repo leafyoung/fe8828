@@ -147,6 +147,22 @@ ggplot(bank, aes(default, age)) + geom_point()
 ggplot(bank, aes(age, default)) + geom_point()
 ```
 
+```{r, echo = FALSE, eval = FALSE}
+df_ys <-
+  group_by(bank, round(age / 10)) %>%
+  summarise(y = sum(default == "yes"), total = n()) %>%
+  mutate(n = total - y) %>%
+  rename(age = `round(age/10)`) %>%
+  mutate(age = age * 10 + 5)
+
+ggplot(bank, aes(age, default)) +
+  geom_point(aes(age, default, color = paste0(round(age / 10) * 10, "s"))) +
+  geom_text(data = select(df_ys, age, n) %>% filter(n > 0), aes(x = age, y = 1.2, label = n)) +
+  geom_text(data = select(df_ys, age, y) %>% filter(y > 0), aes(x = age, y = 2.2, label = y))
+
+View(df_ys)
+```
+
 # For non-numeric data: job and age
 ```{r, echo = TRUE}
 ggplot(bank, aes(job, age)) + geom_point()
@@ -386,11 +402,19 @@ ggplot(bank) +
     + previous:
     + poutcome:
 
+# Categorical/Continuous variable
+
+- numeric -> continuous data
+- string -> discrete data
+
+For different type of variables, the scale is also different
+
+- Reverse a categorical (discrete) variable, we use `scale_y_discrete(limit = rev(levels(...)))`.
+- Reverse a continuous numerical variable, we use `scale_x_reverse()`.
+
 # Exercise
 1. What does this figure mean?
 ```{r, echo = TRUE}
-# Note: Reverse a categorical variable, we use rev(levels(...)).
-# Note: Reverse a continous numerical variable, we use scale_x_reverse().
 ggplot(bank, aes(age, job)) +
 geom_point() +
 scale_y_discrete(limit = rev(levels(bank$job)))
@@ -581,12 +605,13 @@ ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),
 ```{r, echo = T, fig.show = "hide"}
 ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),
        fill = education)) +
+  # layer 1
   geom_bar() +
   # If we want to sort the job acccording to median age
   scale_x_discrete(limit =
     rev(levels(reorder(bank$job, bank$age, FUN = median)))) +
-  geom_line(aes(x = job, y = age)) +
   # And also add age range and median age.
+  geom_line(aes(x = job, y = age)) +
   geom_point(data = group_by(bank, job) %>%
                summarize(age = median(age)) %>% ungroup,
             aes(x = job, y = age), inherit.aes = FALSE) +

@@ -624,7 +624,13 @@ kable(df)
 
 # `spread/gather` convert for Wide format <=> Long format
 
+    # Original help
     gather(data, key, value, ...)
+    # My annotated version
+    gather(data,
+           new_key_col_name,
+           new_value_col_name,
+           -columns_to_be_included_in_the_left)
     
 ... is where you want to make as independent columns.
 You need to specify all columns that should be `gather`ed (or before `gather`, remove all columns that should _not_ be `gather`ed).
@@ -641,6 +647,23 @@ df <- gather(mini_iris,
 kable(df)
 ```
 
+# `gather` example with *Bank* dataset
+
+```{r echo = TRUE, results = "hide"}
+wfmt <- group_by(bank, job) %>% summarize(yy = sum(ifelse(default == "yes", 1, 0)), nn = sum(ifelse(default == "no", 1, 0)))
+df <- gather(wfmt, default, value, -job) %>% arrange(job, default)
+```
+
+```{r, echo = FALSE}
+kable(head(wfmt, 7))
+```
+...
+
+```{r, echo = FALSE}
+kable(head(df, 7))
+```
+...
+
 # `spread/gather` which columns to remove/add
 
 ```{r echo = TRUE, results = "hide"}
@@ -656,8 +679,10 @@ kable(lfmt)
 ```
 
 # spread
-
-    spread(lfmt, key, value)
+    # Original help
+    spread(data, key, value)
+    # My annotated version
+    spread(data, colname_to_be_header, value_to_be_filled_under_header)
 
 Example: get row sum.
 
@@ -673,9 +698,24 @@ df <- wfmt %>%
       inner_join(wfmt, ., by = "date")
 ```
 
-```{r, echo = FALSE}
-kable(df)
+# `gather` example with *Bank* dataset
+
+```{r echo = TRUE, results = "hide"}
+lfmt <- group_by(bank, job, default) %>% summarize(nn = n())
+df <- spread(lfmt, default, nn)
+# How to take care of converting NA to zero?
 ```
+
+```{r, echo = FALSE}
+kable(head(lfmt, 7))
+```
+...
+
+```{r, echo = FALSE}
+kable(head(df, 7))
+```
+...
+
 
 ```{r, echo = TRUE, results = "hide"}
 # although this works...

@@ -1,0 +1,59 @@
+---
+title: "Assignment2"
+output: html_document
+---
+
+```{r assignment2, echo=FALSE}
+Simulation <- 1000
+ave_princes <-numeric(100)
+find_N <-numeric(100)
+
+for(i in 0:99){
+  n <- 0
+  sum <- 0
+  for (z in 1:Simulation){
+    
+    # generate sample of 1 to 100 without replacement
+    x <- sample( 100, replace=FALSE)
+    # when split number equals 0, always grab the first element and continue the loop
+    if(i==0){
+      sum = sum + x[1]
+      next 
+    }
+    
+    # find the best in observation group: max_x
+    sample1 <- x[1:i]
+    max_x <- max(sample1)
+    # optimal princes in each simulation: princes
+    princes <- 0
+    for (j in (i+1):100){
+          # find the first element in evaluation group that's better than max_x
+          if(x[j] > max_x){
+            princes <- x[j]
+            break
+          }
+  
+    }
+    # when N in observation group, get the last element in evaluation group
+    if(princes == 0)
+      princes = x[100]
+    sum = sum + princes
+    # count how many times it finds N
+    if (princes == 100){
+      n = n+1
+      #print (n)
+    }
+  }
+  # average optimal princes number
+  ave_princes[i+1] = sum/Simulation
+  # probability of finding N
+  find_N[i+1] = n/Simulation
+
+}
+plot(ave_princes)
+plot(find_N)
+
+  
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

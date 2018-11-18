@@ -365,6 +365,20 @@ Write functions to do
 - Print the list of month names in abbreviation or full
 - Write a function to count how many working days in a year, given 1) the year 2) list of holidays?
 
+```{r echo = FALSE, eval = FALSE}
+is.leap.year <- function(in_year) {
+  (in_year %% 400 == 0) | (in_year %% 100 != 0 & in_year %% 4 == 0)
+}
+
+is.leap.year <- function(in_year) {
+  if (in_year %% 100) {
+    in_year %% 400 == 0
+  } else {
+    in_year %% 4 == 0
+  }
+}
+```
+
 # Time
 Convert time to character/string
 
