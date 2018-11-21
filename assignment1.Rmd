@@ -1,0 +1,34 @@
+---
+title: "MFE Assignment 1"
+author: "Yang Ye"
+date: "10/29/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+What's normal distribution?
+
+
+```{r}
+sample_norm <- rpois(1000, 3)
+# hist(sample_norm)
+plot(sample_norm)
+
+# chunk
+
+```
+
+## Random number
+
+Give a random please, Gini! `r rnorm(1, 0, 1)`
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
