@@ -14,7 +14,7 @@ library(dygraphs)
 symbols <- c("SPY","IJS","EFA","EEM","AGG")
 
 prices <- 
-  getSymbols(symbols, src = 'google', from = "2005-01-01", 
+  getSymbols(symbols, src = 'yahoo', from = "2005-01-01", 
              auto.assign = TRUE, warnings = FALSE) %>% 
   map(~Cl(get(.))) %>%  # Cl is from quantmod: get Close price
   reduce(merge) %>%

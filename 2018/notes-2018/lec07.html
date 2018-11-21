@@ -168,7 +168,7 @@ anti_join(data_day2, data_day1, by = &quot;position_id&quot;)</code></pre>
 # find the common positions
 inner_join(data_day2, data_day1, by = &quot;position_id&quot;)
 left_join(data_day1, data_day2, by = &quot;position_id&quot;) # produce the same result
-right_join(data_day1, data_day2, by = &quot;position_id&quot;) # produce the same result
+right_join(data_day2, data_day1, by = &quot;position_id&quot;) # produce the same result
 left_join(data_day2, data_day1, by = &quot;position_id&quot;) # produce all items in data_day2</code></pre>
 </div>
 <div id="left_join-right_join" class="slide section level1">
@@ -195,6 +195,10 @@ left_join(data_day2, data_day1, by = &quot;position_id&quot;) # produce all item
 <h1>Use <code>left_join</code> to create a full report</h1>
 <pre><code>left_join(Transaction, Product, by = &quot;type_code&quot;) %&gt;%
 left_join(Customer, by = &quot;customer_id&quot;)
+
+left_join(Transaction, Product, by = &quot;type_code&quot;) %&gt;%
+left_join(.,           Customer, by = &quot;customer_id&quot;)
+
 
 | type_code | quantity | customer_id | type_name | customer_phone |
 |-----------|----------|-------------|-----------|----------------|

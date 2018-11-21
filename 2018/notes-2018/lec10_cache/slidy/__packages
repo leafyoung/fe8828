@@ -14,10 +14,10 @@ stringr
 forcats
 lubridate
 bizdays
-maps
-gridExtra
-bindrcpp
 ggthemes
+gridExtra
+maps
 knitr
 kableExtra
 shiny
+bindrcpp

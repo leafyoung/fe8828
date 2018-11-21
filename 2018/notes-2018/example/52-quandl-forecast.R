@@ -31,7 +31,7 @@ head(index(oil_monthly))
 
 dygraph(oil_monthly, main = "Monthly oil Prices")
 
-forebase1 <- oil_weekly["/2016-02-28"]
+forebase1 <- oil_weekly["/2018-10-28"]
 forecast1 <- forecast(forebase1, h = 4 * 24)
 
 plot(forecast1, main = "Oil Forecast1")

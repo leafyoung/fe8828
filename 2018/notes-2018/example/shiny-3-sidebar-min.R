@@ -7,7 +7,7 @@ ui <- fluidPage(
     sidebarLayout(
       sidebarPanel(
         h1("Introduction to Layout"),
-        h2("Sidebar Layout"),
+        h2("Sidebar Layout")
       ),
       mainPanel(
         img(src = "p19-Hero-Image-796x398.jpg")
@@ -22,5 +22,3 @@ server <- function(input, output) {
 
 # Run the application 
 shinyApp(ui = ui, server = server)
-
-

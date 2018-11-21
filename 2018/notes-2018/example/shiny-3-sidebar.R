@@ -9,10 +9,12 @@ ui <- fluidPage(
         h1("Introduction to Layout"),
         h2("Sidebar Layout"),
         a("A link to Google", href="http://www.google.com"),
+        # unordered list
         tags$ul("About",
           tags$li("Who are we"),
           tags$li("What we do")
         ),
+        # ordered list  
         tags$ol("Steps",
           tags$li("Write"),
           tags$li("Run")

@@ -18,7 +18,9 @@ server <- function(input, output, session) {
                            selected = scenarios)  
 
   observeEvent(input$add, {
+    
     shock <- isolate(input$shock)
+    
     if (!(shock %in% scenarios)) {
       scenarios <<- sort(c(scenarios, shock))
       updateCheckboxGroupInput(session, "scenarios",

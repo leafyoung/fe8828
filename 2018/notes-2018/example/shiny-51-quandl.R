@@ -92,7 +92,7 @@ server <- function(input, output, session) {
   })
   
   output$commodity_gold <- renderDygraph({
-    dygraph(gold(), 
+    dygraph(commodity() / gold(),
             main = paste0("Ratio history of ", names(dataChoices[dataChoices==input$dataSet]), "/Gold"),
             group = "gold group") %>%
       dyAxis("y", label = "$") %>%
