@@ -104,9 +104,9 @@ cat(paste0("diff with approx.: ", price1 - price - approx, "\n"))
 
 Analytically, we can prove the following:
 
-[1] If realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other.
+[1] If realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other, i.e. $0.5 * Gamma * \Delta S ^2 + Theta * (dT) \approx  0$
 
-[2] And overall Profit and Loss "PnL" for the strategy is $ Vega * (Realized \space Vol - Implied \space Vol) * T$. The overall PnL needs to count for the cost of buying the option.
+[2] And overall Profit and Loss "overall PnL" for the strategy is $\approx Vega * (Realized \space Vol - Implied \space Vol) * T$. The overall PnL needs to count for the cost of buying the option.
 
 Your task is to use simulation to prove above two points with the above-mentioned 30-day ATM call option.
 Note: that simulation would show some acceptable level of difference.
@@ -155,7 +155,7 @@ Show case how delta hedging works as a trading strategy.
 Assumption:
 
 - You hold 100 ATM call/put option which expires in 30 days (calendar days). You just need to do either Call or Put.
-  After finishing the tasks below, duplicate the R Notebook and carry out analysis using an option of ~40% delta, take a guess for the strike level.
+  After finishing the tasks below, duplicate the R Notebook and carry out 2nd-round analysis using an option of ~25% delta, take a guess for the strike level.
 - You start to do delta hedging daily immediately till 2nd last day. You close stock position in the last day. Option expires on the last day as well (either ITM with positive PnL or ATM/OTM with zero PnL)
 - Delta hedging: calculate the delta from option, negate it, that's the quantity what you need to hold over 1 day. Repeat for every trading day.
 - Daily PnL: (option premium change) + (stock holding quantity * price change).
@@ -196,7 +196,7 @@ Example flow of analysi:
               start_price <- xts_obj[start_date, "Close"]
               start_volatility <- xts_obj[start_date, "IV30"]
 
-      - create a df with date column
+      - Create a df with date column
 
               df <- tibble(date = dates)
               df$Close <- coredata(xts_obj[, "Close"])
