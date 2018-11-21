@@ -1,26 +1,3 @@
-<<<<<<< HEAD
-# shiny-34-renderUI.R
-
-library(shiny)
-
-ui <- fluidPage(
-  uiOutput("p1")
-)
-
-server <- function(input, output, session) {
-  output$p1 <- renderUI({
-    tagList(
-      h1("HTML t1"),
-      uiOutput("t1"),
-      h1("Plot p1"),
-      plotOutput("p1")
-    )
-  })
-}
-
-shinyApp(ui, server)
-
-=======
 # shiny-34-renderUI.R
 
 library(shiny)
@@ -54,4 +31,3 @@ server <- function(input, output, session) {
 
 shinyApp(ui, server)
 
->>>>>>> 3e8105f2e09af3bd607a5ac90104531e2d4c6eb4

@@ -1,28 +1,3 @@
-<<<<<<< HEAD
-base
-timeDate
-timeSeries
-fBasics
-fOptions
-tidyverse
-ggplot2
-tibble
-tidyr
-readr
-purrr
-dplyr
-stringr
-forcats
-lubridate
-bizdays
-maps
-gridExtra
-bindrcpp
-ggthemes
-knitr
-kableExtra
-shiny
-=======
 base
 timeDate
 timeSeries
@@ -46,4 +21,3 @@ knitr
 kableExtra
 shiny
 bindrcpp
->>>>>>> 3e8105f2e09af3bd607a5ac90104531e2d4c6eb4
