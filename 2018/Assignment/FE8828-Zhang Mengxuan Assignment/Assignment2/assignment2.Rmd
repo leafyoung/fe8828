@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ```{r assignment2, echo=FALSE}
-Simulation <- 1000
+Simulation <- 5000
 ave_princes <-numeric(100)
 find_N <-numeric(100)
 

@@ -12,10 +12,17 @@ make_choice <- function(N, split_number){
     best_eval <- 0
   else
     best_eval <- max(input_list[1:split_number])
-  for( ii in (split_number+1): N){
-    selection <- input_list[ii]
-    if(selection > best_eval)
-      break
+  
+  # YY: set selection <- input_list[N] for the not-found case
+  # YY: just return the last element if split_number == N-1
+  if (split_number == N-1) {
+    selection <- input_list[N]
+  } else {
+    for( ii in (split_number+1): N){
+      selection <- input_list[ii]
+      if(selection > best_eval)
+        break
+    }
   }
   selection
 }

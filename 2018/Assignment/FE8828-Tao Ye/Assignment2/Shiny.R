@@ -2,7 +2,7 @@ library(shiny)
 library(DT)
 ui <- fluidPage(
   fluidRow(
-    column(30, SelectInput(
+    column(3, selectInput(
       "color", "Choose color:",
       c("Blueviolet" =" blueviolet",
         "Firebrick" = "firebrick",

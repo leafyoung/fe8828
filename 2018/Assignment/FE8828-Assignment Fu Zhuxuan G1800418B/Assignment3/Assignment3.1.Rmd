@@ -1,0 +1,32 @@
+---
+title: "Assignment3.1"
+output: html_document
+---
+
+This is to evaluate a portfolio of optional for its total value.
+
+```{r setup, include=FALSE, echo= FALSE}
+library(fOptions)
+library(lubridate)
+library(bizdays)
+```
+
+```{r option_value, echo=FALSE}
+df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
+df <- dplyr::mutate(df, value = GBSOption(TypeFlag = type, S = strike, X = underlying, Time = Time/12, r = r, b = b, sigma = sigma)@price)
+total_value <- sum(df$value)
+
+msg <- paste0( "The total value of the 100 options in this portfolio is: ", format(round(total_value, 2), nsmall = 2))
+msg
+
+df
+
+```
+
+

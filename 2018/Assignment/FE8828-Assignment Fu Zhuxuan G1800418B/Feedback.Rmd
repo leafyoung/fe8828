@@ -1,0 +1,6 @@
+# Assignment 2:
+  Well-done.
+  - You have the code to deal with not-found case.
+  - But dont't have the code to deal with split_number == 0 case.
+  - Also, I added some suggestion to the code with comments beginning with YY.
+

@@ -25,17 +25,29 @@ An example output of 10 numbers with evalution group of size 5 is shown below.
 
 ```{r make_choice, echo=TRUE}
 make_choice <- function(N, split_number){
+  # YY: Vector is faster then list.
+  # YY: remove as.list, unlist in below code.
   input_list <- as.list(sample(1:N, N, replace = FALSE))
-  evaluation <- input_list[1:split_number]
-  selection <- input_list[-(1:split_number)]
-  eval_best <- max(unlist(evaluation))
-  result <- 0
-  for (i in selection){
-    if (i>=eval_best){
-      result <- i
-      break
-    }
+  
+  if (split_number == 0){
+    result = input_list[1]
   }
+  else{
+    evaluation <- input_list[1:split_number]
+    selection <- input_list[-(1:split_number)]
+    eval_best <- max(unlist(evaluation))
+    
+    # YY: you may save the if below by setting result <- selection[length(selection)] here.
+    result <- 0
+    for (i in selection){
+      if (i>=eval_best){
+        result <- i
+        break
+      }
+    }
+  } 
+  
+  # YY: This is good to handle the not-found case.
   if (result == 0){
     result <- unlist(selection[length(selection)])
   }
@@ -46,7 +58,7 @@ make_choice <- function(N, split_number){
 
 ```{r example1, echo = FALSE}
 N <- 10
-split_number <-5
+split_number <-0
 simulation_result <- make_choice(N, split_number)
 msg <- paste0( "For example, the choice from simulation group: ", paste0(simulation_result[-(1:1)], collapse = ','), " with evaluation group of size ", split_number, " is ", simulation_result[1])
 msg
