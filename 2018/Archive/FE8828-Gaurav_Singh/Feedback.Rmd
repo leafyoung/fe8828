@@ -1,0 +1,28 @@
+# Assignment 2
+Good. I liked your document and additional approximation line.
+
+But... but sadly, you missed two important logic in the make_choice()
+
+    if(split_number==0) {
+      # YY: This would not work for the zero-split-number case.
+      # YY: Because loop below only stops when selected_n < current_best
+      
+      current_best<-selection[1]
+    } else    {
+      current_best<-min(evaluation)
+    }
+    
+    # YY: You also don't have the 2nd logic to handle that if N in the first group, then the princes will choose the last one in the queue.
+    # YY: These two reasons could contribute to why your result looks high. It would be around 37.
+    for(i in 1:(N-split_number))
+    {
+      selected_n<-selection[i]
+      if(selected_n < current_best)
+      {
+        current_best<-selected_n
+        break
+      }	
+    }
+
+# Assignment 3
+Well-done

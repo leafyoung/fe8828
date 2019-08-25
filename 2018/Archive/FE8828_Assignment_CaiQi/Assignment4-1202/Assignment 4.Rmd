@@ -1,0 +1,247 @@
+---
+title: "Assignment 4"
+author: "Cq"
+date: "2018/11/30"
+output: html_document
+---
+---
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+
+bank<-read.csv("http://goo.gl/PBQnBt",sep=";")
+bank<-rename(bank,outcome=y)
+```
+
+### Date visulization about the bank dataset
+
+#### Section1: Basic description of clients 
+
+**Finding 1**
+
+We first analyze the balance of the clients with respecti to their age and job. From the following two graphs, we can noticed that:
+
+* With age increasing, the range of balance gets larger, and the mean of balance increases.
+
+* Retired people and housemaid have average higher balance.
+
+* There are several obvious outliers in retired and entrepreneur group, which should be awared of when we analyze the data further.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+bank<-mutate(bank,age_group=case_when(
+    age<30~"30s",
+    age<40~"40s",
+    age<50~"50s",
+    age<60~"60s",
+    TRUE~"senior"))
+
+ ggplot(bank)+
+   geom_point(aes(age_group,balance,color=job))+
+   geom_line(data=group_by(bank,age_group)%>%summarise(balance=mean(balance)),aes(age_group,balance,group=1))
+ ggplot(bank,aes(job,balance))+
+   geom_point()+
+   geom_line(data=group_by(bank,job)%>%summarise(balance=mean(balance)),aes(job,balance,group=1))+
+   theme(axis.text.x = element_text(angle=90,hjust = 1))
+
+```
+
+**Finding 2**
+
+While analyzing the relationship between age and job, we first filter the socail job (not include students and retired people). In the graph below, we can find that the main age groups in all kinds of social jobs is 40s, which indicates that the Population Age Structure is a pyramid. And most clients of the bank serves as blue-collar, management and technician.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+ggplot(bank%>%dplyr::filter(job!='student'&job!='retired'))+
+  geom_bar(aes(job,fill=age_group))+
+  coord_polar()+
+  labs(x="age group")
+
+
+```
+
+**Finding 3**
+
+We then analyze the financial status of the clients with respecti to their age and job. From the following two graphs, we can conclude that:
+
+* People with lower balance are more likely to default. The balance of people who have default record is significantly lower than those who do not have default record.
+
+* People with lower balance tend to loan more frequently on average.
+
+* The percentages of people who are under stress from housing loan among each age group have little difference, except in senior group.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ ggplot(bank)+
+  geom_point(aes(balance,default,color=job))+
+  facet_grid(age_group~.)
+
+ggplot(bank)+
+  geom_point(aes(balance,loan,color=job))+
+  facet_grid(age_group~.) 
+
+ggplot(bank)+
+  geom_point(aes(balance,housing,color=job))+
+  facet_grid(age_group~.) 
+
+```
+
+
+#### Section2: Marketing analysis
+
+**Finding 4**
+
+Comparing this campaign outcome to the previous one, we can noticed that more than 60% of people who successfully joined the previous campaign tend to continously join the current one to subscribed a term deposit. And the conversion rate of peoplo who did not join pervious campaign is lower than 25%, which reflect that the marketing strategy of the bank toward the new customer is not very efficient.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(bank)+
+  geom_bar(aes(poutcome,fill=outcome),position = "fill")+
+  coord_polar()
+```
+
+**Finding 5**
+
+From the table below, we can know that the mean of last contact duration is longer in the group of people who has subscribed a term deposit in this campaign. And for these clients, there were more numbers of contacts performed before this campaign. These may suggested that sellmen should keep in contact with the clients and try to have a conversation with high quality and last for a longer period of time.
+
+From the graphs below, we can know that the following critical point2:
+
+* People who has subscribed a term deposit in this campaign have longer duration in last contact. 
+
+* Even thought the ratios of successfully subscrition with long duration in different age group are different story, it is key to noticed that the senior group seems to more easily to persuade, as its mood of duration of successful outcome is lowest comparing to other age groups.
+
+* In the group of people who join this campaign, there were more numbers of contacts performed before. These may suggested that sellmen should keep in contact with the clients and try to have a conversation with high quality and last for a longer period of time.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+ggplot(bank)+
+  geom_density(aes(duration,fill=outcome,alpha = 0.3))+
+  facet_grid(age_group~.)
+
+ggplot(bank)+
+  geom_density(aes(campaign,fill=outcome,alpha = 0.3))+
+  facet_grid(age_group~.)
+
+```
+
+
+**Finding 6**
+
+The result in the graph below shows that people prefer to being contacted by cellcular but the ways of contact, telephone or cellular, do not matter much. 
+
+Also, this graph prove that it is important for sellmen to try to have a conversation with clients with high quality and make the conversation last for a longer period of time.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+bank<-mutate(bank,duration_group=case_when(
+  duration<quantile(duration,0.25)~"1st shortest",
+  duration<quantile(duration,0.5)~"2nd shortest",
+  duration<quantile(duration,0.75)~"3rd shortest",
+  TRUE~"longest"
+))
+ggplot(bank)+
+  geom_bar(aes(contact,fill=outcome))+
+  facet_grid(.~duration_group)+
+  theme(axis.text.x = element_text(angle=90,hjust = 1))
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+ggplot(bank)+
+  geom_bar(aes(job,fill=age_group),position = "fill")+
+  coord_polar()+
+  labs(x="age group")
+
+
+```
+
+
+**Finding 7**
+
+We then analyze the relationship between the basic information of clients who subscribed a term deposit.
+
+* People around 30-40 years old should be the target clients of this campaign.
+
+* Singles and divorced people are more likely to be persuaded by sellmen and subscribe a term deposit. But still, as married people is majority in the society, it seems that sellmen should not be distracted by the marital status of the clients.
+
+* With respect to education, people with teriary eduaction have a higher rate of successful subscrition.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(data=bank%>%dplyr::filter(outcome=="yes"),aes(education,fill=marital))+
+  geom_bar()+
+  facet_grid(.~age_group)+
+  theme(axis.text.x = element_text(angle=90,hjust = 1))
+```
+
+
+**Finding 8**
+
+We then analyze the relationship between the outcome of this marketing campaign and the financial status of clients.
+
+From the graphs below, we can notice that the loan rate among success group and failure group do not vary distinctly. But it is still valueable to know that people suffer from housing loan might not be as interested in term deposit as expected. This may due to those people have more requirement for liquidity.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+
+ggplot(bank)+
+  geom_histogram(aes(balance,fill=outcome),bins=100)+
+  scale_x_continuous(limits=c(-3000,15000))+
+  scale_y_log10()+
+  facet_grid(loan~.)
+
+ggplot(bank)+
+  geom_histogram(aes(balance,fill=outcome),bins=100)+
+  scale_x_continuous(limits=c(-3000,15000))+
+  scale_y_log10()+
+  facet_grid(housing~.)
+```
+
+
+#### Section3: Other finding about martial status
+
+
+**Finding 9**
+
+It can frequently be heard in news that the divorce rate is increaing heavily recent years. We here study the relationships between martial status and job, education level.
+
+* It should be noticed that retired people and unemployed people have higher divorce rate. The reason for this situation might be that people who are busy with their job have little time to struggle with marital affairs.
+
+* With high level of education, people seem to be more comfortable with single status, which is consistent with common sense.
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(bank)+
+  geom_bar(aes(job,fill=marital),position = "fill")+
+    theme(axis.text.x = element_text(angle=90,hjust = 1))+
+   coord_flip()
+ggplot(bank)+
+  geom_bar(aes(education,fill=marital),position = "fill",width=0.5)+
+  coord_flip()
+```
+
+
+**Finding 10**
+
+There is a saying that staying single helps to saving money. This is conflict with our finding.
+
+Aftering removing the group of students, who are mostly single and purchase little, we get the result below. 
+
+* It is interesting to find that the average of balance between married people and single do not have a great difference. 
+
+* We also point the average default rate of each marital status. Staying in a marital status might push people to become more aware of their credit, which can be revealed by the low default rate comparing to other group.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+ggplot(bank%>%dplyr::filter(job!="student"))+
+  scale_x_continuous(limits=c(-1500,5000))+
+  geom_density(aes(balance))+
+  facet_grid(marital~.)
+
+temp<-group_by(bank,marital)%>%
+  summarise(c=sum(ifelse(default=="yes",1,0)/n()))
+
+ggplot(bank%>%dplyr::filter(job!="student"))+
+  geom_bar(aes(marital,fill=housing),position = "fill",width=0.5)+
+  geom_point(data=temp,aes(marital,c))+
+  coord_flip()
+
+```

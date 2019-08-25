@@ -1,0 +1,28 @@
+# Assignment 2
+
+Good. I just found one point in your code.
+
+    make_choice<-function(N, split_number){
+      input_list <- sample(1:N, N, replace=FALSE)
+      best_n <- max(input_list[1:split_number])
+      
+      # YY: Add code to handle if split_number == 0 case.
+      
+      for(i in (split_number+1):N){
+        in_n <- input_list[i]
+        if(in_n>best_n){
+          best_n <- in_n
+          break;
+        }
+        
+        if(i==N) #counting how many times the best prince is picked for the probability
+          best_n <- input_list[N]
+      }
+      return(best_n) 
+    }
+
+# Assignment 3
+Finding #4 needs normalized by /n(), which is how many people in that job.
+
+For option portfolio, option_value is sum of all individual value, which is your "option_price".
+Your "option_value" is a special case that the portfolio has to be sold with final payoff, which is a big discount. Time value of the option has been waived.\

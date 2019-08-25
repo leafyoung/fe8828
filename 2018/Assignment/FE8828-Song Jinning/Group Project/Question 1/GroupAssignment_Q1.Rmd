@@ -1,0 +1,558 @@
+---
+title: "GroupAssignment_Q1"
+author: "Jason Liang"
+date: "15 December 2018"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(knitr)
+library(randomNames)
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(crayon)
+
+```
+
+# Introduction
+
+## Background
+* Below R program is aim to solve the group assignment question 1. 
+
+## Requirements
+* The requirements are as following:
+    + Randomly generate 10 accounts with initial deposit and credit balance amount (in SGD). 
+    + For each account, gernerate 1-2 deposit transactions per month, and 0 to 60 withdraw or spend transactions from 01-Jul-18 to 30-Sep-18. 
+    + The withdraw and spend amount could be SGD, USD, or CNY. 
+    + The whthdraw SGD equivalent amount can't be greater than the available deposit balance before the withdraw transaction happen. 
+    + The Spend amount can't be greater than the available deposit balance + credit balance before the spend transaction happen.
+    + Generate the transaction history report and account summary report for each account in each month.
+
+
+
+# Design Description
+
+## Step 1 - Initiate data tables 
+* Load 1-Jul-18 to 30-Sep-18 USDSGD and CNYSGD exchange rate from excel sheet into CurrencyToSGD data table.
+* Randomly generate 10 accounts (account number, client name, initial deposit amount, and initial credit amount), and load the account information into Account table. 
+* Create empty Transaction data frame table.
+* Create running sequence number for generating unique transaction number.
+  
+## Step 2 - Generate deposit transactions
+* Randomly generate 1-2 deposit transactions per month for each account (deposit amount is 3k to 5k). Save the transactions into transaction table.
+  
+## Step 3 - Generate withdraw and spend transactions (0 amount)
+* Randomly generate 0-60 withdraw and spend transactions with 0 amount within the time period 01-Jul-18 to 30-Sep-18 for each account. Save the transactions into transaction table.
+  
+## Step 4 - Assign withdraw/spend amount and adjust balance
+* Sort all the deposit, withdraw, and spend transactions by date and tansaction number (group by account number). if 2 or more transactions happen in the same date, the transaction number will be used to sort the order of the transactions. 
+* Process the transactions row by row as below for sorted transactions of each account number: 
+    + Get "begining deposit balance" and "begining credit balance" from the Account table.
+    + Use the date of the transaction row to query CurrencyToSGD table and get exchange rate for that day. Store the exchange rate into transaction table for the transaction row. If the Curreny is SGD then return exchange rate as 1.
+    + Check transaction type - if the transaction type is "deposit", then "end deposit balance" = "begining deposit balance" + transaction amount*exchange rate, and "end deposit balance" = "begining deposit balance".
+    + Check transaction type - if the transaction type is "Withdraw", then generate random withdraw amount (in random currency) between 0.01 and "begining deposit balance"/exchange rate, so that the withdraw SGD equivalent amount can never exceed deposit balance. "end deposit balance" = "begining deposit balance" + transaction amount*exchange rate, and "end deposit balance" = "begining deposit balance".
+    + Check transaction type - if the transaction type is "Spend", then generate random spend amount (in random currency) between 0.01 and ("begining deposit balance"+"begining credit balance")/exchange rate, so that the spend SGD equivalent amount can never exceed deposit+credit balance. The spend amount is deducted from credit balance follow by deposit balance. 
+        + If the spend amount is greater than "begining credit balance", then "end credit balance"=0 and "end desposite balance"="begining credit balance" + "begining desposite balance" + transaction amount*exchange rate. 
+        + If the spend amount is smaller than "begining credit balance", then "end credit balance"="begining credit balance" + transaction amount*exchange rate, and  "end desposite balance"="begining deposit balance".
+        + Update the "end deposit balance" and "end credit balance" into the Account's deposit balance and credit balance as well as the transaction's deposit balance and credit balance. Record the transaction amount (in random currency) and SGD equivalent amount into the transaction row.
+    + "Withdraw" and "Spend" amount are negative.  
+        
+## Step 5 - Transaction table cleanup
+* Cleanup the Transaction table and remove the trivial rows with amount = 0.
+  
+## Step 6 - Generate sample monthly reports
+* Generate monthly transaction history report & monthly summary report.
+
+
+
+# Code and explaination of result.
+
+## Step 1. Initiate FX table, Account table, and Transaction table.
+```{r include=TRUE} 
+#### Function - initialize data tables
+initiateValues <- function(){
+  ## Load exchange rate from 1-Jul-18 to 30-Sep-18
+  assign("CurrencyToSGD", read_xlsx("ExchangeRate.xlsx", sheet="data", col_types = c("date", "numeric", "text")), envir = .GlobalEnv)
+  
+  ## Generate 10 random accounts info
+  assign("Account", data.frame("accountNo"=c(sample(c(100000:999999), 10, replace = FALSE)),
+                               "name"=c(randomNames(10, sample.with.replacement = FALSE)), 
+                               "DepositAmount"=c(sample(c(100000:300000), 10, replace = TRUE)), 
+                               "CreditAmount"=c(sample(c(10000:30000),10,replace = TRUE))),
+                               envir = .GlobalEnv)
+  
+  ## Generate initial deposit for the 10 random accounts
+  assign("Transaction", data.frame(), envir = .GlobalEnv)
+  
+  ## CurrencyList
+  assign("CurrencyList", data.frame("Currency"=c("SGD","USD","CNY")), envir = .GlobalEnv)
+  
+  ## runningSeqNo is used to ensure transaction number is unique
+  assign("runningSeqNo", 1, envir = .GlobalEnv)
+}
+initiateValues()
+```
+### Result: 
+* Daily exchange rate is loaded in table "CurrencyToSGD" from excel. 
+* 10 Random Accounts are generated and loaded into Account table. 
+* Empty "Transaction" table is created.
+* Currency type "SGD", "USD", and "CNY" are loaded CurrencyList" table.
+* "runningSeqNo" is initiated starting from 1.
+  
+  
+## Step 2. Generate random deposit 1-2 times per month (3k-5k).
+```{r include=TRUE}
+## Function - Retrive exchange rate
+getExchangeRate <- function(TransactionDate, CurrencyType){
+  FXRate <- filter(CurrencyToSGD, Date == as.Date(TransactionDate), Currency == CurrencyType)$Conversion
+  
+  if(CurrencyType == "USD")
+    return (FXRate)
+  else if(CurrencyType == "CNY")
+    return (round(1/FXRate,5))
+  else 
+    return(1)
+}
+
+## Function - generate Deposit Transactions for each account
+generateDepositTransaction <- function(Account){
+  TempTransactions <- data.frame()
+  
+  ## Generate 1-2 random deposit for each account number
+  for(i in 1:nrow(Account)){
+    
+    ## Jul-18 Deposit
+    noDepositJUl = sample(1:2,1,replace=TRUE)
+    for(j in 1:noDepositJUl){
+      
+      TransactionDate <- as.Date(sample(seq(as.Date('2018-07-01'), as.Date('2018-07-31'), by="day"), 1))
+      AccountNo <- Account[i,]$accountNo
+      TransactionType <- "Deposit"
+      CurrencyType <- sample(CurrencyList$Currency, 1,replace=TRUE)
+      #Transaction number is unique by using system time + runningSeqNo
+      TransactionNo <- as.integer(Sys.time())+runningSeqNo
+      assign("runningSeqNo", runningSeqNo+1, envir = .GlobalEnv)
+      
+      Amount <- sample(3000:5000,1)
+      
+      if(CurrencyType == "SGD")
+        exchangeRate <- 1
+      else exchangeRate <- getExchangeRate(TransactionDate,CurrencyType)
+      
+      TempTransactions <- rbind(TempTransactions, data.frame("TransactionNo"=TransactionNo, "Date"=TransactionDate, 
+                                                             "AccountNo"=AccountNo, "TransactionType"=TransactionType,
+                                                             "Currency"=CurrencyType,"Amount"=Amount, "exchangeRate"=exchangeRate, 
+                                                             "SGDEquivalent"=round(Amount*exchangeRate,2), "DepositBalance"=0, "CreditBalance"=0))
+    }
+    
+    ## Aug-18 Deposit
+    noDepositAug = sample(1:2,1,replace=TRUE)
+    for(j in 1:noDepositAug){
+      
+      TransactionDate <- as.Date(sample(seq(as.Date('2018-08-01'), as.Date('2018-08-31'), by="day"), 1))
+      AccountNo <- Account[i,]$accountNo
+      TransactionType <- "Deposit"
+      CurrencyType <- sample(CurrencyList$Currency, 1,replace=TRUE)
+      #Transaction number is unique by using system time + runningSeqNo
+      TransactionNo <- as.integer(Sys.time())+runningSeqNo
+      assign("runningSeqNo", runningSeqNo+1, envir = .GlobalEnv)
+      
+      Amount <- sample(3000:5000,1)
+      
+      if(CurrencyType == "SGD"){
+        exchangeRate <- 1
+      }
+      else{
+        ## get Exchange rate from CurrencyToSGD dataframe
+        exchangeRate <- getExchangeRate(TransactionDate,CurrencyType)
+      }
+      
+      TempTransactions <- rbind(TempTransactions, data.frame("TransactionNo"=TransactionNo, "Date"=TransactionDate, 
+                                                             "AccountNo"=AccountNo, "TransactionType"=TransactionType,
+                                                             "Currency"=CurrencyType,"Amount"=Amount, "exchangeRate"=exchangeRate, 
+                                                             "SGDEquivalent"=round(Amount*exchangeRate,2), "DepositBalance"=0, "CreditBalance"=0))
+    }
+    
+    ## Sep-18 Deposit
+    noDepositSep = sample(1:2,1,replace=TRUE)
+    for(j in 1:noDepositSep){
+      
+      TransactionDate <- as.Date(sample(seq(as.Date('2018-09-01'), as.Date('2018-09-30'), by="day"), 1))
+      AccountNo <- Account[i,]$accountNo
+      TransactionType <- "Deposit"
+      CurrencyType <- sample(CurrencyList$Currency, 1,replace=TRUE)
+      #Transaction number is unique by using system time + runningSeqNo
+      TransactionNo <- as.integer(Sys.time())+runningSeqNo
+      assign("runningSeqNo", runningSeqNo+1, envir = .GlobalEnv)
+      
+      Amount <- sample(3000:5000,1)
+      
+      if(CurrencyType == "SGD"){
+        exchangeRate <- 1
+      }
+      else{
+        ## get Exchange rate from CurrencyToSGD dataframe
+        exchangeRate <- getExchangeRate(TransactionDate,CurrencyType)
+      }
+      
+      TempTransactions <- rbind(TempTransactions, data.frame("TransactionNo"=TransactionNo, "Date"=TransactionDate, 
+                                                             "AccountNo"=AccountNo, "TransactionType"=TransactionType,
+                                                             "Currency"=CurrencyType,"Amount"=Amount, "exchangeRate"=exchangeRate, 
+                                                             "SGDEquivalent"=round(Amount*exchangeRate,2), "DepositBalance"=0, "CreditBalance"=0))
+    }
+  }
+    
+  return (TempTransactions)
+}
+
+  Transaction <- rbind(Transaction,generateDepositTransaction(Account))
+```
+### Result: 
+* Random deposit transactions are generate (1-2 deposits per month per account) are created and saved into "Transaction" table.
+
+  
+## Step 3. Generate empty withdraw/spend transactions (0 amount)
+```{r include=TRUE}
+## Function - generate withdraw and spend transactions
+generateWithdrawSpendTransaction <- function(Account){
+  TempTransactions <- data.frame()
+    
+  for(i in 1:nrow(Account)){
+    
+    ## 0-60 random withdraw/spend transaction with 0 amount
+    noWithdrawSpend = sample(0:60,1,replace=TRUE)
+    
+    if(noWithdrawSpend==0){
+      ## do nothing
+    }
+    else{
+      for(j in 1:noWithdrawSpend){
+        
+        TransactionDate <- as.Date(sample(seq(as.Date('2018-07-01'), as.Date('2018-09-30'), by="day"), 1))
+        AccountNo <- Account[i,]$accountNo
+        TransactionType <- sample(c("Spend","Withdraw"), 1,replace=TRUE)
+        CurrencyType <- sample(CurrencyList$Currency, 1,replace=TRUE)
+        #Transaction number is unique by using system time + runningSeqNo
+        TransactionNo <- as.integer(Sys.time())+runningSeqNo
+        assign("runningSeqNo", runningSeqNo+1, envir = .GlobalEnv)
+        
+        Amount <- 0
+        
+        if(CurrencyType == "SGD"){
+          exchangeRate <- 1
+        }
+        else{
+          ## get Exchange rate from CurrencyToSGD dataframe
+          exchangeRate <- getExchangeRate(TransactionDate,CurrencyType)
+        }
+        
+        TempTransactions <- rbind(TempTransactions, data.frame("TransactionNo"=TransactionNo, "Date"=TransactionDate, 
+                                                               "AccountNo"=AccountNo, "TransactionType"=TransactionType,
+                                                               "Currency"=CurrencyType,"Amount"=Amount, "exchangeRate"=exchangeRate, 
+                                                               "SGDEquivalent"=round(Amount*exchangeRate,2), "DepositBalance"=0, "CreditBalance"=0))
+      }
+    }
+  }
+  
+  return (TempTransactions)
+}
+  Transaction <- rbind(Transaction,generateWithdrawSpendTransaction(Account))
+```
+### Result: 
+* 0-60 withdraw and spend transactions with amount 0 (per account) are created and saved into "Transaction" table.
+
+
+## Step 4. Sort the transactions and assign random withdraw/spend amount with the restriction that you can't withdraw more than the deposit, and can't spend more than credit + deposit.
+```{r include=TRUE}
+## Function - generate withdraw and spend amount and adjust deposit & credit balance accordingly
+assignWithdrawSpendAmount <- function(Account, Transaction){
+  TempTransactions <- data.frame()
+  
+  for(i in 1:nrow(Account)){
+    TempClientTransactions <- data.frame()
+    TempClientTransactions <- filter(Transaction, AccountNo == as.numeric(Account[i,]$accountNo)) %>% arrange(Date, TransactionNo)
+    
+    ## Process each row to assign withdraw/spend amount with restriction, calculate Deposit & Credit balance after the transaction done, 
+    ## and update deposit & credit balance in Account
+     
+    for(j in 1:nrow(TempClientTransactions)){
+        
+        ## First transaction, initial deposit & credit balance are from the Account itself
+        initialDepositBal <- Account[i,]$DepositAmount
+        initialCreditBal <-  Account[i,]$CreditAmount
+        
+        TransactionType <- TempClientTransactions[j,]$TransactionType
+        
+        if(TransactionType == "Deposit"){
+          endDepositBal <- initialDepositBal + TempClientTransactions[j,]$SGDEquivalent
+          endCreditBal <- initialCreditBal
+          
+          ## update Account Withdraw & Credit balance info (SGD based)
+          Account[i,]$DepositAmount <- round(endDepositBal,2)
+          Account[i,]$CreditAmount <- round(endCreditBal,2)
+          
+          ## update Transaction Withdraw & Credit balance info (SGD based)
+          TempClientTransactions[j,]$DepositBalance <- round(endDepositBal,2)
+          TempClientTransactions[j,]$CreditBalance <- round(endCreditBal,2)
+          
+        }
+        else if(TransactionType == "Withdraw"){
+          ## Generate withdraw amount (negative) with the restriction that withdraw less than initial deposit balance. 
+          ## additonal rule - if the deposit balance is below 0.01 dollor, then withdraw all. Otherwise the withdraw amount is too small to be reasonable.
+          
+          withDrawAmount <- runif(1, min=min(initialDepositBal/TempClientTransactions[j,]$exchangeRate,0.01), 
+                                  max=initialDepositBal/TempClientTransactions[j,]$exchangeRate)*(-1)
+            
+          TempClientTransactions[j,]$Amount <- round(withDrawAmount,2)
+          TempClientTransactions[j,]$SGDEquivalent <- round(withDrawAmount * TempClientTransactions[j,]$exchangeRate,2)
+            
+          endDepositBal <- initialDepositBal + TempClientTransactions[j,]$SGDEquivalent
+          endCreditBal <- initialCreditBal
+            
+          ## update Account Withdraw & Credit balance info (SGD based)
+          Account[i,]$DepositAmount <- round(endDepositBal,2)
+          Account[i,]$CreditAmount <- round(endCreditBal,2)
+            
+          ## update Transaction Withdraw & Credit balance info (SGD based)
+          TempClientTransactions[j,]$DepositBalance <- round(endDepositBal,2)
+          TempClientTransactions[j,]$CreditBalance <- round(endCreditBal,2)
+          
+        }
+        else if(TransactionType == "Spend"){
+          ## Generate spend amount (negative) with the restriction that spend less than (initial deposit + credit balance). 
+          ## additonal rule - if the deposit+credit balance is below 0.01 dollor, then spend all. Otherwise the spend amount is too small to be reasonable.
+          
+          spendAmount <- runif(1, min=min((initialDepositBal+initialCreditBal)/TempClientTransactions[j,]$exchangeRate,0.01), 
+                               max=(initialDepositBal+initialCreditBal)/TempClientTransactions[j,]$exchangeRate)*(-1)
+          
+          TempClientTransactions[j,]$Amount <- round(spendAmount,2)
+          TempClientTransactions[j,]$SGDEquivalent <- round(spendAmount * TempClientTransactions[j,]$exchangeRate,2)
+          
+          ## deduct the credit balance first, then deposit balance
+          if(abs(TempClientTransactions[j,]$SGDEquivalent)>= initialCreditBal){
+            endCreditBal <- 0
+            endDepositBal <- round(initialDepositBal + initialCreditBal + TempClientTransactions[j,]$SGDEquivalent,2)
+          }
+          else{
+            endCreditBal <- round(initialCreditBal + TempClientTransactions[j,]$SGDEquivalent, 2)
+            endDepositBal <- initialDepositBal
+          }
+          
+          
+          ## update Account Withdraw & Credit balance info (SGD based)
+          Account[i,]$DepositAmount <- round(endDepositBal,2)
+          Account[i,]$CreditAmount <- round(endCreditBal,2)
+          
+          ## update Transaction Withdraw & Credit balance info (SGD based)
+          TempClientTransactions[j,]$DepositBalance <- round(endDepositBal,2)
+          TempClientTransactions[j,]$CreditBalance <- round(endCreditBal,2)
+          
+        }
+        else{}# do nothing
+    }
+    assign("Account",Account,envir = .GlobalEnv)
+    
+    TempTransactions <- rbind(TempTransactions, TempClientTransactions)
+  }
+  
+ 
+  
+  return (TempTransactions)
+  
+}
+  Transaction <- assignWithdrawSpendAmount(Account, Transaction)
+```  
+### Result: 
+* All the transactions are sorted by date then transaction number. Then each row is processed according to their sequence.
+* The ending deposit balance and credit balance is adjusted based on the transaction sequence and transaction amount.
+  + If the row is deposit, then deposit and credit ending balance is adjusted based on the initial deposit and credit balance + deposit amount, and then ending deposit and credit balance are updated into both "Account" & transaction table.
+  + If the row is withdraw or spend, the withdraw or spend amount is randomly generated based on the predefined rule, and deposit and credit ending balance is adjusted based on the initial deposit and credit balance + withdraw or spend amount. Then the ending deposit and credit balance are updated into both "Account" & transaction table.
+
+
+##Step 5. Cleanup the Transaction table and remove the trivial rows with amount = 0.
+```{r include=TRUE}
+Transaction <- filter(Transaction, Amount != 0) %>% group_by(AccountNo) %>% arrange(AccountNo,Date,TransactionNo)
+assign("Transaction", Transaction, envir = .GlobalEnv)
+```
+### Result
+* As there might be some rows with 0 amount in the "Transaction" table if the withdraw or spend transaction happen after the Account's deposit and credit balance has been sued up, this step Cleanup these 0 amount trivial rows from "Transaction" table.
+
+## Step 6 - Generate monthly transaction history report & monthly summary report.
+```{r eval=FALSE}
+
+for(i in 1:nrow(Account)){
+
+  clientName <- Account[i,]$name
+  cat(bold(paste0("Account Name: ",Account[i,]$name,"\n")))
+  
+  ## Jul-18 Report
+  JulTransMonth <- "Jul-18"
+     
+      JulDF <- filter(Transaction, Date >=as.Date("2018-07-01") & Date <= as.Date("2018-07-31") & AccountNo == Account[i,]$accountNo) %>% arrange(Date,TransactionNo)
+      JulDF <- JulDF %>% select(TransactionNo, AccountNo, Date, TransactionType, Amount, Currency, DepositBalance,CreditBalance) %>% arrange(Date,TransactionNo) 
+      JulDF <- JulDF[,c("Date","TransactionType","Amount","Currency","DepositBalance","CreditBalance")]
+
+  JulDepositBalance <- tail(JulDF, 1)$DepositBalance
+  JulCreditBalance <- tail(JulDF, 1)$CreditBalance
+  
+  ## Generate Jul-18 Summary Report
+    JulSummary <- filter(Transaction, Date >=as.Date("2018-07-01") & Date <= as.Date("2018-07-31") & AccountNo == Account[i,]$accountNo) %>% group_by(AccountNo, TransactionType) %>% summarise("Amount"=sum(Amount))
+    JulSummary <- JulSummary[,c("TransactionType","Amount")]
+    
+  cat(paste0("Month: ",JulTransMonth)) 
+  print(kable(JulDF))    
+  cat("-------------------------------------------------------------------------------------------\n")
+  cat(paste0("Month-End Balance | Deposite ",JulDepositBalance," | Credit ", JulCreditBalance, " |\n"))
+  cat("\n")
+  
+  cat(paste0("#Summary"))
+  print(kable(JulSummary)) 
+  cat("\n")
+  
+## Aug-18 Report
+    AugTransMonth <- "Aug-18"
+    AugDF <- filter(Transaction, Date >=as.Date("2018-08-01") & Date <= as.Date("2018-08-31") & AccountNo==Account[i,]$accountNo) %>% arrange(Date,TransactionNo)
+    AugDF <- AugDF %>% select(TransactionNo, AccountNo, Date, TransactionType, Amount, Currency, DepositBalance,CreditBalance) %>% arrange(Date,TransactionNo)
+    AugDF <- AugDF[,c("Date","TransactionType","Amount","Currency","DepositBalance","CreditBalance")]
+    
+    AugDepositBalance <- tail(AugDF, 1)$DepositBalance
+    AugCreditBalance <- tail(AugDF, 1)$CreditBalance
+    ## Generate Aug-18 Summary Report
+    AugSummary <- filter(Transaction, Date >=as.Date("2018-08-01") & Date <= as.Date("2018-08-31") & AccountNo == Account[i,]$accountNo) %>% group_by(AccountNo, TransactionType) %>% summarise("Amount"=sum(Amount))
+    AugSummary <- AugSummary[,c("TransactionType","Amount")]
+    
+  cat(paste0("Month: ",AugTransMonth)) 
+  print(kable(AugDF))    
+  cat("-------------------------------------------------------------------------------------------\n")
+  cat(paste0("Month-End Balance | Deposite ",AugDepositBalance," | Credit ", AugCreditBalance, " |\n"))
+  cat("\n")
+  
+  cat(paste0("#Summary"))
+  print(kable(AugSummary))   
+  cat("\n")      
+      
+## Sep-18 Report
+    SepTransMonth <- "Sep-18"
+    SepDF <- filter(Transaction, Date >=as.Date("2018-09-01") & Date <= as.Date("2018-09-30") & AccountNo==Account[i,]$accountNo) %>% arrange(Date,TransactionNo)
+    SepDF <- SepDF %>% select(TransactionNo, AccountNo, Date, TransactionType, Amount, Currency, DepositBalance,CreditBalance) %>% arrange(Date,TransactionNo)
+    SepDF <- SepDF[,c("Date","TransactionType","Amount","Currency","DepositBalance","CreditBalance")]
+    
+    SepDepositBalance <- tail(SepDF, 1)$DepositBalance
+    SepCreditBalance <- tail(SepDF, 1)$CreditBalance
+    
+    ## Generate Aug-18 Summary Report
+    SepSummary <- filter(Transaction, Date >=as.Date("2018-09-01") & Date <= as.Date("2018-09-30") & AccountNo == Account[i,]$accountNo) %>% group_by(AccountNo, TransactionType) %>% summarise("Amount"=sum(Amount))  
+    SepSummary <- SepSummary[,c("TransactionType","Amount")]
+    
+  cat(paste0("Month: ",SepTransMonth)) 
+  print(kable(SepDF))    
+  cat("-------------------------------------------------------------------------------------------\n")
+  cat(paste0("Month-End Balance | Deposite ",SepDepositBalance," | Credit ", SepCreditBalance, " |\n"))
+  cat("\n")
+  
+  cat(paste0("#Summary"))
+  print(kable(SepSummary)) 
+  
+  cat("\n")
+  cat("\n")
+  cat("\n")
+}
+```
+### Result:
+* Sample monthly transaction report and monthly summary report for each account will be generated if the above code run.
+
+
+# Example running result
+
+## Example Run
+* following is an example of 10 Accounts' monthly transaction history report and monthly summary report generated based on the above R program.  
+```{r echo=FALSE}
+
+for(i in 1:nrow(Account)){
+
+  clientName <- Account[i,]$name
+  cat(bold(paste0("Account Name: ",Account[i,]$name,"\n")))
+  
+  ## Jul-18 Report
+  JulTransMonth <- "Jul-18"
+     
+      JulDF <- filter(Transaction, Date >=as.Date("2018-07-01") & Date <= as.Date("2018-07-31") & AccountNo == Account[i,]$accountNo) %>% arrange(Date,TransactionNo)
+      JulDF <- JulDF %>% select(TransactionNo, AccountNo, Date, TransactionType, Amount, Currency, DepositBalance,CreditBalance) %>% arrange(Date,TransactionNo) 
+      JulDF <- JulDF[,c("Date","TransactionType","Amount","Currency","DepositBalance","CreditBalance")]
+
+  JulDepositBalance <- tail(JulDF, 1)$DepositBalance
+  JulCreditBalance <- tail(JulDF, 1)$CreditBalance
+  
+  ## Generate Jul-18 Summary Report
+    JulSummary <- filter(Transaction, Date >=as.Date("2018-07-01") & Date <= as.Date("2018-07-31") & AccountNo == Account[i,]$accountNo) %>% group_by(AccountNo, TransactionType) %>% summarise("Amount"=sum(Amount))
+    JulSummary <- JulSummary[,c("TransactionType","Amount")]
+    
+  cat(paste0("Month: ",JulTransMonth)) 
+  print(kable(JulDF))    
+  cat("-------------------------------------------------------------------------------------------\n")
+  cat(paste0("Month-End Balance | Deposite ",JulDepositBalance," | Credit ", JulCreditBalance, " |\n"))
+  cat("\n")
+  
+  cat(paste0("#Summary"))
+  print(kable(JulSummary)) 
+  cat("\n")
+  
+## Aug-18 Report
+    AugTransMonth <- "Aug-18"
+    AugDF <- filter(Transaction, Date >=as.Date("2018-08-01") & Date <= as.Date("2018-08-31") & AccountNo==Account[i,]$accountNo) %>% arrange(Date,TransactionNo)
+    AugDF <- AugDF %>% select(TransactionNo, AccountNo, Date, TransactionType, Amount, Currency, DepositBalance,CreditBalance) %>% arrange(Date,TransactionNo)
+    AugDF <- AugDF[,c("Date","TransactionType","Amount","Currency","DepositBalance","CreditBalance")]
+    
+    AugDepositBalance <- tail(AugDF, 1)$DepositBalance
+    AugCreditBalance <- tail(AugDF, 1)$CreditBalance
+    ## Generate Aug-18 Summary Report
+    AugSummary <- filter(Transaction, Date >=as.Date("2018-08-01") & Date <= as.Date("2018-08-31") & AccountNo == Account[i,]$accountNo) %>% group_by(AccountNo, TransactionType) %>% summarise("Amount"=sum(Amount))
+    AugSummary <- AugSummary[,c("TransactionType","Amount")]
+    
+  cat(paste0("Month: ",AugTransMonth)) 
+  print(kable(AugDF))    
+  cat("-------------------------------------------------------------------------------------------\n")
+  cat(paste0("Month-End Balance | Deposite ",AugDepositBalance," | Credit ", AugCreditBalance, " |\n"))
+  cat("\n")
+  
+  cat(paste0("#Summary"))
+  print(kable(AugSummary))   
+  cat("\n")      
+      
+## Sep-18 Report
+    SepTransMonth <- "Sep-18"
+    SepDF <- filter(Transaction, Date >=as.Date("2018-09-01") & Date <= as.Date("2018-09-30") & AccountNo==Account[i,]$accountNo) %>% arrange(Date,TransactionNo)
+    SepDF <- SepDF %>% select(TransactionNo, AccountNo, Date, TransactionType, Amount, Currency, DepositBalance,CreditBalance) %>% arrange(Date,TransactionNo)
+    SepDF <- SepDF[,c("Date","TransactionType","Amount","Currency","DepositBalance","CreditBalance")]
+    
+    SepDepositBalance <- tail(SepDF, 1)$DepositBalance
+    SepCreditBalance <- tail(SepDF, 1)$CreditBalance
+    
+    ## Generate Aug-18 Summary Report
+    SepSummary <- filter(Transaction, Date >=as.Date("2018-09-01") & Date <= as.Date("2018-09-30") & AccountNo == Account[i,]$accountNo) %>% group_by(AccountNo, TransactionType) %>% summarise("Amount"=sum(Amount))  
+    SepSummary <- SepSummary[,c("TransactionType","Amount")]
+    
+  cat(paste0("Month: ",SepTransMonth)) 
+  print(kable(SepDF))    
+  cat("-------------------------------------------------------------------------------------------\n")
+  cat(paste0("Month-End Balance | Deposite ",SepDepositBalance," | Credit ", SepCreditBalance, " |\n"))
+  cat("\n")
+  
+  cat(paste0("#Summary"))
+  print(kable(SepSummary)) 
+  
+  cat("\n")
+  cat("\n")
+  cat("\n")
+}
+```
+
+
+
+

@@ -1,0 +1,245 @@
+---
+title: "Assignment 3"
+author: "Ng Lay Yong"
+date: "November 17, 2018"
+output: html_document
+---
+
+```{r library, echo=FALSE, message = FALSE, warning=FALSE}
+library(fOptions)
+library(tidyverse)
+library(bizdays)
+library(knitr)
+bank<-read.csv("http://goo.gl/PBQnBt",sep=";")
+```
+
+## Part 1: Valuation of options portfolio
+Evaluate options portfolio to obtain its total valuation
+
+
+```{r options portfolio, echo =TRUE, warning=FALSE}
+df<-data.frame(type = sample(c("c","p"),100, replace = TRUE),strike = round(runif(100)*100,0),underlying = round(runif(100)*100,0),Time =1,r = 0.01, b=0, sigma=0.3)
+x<-mutate(df, valuation = GBSOption(TypeFlag= type, S = underlying, X =strike, Time= Time, r= r, b=b, sigma =sigma)@price)
+kable(df,caption = "Options Portfolio")
+print(paste("The total valuation is $",round(sum(x$valuation),2)))
+
+```
+
+
+## Part 2: Exploratory data work on bank data
+
+#### Finding 1
+This data contains `r nrow(bank)` rows with `r ncol(bank)` categories.
+
+#### Finding 2
+The bank spent a total of 331.5 hours on calls and on average, each call lasts about 4.4 minutes. The median call duration is around 3 minutes, which suggests that the distribution is skewed right with half the people hanging up below 3 minutes.
+```{r}
+df<-data.frame(bank)
+totalcalldur<-summarise(df,total=sum(duration/60/60))
+totalcalldur
+avgcalldur<-summarise(df,mean(duration/60))
+avgcalldur
+mediancalldur<-summarise(df,median(duration/60))
+mediancalldur
+
+
+```
+
+#### Finding 3
+The age groups seem to follow a right-skewed distribution. There is a longer right tail for larger age groups. This is expected since children are not target customer groups. Those in their 30s form the largest age group.
+```{r}
+bank %>% group_by(age_group = (age %/% 10)*10) %>%
+  summarise(count =n())%>%
+  arrange(age_group)-> res
+age_dist<-group_by(bank,age)%>%summarise(n=n())
+ggplot(age_dist,aes(age_dist$age,age_dist$n))+geom_point()+geom_smooth(method = "loess", se =FALSE)
+ggplot(res,aes(res$age_group,res$count))+geom_point()+geom_smooth(method = "loess", se =FALSE)+
+  xlab("Age Group") +
+  ylab("Count")
+
+```
+
+####Finding 4
+The number of defaults for each job categories are shown below. It seems like there are higher number of defaults for those working as blue-collar workers, technicians or in management roles. However, the number of defaults is not a good gauge of the likelihood of defaults for each job category since the number of people interviewed for each job differs.
+
+```{r}
+jobdefault<- group_by(bank,job,default)%>%filter(default=="yes")%>% summarise(no._of_defaults = n())%>%arrange(no._of_defaults)
+jobdefault
+ggplot(jobdefault, aes(reorder(job, no._of_defaults),no._of_defaults)) +
+  geom_point(color="skyblue", size=4) + 
+  geom_segment( aes(x=job, xend=job, y=0, yend=no._of_defaults))+
+  theme(axis.text.x= element_text(angle= 90,hjust= 1))+
+   xlab("Jobs") +
+  ylab("Number of Defaults")
+```
+The pecentage of defaults within each job category is shown below. We can see that entrepreneurs have the highest percentage of defaults followed by the unemployed. This is understandable since entrepreneurs are likely to be in debt due to their business ventures and some have defaulted due to their inability to pay off their loans when business is bad. A higher percentage of the unemployed have defaulted since their source of income from employment is zero. None of those with unknown jobs have defaulted, possibily because the number of observations for the unknowns are much smaller than other job categories and in the small sample of unknowns, none of them have defaulted.
+```{r}
+
+jobno<-group_by(bank,job)%>%summarise(jobno=n())%>%arrange(jobno)
+data.frame(jobno)
+defaultbyjob<-group_by(bank,job)%>%summarise(jobno=n(),default_count=sum(ifelse(default=="no",0,1)),percentdefault=default_count/jobno*100)
+ggplot(defaultbyjob, aes(reorder(job, percentdefault),percentdefault)) +
+  geom_point(color="skyblue", size=4) + 
+  geom_segment( aes(x=job, xend=job, y=0, yend=percentdefault))+
+  theme(axis.text.x= element_text(angle= 90,hjust= 1))+
+  xlab("Jobs") +
+  ylab("%Default in each Job")
+
+
+
+
+```
+
+####Finding 5
+We can see that generally, the mean of the call duration increases as age increases till around 70 years old where the call duration starts to dip. Most of the people who already have bank loans are those between 30s to 50s and their call durations seem lower than those who are older with fewer loans. We may infer that people who already have bank loans are unlikely to be interested in what the banks have to offer since they still need to service their loans. They may have lower cash available for investment and are unwilling to take up another loan.
+```{r}
+bank_age<-group_by(bank,age)%>%
+  summarise(duration_mean=mean(duration),
+            count=n(),
+            loan_count =sum(ifelse(loan == "no",0,1)))
+bank_age %>%
+  ggplot(aes(x=age,y = duration_mean))+
+  geom_point(aes(size = count), alpha =1/4, color="orange")+
+  geom_point(aes(size = loan_count),alpha =1/3,color="purple")+
+  geom_smooth(se=FALSE, method="loess", color = "forestgreen")+
+  xlab("Age") +
+  ylab("Duration Mean")
+```
+
+####Finding 6
+The boxplot of balances for each job category shows that the retirees have an outlier who has more 60k and entrepreneurs have an outlier with more than 40k in account balance.
+```{r}
+bank %>%
+    ggplot( aes(x=job, y=balance)) +
+    geom_segment( aes(x=job, xend=job, y=0, yend=balance), color="orange", size=1) +
+    geom_boxplot( color="skyblue", size=0.5, alpha=0.6) +
+    theme_light() +
+    coord_flip() +
+    theme(
+      panel.grid.major.y = element_blank(),
+      panel.border = element_blank(),
+      axis.ticks.y = element_blank()
+    ) +
+  xlab("Jobs") +
+  ylab("Balance")
+
+```
+
+Zooming into the boxplot by removing 2 outliers with balances more than 30k, we can see the boxplot more clearly. The retirees have the highest mean balance and a wider distribution compared to other jobs.
+
+```{r}
+bank %>%
+    ggplot( aes(x=job, y=balance)) +
+    geom_segment( aes(x=job, xend=job, y=0, yend=balance), color="pink", size=1) +
+    geom_boxplot( color="blue", size=0.5, alpha=0.6) +
+    theme_light() +
+  
+  ylim(NA,30000)+
+    coord_flip() +
+    theme(
+      panel.grid.major.y = element_blank(),
+      panel.border = element_blank(),
+      axis.ticks.y = element_blank()
+    ) +
+  xlab("Jobs") +
+  ylab("Balance")
+```
+
+####Finding 7
+
+We can observe the mean and median of the balances for each job category and reorder them in ascending order. Retirees have the highest mean and median balance. However, the job with the lowest mean balance (blue-collar) is not the lowest in terms of median. The job with the lowest median balance is services. Interestingly, the entrepreneurs are in the bottom 3 in terms of mean balance but they are in top 4 in terms of median balance. This suggests that the distribution of their balances is skewed right and there are more with lower balances. 
+```{r}
+median_bal<-group_by(bank,job)%>%summarise(balance_median=median(balance))%>%ggplot(aes(reorder(job,balance_median),balance_median))+
+  geom_point(color="yellow", size=4)+
+  geom_segment( aes(x=job, xend=job, y=0, yend=balance_median))+
+  theme(axis.text.x= element_text(angle= 90,hjust= 1))+
+   xlab("Jobs") +
+   ylab("Median of Balance")
+median_bal
+mean_bal<-group_by(bank,job)%>%summarise(balance_mean=mean(balance))%>%ggplot(aes(reorder(job,balance_mean),balance_mean))+
+  geom_point(color="red", size=4)+
+  geom_segment( aes(x=job, xend=job, y=0, yend=balance_mean))+
+ theme(axis.text.x= element_text(angle= 90,hjust= 1))+
+   xlab("Jobs") +
+   ylab("Mean of Balance")
+mean_bal
+```
+The skewness of the distributioin is confirmed by the plot on entrepreneurs' balances below.
+```{r}
+entrep_bal<-bank%>%group_by(job,balance)%>%filter(job=="entrepreneur")%>%ungroup%>%select(balance)
+df<-group_by(entrep_bal,entrep_bal_group=(balance%/%500)*500)%>%summarise(count=n())%>%arrange(entrep_bal_group)
+df
+plot(df)
+```
+
+####Finding 8
+Those with tertiary education have the highest mean and median balances in their accounts while those with secondary education have the lowest mean and median balances. This is somewhat surprising as we would assume that the higher the education, the higher the account balances. Those with only primary school education have higher mean and median balances than those with only secondary school education. 
+```{r}
+mean_edu_bal<-bank%>%group_by(education)%>%summarise("mean balance"=mean(balance))
+median_edu_bal<-bank%>%group_by(education)%>%summarise("median balance"=median(balance))
+edu_overview<-left_join(mean_edu_bal,median_edu_bal)
+edu_overview
+```
+####Finding 9
+Those who are married and can be contacted with cellular form the highest pecentage group of the interviewees. Divorcees with telephone form the lowest percentage, which makes sense since one would expect both the percentage of divorcees and telephone users to be the least.
+```{r}
+dm<-group_by(bank,contact,marital)%>%summarise(percentage=round((count=n()/4521*100),2))
+dm
+```
+####Finding 10
+The graph below shows the percentage of success for each age group. This shows that the bank may want to consider calling customers of age 60 and above to have a higher chance of successful calls.
+```{r}
+bank %>% group_by(age_group = (age %/% 10)*10) %>%
+  summarise(count_age =n())%>%filter(age_group!="10")%>%
+  arrange(age_group)-> count_age
+filtersuccess<-group_by(bank,age_group = (age %/% 10)*10,poutcome)%>%summarise(count=n())%>%filter(poutcome=="success")
+combine<-left_join(count_age,filtersuccess,by="age_group")%>%mutate(percent=count/count_age*100)
+combine
+combine %>%
+  ggplot(aes(x=age_group,y = percent))+
+  geom_point(aes(size = count_age), alpha =1/4, color="blue")+
+  geom_smooth(se=FALSE, method="loess", color = "forestgreen")+
+  xlab("Age Group")+
+  ylab("Percentage of Success")
+
+```
+
+##Part 3: Book Option trades
+####Copy options data
+```{r}
+opt<-read.csv("https://docs.google.com/spreadsheets/d/1onXYcn-xp_0BJpghxZXmkhIIaBx2MYEWiFZRkNQoTw8/export?format=csv", sep=",")
+valuation<-opt%>%mutate(Valuation=Open.Interest*(Bid+Ask)/2)
+combine<-left_join(opt,valuation)
+```
+
+####Count total valuation
+```{r}
+Call_Value<-combine%>%filter(Call.Put=="Calls")%>%summarise("Total Call Valuation"= sum(Valuation))
+Put_Value<-combine%>%filter(Call.Put=="Puts")%>%summarise("Total Put Valuation"= sum(Valuation))
+Total_Value<-combine%>%summarise("Total Valuation"= sum(Valuation))
+Df_Valuation<-cbind(Call_Value,Put_Value,Total_Value)
+Df_Valuation
+```
+
+####In the money open interest
+```{r}
+itm_call<-opt%>%filter(Call.Put=="Calls")%>%summarise(Call_interest=sum(ifelse(Strike<Underlying,Open.Interest,0)))
+itm_put<-opt%>%filter(Call.Put=="Puts")%>%summarise(Put_interest=sum(ifelse(Strike>Underlying,Open.Interest,0)))
+itm_interest<-cbind(itm_call,itm_put)
+itm_interest
+```
+
+####Strike vs Volatility
+```{r, error=TRUE}
+optcall<-combine%>%filter(Call.Put=="Calls")%>%mutate(Price=ifelse(Strike>Underlying,Valuation,0))
+optput<-combine%>%filter(Call.Put=="Puts")%>%mutate(Price=ifelse(Strike<Underlying,Valuation,0))
+join<-full_join(optcall,optput)%>%arrange(Strike)%>%filter(Price!=0)
+joinvol<-join%>%mutate(OptionVol=GBSVolatility(Price,ifelse(Call.Put=="Calls","c","p"),Underlying,Strike,as.numeric((as.Date("2018-12-14")-as.Date("2018-11-10")))/365,r=0.03,b=0,1,100))
+fulldf<-left_join(join,joinvol)
+fulldf %>%
+  ggplot(aes(x=Strike,y = OptionVol))+
+  geom_point()+
+  geom_smooth(se=FALSE, method="loess", color = "forestgreen")+
+  xlab("Strike")+
+  ylab("Volatility")
+```

@@ -1,0 +1,6 @@
+Assignment 2:
+
+1. Missed logic for zero split number case
+2. Missed logic for last element treatment
+
+Please see my comments in the code.

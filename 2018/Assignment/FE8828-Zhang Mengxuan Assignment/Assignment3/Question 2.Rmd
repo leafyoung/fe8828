@@ -1,0 +1,145 @@
+---
+title: "Assignment 1: Discover insights of data frame: bank"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tidyr)
+library(lubridate)
+library(bizdays)
+library(grid)
+library(dplyr)
+library(knitr)
+library(DT)
+library(xtable)
+library(kableExtra)
+library(formattable)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1 Total Number of Records
+This data contains `r nrow(bank)` rows.
+
+# Finding #2 Find Group Distribution by Age
+  * 30-40 takes up the largest portion whereas 10-20 & 80-90 takes up the smallest
+```{r echo=FALSE}
+# Find the big age group
+
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+summarise(count = n()) %>%
+arrange(age_group) -> res
+res
+plot(res$age_group, res$count,xlab='Age Group',ylab='Count',main='Age Group Distribution')
+```
+
+# Finding #3 Job vs Marital Status Distribution
+  * ~35% technicians are single :/
+  * 70%~ marriage percentaage among entrepreneur,retired,housemaid and blue collar
+  * 17%~ of unemployed are divorced
+```{r echo=FALSE}
+# Find marital distribution
+group_by(bank,job) %>%
+summarise( 'married'=sum(marital=="married")/n(), 'single'=sum(marital=="single")/n(),'divorced'=sum(marital=="divorced")/n()) %>%
+arrange(married,single,divorced)-> marital_table
+kable(marital_table,caption="Marital Status ") %>%
+  kable_styling()
+```
+
+# Finding #4 Job vs Education Distribution
+  * ppl who are highly educated are more likely to be mgt roles 
+  whereas ppl who are less educated are more likely to be blue collars & technicians
+```{r echo=FALSE}
+df4 <- bank %>% group_by(job, education) %>% summarise(c=n()) %>% spread(education, c) %>% arrange(primary,secondary,tertiary,unknown)
+kable(df4,caption="Education Distribution ") %>%
+  kable_styling() %>%
+add_header_above(c(" " = 1, "Education" = 4)) %>%
+row_spec(12, bold = T, color = "white", background = "#D7261E")
+```
+
+# Finding #5 Age vs Bank Balance 
+  * On average, ppl in age 30-40 holds bank balance slightly higher than other age groups
+```{r echo =FALSE}
+plot(bank$age,bank$balance)
+```
+
+# Finding #6 
+  * Find the Maximum and Minimum Balance on Each Age
+```{r echo=FALSE}
+df6 <- bank %>%
+group_by(age) %>%
+dplyr::filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+arrange(age, balance)
+
+kable(df6) %>%
+kable_styling() %>%
+  scroll_box(width = "100%", height = "200px")
+```
+
+# Finding #7 Last Phone Duration vs Job
+  * the top 2 longest phone duration is to unemployed and housemaid
+```{r echo=FALSE}
+df7 <- bank  %>% select(age,job,marital,education, duration) %>%
+  group_by(job) %>% summarize(count=n(),'mean duration'=mean(duration),'median duration'=median(duration)) %>%
+  arrange(`mean duration`, `median duration`) 
+kable(df7) %>%
+  kable_styling(position='center',full_width = F)
+```
+
+# Finding #8 Last Phone Duration vs Education
+  * the duration of the phone is getting shorter when targets are highly educated 
+  * this is further shown in all successful cases that targets subscribe term desposits
+```{r echo=FALSE}
+df8 <- bank %>% select(age,job,marital,education, duration) %>%
+  group_by(education) %>% summarize(count=n(),'mean duration'=mean(duration),'median duration'=median(duration))
+kable(df8, caption='All Cases') %>%
+  kable_styling(position='center',full_width = F) %>%
+  row_spec(2, bold = T, color = "white", background = "#D7261E")
+
+df8.1 <- bank %>% dplyr::filter(y=='yes') %>% select(age,job,marital,education, duration) %>%
+  group_by(education) %>% summarize(count=n(),'mean duration'=mean(duration),'median duration'=median(duration))
+kable(df8.1,caption='Success Cases') %>%
+  kable_styling(position='center',full_width = F) %>%
+  row_spec(1, bold = T, color = "white", background = "#D7261E")
+
+```
+
+# Finding #9 Last Phone Duration vs Final Outcome
+  * among all successful cases, majority of phone call fall under 200-300 mins range
+```{r echo=FALSE}
+df9 <- dplyr::filter(bank,y=='yes') %>% select(age,job,marital,education, balance,duration, poutcome) 
+
+hist(df9$duration,breaks=20,xlim=c(0,3000),ylim=c(0,100),main='Duration Distribution for All Success Cases')
+```
+
+# Finding #10 Previous Campaign vs Current Campaign
+  * ave contact times for previous campaign
+```{r echo=FALSE}
+df10 <- dplyr::filter(bank,previous!=0) %>% select(age,job,education, previous,poutcome) %>% arrange(previous) %>%
+  group_by(poutcome) %>% summarize(  ave_count=round(mean(previous),2)) %>% arrange(ave_count)
+
+kable(df10) %>%
+  kable_styling(position='center',full_width = F)
+
+row_nums <- mutate(bank, nnn = 1:n()) %>%
+dplyr::filter(poutcome == "success" ) %>%
+select(nnn) %>%
+.$nnn
+df10.1 <- data.frame(row_nums)
+```
+  * previous campaign carries forward 83 clients and 438 new clients join after current campaign, which expands all potential clients to 567
+```{r echo=FALSE}
+row_nums <- mutate(bank, nnn = 1:n()) %>%
+dplyr::filter(y == "yes" ) %>%
+select(nnn) %>%
+.$nnn
+df10.2 <- data.frame(row_nums)
+in_both <- nrow(data.frame(intersect(df10.1$row_nums,df10.2$row_nums)))
+new_joiner <- nrow(anti_join(df10.2,df10.1,by="row_nums"))
+all_clients <- nrow(full_join(df10.1,df10.2,by="row_nums"))
+demograph <- bind_cols(data.frame(in_both),data.frame(new_joiner),data.frame(all_clients))
+kable(demograph) %>%
+  kable_styling(position='center',full_width = F) 
+```
+

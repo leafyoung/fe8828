@@ -1,0 +1,155 @@
+---
+title: "Assignment 4"
+author: "Dong Jiaqi"
+date: "29 November 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(tidyverse)
+library(Hmisc)
+bank <- read.csv("https://goo.gl/PBQnBt", sep =";")
+```
+
+
+
+
+## Finding 1
+For people in different age, find the relationship between their balance and marital status. 
+
+People who are single or married tend have higher balance than those who are divorced.
+```{r, echo = TRUE}
+ggplot(bank, aes(age, balance))+ 
+  geom_point(aes(shape=marital))+
+  geom_smooth()
+```
+
+
+## Finding2
+Group people by their occupation and sort the group by the mean of balance and find the outcome of the previous outcome. 
+
+The technician and admin people worth more notice when doing the compaign since they have relatively more balance and the successful rate of compaign.
+```{r, echo=TRUE}
+ggplot(bank, mapping = aes(x = reorder(job, balance, FUN = mean),
+                           fill=poutcome))+
+  geom_bar()+ coord_flip()
+  
+```
+
+## Finding 3
+Group people by their occupation and find each group's default rate. 
+
+The chart shows that the entrepreneur has the greatest possibility of default.
+```{r, echo=TRUE}
+bank %>% 
+  group_by(job) %>%
+  summarise(default_n = sum(ifelse(default == "yes",1,0)),
+            count = n(),
+            default_rate = default_n/count)%>%
+  ggplot(.,aes(x=job, y=default_rate)) +
+  geom_bar(stat = "identity") + coord_flip()
+
+```
+
+## Finding 4 
+Split the age group into three and find the relationship between the balance and education level. 
+
+For people who have low educational level, their balance won't go up along with their growth. However, people who have a higher education, their balance will go up as they grow older.
+```{r, echo=TRUE}
+cutpoints <- quantile(bank$age, seq(0,1,length =4), na.rm = TRUE)
+bank$age_group <- cut(bank$age, cutpoints,include.lowest=TRUE)
+bank %>%
+  dplyr::filter(balance>0) %>%
+  ggplot(aes(age, balance)) +
+  geom_point(alpha = 0.3, col = "blue") +
+  facet_wrap(education ~ age_group, nrow =2) +
+  geom_smooth(method ="lm", se= FALSE, col = "darkblue")+
+  labs(title = "Bank Clients")
+
+```
+
+## Finding 5
+For each month, find the probablility density function of clients making calls. 
+
+At the end of Jan, there is sharp increase in making calls probably due to the cold wealther. Also, at the end of Nov, the calls increases dramatically probably because of the Thanksgiving day. 
+```{r, echo=TRUE}
+bank$month_n <- capitalize(as.character(bank$month))
+bank$month_n = factor(bank$month_n, levels = month.abb)
+bank %>%
+  ggplot(aes(day))+
+  geom_density() +
+  facet_wrap(~ month_n, nrow =2) +
+  labs(title = "Bank Clients Calls")
+```
+
+## Finding 6
+For people who have been contacted from the last compaign, find the duration between the last compaigns across different occupations. 
+
+For people who are blue collar and service, their average durations are relatively high. For the entrepreneur, housemaid, self-employed and students, their duration are relatively low.
+
+```{r, echo=TRUE}
+bank %>%
+  dplyr::filter(pdays > 0) %>%
+  ggplot() +
+  geom_boxplot(aes(y=pdays),outlier.alpha = 0.7) +
+  facet_wrap(~ job, nrow =2) 
+
+  
+```
+
+## Finding 7
+For each occupation, find the percentage of having housing loan. 
+
+The blue-collar people have the greatest percentage of having the housing loan.
+```{r, echo=TRUE}
+bank %>%
+  ggplot(aes(job,fill = housing ))+
+  geom_bar(position = "fill")
+```
+
+## Finding 8
+For each occupation, summarize the contact type. 
+
+For every occupation, the cellular is the most favorable way for contact.
+```{r, echo=TRUE}
+bank %>%
+  ggplot(aes(job, fill = contact)) +
+  geom_bar(position = "dodge")
+
+```
+
+## Finding 9
+For each of occupation, find whether there are relationship between age and balance. 
+
+The chart shows that technicians' balances are more concentrated compares to other groups. Also, people have a managment position tend to have a higher balance. 
+```{r, echo=TRUE}
+bank %>%
+  ggplot(aes(age,balance)) +
+  geom_bin2d(bins = 70)+
+  facet_wrap(~job, nrow=2)
+  
+```
+
+## Finding 10
+Find which kind of occupation have the largest number of term deposit subscriber. 
+
+Among the term subcribers, people who are in management position take the largest propotion.
+
+```{r, echo=TRUE}
+bank %>%
+  group_by(job) %>%
+  summarise(outcome_n = sum(ifelse(y == "no",1,0)),
+            outcome_y = sum(ifelse(y == "yes",1,0))) %>%
+  ggplot(aes(x = "", y=outcome_y, fill = factor(job))) + 
+  geom_bar(width = 1, stat = "identity") +
+  theme(axis.line = element_blank(), 
+        plot.title = element_text(hjust=0.5)) + 
+  labs(fill="job", 
+       x=NULL, 
+       y=NULL, 
+       title="Pie Chart of term deposit subscriber")+
+  coord_polar(theta = "y", start=0)
+  
+```

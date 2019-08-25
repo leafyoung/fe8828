@@ -1,0 +1,164 @@
+---
+title: "R Markdown assignment 3#"
+author: "Abhishek Vijaykumar"
+output: pdf_document
+date: "November 26, 2018"
+header-includes:
+- \usepackage{leading}
+- \leading{18pt}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+###Here are the ten insights into the Banking Data
+
+
+```{r Import Bank, include=FALSE}
+bank<-read.csv("https://goo.gl/PBQnBt", sep=";")
+library(tidyverse)
+library(kableExtra)
+
+```
+
+## Including Plots
+###1) Distribution of People who have cellular across each age
+#### Observation - Mostly people between the ages of 30 and 40 have cellular
+
+
+```{r Query 1, echo=FALSE}
+suppressWarnings(group_by(bank,age)%>%summarise(contact_count=sum(ifelse(contact=="cellular",1,0)))%>%ungroup%>%select(age,contact_count)%>%plot(type="h",ylab="Count of People who have Cellular"))
+```
+
+
+###2) Average Balance of people based on profession 
+#### Observation - Retired people have the highest balance, believeable, but housemaids have the second highest? The next Query will try to find data outliers
+
+
+```{r Query 2, echo=FALSE}
+group_by(bank,job)%>%summarize(avgbal=mean(balance))%>%plot(type="l",las=2,ylab="Average Balance",xlab="Job")
+```
+
+
+###3) Looking for Outliers in Bank balance in each profession by seeing the difference between mean and median for each profession
+#### Observation - The housemaid average balance has the highest deviation of mean with respect to median relative to any other job group
+
+
+```{r Query 3, echo=FALSE}
+df<-group_by(bank,job)%>%summarise(mean=mean(balance),median=median(balance))%>%
+  mutate(.,Deviation=((mean/median)-1)*100)%>%arrange(Deviation)
+plot(df$Deviation,type = "b",xlab="Job",ylab="Deviation of Mean from Median")
+axis(1,1:12,df$job[1:12],las=2)
+```
+
+
+#### Interesting sidenote- The highest Bank balance for a housemaid is almost 27,000! the sixth highest balance in the entire dataset!
+#### This number is very suspicious for a single person with only a Primary level education, i'll leave the rest to the imagination
+ 
+
+```{r Query a, echo=FALSE}
+group_by(bank,job)%>%filter(job=="housemaid")%>%arrange(balance)%>%select(age,job,marital,education,balance)%>%tail(1)%>%kable()%>%
+kable_styling(full_width = F, position = "left")
+```
+
+
+###4) Which employment category is most frequently contacted by bank employees
+#### The highest is the "admin" group, the student is second highest, which makes sense as banks see younger people having a higher future potential
+
+```{r Query 4, echo=FALSE}
+group_by(bank,job)%>%summarize(avgbal=mean(pdays))%>%plot(type="l",las=2,ylab="Average Number of Times Contacted")
+```
+
+
+###5) We look at the average number of times each job group is contacted by the bank to see whether the campaigning is effective by checking the percent of those groups of people who have taken a housing/personal loan
+#### We do see a correlation between the number of calls a particular job group receives and the percentage of that group that has taken a loan
+
+```{r Query 5, echo=FALSE}
+
+group_by(bank,job)%>%filter(pdays>0& (sum(loan == "yes") / n())>0)%>%
+    summarise(avgcontact=mean(pdays),percentHousing=sum(housing == "yes") / n(),
+                                                 percentLoan=sum(loan == "yes") / n())%>%arrange(percentHousing)%>%kable() %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+
+
+###6) Which bucket of Call duration has the highest probability of getting a customer
+#### Here we confirm that the longer a person is on a call, the more likely he is to agree to opening a term deposit (Column "y")
+
+```{r Query 6, echo=FALSE}
+#4
+mutate(bank,duration=case_when(
+  duration<10~"1-10 Seconds",
+  duration<20~"11-20 Seconds",
+  duration<30~"21-30 Seconds",
+  duration<40~"31-40 Seconds",
+  duration<50~"41-50 Seconds",
+  duration<60~"50s-1minutes",
+  duration<120~"1-2minutes",
+  duration<180~"2-3minutes",
+  duration<240~"3-4minutes",
+  duration<300~"4-5minutes",
+  duration<600~"5-10minutes",
+  duration<900~"10-15minutes",
+  duration<1200~"15-20minutes",
+  duration<2400~"20-30minutes",
+  duration<3600~">30minutes"
+))%>%group_by(.,duration)%>%summarise(percentyes=sum(y == "yes") / n())%>%arrange(percentyes)%>%kable() %>%
+  kable_styling(full_width = F, position = "left")
+
+```
+
+###7) Cost of Marriage!
+#### Here we see the effect of bank balance on married people grouped by their job (Marriage is definetly expensive, Divorce is even worse!)
+
+
+```{r Query 7, echo=FALSE}
+group_by(bank,job,marital)%>%summarise(avg_bal=mean(balance))%>%arrange(job)%>%kable() %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+
+
+###8) Which age group is most likely to open a term deposit account/ Which age group should the bank target?
+#### Here we see that the target group should be people over the age of 60
+
+```{r Query 8, echo=FALSE}
+mutate(bank,age=case_when(
+  age<24~"<24",
+  age<28~"24-28",
+  age<32~"28-32",
+  age<36~"32-36",
+  age<40~"36-40",
+  age<44~"40-44",
+  age<48~"44-48",
+  age<52~"48-52",
+  age<56~"52-56",
+  age<60~"56-60",
+  age<70~"60-70",
+  age<80~"70-80",
+  age<90~"80-90",
+  TRUE~">90"
+))%>%group_by(.,age)%>%summarise(percentyes=sum(y == "yes") / n())%>%arrange(percentyes)%>%arrange(age)%>%kable() %>%
+  kable_styling(full_width = F, position = "left")
+```
+
+
+###9) Percentage of defaults according to profession
+#### Here we see that the profession group that defaults the most is entrepreneurs
+
+
+```{r Query 9, echo=FALSE}
+group_by(bank,job)%>%summarise(defaultpercent=sum(default=="yes")/n())%>%arrange(defaultpercent)%>%plot(las=2,ylab="Percentage that Defaulted")
+```
+
+###10) Does having a higher education make you richer, in each profession 
+#### We see that this is not necessarily true! professions such as the technician and management defy this. We also see this in retired people, indicating that by the time you get that old, your education wont make much difference. Not something I believe in but this is what the data says. Education does seem to matter if you're unemployed though!
+
+```{r Query 10, echo=FALSE}
+group_by(bank,job,education)%>%filter(education!="unknown")%>%summarise(avg_bal=mean(balance))%>%arrange(job)%>%kable()%>%
+  kable_styling(full_width = F, position = "left")
+```
+

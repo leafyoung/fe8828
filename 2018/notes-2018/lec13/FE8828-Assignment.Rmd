@@ -136,6 +136,35 @@ Note: that simulation would show some acceptable level of difference.
     ...
     
 ```{r include = FALSE, eval = FALSE}
+days <- 20
+
+S <- 100
+K <- 100
+sigma <- 0.5 # realized vol can be 0.3 for [1] or 0.5 for [2]
+drift <- 0 # drift = r - q
+N <- days / 20
+timestep <- 20 / 250
+
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+
+opt_price <- GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price
+delta <- GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+vega <- GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+
+# ss is the simulated price movement for N days
+replicate(500,
+  {
+    ss <- rep(S, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+    pnl <- (-1) * opt_price + max(0, ss - K) + (-1) * delta * (ss - K)
+    pnl
+  }) -> aa
+
+vega_pnl <- vega * (sigma - 0.3) * sqrt(20 / 250)
+vega_pnl
+
+plot(aa - vega_pnl)
+
 # Below line returns the realized vol
 sd(log(unlist(part_c) / 100)) / sqrt(days / 250)
 

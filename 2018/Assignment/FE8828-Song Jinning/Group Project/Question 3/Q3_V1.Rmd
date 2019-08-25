@@ -1,0 +1,304 @@
+---
+title: "Web R Project Question 3"
+output:
+  html_document:
+    df_print: paged
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(knitr)
+library(DT)
+library(xtable)
+library(kableExtra)
+library(formattable)
+library(ggplot2)
+library(gridExtra)
+library(xts)
+library(tidyquant)
+library(fOptions)
+library(tseries)
+library(chron)
+library(DescTools)
+library(data.table)
+
+```
+
+###Data: salesforce(CRM) stock from 2017/12/14 to 2018/12/13
+```{r}
+#Read Data??? 
+stock_data <- read.csv("Stock2.csv")
+#Get starting date and end date.
+stock_data<-xts(x=stock_data[,-1,drop=F],order.by=as.Date(stock_data$Date,format="%m/%d/%Y"))
+is.xts(stock_data)
+dates <- index(stock_data)
+
+
+#Create a df with date column
+df <- tibble(date = dates)
+df$Close <- coredata(stock_data[, "Close"])
+df$vol <- coredata(stock_data[,"IV30"])
+
+#Initialize Parameters
+r <- 0.8 / 100
+# annual dividend yield is 1.8% as of 30th May 2018
+b <- r-1.8 /100
+quantity <- 100
+
+#add expire date to each record
+df_output <- df[1:231,] %>%
+  mutate(Final_PnL = 0, Option_PnL = 0, Stock_PnL = 0, MaxDrawdown = 0, Sharpe = 0)
+```
+
+###Part 1: One Trade Analysis:
+###Selected Period: 2018/11/14 - 2018/12/13
+```{r oneTrade, include = FALSE}
+i <- 1
+  start_date <- as.numeric(df[i,1])
+  end_date <- start_date + 29
+  start_price <- as.numeric(df[i,2])
+  start_vol <- as.numeric(df[i,3])
+  
+  temp <- tibble(date = dates[dates<=end_date & dates>=start_date]) %>% 
+    rowwise() %>%
+    mutate(Close = as.numeric(stock_data[date,"Close"])) %>% 
+    ungroup()
+  
+  #Option Side use call option
+  df_opt <- temp %>%
+    mutate(premium = quantity * GBSOption(TypeFlag = "c",
+                                          S=temp$Close,
+                                          X=start_price,
+                                          Time=(end_date-as.numeric(temp$date))/ 365,
+                                          r , # interest rate
+                                          b, # dividend yield
+                                          start_vol/100)@price) %>%
+    ungroup %>%
+    mutate(Option_DoD_PnL = ifelse(as.numeric(temp$date) == start_date,
+                                   # On the 1st date, we count the cost of buying the option
+                                   0,
+                                   premium-shift(premium)))
+  
+  #Hedge Side
+  df_hedge <- df_opt %>%
+    mutate(delta_hedge = GBSGreeks("delta", "c", 
+                                   S=temp$Close,
+                                   X=start_price, 
+                                   Time=(end_date-as.numeric(temp$date))/ 365,
+                                   r, 
+                                   b, 
+                                   start_vol/100) * quantity * (-1)) %>%
+    ungroup() %>%
+    mutate(Hedging_DoD_PnL = ifelse(as.numeric(temp$date)  == start_date | as.numeric(temp$date) == end_date,
+                                    0,(temp$Close-shift(temp$Close))*shift(delta_hedge)))
+  
+  #Time to expiry & Cost of Hedge
+  df_total <-mutate(df_hedge,Time_to_Expiry = end_date - as.numeric(temp$date),
+           Cost_of_Hedging = temp$Close*delta_hedge)
+  
+  #Daily PnL (combined):
+  df_total <- mutate(df_total,DoD_PnL = df_opt$Option_DoD_PnL + df_hedge$Hedging_DoD_PnL,
+                     Option_DoD_PnL=df_opt$Option_DoD_PnL,
+                     Hedging_DoD_PnL=df_hedge$Hedging_DoD_PnL)
+  
+  
+  #Total PnL (combined)
+  df_total <- mutate(df_total,Total_Cum_PnL=cumsum(df_total$DoD_PnL),
+                     Option_Cum_PnL = cumsum(df_total$Option_DoD_PnL),
+                     Stock_Cum_PnL = cumsum(df_total$Hedging_DoD_PnL))
+  
+  #Max Drawdown: accumulative of Daily PnL, max - min.
+  max_drawdown <- df_total %>%
+    ungroup() %>%
+    mutate(PnL = cumsum(DoD_PnL)) %>%
+    {
+      xs <- .$PnL
+      max(cummax(xs) - cummin(xs))
+    }
+  
+  #Sharpe ratio
+  sharpe <- (mean(df_total$DoD_PnL) - r)/stdev(df_total$DoD_PnL)
+```
+### 1. Daily PnL vs. Time to expiry
+```{r dailyPnL}
+ggplot(df_total) + 
+  geom_line(aes(end_date - as.numeric(date),DoD_PnL, color = "DoD_PnL")) +
+  geom_line(aes(end_date - as.numeric(date),Hedging_DoD_PnL, color = "Stock_DoD_PnL")) +
+  geom_line(aes(end_date - as.numeric(date),Option_DoD_PnL, color = "Option_DoD_PnL")) +
+  ggtitle("Daily PnL vs. Time to Expiry") +
+  xlab("Time to Expiry") +
+  scale_x_reverse()
+
+```
+###2. Final PnL
+```{r finalPnL}
+cat(paste0("Final PnL: $", sprintf("%.2f",df_total$Total_Cum_PnL[nrow(df_total)]), ".\n",
+           "Option PnL: $", sprintf("%.2f",df_total$Option_Cum_PnL[nrow(df_total)]), ".\n",
+           "Stock PnL: $", sprintf("%.2f",df_total$Stock_Cum_PnL[nrow(df_total)]), ".\n" ))
+
+```
+### 3. Max Drawdown:
+```{r maxDrawdown}
+cat(paste0("MaxDrawdown: $", sprintf("%.2f",max_drawdown), ".\n" ))
+```
+### 4. Sharpe Ratio:
+```{r sharpe}
+cat(paste0("Sharpe Ratio: ", sprintf("%.3f",sharpe), ".\n" ))
+```
+
+###Part 2: Backtest: 
+### Every day from 2017/12/14 to 2018/11/14 used as start date
+```{r backtest, include = FALSE}
+for (i in 1:231){
+  #Initialize the dates af a 30-day trading period
+  start_date <- as.numeric(df[i,1])
+  end_date <- start_date + 29
+  start_price <- as.numeric(df[i,2])
+  start_vol <- as.numeric(df[i,3])
+  
+  temp <- tibble(date = dates[dates<=end_date & dates>=start_date]) %>% 
+    rowwise() %>%
+    mutate(Close = as.numeric(stock_data[date,"Close"])) %>% 
+    ungroup()
+  
+  #Option Side use call option
+  df_opt <- temp %>%
+    mutate(premium = quantity * GBSOption(TypeFlag = "c",
+                                          S=temp$Close,
+                                          X=start_price,
+                                          Time=(end_date-as.numeric(temp$date))/ 365,
+                                          r , # interest rate
+                                          b, # dividend yield
+                                          start_vol/100)@price) %>%
+    ungroup %>%
+    mutate(Option_DoD_PnL = ifelse(as.numeric(temp$date) == start_date,
+                                   # On the 1st date, we count the cost of buying the option
+                                   0,
+                                   premium-shift(premium)))
+  
+  #Hedge Side
+  df_hedge <- df_opt %>%
+    mutate(delta_hedge = GBSGreeks("delta", "c", 
+                                   S=temp$Close,
+                                   X=start_price, 
+                                   Time=(end_date-as.numeric(temp$date))/ 365,
+                                   r, 
+                                   b, 
+                                   start_vol/100) * quantity * (-1)) %>%
+    ungroup() %>%
+    mutate(Hedging_DoD_PnL = ifelse(as.numeric(temp$date)  == start_date | as.numeric(temp$date) == end_date,
+                                    0,(temp$Close-shift(temp$Close))*shift(delta_hedge)))
+  
+  #Time to expiry & Cost of Hedge
+  df_total <-mutate(df_hedge,Time_to_Expiry = end_date - as.numeric(temp$date),
+           Cost_of_Hedging = temp$Close*delta_hedge)
+  
+  #Daily PnL (combined):
+  df_total <- mutate(df_total,DoD_PnL = df_opt$Option_DoD_PnL + df_hedge$Hedging_DoD_PnL,
+                     Option_DoD_PnL=df_opt$Option_DoD_PnL,
+                     Hedging_DoD_PnL=df_hedge$Hedging_DoD_PnL
+  )
+  
+  #Total PnL (combined)
+  df_total <- mutate(df_total,Total_Cum_PnL=cumsum(df_total$DoD_PnL),
+                     Option_Cum_PnL = cumsum(df_total$Option_DoD_PnL),
+                     Stock_Cum_PnL = cumsum(df_total$Hedging_DoD_PnL))
+  
+  #Max Drawdown: accumulative of Daily PnL, max - min.
+  max_drawdown <- df_total %>%
+    ungroup() %>%
+    mutate(PnL = cumsum(DoD_PnL)) %>%
+    {
+      xs <- .$PnL
+      max(cummax(xs) - cummin(xs))
+    }
+  
+  #Sharpe ratio
+  sharpe <- (mean(df_total$DoD_PnL) - r)/stdev(df_total$DoD_PnL)
+  
+  #Final PnL
+  df_output[i,4] <- df_total$Total_Cum_PnL[nrow(df_total)]
+  
+  #Option PnL
+  df_output[i,5] <- df_total$Option_Cum_PnL[nrow(df_total)]
+  
+  #Stock PnL
+  df_output[i,6] <- df_total$Stock_Cum_PnL[nrow(df_total)]
+  
+  #Max Drawdown
+  df_output[i,7] <- max_drawdown
+  
+  #Sharpe Ratio
+  df_output[i,8] <- sharpe
+}
+```
+
+#### dashed line: Mean value
+#### dotted line: Median value
+### 1. Distribution of Final PnL
+```{r FinalPnLDistr}
+ggplot(df_output, aes(x = Final_PnL)) + 
+  geom_density(color = "black") +
+  geom_vline(aes(xintercept=median(df_output$Final_PnL)), color = "red", linetype = "dotted", size = 2) +
+  geom_vline(aes(xintercept=mean(df_output$Final_PnL)), color = "blue", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Final PnL")
+```
+### 2. Distribution of Final PnL split into option and stock
+```{r OptStPnLDistr}
+ggplot(df_output) + 
+  geom_density(aes(Final_PnL, fill = "Final_PnL"), alpha = 0.4) + 
+  geom_density(aes(Option_PnL, fill = "Option_PnL"), alpha = 0.4) +
+  geom_density(aes(Stock_PnL, fill = "Stock_PnL"), alpha = 0.4) + 
+  ggtitle("Distribution of Final PnL")
+```
+
+### 3. Distribution of Max Drawdown
+```{r MaxDrawdownPlot}
+ggplot(df_output, aes(x = MaxDrawdown)) + 
+  geom_density(color = "black") +
+  geom_vline(aes(xintercept=mean(df_output$MaxDrawdown)), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept=median(df_output$MaxDrawdown)), color = "red", linetype = "dotted", size = 2) +
+  ggtitle("Distribution of Max Drawdown")
+```
+
+### 4. Final PnL vs. Option Expiry Date
+```{r PnLvsExpiry}
+ggplot(df_output) + 
+  geom_point(aes(x = date+29, y = Final_PnL)) +
+  geom_smooth(aes(x = date+29, y = Final_PnL)) +
+  geom_line(aes(x = date+29, y = Final_PnL)) +
+  ggtitle("Final PnL vs. Option Expiry Date") +
+  xlab("Expiry Date")
+```
+
+### 5. Distribution of Sharpe Ratio
+```{r Sharpe}
+ggplot(df_output, aes(x = Sharpe)) + 
+  geom_density(color = "black") +
+  geom_vline(aes(xintercept=mean(df_output$Sharpe)), color = "blue", linetype = "dashed", size = 1) +
+  geom_vline(aes(xintercept=median(df_output$Sharpe)), color = "red", linetype = "dotted", size = 2) +
+  ggtitle("Distribution of Sharpe Ratio")
+```
+
+###Part 3: 2nd round analysis: strike level of ~25% delta
+```{r}
+start_price=as.numeric(df$Close[nrow(df)])
+start_vol = as.numeric(df$vol[nrow(df)])
+delta=0.5
+while( round(delta,2) !=0.25 )
+{ 
+  
+  delta =GBSGreeks("delta", "c", 
+         S=as.numeric(df$Close[nrow(df)]),
+         X=start_price, 
+         Time=30/ 365,
+          r, 
+          b, 
+          start_vol/100)
+  
+  start_price = start_price + 0.1
+
+}
+start_price
+```

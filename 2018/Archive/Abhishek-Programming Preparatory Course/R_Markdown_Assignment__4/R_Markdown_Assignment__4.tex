@@ -1,0 +1,399 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={R Markdown assignment 4\#},
+            pdfauthor={Abhishek Vijaykumar},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{R Markdown assignment 4\#}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Abhishek Vijaykumar}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{December 3rd, 2018}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+
+\usepackage{leading}
+\leading{18pt}
+
+\begin{document}
+\maketitle
+
+\subsection{R Markdown}\label{r-markdown}
+
+\subsubsection{Here are the ten insights into the Banking Data using
+GGPLOT}\label{here-are-the-ten-insights-into-the-banking-data-using-ggplot}
+
+\subsection{Including Plots}\label{including-plots}
+
+\subsubsection{1) Distribution of contact method across
+age}\label{distribution-of-contact-method-across-age}
+
+\paragraph{Observation - Mostly people below the age of 60 have
+celephones, the older generations mostly still use
+telephones}\label{observation---mostly-people-below-the-age-of-60-have-celephones-the-older-generations-mostly-still-use-telephones}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(bank) }\OperatorTok{+}
+\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ age,}\DataTypeTok{fill=}\NormalTok{contact)) }\OperatorTok{+}\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Distribution of contact with age"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"age"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Count"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 1-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(bank) }\OperatorTok{+}
+\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ age,}\DataTypeTok{fill=}\NormalTok{contact),}\DataTypeTok{position=}\StringTok{"fill"}\NormalTok{) }\OperatorTok{+}\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Distribution of contact with age"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"age"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Count"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 1-2.pdf}
+
+\subsubsection{2) Average Balance of people based on
+profession}\label{average-balance-of-people-based-on-profession}
+
+\paragraph{Observation - Retired people have the highest balance,
+believeable, but housemaids have the second highest? The next Query will
+try to findout which profession has data points that deviate from the
+median}\label{observation---retired-people-have-the-highest-balance-believeable-but-housemaids-have-the-second-highest-the-next-query-will-try-to-findout-which-profession-has-data-points-that-deviate-from-the-median}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{()}\OperatorTok{+}
+\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{data =} \KeywordTok{group_by}\NormalTok{(bank, job) }\OperatorTok{%>%}
+\KeywordTok{summarize}\NormalTok{(}\DataTypeTok{avgbal =} \KeywordTok{mean}\NormalTok{(balance)) }\OperatorTok{%>%}\StringTok{ }\NormalTok{ungroup,}
+\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ job, }\DataTypeTok{y =}\NormalTok{ avgbal), }\DataTypeTok{size =} \DecValTok{4}\NormalTok{, }\DataTypeTok{color=}\StringTok{"blue"}\NormalTok{,}\DataTypeTok{alpha =} \DecValTok{1}\OperatorTok{/}\DecValTok{3}\NormalTok{, }\DataTypeTok{inherit.aes =} \OtherTok{FALSE}\NormalTok{) }\OperatorTok{+}\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Average bank balance by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"job"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Avg Bank Balance"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 2-1.pdf}
+
+\subsubsection{3) Looking for Outliers in Bank balance in each
+profession by examinimg the boxplot for the
+data}\label{looking-for-outliers-in-bank-balance-in-each-profession-by-examinimg-the-boxplot-for-the-data}
+
+\paragraph{\texorpdfstring{The two outliers present under ``retired''
+and ``entrepreneur'' make it difficult to look at the box
+plot}{The two outliers present under retired and entrepreneur make it difficult to look at the box plot}}\label{the-two-outliers-present-under-retired-and-entrepreneur-make-it-difficult-to-look-at-the-box-plot}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(bank, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ job, }\DataTypeTok{y =}\NormalTok{ balance))}\OperatorTok{+}\StringTok{ }\KeywordTok{geom_boxplot}\NormalTok{() }\OperatorTok{+}\StringTok{ }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"BoxPlot for average bank balance by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"job"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Bank Balance"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 3-1.pdf}
+
+\paragraph{\texorpdfstring{Once these are removed, we are able to
+clearly see how the ``housemaid'' and ``retired'' profession category is
+being impacted by the presence of
+outliers}{Once these are removed, we are able to clearly see how the housemaid and retired profession category is being impacted by the presence of outliers}}\label{once-these-are-removed-we-are-able-to-clearly-see-how-the-housemaid-and-retired-profession-category-is-being-impacted-by-the-presence-of-outliers}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df<-}\KeywordTok{arrange}\NormalTok{(bank,}\KeywordTok{desc}\NormalTok{(balance))}
+\NormalTok{df}\OperatorTok{$}\NormalTok{balance[}\DecValTok{1}\OperatorTok{:}\DecValTok{2}\NormalTok{]=}\KeywordTok{mean}\NormalTok{(df}\OperatorTok{$}\NormalTok{balance)}
+\KeywordTok{ggplot}\NormalTok{(df, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ job, }\DataTypeTok{y =}\NormalTok{ balance))}\OperatorTok{+}\StringTok{ }\KeywordTok{geom_boxplot}\NormalTok{() }\OperatorTok{+}\StringTok{ }\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"BoxPlot for average bank balance by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"job"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Bank Balance"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"BoxPlot for average bank balance by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"job"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Bank Balance"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query a-1.pdf}
+
+\subsubsection{4) Which employment category is most frequently contacted
+by bank
+employees}\label{which-employment-category-is-most-frequently-contacted-by-bank-employees}
+
+\paragraph{\texorpdfstring{``Pdays'' is the days since the last time the
+person was contacted, the more left skewed the distribution, the more
+number of times that particular profession group was contacted, from
+this we see that entreprenuer's are amongst the most frequently while
+unemployed people are amongst the
+least}{Pdays is the days since the last time the person was contacted, the more left skewed the distribution, the more number of times that particular profession group was contacted, from this we see that entreprenuer's are amongst the most frequently while unemployed people are amongst the least}}\label{pdays-is-the-days-since-the-last-time-the-person-was-contacted-the-more-left-skewed-the-distribution-the-more-number-of-times-that-particular-profession-group-was-contacted-from-this-we-see-that-entreprenuers-are-amongst-the-most-frequently-while-unemployed-people-are-amongst-the-least}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(bank, }\KeywordTok{aes}\NormalTok{(pdays)) }\OperatorTok{+}
+\KeywordTok{geom_density}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ dplyr}\OperatorTok{::}\KeywordTok{filter}\NormalTok{(bank, pdays }\OperatorTok{>}\DecValTok{0}\NormalTok{),}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{fill =}\NormalTok{ job), }\DataTypeTok{alpha =} \FloatTok{0.5}\NormalTok{) }\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Desnity plot for Pdays grouped by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"Pdays"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Count"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 4-1.pdf}
+
+\subsubsection{9) Proportion of defaults according to
+profession}\label{proportion-of-defaults-according-to-profession}
+
+\paragraph{Here we see that the profession group that defaults the most
+is
+entrepreneurs}\label{here-we-see-that-the-profession-group-that-defaults-the-most-is-entrepreneurs}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(}\DataTypeTok{data =}\NormalTok{ bank, }\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ job, }\DataTypeTok{fill =}\NormalTok{ default)) }\OperatorTok{+}
+\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{position=}\StringTok{"fill"}\NormalTok{)  }\OperatorTok{+}
+\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{coord_flip}\NormalTok{()}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Filled Bar Plot for the default count"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"Pdays"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Count"}\NormalTok{,}\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 5-1.pdf}
+
+\subsubsection{6) Which bucket of Call duration has the highest
+probability of getting a
+customer}\label{which-bucket-of-call-duration-has-the-highest-probability-of-getting-a-customer}
+
+\paragraph{\texorpdfstring{Here we confirm that the longer a person is
+on a call, the more likely he is to agree to opening a term deposit
+(Column
+``y'')}{Here we confirm that the longer a person is on a call, the more likely he is to agree to opening a term deposit (Column y)}}\label{here-we-confirm-that-the-longer-a-person-is-on-a-call-the-more-likely-he-is-to-agree-to-opening-a-term-deposit-column-y}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df<-bank}
+\NormalTok{df}\OperatorTok{$}\NormalTok{duration_quantiles <-}\StringTok{ }\KeywordTok{cut}\NormalTok{(df}\OperatorTok{$}\NormalTok{duration, }\KeywordTok{quantile}\NormalTok{(df}\OperatorTok{$}\NormalTok{duration, }\KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DataTypeTok{length =} \DecValTok{15}\NormalTok{), }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{))}
+\KeywordTok{ggplot}\NormalTok{(df) }\OperatorTok{+}
+\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{group_by}\NormalTok{(df,duration_quantiles)}\OperatorTok{%>%}\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{percentyes=}\KeywordTok{sum}\NormalTok{(y }\OperatorTok{==}\StringTok{ "yes"}\NormalTok{) }\OperatorTok{/}\StringTok{ }\KeywordTok{n}\NormalTok{())}\OperatorTok{%>%}\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{filter}\NormalTok{(duration_quantiles}\OperatorTok{!=}\StringTok{"NA"}\NormalTok{)}\OperatorTok{%>%}\KeywordTok{arrange}\NormalTok{(percentyes)}\OperatorTok{%>%}\KeywordTok{arrange}\NormalTok{(duration_quantiles),}\DataTypeTok{mapping=}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{duration_quantiles,}\DataTypeTok{y=}\NormalTok{percentyes),}\DataTypeTok{alpha =} \DecValTok{1}\OperatorTok{/}\DecValTok{2}\NormalTok{,}\DataTypeTok{size =} \DecValTok{4}\NormalTok{, }\DataTypeTok{color=}\StringTok{"blue"}\NormalTok{)}\OperatorTok{+}
+\KeywordTok{theme_bw}\NormalTok{(}\DataTypeTok{base_size =} \DecValTok{10}\NormalTok{) }\OperatorTok{+}\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Duration Quantiles"}\NormalTok{, }\DataTypeTok{y =} \KeywordTok{expression}\NormalTok{(}\StringTok{"Percent Agreed to Open Account"}\NormalTok{)) }\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Longer Calls work better"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 6-1.pdf}
+
+\subsubsection{7) Cost of Marriage!}\label{cost-of-marriage}
+
+\paragraph{Here we see the effect of bank balance on married people
+grouped by their job.The plot on the left suggests that marriage is
+quite expensive for most professions, divorce even more so! The plot on
+the right however, does not show any change in bank balance induced by
+marital
+status}\label{here-we-see-the-effect-of-bank-balance-on-married-people-grouped-by-their-job.the-plot-on-the-left-suggests-that-marriage-is-quite-expensive-for-most-professions-divorce-even-more-so-the-plot-on-the-right-however-does-not-show-any-change-in-bank-balance-induced-by-marital-status}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{upperplot<-}\KeywordTok{ggplot}\NormalTok{()}\OperatorTok{+}\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{group_by}\NormalTok{(bank,job,marital)}\OperatorTok{%>%}\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{avg_bal=}\KeywordTok{mean}\NormalTok{(balance))}\OperatorTok{%>%}\KeywordTok{arrange}\NormalTok{(job),}\DataTypeTok{mapping=}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{job,}\DataTypeTok{y=}\NormalTok{avg_bal,}\DataTypeTok{color=}\NormalTok{marital))}\OperatorTok{+}\KeywordTok{theme}\NormalTok{(}\DataTypeTok{axis.text.x =} \KeywordTok{element_text}\NormalTok{(}\DataTypeTok{angle =} \DecValTok{90}\NormalTok{, }\DataTypeTok{hjust =} \DecValTok{1}\NormalTok{))}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Point Plot for Average Bank Balance grouped by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"Job"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Avg Bank Bal"}\NormalTok{,}\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\NormalTok{centerplot<-}\KeywordTok{ggplot}\NormalTok{( bank) }\OperatorTok{+}
+\KeywordTok{geom_point}\NormalTok{(}\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{age , }\DataTypeTok{y =}\NormalTok{balance ,}\DataTypeTok{color=}\NormalTok{marital)) }\OperatorTok{+}
+\KeywordTok{facet_wrap}\NormalTok{(.}\OperatorTok{~}\NormalTok{job , }\DataTypeTok{nrow =} \DecValTok{5}\NormalTok{)}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Point Plot for Average Bank Balance grouped by profession"}\NormalTok{,}\DataTypeTok{x =} \StringTok{"age"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Avg Bank Bal"}\NormalTok{,}\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\KeywordTok{grid.arrange}\NormalTok{(upperplot, centerplot,}\DataTypeTok{ncol=}\DecValTok{2}\NormalTok{, }\DataTypeTok{nrow=}\DecValTok{1}\NormalTok{,}
+\DataTypeTok{widths=}\KeywordTok{c}\NormalTok{(}\DecValTok{5}\NormalTok{,}\DecValTok{5}\NormalTok{), }\DataTypeTok{heights=}\KeywordTok{c}\NormalTok{(}\DecValTok{8}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 7-1.pdf}
+
+\subsubsection{8) Which age group is most likely to open a term deposit
+account/ Which age group should the bank
+target?}\label{which-age-group-is-most-likely-to-open-a-term-deposit-account-which-age-group-should-the-bank-target}
+
+\paragraph{Here we see that the target group should be people over the
+age bucket of 58-87 are most likely to open a term deposit accout with
+the
+bank}\label{here-we-see-that-the-target-group-should-be-people-over-the-age-bucket-of-58-87-are-most-likely-to-open-a-term-deposit-accout-with-the-bank}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df<-bank}
+\NormalTok{df}\OperatorTok{$}\NormalTok{age_quantiles <-}\StringTok{ }\KeywordTok{cut}\NormalTok{(df}\OperatorTok{$}\NormalTok{age, }\KeywordTok{quantile}\NormalTok{(df}\OperatorTok{$}\NormalTok{age, }\KeywordTok{seq}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DataTypeTok{length =} \DecValTok{15}\NormalTok{), }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{))}
+\KeywordTok{ggplot}\NormalTok{(df) }\OperatorTok{+}
+\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{group_by}\NormalTok{(df,age_quantiles)}\OperatorTok{%>%}\KeywordTok{summarise}\NormalTok{(}\DataTypeTok{percentyes=}\KeywordTok{sum}\NormalTok{((y }\OperatorTok{==}\StringTok{ "yes"}\NormalTok{) }\OperatorTok{/}\StringTok{ }\KeywordTok{n}\NormalTok{()))}\OperatorTok{%>%}\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{filter}\NormalTok{(age_quantiles}\OperatorTok{!=}\StringTok{"NA"}\NormalTok{)}\OperatorTok{%>%}\KeywordTok{arrange}\NormalTok{(percentyes)}\OperatorTok{%>%}\KeywordTok{arrange}\NormalTok{(age_quantiles),}\DataTypeTok{mapping=}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x=}\NormalTok{age_quantiles,}\DataTypeTok{y=}\NormalTok{percentyes),}\DataTypeTok{alpha =} \DecValTok{1}\OperatorTok{/}\DecValTok{2}\NormalTok{,}\DataTypeTok{size =} \DecValTok{4}\NormalTok{, }\DataTypeTok{color=}\StringTok{"blue"}\NormalTok{)}\OperatorTok{+}
+\KeywordTok{theme_bw}\NormalTok{(}\DataTypeTok{base_size =} \DecValTok{10}\NormalTok{) }\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Age quantile"}\NormalTok{, }\DataTypeTok{y =} \KeywordTok{expression}\NormalTok{(}\StringTok{"Percent Agreed to Open Account"}\NormalTok{)) }\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Target Age Group for Banks"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 8-1.pdf}
+
+\subsubsection{9) Does having a higher education make you richer, in
+each profession
+?}\label{does-having-a-higher-education-make-you-richer-in-each-profession}
+
+\paragraph{We do not see many blue spots rising above the others in many
+cases, we do see a few in the entrepreneur profession, but not too many.
+We can say that education does not make you richer (according to the
+data!). We also have a chance to see how the bank balance varies by
+profession, no particular group seems to be dominating the roster here.
+(note- turns out the person who spoke to the bank employee for 3000
+seconds was infact unemployed, not
+surprising!)}\label{we-do-not-see-many-blue-spots-rising-above-the-others-in-many-cases-we-do-see-a-few-in-the-entrepreneur-profession-but-not-too-many.-we-can-say-that-education-does-not-make-you-richer-according-to-the-data.-we-also-have-a-chance-to-see-how-the-bank-balance-varies-by-profession-no-particular-group-seems-to-be-dominating-the-roster-here.-note--turns-out-the-person-who-spoke-to-the-bank-employee-for-3000-seconds-was-infact-unemployed-not-surprising}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+ \KeywordTok{ggplot}\NormalTok{(bank, }\KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ duration, }\DataTypeTok{y =}\NormalTok{ balance)) }\OperatorTok{+}\StringTok{ }\KeywordTok{geom_point}\NormalTok{(}\KeywordTok{aes}\NormalTok{(}\DataTypeTok{color =}\NormalTok{ education), }\DataTypeTok{size =} \DecValTok{4}\NormalTok{, }\DataTypeTok{alpha =} \FloatTok{0.5}\NormalTok{)}\OperatorTok{+}\StringTok{ }\KeywordTok{theme_minimal}\NormalTok{() }\OperatorTok{+}\KeywordTok{facet_wrap}\NormalTok{(.}\OperatorTok{~}\NormalTok{job)}\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Point Plot for Education against Bank Balance"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }\OperatorTok{+}
+\KeywordTok{labs}\NormalTok{(}\DataTypeTok{x =} \StringTok{"Duration"}\NormalTok{, }\DataTypeTok{y =} \StringTok{"Balance "}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 9-1.pdf}
+
+\subsubsection{10) How does Education affect the job you end up
+taking?}\label{how-does-education-affect-the-job-you-end-up-taking}
+
+\paragraph{We plot two graphs, both for the same end purpose. We see
+clearly that people with a higher level education end up in managerial
+roles, the profession of the secondary education group seems to be
+distributed uniformly, and the people with a primary level education
+endup in the blue collar
+roles}\label{we-plot-two-graphs-both-for-the-same-end-purpose.-we-see-clearly-that-people-with-a-higher-level-education-end-up-in-managerial-roles-the-profession-of-the-secondary-education-group-seems-to-be-distributed-uniformly-and-the-people-with-a-primary-level-education-endup-in-the-blue-collar-roles}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(bank) }\OperatorTok{+}
+\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ education, }\DataTypeTok{fill =}\NormalTok{ job), }\DataTypeTok{position =} \StringTok{"fill"}\NormalTok{)}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Bar Plot for Jobs taken based on Education"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 10-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggplot}\NormalTok{(bank) }\OperatorTok{+}
+\KeywordTok{geom_bar}\NormalTok{(}\DataTypeTok{mapping =} \KeywordTok{aes}\NormalTok{(}\DataTypeTok{x =}\NormalTok{ education, }\DataTypeTok{fill =}\NormalTok{ job), }\DataTypeTok{position =} \StringTok{"fill"}\NormalTok{)}\OperatorTok{+}
+\StringTok{  }\KeywordTok{coord_polar}\NormalTok{()}\OperatorTok{+}\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Polar Coordinate Plot for Jobs taken based on Education"}\NormalTok{,}
+\DataTypeTok{caption =} \StringTok{"Bank Data"}\NormalTok{) }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{R_Markdown_Assignment__4_files/figure-latex/Query 10-2.pdf}
+
+
+\end{document}

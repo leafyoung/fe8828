@@ -1,0 +1,178 @@
+---
+title: "R Markdown assignment 4#"
+author: "Abhishek Vijaykumar"
+output: html_document
+date: "December 3rd, 2018"
+header-includes:
+- \usepackage{leading}
+- \leading{18pt}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+###Here are the ten insights into the Banking Data using GGPLOT
+
+
+```{r Import Bank, include=FALSE}
+bank<-read.csv("https://goo.gl/PBQnBt", sep=";")
+library(tidyverse)
+library(kableExtra)
+library(ggplot2)
+library(ggthemes)
+library(gridExtra)
+library(maps)
+```
+
+## Including Plots
+###1) Distribution of contact method across age
+#### Observation - Mostly people below the age of 60 have celephones, the older generations mostly still use telephones
+
+
+```{r Query 1, echo=TRUE}
+ggplot(bank) +
+geom_bar(mapping = aes(x = age,fill=contact)) +theme(axis.text.x = element_text(angle = 90, hjust = 1))+labs(title = "Distribution of contact with age",
+caption = "Bank Data") +
+labs(x = "age", y = "Count")
+
+ggplot(bank) +
+geom_bar(mapping = aes(x = age,fill=contact),position="fill") +theme(axis.text.x = element_text(angle = 90, hjust = 1))+labs(title = "Distribution of contact with age",x = "age", y = "Count",
+caption = "Bank Data") 
+
+```
+
+
+###2) Average Balance of people based on profession 
+#### Observation - Retired people have the highest balance, believeable, but housemaids have the second highest? The next Query will try to findout which profession has data points that deviate from the median
+
+
+```{r Query 2, echo=TRUE}
+ggplot()+
+ geom_point(data = group_by(bank, job) %>%
+summarize(avgbal = mean(balance)) %>% ungroup,
+aes(x = job, y = avgbal), size = 4, color="blue",alpha = 1/3, inherit.aes = FALSE) +theme(axis.text.x = element_text(angle = 90, hjust = 1))+labs(title = "Average bank balance by profession",x = "job", y = "Avg Bank Balance",
+caption = "Bank Data") 
+
+
+```
+
+
+###3) Looking for Outliers in Bank balance in each profession by examinimg the boxplot for the data
+#### The two outliers present under "retired" and "entrepreneur" make it difficult to look at the box plot
+
+
+```{r Query 3, echo=TRUE}
+ggplot(bank, aes(x = job, y = balance))+ geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))+labs(title = "BoxPlot for average bank balance by profession",x = "job", y = "Bank Balance",
+caption = "Bank Data") 
+```
+
+
+#### Once these are removed, we are able to clearly see how the "housemaid" and "retired" profession category is being impacted by the presence of outliers
+
+
+```{r Query a, echo=TRUE}
+df<-arrange(bank,desc(balance))
+df$balance[1:2]=mean(df$balance)
+ggplot(df, aes(x = job, y = balance))+ geom_boxplot() + theme(axis.text.x = element_text(angle = 90, hjust = 1))+labs(title = "BoxPlot for average bank balance by profession",x = "job", y = "Bank Balance",
+caption = "Bank Data") +labs(title = "BoxPlot for average bank balance by profession",x = "job", y = "Bank Balance",
+caption = "Bank Data") 
+```
+
+
+
+
+
+###4) Which employment category is most frequently contacted by bank employees
+#### "Pdays" is the days since the last time the person was contacted, the more left skewed the distribution, the more number of times that particular profession group was contacted, from this we see that entreprenuer's are amongst the most frequently while unemployed people are amongst the least
+
+```{r Query 4, echo=TRUE}
+ggplot(bank, aes(pdays)) +
+geom_density(data = dplyr::filter(bank, pdays >0),aes(fill = job), alpha = 0.5) +labs(title = "Desnity plot for Pdays grouped by profession",x = "Pdays", y = "Count",
+caption = "Bank Data") 
+```
+
+
+
+###9) Proportion of defaults according to profession
+#### Here we see that the profession group that defaults the most is entrepreneurs
+
+
+```{r Query 5, echo=TRUE}
+ggplot(data = bank, mapping = aes(x = job, fill = default)) +
+geom_bar(position="fill")  +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))+coord_flip()+labs(title = "Filled Bar Plot for the default count",x = "Pdays", y = "Count",caption = "Bank Data") 
+```
+
+
+###6) Which bucket of Call duration has the highest probability of getting a customer
+#### Here we confirm that the longer a person is on a call, the more likely he is to agree to opening a term deposit (Column "y")
+
+```{r Query 6, echo=TRUE}
+df<-bank
+df$duration_quantiles <- cut(df$duration, quantile(df$duration, seq(0, 1, length = 15), na.rm = TRUE))
+ggplot(df) +
+ geom_point(group_by(df,duration_quantiles)%>%summarise(percentyes=sum(y == "yes") / n())%>%dplyr::filter(duration_quantiles!="NA")%>%arrange(percentyes)%>%arrange(duration_quantiles),mapping=aes(x=duration_quantiles,y=percentyes),alpha = 1/2,size = 4, color="blue")+
+theme_bw(base_size = 10) +theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+labs(x = "Duration Quantiles", y = expression("Percent Agreed to Open Account")) +
+labs(title = "Longer Calls work better")
+
+```
+
+###7) Cost of Marriage!
+#### Here we see the effect of bank balance on married people grouped by their job.The plot on the left suggests that marriage is quite expensive for most professions, divorce even more so! The plot on the right however, does not show any change in bank balance induced by marital status
+
+
+```{r Query 7, echo=TRUE}
+
+upperplot<-ggplot()+geom_point(group_by(bank,job,marital)%>%summarise(avg_bal=mean(balance))%>%arrange(job),mapping=aes(x=job,y=avg_bal,color=marital))+theme(axis.text.x = element_text(angle = 90, hjust = 1))+labs(title = "Point Plot for Average Bank Balance grouped by profession",x = "Job", y = "Avg Bank Bal",caption = "Bank Data") 
+centerplot<-ggplot( bank) +
+geom_point(mapping = aes(x =age , y =balance ,color=marital)) +
+facet_wrap(.~job , nrow = 5)+labs(title = "Point Plot for Average Bank Balance grouped by profession",x = "age", y = "Avg Bank Bal",caption = "Bank Data") 
+grid.arrange(upperplot, centerplot,ncol=2, nrow=1,
+widths=c(5,5), heights=c(8))
+
+```
+
+
+
+###8) Which age group is most likely to open a term deposit account/ Which age group should the bank target?
+#### Here we see that the target group should be people over the age bucket of 58-87 are most likely to open a term deposit accout with the bank
+
+```{r Query 8, echo=TRUE}
+df<-bank
+df$age_quantiles <- cut(df$age, quantile(df$age, seq(0, 1, length = 15), na.rm = TRUE))
+ggplot(df) +
+ geom_point(group_by(df,age_quantiles)%>%summarise(percentyes=sum((y == "yes") / n()))%>%dplyr::filter(age_quantiles!="NA")%>%arrange(percentyes)%>%arrange(age_quantiles),mapping=aes(x=age_quantiles,y=percentyes),alpha = 1/2,size = 4, color="blue")+
+theme_bw(base_size = 10) +
+labs(x = "Age quantile", y = expression("Percent Agreed to Open Account")) +
+labs(title = "Target Age Group for Banks")
+```
+
+###9) Does having a higher education make you richer, in each profession ?
+####We do not see many blue spots rising above the others in many cases, we do see a few in the entrepreneur profession, but not too many. We can say that education does not make you richer (according to the data!). We also have a chance to see how the bank balance varies by profession, no particular group seems to be dominating the roster here. (note- turns out the person who spoke to the bank employee for 3000 seconds was infact unemployed, not surprising!)
+
+
+```{r Query 9, echo=TRUE}
+ ggplot(bank, aes(x = duration, y = balance)) + geom_point(aes(color = education), size = 4, alpha = 0.5)+ theme_minimal() +facet_wrap(.~job)+
+labs(title = "Point Plot for Education against Bank Balance",
+caption = "Bank Data") +
+labs(x = "Duration", y = "Balance ")
+```
+
+###10) How does Education affect the job you end up taking? 
+#### We plot two graphs, both for the same end purpose. We see clearly that people with a higher level education end up in managerial roles, the profession of the secondary education group seems to be distributed uniformly, and the people with a primary level education endup in the blue collar roles
+```{r Query 10, echo=TRUE}
+
+ggplot(bank) +
+geom_bar(mapping = aes(x = education, fill = job), position = "fill")+labs(title = "Bar Plot for Jobs taken based on Education",
+caption = "Bank Data") 
+
+ggplot(bank) +
+geom_bar(mapping = aes(x = education, fill = job), position = "fill")+
+  coord_polar()+labs(title = "Polar Coordinate Plot for Jobs taken based on Education",
+caption = "Bank Data") 
+
+```
+

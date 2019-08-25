@@ -1,0 +1,146 @@
+---
+title: "Assignment 4"
+author: "Manav Mehra"
+date: "02/12/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(fOptions)
+library(dplyr)
+library(kableExtra)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.table.format = "html") 
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+
+#Findings from Exploratory Data Analysis of Bank Dataset
+
+##Finding 1
+This plot shows the duration of the calls per education type for all the previous campaign outcomes. As expected the call duration for the previous successes in significantly lower than that for the previous failures. 
+
+```{r}
+
+ggplot(bank, aes(education, duration)) + 
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(. ~ poutcome, nrow = 2) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
+##Finding 2
+This plot shows the balances for each job. We can see that the balances for the _management_ seem to be the highest but also have the highest range. There are a few outlying observations but in general most of the balances for each job show similar and expected characteristics.  
+
+```{r}
+
+ggplot(bank) + geom_point(aes(job, balance)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
+##Finding 3
+This plot is trying to examine what are the balances and ages of people who default on their loans from the bank. In general, the trend shows that the customers with very low or negative balances end up defaulting as expected. As for the age criterion, there seems to be no correlation between the age and default.
+
+```{r}
+
+ggplot(bank) + geom_point(aes(age, balance, color=default, size=default))
+
+```
+
+##Finding 4
+This plot shows us the division of eduation for each job. As expected, _management_ has the largest proportion of people having received _tertiary_ education. On the other hand, _housemaid_ is the group with the largest number of people having received _primary_ education. These observations were as expected.
+
+```{r}
+
+ggplot(bank) +geom_bar(mapping = aes(x = job, fill = education),position = "fill") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
+##Finding 5
+This plot is showing the percentage of people who default depending on their marital status. As expected the largest percentage of defaults are from divorced people.
+```{r}
+
+ggplot(bank) +
+  geom_bar(mapping = aes(x = marital, fill = default),position = "fill") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+```
+
+
+##Finding 6
+This plot looks at a number of people with loans who default for each job. We can clearly see that the largest number of total defaults seems to be occuring in the group of people having only a housing loan. Technicians seem to default the most without any loans, whereas the number of defaults for those having only a houseing loan is largest for _management_ and _blue-collar_.
+
+```{r}
+
+ggplot(data = bank) +
+  geom_bar(data = bank %>% dplyr::filter(default=='yes'), aes(x = job)) +
+  facet_wrap(loan ~ housing, nrow = 2) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  
+
+```
+
+##Finding 7
+This plot shows us the median age for each job and plots it while ordering the jobs in alphabetical order.
+
+```{r}
+
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median),fill = education)) + 
+  geom_bar() +
+  scale_x_discrete(limit = rev(levels(bank$job))) +
+  coord_flip()
+
+```
+
+
+##Finding 8
+This plot shows the percentage of people for each job who hold atleast one loan. The largest percentages of loan holders are _blue-collar_ and _services_, followed closely by _admin_. Not surprisingly the two lowest loan holders are the group on _students_ and _retired_. This makes sense as they would not require to take out loans.
+
+```{r}
+
+ggplot(bank) +
+  geom_bar(aes(x=job, fill=(housing=='yes' | loan=='yes')), position="fill") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
+  scale_x_discrete(limit = levels(bank$job))
+
+```
+
+
+##Finding 9
+This plot shows the balance for each job for each age. It also shows the linear change in the balance with the age for each of these roles
+
+```{r}
+
+ggplot(bank, aes(age, balance)) + 
+  geom_point(aes(color = job)) +
+  geom_smooth() +
+  facet_wrap(. ~ job, nrow = 2) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+
+##Finding 10
+This plot shows the boxplot for age for each job.
+
+```{r}
+
+ggplot(bank, aes(job, age)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  geom_boxplot()
+
+```
+
+
+

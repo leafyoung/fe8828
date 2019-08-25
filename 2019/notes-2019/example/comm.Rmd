@@ -1,0 +1,132 @@
+---
+title: "Simple Quandl Commodities Flexdb"
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+  #vertical_layout: scroll
+  orientation: rows
+  source_code: embed
+---
+
+```{r setup, include=FALSE}
+library(tidyverse) 
+library(Quandl)
+library(xts)
+library(forecast)
+library(dygraphs)
+```
+
+Inputs{.sidebar}
+--------------------------------
+
+```{r}
+# Notice a tradeoff here: we're making it easy on our users because they don't need to 
+# remember the naming conventions. But, we're also forced to severely limit their choices. 
+# On page two, we'll see what it looks like to be more flexible but less efficient.
+
+dataChoices <- c("WTI oil" = "FRED/DCOILWTICO", #oil data from Fred
+                  "Copper" = "ODA/PCOPP_USD", # copper data from ODA
+                  "Gold" = "CHRIS/CME_GC1.1") # gold data from CME
+
+selectInput("dataSet",
+             "Commodity",
+             choices = dataChoices, #Freddie mac
+                         #"BIS",  #Bank of intl settlements
+                         #"ODA",  #IMF
+                         #"ISM"), #Inst of supply management
+             selected = "WTI oil")
+ 
+frequencyChoices <- c("days" = "daily",
+                      "weeks" = "weekly", 
+                      "months" = "monthly")
+                     
+selectInput("frequency",
+            "freq",
+            choices = frequencyChoices, 
+            selected = "months")
+                     
+# selectInput("country", "Select country", list(
+#   "Europe" = c("Germany", "Spain"),
+#   "North America" = c("Canada", "United States" = "USA")
+# ))
+
+dateRangeInput("dateRange",
+               "Date range",
+               start = "1980-01-01",
+               end   = Sys.Date())
+
+numericInput("periods", "Periods to Forecast", 6, min = 1, max = 100)
+
+commodity <- reactive({
+  Quandl.api_key("d9EidiiDWoFESfdk5nPy")
+  commodity <- Quandl(input$dataSet,
+                 start_date = format(input$dateRange[1]),
+                 end_date = format(input$dateRange[2]),
+                 order = "asc",
+                 type = "xts",
+                 collapse = as.character(input$frequency)
+               )
+})
+
+combined_xts <- reactive({
+  forecasted <- forecast(commodity(), h = input$periods)
+  forecast_dataframe <- data.frame(
+                        date = seq(input$dateRange[2], 
+                        by = names(frequencyChoices[frequencyChoices == input$frequency]),
+                        length.out = input$periods),
+                        Forecast = forecasted$mean,
+                        Hi_95 = forecasted$upper[,2],
+                        Lo_95 = forecasted$lower[,2])
+  
+  forecast_xts <- xts(forecast_dataframe[,-1], order.by = forecast_dataframe[,1])
+  combined_xts <- cbind(commodity(), forecast_xts)
+
+  # Add a nicer name for the first column.
+  colnames(combined_xts)[1] <- "Actual"
+  
+  combined_xts
+})
+```
+
+
+Row
+-------------------------------------
+    
+### Chart 1
+    
+```{r}
+dygraphOutput("commodity")
+
+output$commodity <- renderDygraph({
+  dygraph(commodity(), 
+          main = paste("Price history of", names(dataChoices[dataChoices==input$dataSet]), 
+                       sep = " ")) %>%
+    dyAxis("y", label = "$") %>%
+    dyOptions(axisLineWidth = 1.5, fillGraph = TRUE, drawGrid = TRUE)
+})
+
+```
+
+Row
+-------------------------
+
+### Chart 2
+
+```{r}
+dygraphOutput("forecasted")
+
+output$forecasted <- renderDygraph({
+  start_date <- tail(seq(input$dateRange[2], by = "-1 months", length = 6), 1)
+  end_date <- tail(seq(input$dateRange[2], by = names(frequencyChoices[frequencyChoices == input$frequency]), length = input$periods), 1)
+
+  dygraph(combined_xts(), 
+          main = paste(names(dataChoices[dataChoices==input$dataSet]), 
+                       ": Historical and Forecast", sep = "")) %>%
+    # Add the actual series
+    dySeries("Actual", label = "Actual") %>%
+    # Add the three forecasted series
+    dySeries(c("Lo_95", "Forecast", "Hi_95")) %>% 
+    #a range selector to focus on the forecasted
+    dyRangeSelector(dateWindow = c(start_date, end_date))
+})
+```

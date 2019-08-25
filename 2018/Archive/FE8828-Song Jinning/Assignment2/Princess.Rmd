@@ -1,0 +1,55 @@
+---
+title: "Assignment2_Princess"
+author: "Song Jinning"
+date: "2018/11/18"
+output: html_document
+---
+
+```{r princess}
+make_choice <- function(N, split_number){
+  input_list <- sample(1:N, N, replace=FALSE)
+  if (split_number == 0)
+    best_eval <- 0
+  else
+    best_eval <- max(input_list[1:split_number])
+  
+  # YY: set selection <- input_list[N] for the not-found case
+  # YY: just return the last element if split_number == N-1
+  if (split_number == N-1) {
+    selection <- input_list[N]
+  } else {
+    for( ii in (split_number+1): N){
+      selection <- input_list[ii]
+      if(selection > best_eval)
+        break
+    }
+  }
+  selection
+}
+
+find_optimal <- function(N){
+  res <- rep(0, 5000)
+  split_res <- rep(0, (N-1))
+  prob_optimal <- rep(0, (N-1))
+  for(split_number in 0:(N-1) ){
+    count_opt <- 0
+    for(i in 1:5000){
+      best <- make_choice (N, split_number)
+      res[i]= best
+      if (best == N)
+        count_opt = count_opt + 1
+    }
+    split_res[split_number+1] <- mean(res)
+    prob_optimal[split_number+1] <- (count_opt/5000)
+  }
+  plot(0:(N-1),split_res,xlab="Split number", ylab="Expected rank")
+  plot(0:(N-1),prob_optimal, xlab="Split number", ylab="Probability of the best")
+
+}
+
+find_optimal(3)
+find_optimal(10)
+find_optimal(100)
+```
+
+

@@ -1,0 +1,115 @@
+---
+title: "R Markdown assignment 3#"
+author: "Abhishek Vijaykumar"
+date: "November 26, 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r ,include=FALSE}
+library(readxl)
+library(dplyr)
+library(tidyverse)
+library(fOptions)
+require(reshape2)
+library(kableExtra)
+library(ggplot2)
+#Enter file path here
+OptionsDataInitial <- read_excel("C:/Users/Abhishek/Desktop/OptionsData.xlsx")
+names(OptionsDataInitial)[7]<-"OpenInterest_Call"
+names(OptionsDataInitial)[16]<-"OpenInterest_Put"
+Underlying<-c()
+ImpliedVolatility<-c()
+OptionsData<-data.frame()
+for (i in 1:nrow(OptionsDataInitial)) {
+  Underlying[i]=1023.88
+}
+OptionsData2<-data.frame(OptionsDataInitial$Puts,OptionsDataInitial$Strike,OptionsDataInitial$OpenInterest_Put,Underlying,c(rep("Put",nrow(OptionsDataInitial))),OptionsDataInitial$Bid__1,OptionsDataInitial$Ask__1)
+OptionsData1<-data.frame(OptionsDataInitial$Calls,OptionsDataInitial$Strike,OptionsDataInitial$OpenInterest_Call,Underlying,c(rep("Call",nrow(OptionsDataInitial))),OptionsDataInitial$Bid,OptionsDataInitial$Ask)
+
+OptionsData=data.frame(OptionsData)
+names(OptionsData1)[1]=names(OptionsData2)[1]="ExpiryDate"
+names(OptionsData1)[2]=names(OptionsData2)[2]="Strike"
+names(OptionsData1)[3]=names(OptionsData2)[3]="OpenInterest"
+names(OptionsData1)[5]=names(OptionsData2)[5]="Type"
+names(OptionsData1)[6]=names(OptionsData2)[6]="Bid"
+names(OptionsData1)[7]=names(OptionsData2)[7]="Ask"
+OptionsData<-rbind(OptionsData1,OptionsData2)
+
+for(i in 1:nrow(OptionsData))
+  {
+    if(OptionsData$Type[i]=="Call")
+    {
+      ImpliedVolatility[i]=GBSVolatility((OptionsData$Bid[i]+OptionsData$Ask[i])/2, "c", OptionsData$Underlying[i],OptionsData$Strike[i],
+                                         as.numeric((as.Date("2018-12-14") - as.Date("2018-11-25")))/365, r = 0.03,b=-0.0002)
+    }
+    else{
+      ImpliedVolatility[i]=GBSVolatility((OptionsData$Bid[i]+OptionsData$Ask[i])/2, "p", OptionsData$Underlying[i],OptionsData$Strike[i],
+                                         as.numeric((as.Date("2018-12-14") - as.Date("2018-11-25")))/365, r = 0.03,b=-0.0002)
+    }
+  }
+
+OptionsData<-data.frame(OptionsData,ImpliedVolatility)
+
+```
+
+
+
+###Total Valuation of the Call and Put Options
+
+```{r Total Valuation ,echo=FALSE}
+suppressWarnings(group_by(OptionsData,Type)%>%
+  mutate(CallValue=(OpenInterest*(Bid+Ask)/2))%>%
+  summarise(TotalCallValuation=sum(CallValue))%>%kable() %>%
+  kable_styling(full_width = F, position = "left"))
+
+```
+
+###Total Open Interest of all the in the money Options
+
+```{r Total Open Interest ,echo=FALSE}
+group_by(OptionsData,Type)%>%
+  summarise(TotalOI=sum(ifelse(Type=="Call",ifelse(Strike<Underlying,OpenInterest,0),ifelse(Strike>Underlying,OpenInterest,0))))%>%kable() %>%kable_styling(full_width = F, position = "left")
+```
+
+###Plot of Implied Volatility vs Strike Price
+
+```{r IV, echo=FALSE}
+library(tidyverse)
+ group_by(OptionsData,Type)%>%dplyr::filter(Type=="Call"&Strike>Underlying|Type=="Put"&Strike<Underlying)%>%ungroup%>%arrange(Strike)%>%
+    select(Strike,ImpliedVolatility)%>%plot(pch=19)
+```
+
+
+###Exercise Problem: Finding total Value of Options using GBSOption
+
+```{r Exercise, echo=FALSE}
+#GBSOption(TypeFlag = "p", S = 3500, X = 3765,Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
+df <- data.frame(type = as.character(sample(c("c", "p")), 100, replace = TRUE),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
+df$type=as.character(df$type)
+
+OptionValue<-c(1:100)
+for(i in 1:nrow(df)){
+  if (df$type[i]=="c")
+    OptionValue[i]=GBSOption(TypeFlag ="c", S = df$underlying[i], X = df$strike[i],
+                             Time = 1/12, r = 0.01, b = 0, sigma = 0.3)@price
+  else
+    OptionValue[i]=GBSOption(TypeFlag ="c", S = df$underlying[i], X = df$strike[i],
+                             Time = 1/12, r = 0.01, b = 0, sigma = 0.3)@price
+}
+df<-data.frame(df,OptionValue)
+group_by(df,type)%>%kable()%>%kable_styling(full_width = F, position = "left")
+summarise(df,sum=sum(OptionValue))%>%kable() %>%kable_styling(full_width = F, position = "left")
+```

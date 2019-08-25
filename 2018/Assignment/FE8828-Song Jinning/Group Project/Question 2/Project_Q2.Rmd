@@ -1,0 +1,180 @@
+---
+title: "Project_Q2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dbplyr)
+library(fOptions)
+library(tidyverse)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+```
+
+
+## Question 2-1
+
+Below function is to calculate the greeks for a simulated 30-day option. Based on gamma and theta neutralization theory, the difference between gamma and theta should be approximately 0 for every day. Then, we run t-test for the gamma-theta difference of all days to get the significance level (p.value) of equation $$0.5∗Gamma∗∆S2 +Theta∗(dT)≈0$$.
+
+```{r Gamma_Theta_neutralize}
+neutralization_check <- function(){
+  S0<- 100
+  K <- 100
+  days <- 20.0
+  delta_t <- 1/250
+  sigma <- 0.3
+  drift <- 0 # drift = r - q
+  N <- days
+  timestep <- 1 / 250
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  # ss is the simulated price movement for N days
+  ss <- rep(S0, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+  df <- data_frame(S = c(S0, ss), days = 0:days)
+  opt <- df%>% mutate(
+    price = GBSOption("c", S = S0, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.3)@price,
+    delta = GBSGreeks("Delta", "c", S = S0, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.3),
+    gamma = GBSGreeks("Gamma", "c", S = S0, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.3),
+    theta = GBSGreeks("Theta", "c", S = S0, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.3),
+    delta_s = ifelse(days ==0, 0, S-lag(S)),
+    gamma_theta = 0.5*gamma*delta_s*delta_s + theta*delta_t
+  )
+  
+  test_result<- t.test(opt$gamma_theta, mu=0)
+  return(test_result$p.value)
+}
+```
+
+For the next step, we run 500 simulations to verify gamma-theta neutralization. We plot the p-value against simulation index and noticed that majority of p-values are larger than 0.05(the red dashed line in the plot), which means they can not reject null hypothesis of gamma - theta is indifferent from 0.
+```{r Simulation1}
+p_value_result = vector()
+
+for (i in 1:500){
+  p_value_result = c(p_value_result, neutralization_check())
+  
+}
+
+neutralization_result = data_frame( simulation=c(1:500),p_value = p_value_result)
+ggplot(neutralization_result) +
+  geom_point(aes(x=simulation, y=p_value, color = p_value)) +
+  geom_hline(yintercept=0.05, linetype="dashed", 
+           color = "red", size=2)
+```
+
+We also summarize the detailed test result in below table to show the number of cases which support/reject gamma theta neutralization for 500 simulations.
+```{r Simulation2}
+neutralization_result %>%
+  mutate(`Reject gamma theta neutralization` = ifelse(p_value<=0.05, 'Yes', 'No') )%>%
+  group_by(`Reject gamma theta neutralization`)%>%
+  summarise(`No of simulations` = n())->test_result
+
+test_result%>%
+  kable(format = "html", escape = F)%>%
+  kable_styling(bootstrap_options = c("striped"),full_width = F, position = "left")
+  
+```
+
+In conclusion, our test support the gamma theta neutralization.
+
+## Question 2-2
+
+We calculate overall Profit and Loss for the dynamic hedging strategy step by step.
+
+1. Daily Profit and Loss of option: we use Black-Scholes formula to calculate the option price for everyday. For the first day, the book value is zero. For the rest, the book values equal to the difference between previous price and current price.
+  
+2. Overall PnL of option: there are two ways to compute it. The first way is to sum up all Daily PnL of option. Another is to subtract the cost of buying the option, which equals to the price of option on the first day, from the payoff of the option on expiry day.
+  
+3. PnL of hedging side: The position in underlying is adjusted everyday according to the option delta obtained from previous day, so that the delta of strategy could be zero. Therefore, the daily PnL of the hedging side is the 
+opposite of the option delta on the previous day multiple the price change of the underlying. The overall PnL is the sum of Daily PnL.
+  
+4. To compute RHS: $Vega ∗ (RealizedVol − ImpliedVol) ∗ T$, we need to calcultate the realize volatility from the result of the simulated price movement. To prove the statement that : $OverallPnL \approx Vega ∗ (RealizedVol − ImpliedVol) ∗ T$, we calculate the difference between LHS and RHS.
+  
+```{r}
+  S0<- 100
+  K <- 100
+  days <- 20.0
+  delta_t <- 1/250
+  sigma <- 0.5 
+  drift <- 0
+  N <- days
+  timestep <- 1 / 250
+  vega <- GBSGreeks("Vega", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5)
+  #simulate price movement for N days
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  ss <- rep(S0, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+  df <- data_frame(S = c(S0, ss), days = 0:days)
+  
+  opt <- df%>% mutate(
+    Option_Price = GBSOption("c", S = S, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.5)@price,
+    Option_Delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.5),
+    Option_DoD_PnL = ifelse(days==0, 0, Option_Price-lag(Option_Price)),
+    Stock_Return = (S-lag(S))/lag(S),
+    Delta_Hedge = Option_Delta*(-1),
+    Hedging_DoD_Pnl = ifelse(days == 0, 0, lag(Delta_Hedge) * (S - lag(S))))
+  
+  opt_pnl<-sum(opt$Option_DoD_PnL)
+  stock_pnl<-sum(opt$Hedging_DoD_Pnl)
+  realized_vol<- sqrt(sum((opt$Stock_Return[2:21])^2)*250/20)
+  RHS = vega*(realized_vol-0.5)*20/250
+  diff = opt_pnl+stock_pnl-RHS
+```
+
+The related stats of one simulation are shown below.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+  opt%>%
+  kable(format = "html", escape = F)%>%
+  kable_styling(bootstrap_options = c("striped"),full_width = F, position = "left")
+  
+  cat("Overall PnL of Option side: ",opt_pnl,"\n")
+  cat("Overall PnL of Hedging side: ",stock_pnl,"\n")
+  cat("Overall PnL of the strategy: ",opt_pnl+stock_pnl,"\n")
+  cat("Realized Volatility: ",realized_vol,"\n")
+  cat("LHS-RHS: ",diff)
+```
+
+From the above result, we can see that the difference between LHS and RHS of the equation is very small. To prove the statement more powerfully, we we run 500 simulations to verify the statement. We preform t-test for the the difference between LHS and RHS generating from the 500 simulation. The p-value of t-test is large, which means we cannot reject the null hypothesis that the difference is zero. In this way, we prove the statement that $OverallPnL \approx Vega ∗ (RealizedVol − ImpliedVol) ∗ T$
+
+```{r cars, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+neutralization_check <- function(){
+  S0<- 100
+  K <- 100
+  days <- 20.0
+  delta_t <- 1/250
+  sigma <- 0.5 
+  drift <- 0
+  N <- days
+  timestep <- 1 / 250
+  vega <- GBSGreeks("Vega", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5)
+  #simulate price movement for N days
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  ss <- rep(S0, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+  df <- data_frame(S = c(S0, ss), days = 0:days)
+  
+  opt <- df%>% mutate(
+    Option_Price = GBSOption("c", S = S, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.5)@price,
+    Option_Delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = (20-days)/ 250, r = 0, b = 0, sigma = 0.5),
+    Option_DoD_PnL = ifelse(days==0, 0, Option_Price-lag(Option_Price)),
+    Stock_Return = (S-lag(S))/lag(S),
+    Delta_Hedge = Option_Delta*(-1),
+    Hedging_DoD_Pnl = ifelse(days == 0, 0, lag(Delta_Hedge) * (S - lag(S))))
+  
+  opt_pnl<-sum(opt$Option_DoD_PnL)
+  stock_pnl<-sum(opt$Hedging_DoD_Pnl)
+  realized_vol<- sqrt(sum((opt$Stock_Return[2:21])^2)*250/20)
+  RHS = vega*(realized_vol-0.5)*20/250
+  diff = opt_pnl+stock_pnl-RHS
+  
+  return(diff)
+}
+
+diff_result = vector()
+for (i in 1:500){
+  diff_result = c(diff_result, neutralization_check())
+}
+
+t.test(diff_result, mu=0)
+```

@@ -1,0 +1,93 @@
+---
+title: "Book Options Trade - Week 3 Assignment"
+author: "Gaurav Singh"
+date: "November 25, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(xlsx)
+library(fOptions)
+library(kableExtra)
+library(tidyverse)
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE)
+```
+
+# Problem 2 : Book Options Trade
+
+```{r definition, echo=FALSE,message=FALSE}
+##need to set working directory for file import
+opt_chain_raw<-read.xlsx2("Raw_Data_GOOG_options.xlsx", 1, header=TRUE) %>%
+  mutate_all(.,as.character)
+underlying_price<-1023.88 # Delayed - data as of Nov. 23, 2018
+
+#slicing data for calls
+call_chain<-subset(opt_chain_raw,select=c(1:7,9)) %>% 
+  mutate(.,Calls=as.Date(as.double(Calls),origin="1899-12-30")) %>%
+  mutate(.,Underlying=underlying_price,Type="Call")
+call_chain<-select(call_chain,"Calls","Strike","Open.Int","Underlying","Type","Bid","Ask")
+colnames(call_chain)<-c("ExpiryDate","Strike","OpenInterest","Underlying","Call_Put","Bid","Ask")
+#slicing data for puts
+put_chain<-subset(opt_chain_raw,select=c(9:16)) %>% 
+  mutate(.,Puts=as.Date(as.double(Puts),origin="1899-12-30")) %>%
+  mutate(.,Underlying=underlying_price,Type="Put")
+put_chain<-select(put_chain,"Puts","Strike","Open.Int.1","Underlying","Type","Bid.1","Ask.1")
+colnames(put_chain)<-c("ExpiryDate","Strike","OpenInterest","Underlying","Call_Put","Bid","Ask")
+
+opt_chain<-bind_rows(call_chain,put_chain) %>%
+  mutate(Strike=as.numeric(Strike),OpenInterest=as.double(OpenInterest),Bid=as.double(Bid),Ask=as.double(Ask))
+
+opt_chain<-mutate(opt_chain,valuation=OpenInterest*0.5*(Bid+Ask))
+
+```
+##--------------------------------
+## 2.1 Data in the required Format
+###Underlying is 1023.88 - data as of Nov. 23, 2018
+```{r run1, echo=FALSE,message=FALSE}
+opt_chain[,c("ExpiryDate","Strike","OpenInterest","Underlying","Call_Put","Bid","Ask")] %>%
+  kable() %>%
+  kable_styling()
+```
+##--------------------------------
+## 2.2 Count the total valuation of 1) call alone, 2) put alone, 3) call and put.
+```{r run2, echo=FALSE,message=FALSE}
+group_by(opt_chain,Call_Put) %>%
+  summarise(Valuation=sum(valuation)) %>%
+  ungroup %>%
+  rbind(c("Call an Put",sum(.$Valuation))) %>%
+  kable() %>%
+  kable_styling(full_width = F, position = "left")
+```
+##--------------------------------
+## 2.3  Find those in the money and get their total Open Interest.
+```{r run3, echo=FALSE,message=FALSE}
+mutate(opt_chain,in_the_money=ifelse(
+  (Call_Put=="Call" & Strike<=underlying_price)|
+    (Call_Put=="Put" & Strike>=underlying_price)
+  ,"Yes","No")) %>% 
+  filter(in_the_money=="Yes") %>% 
+  summarise("Number of Options ITM"=n(),"Sum Open Interest"=sum(OpenInterest)) %>%
+  kable() %>%
+  kable_styling(full_width = F, position = "left")
+```
+##--------------------------------
+## 2.4 Plot the volatility curve, strike v.s. vol. (assumed r=b=0.03 for BS-Stock-option-model)
+```{r run4, echo=FALSE,message=FALSE}
+cbind(
+  opt_chain,
+  volatilites=sapply(
+    seq_along(opt_chain$Strike),function(i) {GBSVolatility(price = 0.5*(opt_chain$Bid[i]+opt_chain$Ask[i]), TypeFlag =ifelse(opt_chain$Call_Put[i]=="Call","c","p"),S = underlying_price, X = opt_chain$Strike[i], Time =as.numeric(opt_chain$ExpiryDate[i]-as.Date("2018-11-24"))/365, r = 0.03, b = 0.03) }
+    )
+  ) %>% 
+  dplyr::filter((Strike<underlying_price & Call_Put=="Put")|(Strike>underlying_price & Call_Put=="Call")) %>% 
+  arrange(desc(Strike)) %>% 
+  select(Strike,volatilites) %>% 
+  plot(type="l",xlab="Strike Prices (Current Price in Red)",ylab="Implied Volatilities") %>% 
+  abline(v=underlying_price, col="darkred")
+#text(underlying_price, .35, "Current Price") 
+cat(paste("\n"))
+```
+---
+---
+
+##--------------------------------

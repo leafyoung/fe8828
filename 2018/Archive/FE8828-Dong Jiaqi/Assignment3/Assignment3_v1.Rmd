@@ -1,0 +1,204 @@
+---
+title: "Assignment 3"
+author: "Dong Jiaqi"
+date: "25 November 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fOptions)
+library(bizdays)
+library(tidyverse)
+library(dplyr)
+library(tidyr)
+bank <- read.csv("https://goo.gl/PBQnBt", sep =";")
+```
+
+## Question 1
+```{r q1, echo=TRUE}
+df <- data.frame(type = sample(c("c","p"), 100, replace = TRUE),
+                 strike = round(runif(100)*100,0), 
+                 underlying = round(runif(100)*100,0),
+                 Time =1,
+                 r = 0.01,
+                 b =0,
+                 sigma = 0.3)
+Price <- function(x) GBSOption(x["type"], as.numeric(x["underlying"]), as.numeric(x["strike"]), 
+                                 Time=as.numeric(x["Time"]), r=as.numeric(x["r"]), b=as.numeric(x["b"]), sigma = as.numeric(x["sigma"]))@price
+df$Price <- apply(df, 1, Price)
+df
+```
+
+## Question 2
+```{r, echo=TRUE}
+#Finding 1 loan per person for different age group
+group_by(bank, age_group = (age %/% 10)* 10) %>%
+  summarize(total_number = n(),
+            housing_loan = sum(ifelse(housing == "no",0,1)),
+            hl_per_person = housing_loan/total_number,
+            personal_loan = sum(ifelse(loan == "no",0,1)),
+            pl_Per_Person = personal_loan/total_number) %>%
+  arrange(desc(hl_per_person))
+```
+
+
+```{r, echo=TRUE}
+#Finding 2 Determine the rate of owning a house in different age group with people have a positive balance
+mutate(bank, age_group = case_when(
+  age < 20 ~ "Youth",
+  age < 40 ~ "Middle Age",
+  age < 50 ~ "Senior",
+  age >= 50 ~"S Senior")) -> df_1
+df_1 %>%
+  filter(balance >0) %>%
+  group_by(age_group) %>%
+  summarize(ppl = n(),
+            n_housing = sum(ifelse(housing == "yes",1,0)),
+            housing_per_person = n_housing/ppl) %>%
+  arrange(desc(housing_per_person))
+```
+
+
+```{r, echo=TRUE}
+#Finding 3 - Determine the average, min and max age for each education level
+bank %>%
+  filter(balance >0) %>%
+  group_by(education) %>%
+  summarize(avg_age=mean(age), min_age= min(age), max_age = max(age))
+```
+
+
+```{r, echo=TRUE}
+#Finding 4 - Determine the avg age, min_age and max_age of each occupation
+bank %>%
+  group_by(job) %>%
+  summarize(age_young = sum(ifelse(age <= 30,1,0)),
+            age_middle = sum(ifelse(age >30 & age <=50,1,0)),
+            age_senior = sum(ifelse(age >50, 1,0)))
+```
+
+
+```{r, echo=TRUE}
+#Finding 5 - Determine the occupation that has the highest telemarketing success rate
+bank %>%
+  group_by(job) %>%
+  summarize(num = n(),
+            successful_campaign = sum(ifelse(poutcome == 'success',1,0)),
+            successful_rate = successful_campaign/num) %>%
+  arrange(desc(successful_rate)) 
+```
+
+
+```{r, echo=TRUE}
+#Finding 6 - Find the occupation has the highest default rate
+bank %>%
+  group_by(job) %>%
+  summarise(ppl = n(),
+            Avg_balance = mean(balance),
+            default = sum(ifelse(default == "no",0,1)),
+            default_rate = default/ppl) %>%
+  arrange(desc(default_rate))
+```
+
+
+```{r, echo=TRUE}
+#Finding 7 - Determine the telemarketing success rate by martial status
+bank %>%
+  group_by(marital) %>%
+  summarise(count = n(),
+            successful_campaign = sum(ifelse(poutcome == 'success',1,0)),
+            successful_rate = successful_campaign/count) %>%
+  arrange(desc(successful_rate))
+```
+
+
+```{r, echo=TRUE}
+#Finding 8 - Determine which mode of contact lead to the highest success rate 
+bank %>%
+  group_by(contact) %>%
+  summarise(count = n(),
+            successful_campaign = sum(ifelse(poutcome == 'success',1,0)),
+            successful_rate = successful_campaign/count) %>%
+  arrange(desc(successful_rate)) 
+
+```
+
+
+```{r, echo=TRUE}
+#Finding 9 - Determine which job has the highest percentage of new contact, and the average number compaigns attended for each occupation
+bank %>%
+  group_by(job) %>%
+  summarize(ppl=n(),
+            NewContact = sum(ifelse(pdays<0,1,0)),
+            NewContact_pct = mean(pdays<0),
+            PreContact = ppl-NewContact,
+            Total_Compaign = sum(campaign),
+            Avg_Compaign = Total_Compaign/PreContact
+            ) %>%
+  arrange(desc(NewContact_pct))
+```
+
+
+```{r, echo=TRUE}
+#Finding 10 - Find the most possitble month of last contact happended and get the occopation with the highest number of contact
+bank %>%
+  count(job, month) %>%
+  spread(month,n,fill=0) %>%
+  mutate(total = apr+aug+dec+feb+jan+jul+jun+mar+may+nov+oct+sep) %>%
+  arrange(desc(total))
+```
+
+## Question 3
+### 3.1
+```{r ,echo= TRUE}
+
+df <- read.csv("/Users/Jiaqidong/Documents/OOP/Web Application/assignment3/option_data_n.csv",sep = ",", header = TRUE)
+df <- as.data.frame(df)
+df %>% rename("Expiry Date"=Expire, "Open Interest" =Open.Int , "Underlying" =Stock, "Call/Put" =c.p) -> df_new
+df_new%>% select("Expiry Date", "Strike", "Open Interest", "Underlying", "Call/Put", "Bid", "Ask") -> df_1
+colnames(df_1)
+```
+
+### 3.2
+```{r, echo=TRUE}
+df_1 %>% mutate(value = (Bid+Ask)/2*`Open Interest`) %>%
+  group_by(`Call/Put`) %>%
+  summarize(value= sum(value))-> df_11
+df_11 %>%
+  add_row(`Call/Put` = "c&p",value = sum(df_11$value)) -> df_sum
+df_sum
+```
+
+### 3.3
+```{r, echo=TRUE}
+df_1 %>% 
+  select(Strike, Underlying,`Call/Put`,`Open Interest`) %>%
+  mutate(delta = Strike - Underlying)%>%
+  mutate(In_Out = ifelse(((`Call/Put` == "c") & delta < 0) | ((`Call/Put` == "p") & delta > 0) , "In", "Out")) %>%
+  dplyr::filter(In_Out == "In") -> df_2
+cat("Total Open Interest is",sum(df_2$`Open Interest`))
+```
+
+### 3.4
+```{r, echo=TRUE}
+#assume r =0.03
+df_1 %>%
+  select(`Expiry Date`,Strike, Underlying,`Call/Put`,Bid, Ask) %>%
+  mutate(delta = Strike - Underlying)%>%
+  mutate(In_Out = ifelse(((`Call/Put` == "c") & delta < 0) | ((`Call/Put` == "p") & delta > 0) , "In", "Out")) %>%
+  mutate(Price = ifelse(In_Out == "Out" ,(Bid+Ask)/2, 0)) %>%
+  mutate(TTM = as.numeric((as.Date(`Expiry Date`,format = "%B %d, %Y") - as.Date("2018-11-23")))/365) %>%
+  dplyr::filter(Price>0) -> df_4 
+
+vol <- function(x) GBSVolatility(price=as.numeric(as.character(x["Price"])), 
+                                 TypeFlag =x["Call/Put"], 
+                                 S=as.numeric(as.character(x["Underlying"])), 
+                                 X=as.numeric(as.character(x["Strike"])), 
+                                 Time= as.numeric(x["TTM"]), 
+                                 r=0.03, 
+                                 b=0)
+df_4$IV <- apply(df_4, 1, vol)
+plot(df_4$Strike,df_4$IV,xlab ="Strike Price",ylab= "Implied Volatility", main = "Implied Volatility")
+```
+

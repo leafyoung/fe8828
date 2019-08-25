@@ -1,0 +1,136 @@
+---
+title: "WuSiyingAssignment3"
+author: "Wu Siying"
+date: "25 November 2018"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+
+library(tidyverse)
+library(fOptions)
+library(magrittr)
+library(dplyr)
+library(lubridate)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep=";")
+
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center", collapse = TRUE, cache = TRUE)
+```
+
+Q1: Is there any relationship between the level of education and probability of default?
+
+It seems that those with secondary education is more likely to default, followed by the "unknown" group. Those with tertiary education is least likely to default.
+
+(Observations with age under 20 has been excluded since they may not yet have opportunity to get a loan.)
+
+```{r Q1}
+kable(Q1df <- dplyr::filter(bank, age>20) %>%
+  group_by(education, default) %>% 
+  summarise(n = n()) %>% 
+  group_by(education) %>% 
+  summarise(defaultRate = sum((default == 'yes')*n)/sum(n))) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+ggplot(Q1df, aes(education, defaultRate, group = 1)) + geom_line()
+```
+
+
+Q2. Is there a relationship between average balance and different educational background?
+
+Divide the observations into 5 groups according to their balance, with group 1 having the least balance and group 5 the most balance. Within the groups with highest and lowest balance (5 and 1), calculate the average balance for each educational background.
+
+Those with secondary education has the lowest average balance for the low balance group (group 1), and those with tertiary education has the highest balance in the high balance group (group 5)
+
+```{r Q2}
+kable(Q2df <- mutate(bank, BalGroup = ntile(balance, 5)) %>% 
+  dplyr::filter(age > 20 & (BalGroup ==1 | BalGroup == 5)) %>% 
+  group_by(education, BalGroup) %>%
+  summarise(n = n(), mean = mean(balance)) %>%
+  arrange(BalGroup)) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+
+Q3. Among those who takes loans (either housing or personal), what is the percentage of those who take housing loan only, personal loan only, and both?
+```{r Q3}
+kable(Q3df <- dplyr::filter(bank, housing == 'yes'| loan == 'yes') %>% 
+  mutate(TypeOfLoan = ifelse(housing == 'yes' & loan =='yes', yes = "Both", no = ifelse(housing == 'yes', yes = "Housing", no = "Personal"))) %>%
+  group_by(TypeOfLoan) %>%
+  summarise(n = n()) %>%
+  mutate(percentage = n/sum(n))) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+ggplot(data = dplyr::filter(bank, housing == 'yes'| loan == 'yes') %>% 
+  mutate(TypeOfLoan = ifelse(housing == 'yes' & loan =='yes', yes = "Both", no = ifelse(housing == 'yes', yes = "Housing", no = "Personal"))), aes(x = factor(1), fill = TypeOfLoan)) + geom_bar() + coord_polar(theta = 'y')
+```
+
+Q4 Is there a relationship between taking up a housing loan and marital status?
+
+There is a higher percentage of married people taking housing loans, followed by those divorced and single.
+
+```{r Q4}
+kable(bank %>% group_by(marital, housing) %>% 
+  summarise(n = n()) %>% 
+  group_by(marital) %>% 
+  summarise(percent = sum((housing=='yes')*n)/sum(n))) %>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Q5. Are those who has term deposit richer (have more balance) those who does not?
+
+The mean balance is more than 150 higher for those who has term deposit than those who do not.
+```{r Q5}
+kable(bank %>% group_by(y) %>% summarise(mean(balance)) %>% rename(`Term Deposit` = y))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Q6. For those who have negative balance, is the percentage higher for them to take loans, either housing or personal?
+
+The percentage of those with negative balance taking on loans is higher than those who has positive balance.
+```{r Q6}
+kable(bank %>% group_by(balance < 0) %>% summarise(TakeLoan = sum((housing == 'yes'| loan == 'yes'))/n()))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Q7. Is there relationship between days of the week and mean duration?
+
+(Assuming the origin is today)
+
+For some days of the week, the mean duration is longer.
+```{r Q7}
+Q7df <- mutate(bank, WeekDay = weekdays(as.Date(day, format = "%d", origin = Sys.Date()))) %>% 
+  group_by(WeekDay) %>%
+  summarise(mean = mean(duration))
+kable(Q7df <- arrange(Q7df, factor(Q7df$WeekDay, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), ordered = TRUE)))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+ggplot(data = Q7df, aes(factor(Q7df$WeekDay, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")), mean, group =1))+geom_line()
+```
+
+Q8. What is the profile of those who has the highest/lowest balance among those whose poutcome is success? 
+```{r Q8}
+Q8 <- bank %>% dplyr::filter(poutcome == 'success') %>% dplyr::arrange(.,balance)
+  kable(head(Q8, 3))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F) 
+  kable(tail(Q8, 3))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F) 
+```
+Q9. Is there a relationship between mean duration and number of contacts performed in this campaign?
+
+The observations are divided into 10 groups based on campaign (number of contacts performed). The mean duration is derived for the ten groups. 
+```{r Q9}
+kable(Q9df <- mutate(bank, campaignQuantile = ntile(campaign,10)) %>%
+group_by(campaignQuantile) %>% summarise(meanDur = mean(duration)))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+ggplot(Q9df, aes(campaignQuantile, meanDur, group = 1)) + geom_line()
+```
+
+Q10. Divide the observations into 5 groups based on number of contacts performed previously, What is the percentage of those who has term deposit among each group?
+
+Those who has been contacted the most number of times tends to be more likely to have term deposit
+```{r Q10}
+kable(mutate(bank, previousQuantile = ntile(previous, 5)) %>% group_by(previousQuantile) %>% summarise(precentage = sum(y == 'yes')/n()))%>%
+  kable_styling(bootstrap_options = "striped", full_width = F)
+  
+```

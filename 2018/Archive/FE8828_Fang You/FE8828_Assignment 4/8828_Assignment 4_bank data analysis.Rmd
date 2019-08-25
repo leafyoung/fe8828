@@ -1,0 +1,380 @@
+---
+title: "FE8828_Assignment 4"
+subtitle: "Fang You G1800202G"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#setup
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(DT)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## Problem 1: Generate analysis of "bank" dataset
+
+We will develop a few hypotheses and subsequently test them against the "bank" dataset to check if we can derive any conclusions about our hypothesis. Base on the observations from these hypotheses, we attempt to devise an optimal strategy for the bank to maximize the telemarketing sales.
+
+The bank dataset consit of information from marketing campaign of a Portugese banking instituition. The variables of the dataset are explained below (https://archive.ics.uci.edu/ml/datasets/bank+marketing, extracted on 17 Nov 2018)
+Attribute Information:
+
+Input variables:
+
+1 - age (numeric)
+
+2 - job : type of job (categorical: 'admin.','blue-collar','entrepreneur','housemaid','management','retired','self-employed','services','student','technician','unemployed','unknown')
+
+3 - marital : marital status (categorical: 'divorced','married','single','unknown'; note: 'divorced' means divorced or widowed)
+
+4 - education (categorical: 'basic.4y','basic.6y','basic.9y','high.school','illiterate','professional.course','university.degree','unknown') -> simplified to 'primary','secondary','tertiary','unknown'
+
+5 - default: has credit in default? (categorical: 'no','yes','unknown')
+
+6 - housing: has housing loan? (categorical: 'no','yes','unknown')
+
+7 - loan: has personal loan? (categorical: 'no','yes','unknown')
+
+related with the last contact of the current campaign:
+
+8 - contact: contact communication type (categorical: 'cellular','telephone') 
+
+9 - month: last contact month of year (categorical: 'jan', 'feb', 'mar', ..., 'nov', 'dec')
+
+10 - [excluded] day_of_week: last contact day of the week (categorical: 'mon','tue','wed','thu','fri')
+
+11 - duration: last contact duration, in seconds (numeric).
+
+12 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+
+13 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)
+
+14 - previous: number of contacts performed before this campaign and for this client (numeric)
+
+15 - poutcome: outcome of the previous marketing campaign (categorical: 'failure','nonexistent','success')
+
+16 - y - has the client subscribed a term deposit? (binary: 'yes','no')
+
+#Hypothesis no. 1
+
+Divorcees are the poorest, followed by people who are married and with singles being the richest.
+
+Divorcees would have gone through high expenses for divorce settlements as well as to upkeep alimonies to their previous spouse. The lack of a spouse to provide emotional support, further worsened by the trauma of a broken marriage led to poor spending habits and hence, low bank balances.
+
+Married people are thought to have higher expenses to provide for children or perhaps with a higher tendency to own a house, leading to intermediate bank balances among the three groups of marital status.
+
+Singles are believed to have the least expenses as they do not need to provide for a family, are less likely to have a child or own a house (no downpayment paid). Hence singles are expected to be the richest.
+
+```{r, echo = FALSE}
+
+# Relationship between marital status and bank balance
+hyp1 <- group_by(bank,marital) %>% summarize(.,Min_balance = min(balance),Max_balance = max(balance),Average_balance = mean(balance)) %>% arrange(Min_balance,Max_balance,Average_balance)
+
+
+datatable(hyp1) %>% formatCurrency(c("Min_balance","Max_balance","Average_balance"))
+
+ggplot(bank, aes(marital,balance)) + geom_boxplot() + 
+  labs(title="Bank balances vs marital status",x="Marital status", y = "Balance ($)")
+
+```
+
+Clearly our hypothesis is not entirely correct. While the divorced group has the lowest average balance as expected, it seems that married people and singles have similar average bank balances. The group of consisting of married people also exhibitd a wider spread minimum and maximum balances compared to singles but a closer look at the distributiion suggested the very high maximum balance from the married group came from outliers. Ignoring the outliers, married and singles have approximately similar spread.
+
+Hence we might say that getting married does not make one less/more rich than staying single as the two groups probably have different financial committments/expenese. However, getting a divorce seems to be a costly affair. The bottomline is - make your choice of partner carefully and avoid a divorce.
+
+#Hypothesis no. 2
+
+The age group of divorcees tend to be younger than married people and do not have a house & loan.
+
+We believe people who are too young tend to make rash and poor decisions due to their immaturity and hence, more often results in a divorce compared to those who are older and hence probably spent more time understanding their partner before committing to a marriage. Furthermore, those who owns a house are believed to be more matured due to the financial committment of servicing a mortgage and we draw the link that those who has a house and loan are less likely to be divorced.
+
+```{r, echo=FALSE}
+hyp2 <- group_by(bank,marital,housing,loan) %>% summarize( 
+                                             young = sum(ifelse(age <20,1,0)),
+                                                twenties = sum(ifelse(age>=20 & age <30,1,0)),
+                                                thirties = sum(ifelse(age>=30 & age <40,1,0)),
+                                                forties = sum(ifelse(age>40&age <=50,1,0)),
+                                                older = sum(ifelse(age>50,1,0))
+                                            ) %>% filter(marital == "divorced")
+datatable(hyp2)
+
+ggplot(bank, aes(x = age, fill = marital)) +
+  geom_histogram(binwidth = 5)+
+  labs(title = "Marital status of bank clients across age group")
+
+```
+
+We realize that most of those who are divorced actually has a house but not a loan. However, the data does not provide any evidence on the age at which this group of people got married or undergo divorce. Hence, we cannot reject our hypothesis and will require more information (age at which the divorcees got married and which they filed for a divorce) in order to test hypothesis 2.
+
+On the other hand, we can conclude that most of the divorcees still own a house under their name, hence at least most of them still has a place to stay. Only a handful  are without house and with loan. They are mostly in their thirties and older and might be facing financial problems.
+
+#Hypothesis no. 3:
+
+Younger and older people tend to talk more with the telemarketer compared to middle aged people.
+
+Younger clients tend to have more time and energy than middle aged clients who have more career and family committments. On the other han, older retirees or those whose children have grown up and moved out tend to be more open to talking to telemarketers since they have less social interactions in their lives.
+
+```{r, echo = FALSE}
+hyp3 <- group_by(bank,age) %>% summarize(.,average_duration = mean(duration))
+
+datatable(hyp3) %>% formatRound(.,columns = "average_duration", digits = 0)
+plot(hyp3,type = "h",main = "Average duration vs age of client",xlab = "Age",ylab="Average duration" )
+
+  
+```
+
+Generally, we see a rather constant trend in talk duration as the client's age increasses. At ages 60 an above, we start to observe that average talk time exhibits an increasing trend, especially from ages ~65 and up.This is consistent with the retirement age of 65 in Portugal when working adults suddenly have lots of time to themselves and are more wiling to entertain telemarketers from the bank.
+
+#Hypothesis no. 4:
+
+The longer the call duration, the higher the chances of convincing the client to subscribe to a term deposit.
+
+This is a logical conclusion as the longer the telemarketer is able to keep the client on the line, the higher the chances that the telemarketer can succeed in persuading the client to get a agree to the sale.
+
+```{r, echo = FALSE}
+
+hyp4 <- group_by(bank, poutcome) %>% summarize(., average_duration = mean(duration)) %>% arrange(average_duration)
+datatable(hyp4) %>% formatRound(.,columns = "average_duration", digits = 0)
+
+hyp4a <- group_by(bank, poutcome,duration) %>% summarize(.)
+
+ggplot(hyp4a,aes(x = poutcome, y = duration)) +
+  geom_boxplot() +
+  labs(title="duration vs previous outcome",x="previous outcome", y = "Duration (s)")
+
+```
+
+Indeed the data suggests that the successful marketing cases usually have a longer median call duration. The calls which failed are usually those that ended quickly. 
+
+One recommendation that comes out from this observation is start with opening statements that keep the clients interested to stay on the line, such as "We have a free gift for you!" and continue to keep the client engaged by prompting them to answer questions.
+
+#Hypothesis no. 5:
+
+The best time to call the clients are during holidays.
+
+Holidays are the time of the year when they are in a happier mood and hence, the clients tend to be more generous during this time of the year and are more willing to put their money with the bank's term deposit. Being in a festive mood also increases the chances of the client staying engaged longer by starting off with festive greetings to lighten the mood.
+
+```{r, echo = FALSE}
+
+hyp5 <- group_by(bank, month) %>% summarize(.,
+                                            success_rate = sum(ifelse((month == month & y == "yes"),1,0))/sum(ifelse(month == month,1,0)),
+                                                    ) %>% arrange(.,desc(success_rate))
+datatable(hyp5, options = list(pageLength = 12),caption = "Success rate of telemarketing calls by month") %>% formatPercentage(.,columns = "success_rate",digits = 1)
+
+nat_holiday <- data.frame("month" = c("jan", "feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"),n_holidays = c(1,0,1,2,2,1,0,1,0,1,1,3))
+#list of holidays obtained from https://www.officeholidays.com/countries/portugal/index.php
+
+hyp5 <- full_join(hyp5,nat_holiday, by = "month")
+
+ggplot(hyp5, aes(x = month, y = success_rate,fill = success_rate)) + 
+  geom_col() + 
+  scale_x_discrete(name = "month",limits =c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec")) +
+  geom_text(data = hyp5, aes(x = month, y = (success_rate+0.05) ,label = n_holidays)) +
+  labs(Title = "Success rate of campaign by month", subtitle = "No. above bars indicate no. of national holidays in that month")
+  
+
+```
+
+Based on the above correlation, the best times to launch the telemarketing campaign are during the months of March, October and December. A comparison with the number of national holidays in various months did not reveal any significant correlation between the number of public holidays and the success rate of the campaign. A probable explanation could be that bonus for the majority of the workers are dispensed twice a year in March and in September, months in which they feel richer and are more willing to subscribe to the bank's term deposit. On the other hand, the month of December could be the time when they receive their annual pay rise and for the same reason, believe that they have more cash to spare for the term deposit.
+
+On the contrary, success rates are the lowest during the summer month (May to July) which could be attributed to the high expenditure for summer vacations and hence, people are generally less open to putting aside more cash for term deposits.
+
+Nevertheless, an important piece of information can be drawn here from deciding which month the bank should focus its telemarketing campaign in, that is in the month of March, October and December.
+
+#Hypothesis 6:
+
+There is an optimal period of time to wait before attempting to call the client again.
+
+When the client receives multiple calls within a short period of time, the client may feel that the bank is too pushy leading to a bad impression on the bank and lower chances of success. On the other hand, leaving the client alone for too long might cause the client to feel that he or she is not a valued customer of the bank.
+
+The theory is that by having consistent but spaced out calls on an optimal frequency, it keeps the bank on the clients' mind and triggers the clients to think about their banking needs, leading to a more open mind to the telemarketers' sales pitch and hence, a higher success rate.
+
+``` {r, echo = FALSE}
+
+hyp6 <- group_by(bank, round(pdays/30), previous, poutcome,y) %>% 
+   filter(previous > 0) %>% #remove clients who have not been called before in this analysis
+   rename(., "pmonths" = "round(pdays/30)") %>%
+  ungroup %>%
+  group_by(.,pmonths) %>%
+  summarize(.,
+            success_rate = sum(ifelse((pmonths == pmonths & y == "yes"),1,0))/sum(ifelse((pmonths == pmonths),1,0)),
+            num_calls=n(),
+            )
+
+hyp6a <- group_by(hyp6,success_rate) %>%
+  filter(num_calls >30)
+
+datatable(hyp6a) %>% formatPercentage(.,columns = "success_rate", digits = 1)
+
+ggplot(hyp6, aes(x=pmonths,y=success_rate,size = num_calls)) +
+        geom_point(color = "red") +
+        geom_text(data = hyp6, aes(x = pmonths, y = (success_rate+0.075) ,label = num_calls)) +
+        labs(Title = "Success rate vs no. of months since last call")
+        
+
+```
+
+By studying only data points with a reliable sample size (>30 call attempts made), making a follow up telemarketing attempt 3 months (113 attempts) or 7 months (166 attempts) after the previous call has the highest success rate of approximately 45% and 30% respectively. 
+
+Hence a decent strategy to adopt will be to space out calls for 3 or 7 months apart when making a repeated call to the same client.
+
+#Hypothesis 7:
+
+There exist a preferred mode of contacting the client that results in a higher chance of success.
+
+Clients might be more willing to stay on the line with the telemarketer if they are contacted on a certain communication mode, such as on their cellular phone compared to being contacted on a land line.
+
+```{r, echo = FALSE}
+hyp7a <- group_by(bank, contact) %>%
+  summarize(.,
+            success_rate = sum(ifelse((contact == contact & y == "yes"),1,0))/sum(ifelse((contact == contact),1,0)),
+            num_calls=n(),
+            )
+
+datatable(hyp7a) %>% formatPercentage(., columns = "success_rate",digits = 1)
+
+hyp7 <- group_by(bank, contact, month) %>%
+  summarize(.,
+            success_rate = sum(ifelse((contact == contact & y == "yes"),1,0))/sum(ifelse((contact == contact),1,0)),
+            num_calls=n(),
+            ) %>%
+  filter(num_calls > 10)
+
+ggplot(hyp7,aes(x=month,y=success_rate,color=contact, size = num_calls)) +
+  geom_point() +
+  scale_x_discrete(name = "month",limits =c("jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"))
+
+```
+
+Across all datapoints, there seem to be no difference in whether clients are contacted via their cellular phone or via telephone.
+
+However, a deeper look into the data after breaking down the mode of contact by the months and verifying the reliability of the data by the number of call attempts made, some inferences can be drawn. Discarding datapoints with less than 10 call attempts (regarded as too few attempts to be representative of the real success rate), it seems that cellular phones are the preferred mode of contact to achieve a higher rate of success and this observation is consistent across most, if not all months of the year.
+
+In the fast paced lifestyle today, it seems that making telemarketing attempts on land lines that "bind" the clients to the phones results in more frustration as the telephone gives less room to multi-task (e.g. talking and travelling to the next destination at the same time, attach hands-free devices to mobile phones). 
+
+Picture this: the client is about to knock off from work when the bank calls him or her to sell a product. If the bank calls on the telephone, he or she is more likely to end the call faster as the client wants to get home quickly. However, if the bank calls the client on the cell phone, the client has the option to take the call while packing up his or her desk and make his or her way to the car/train station.
+
+It is intuitive that the telemarketing pitch must result in minimum inconvenience to the client. Hence, calling on cellular phones is th preferred mode of contact.
+
+#Hypothesis 8:
+
+There should be a strategy to engage clients who have previously rejected the last sales pitch. We can attempt to infer some trends between optimal waiting time between calls for clients who previously rejected a pitch but subsequently subscribed to a term deposit in the most recent attempt.
+
+```{r, echo=FALSE}
+
+hyp8 <- group_by(bank,poutcome,y) %>%
+  filter(poutcome == "failure") %>%
+  ungroup %>%
+  group_by(., round(pdays/30)) %>%
+  summarize(.,
+            success_rate = sum(ifelse((poutcome == poutcome & y == "yes"),1,0))/sum(ifelse((poutcome == poutcome),1,0)),
+            n=n()
+            ) %>%
+  filter(n>10) %>%
+  rename(., "pmonths" = "round(pdays/30)") %>%
+  select(-n)
+
+datatable(hyp8) %>% formatPercentage(.,columns = "success_rate", digits = 0)
+
+ggplot(hyp8,aes(x=pmonths,y=success_rate,alpha = success_rate)) +
+  geom_col() +
+  theme_minimal()
+
+```
+
+It is evident that clients who had previously declined to take up the sales offer is less likely to subscribe to a term deposit when approached again by the telemarketers. Even after breaking down into the months between the most recent successful one and the failed attempt before it, the optimal success rate is only 19% when the two sales pitches are spaced 3 months apart, compared to the ~45% success rate seen in Hypothesis 6.
+
+Nevertheless, there is still some tactic that can be employed to maximize the chances of success when dealing with clients who had previously rejected a sales pitch. Based on this hypothesis, the best chances of success is to wait out for 3,5,6 or 10 months before attempting to engage the client again. This is somewhat similar to Hypothesis 6 which also indicated an optimal wait time of 3 or 7 months in between attempts.
+
+#Hypothesis 9:
+
+The work nature of clients with different occupations lead to varying success rates of the telemarketing attempt when clients are contacted in different months.
+
+Different occupations tend to have different "lull" periods, or periods when workload is generally lesser which contributes to a more relaxed state of mind. It is reasonable to assume that contacting customers who are in a better mood will have a higher probability of a successful telemarketing campaign.
+
+```{r, echo = FALSE}
+hyp9 <- group_by(bank, job, month) %>%
+  summarize(.,success_rate = sum(ifelse((job == job & y == "yes"),1,0))/sum(ifelse((job == job),1,0)))
+ 
+ hyp9a <- group_by(bank,job,month) %>%
+    summarize(.,success_rate = sum(ifelse((job == job & y == "yes"),1,0))/sum(ifelse((job == job),1,0))) %>%
+    mutate(max_success = (max(success_rate) == success_rate)) %>%
+    filter(max_success == TRUE)
+
+hyp9b <- group_by(hyp9a,job,month,success_rate) %>%
+  summarize() %>%
+  filter(success_rate != 1.00) %>%
+  arrange(desc(success_rate))
+  
+
+datatable(hyp9b) %>% formatPercentage(.,columns = "success_rate", digits = 1)
+
+ggplot(hyp9, aes(x=0, y = job, size = success_rate)) +
+  geom_point() +
+  geom_point(data = hyp9a, aes(x=0, y = job, size = success_rate),color = "Green") +
+  facet_grid(. ~month)+
+  scale_x_discrete(name = "", limits = "") +
+  labs(caption = "Highlighted points represent the highest success rate")
+
+```
+
+Based on the data collected, the best month to call someone who is in mangement is in December with 66.7% success and the best month  to call someone who is working as admin is in the month of March with 62.5% success, so and an so forth. 
+
+In December, similar to Hypothesis no. 5, is that people in management are likely to be in better mood as they might have just received their year-end bonus. Futhermore for those in management, it is also quite likely that most of their staff went on vacation in December which significantly lightens their workload. The general better mood translates to higher success rates.
+
+On the other hand, March seems to be the best month to call those who work in admin. It is possible that admins are generally the busiest in the months of Jan/Feb due to the company's year end closing which is typically requires long work hours by admins to meet reporting deadlines. After the year end closing is done, admins will be significantly relieved in terms of workload and hence, are more open to sales pitches from telemarketers.
+
+Similarly, the higher success rates for clients in different occupations in certain months could be due to a step reduction in work load in the period around that particular month that affects the psychology of the customer. Unfortunately, the number of success cases are not a large number to obtain meaningful trends across occupations and the month of the successful call.
+
+#Hypothesis 10:
+
+Clients with a default history are less likely to take up the term deposit.
+
+For those with a history of default, we can expect them to have less spare cash available and are hence less likely to take up the term deposit when contacted by the telemarketer. 
+
+
+```{r, echo = FALSE}
+hyp10 <- group_by(bank,default,education) %>%
+  summarize(.,success_rate = sum(ifelse((education == education & y == "yes"),1,0))/sum(ifelse((education == education),1,0)),
+            num_calls = n()) %>%
+  arrange(desc(success_rate))
+
+hyp10a <- group_by(bank,education) %>%
+  summarize(.,success_rate = sum(ifelse((education == education & y == "yes"),1,0))/sum(ifelse((education == education),1,0)),
+            average_balance = mean(balance)) %>%
+  arrange(desc(success_rate))
+  
+datatable(hyp10) %>%
+  formatPercentage(., columns = "success_rate",digits = 1)
+
+ggplot(hyp10,aes(x=education,y=success_rate,fill = default)) +
+  geom_col() +
+  geom_text(data = hyp10, aes(x = education, y = (ifelse(default == "yes",0.03, 0.4)) ,label = num_calls)) +
+  labs(Title = "Success rate across education levels and by history of default")
+
+ggplot(hyp10a,aes(x=education,y=success_rate)) + 
+  geom_col() +
+  geom_text(data = hyp10a, aes(x = education, y = success_rate ,label = average_balance)) +
+  coord_flip() +
+  labs(subtitle = "Success rate across education level (no. is average bank balance)")
+```
+
+Interestingly, contacting clients with unknown education level and with a history of default has the highest probability of success! However, there are only three clients with a default history and unknown education level. When the sample size is small, just one successful attempt can drive the success rate deceivingly high (33.3% when just one out of the three takes up the term deposit). Due to lack of sample size, we should ignore this particular observation until more data is collected.
+
+For clients with primary and teritary education, the data is in line with the hypothesis that the success rate of those with a history of default is small. However, clients with secondary education does not seem to follow this trend, with a higher success rate on this group of client with a default history, compared to those without a default history. We might be able to uncover more information if we study the reasons for the default or the amount defaulted to shed some light on this inconsistency. Some of the reasons could be that these clients tend to default on credit card repayment because of their forgetfullness rather than actually being unable to repay the outstanding balance. In such cases, we cannot draw a direct link between default history and the client's availability of spare cash.
+
+Generally, customers with teritary education are more likely to take up the term deposit, followed by those with secondary education level and primary education level in that order. Probably the higher educated customers understand that storing cash in term deposits earn a higher interested than a regular savings account and they tend to plan further ahead to manage their cashflows during the term. On the other hand, those who receive less education might not be confident to plan ahead and are reluctant to lock up a portion of their asset in term deposit, even though they might have more assets than those with secondary education level.
+
+#Conclusion:
+Hypothesis 1 seems to indicate a potential social problem on divorcees facing financial hardships compared to singles or married clients. While a term deposit might not immediately appeal to the already cash strapped divorcees, the bank could consider pitching other products relevant to this cash-strapped group of people, such as loans or credit cards.
+
+The rest of the observations indicate a certain strategy that the bank may consider adopting to maximize the chances of successful subscription to a a term deposit sales pitch. They are:  
+1) Train telemarketers to engage the clients longer on the phone  
+2) The preferred mode of conact is cellular phones instead of telephones  
+3) The preferred months to contact the clients are in the months of March, September, October and December. If resources permit, specifc occupation groups should be preferentially contacted in certain months according to Hypothesis no. 9 to maximize the chances of a successful telemarketing attempt  
+4) The optimal time between call attempts is 3 or 7 months  
+5) When engaging clients who rejected the pitch previously, the optimal time between the previous and the next sales attempt is 3,5,6 or 10 months  
+6) National holidays do not seem to have an impact on the success rate of the sales attempt  
+7) Clients with tertiary education are more likely to take up the term deposit, followed by those with secondary and primary education levels  
+
+The above observations could help the bank strategize its future telemarketing campaign more effectively to boost term deposit take up rate.

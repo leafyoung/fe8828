@@ -1,0 +1,114 @@
+---
+title: "Assignment3_Q2"
+author: "JL"
+date: "25 November 2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(readr)
+library(dplyr)
+library(lubridate)
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+
+## Finding #1
+### Job categories used.
+```{r}
+job_category <- distinct(bank, job) %>% arrange(job)
+
+kable(job_category, caption="job_category")
+```
+
+## Finding #2
+### Defaulted Person's total balance for each job category. Interesting finding is that housemaid defaulted but has positive bank balance.
+```{r}
+default_BalNJob <- filter(bank, default == "yes") %>% group_by(.,job) %>% summarise(balance = sum(balance)) %>% arrange(balance)
+
+kable(default_BalNJob, caption="default_BalNJob")
+```
+
+## Finding #3
+### Find the age group that has the highest default rate. People mostly tend to default in 20-30 age group & 40-50 age group.
+```{r}
+defalutRate_byAge <- bank %>% group_by(age_group = (age %/% 10) * 10) %>%  
+  summarise(default_rate = round(sum(ifelse(default=="yes",1,0))/n(),3)) %>%  arrange(default_rate)
+
+kable(defalutRate_byAge, caption="defalutRate_byAge")
+
+plot(defalutRate_byAge$age_group,defalutRate_byAge$default_rate)
+```
+
+## Finding #4
+### Bank clients have a loan while doesn't have a housing, grouping by job
+```{r}
+loan_no_housing <- bank %>% filter(loan == "yes" & housing == "no") %>% group_by(.,job) %>% summarise(count = n())
+
+kable(loan_no_housing, caption="loan_no_housing")
+```
+
+## Finding #5
+### Bank client have a job between 20 to 40, grouping by job.
+```{r}
+age20to40_withJob <- bank %>% filter(age>=20 & age <= 40 & !(job %in% c("housemaid","retired","student","unemployed"))) %>% 
+  group_by(.,job) %>% summarise(count = n())
+
+kable(age20to40_withJob, caption="age20to40_withJob")
+```
+
+## Finding #6
+### The longest call duration.
+```{r}
+longest_duration <- filter(bank,duration == max(duration))
+
+kable(longest_duration, caption="longest_duration")
+```
+
+## Finding #7
+### The eldest person.
+```{r}
+eldest_person <- filter(bank,age==max(age))
+
+kable(eldest_person, caption="eldest_person")
+```
+
+## Finding #8
+### number of person in each job category.
+```{r}
+jobs_count <- group_by(bank,job) %>% summarise(total = n())
+
+kable(jobs_count, caption="jobs_count")
+```
+
+## Finding #9
+### campaign successful rate by job category. entrepreneur has lowest success rate, maybe due to busy work schedule.
+```{r}
+successRate_byJob <- bank %>% group_by(job) %>% summarize(success_rate = round(sum(ifelse(poutcome=="success",1,0))/n(),3)) %>% 
+  arrange(success_rate)
+
+kable(successRate_byJob, caption="successRate_byJob")
+```
+
+## Finding #10
+### Default rate group by Marital status, education level, and average bank balance. Single and primary school educated person has highest default rate.
+```{r}
+married_group <- filter(bank, marital=="married") %>% group_by(education) %>% 
+  summarise(aveage_balance=mean(balance),default_rate=round(sum(ifelse(default=="yes",1,0))/n(),3))
+single_group <- filter(bank, marital=="single") %>% group_by(education) %>% 
+  summarize(aveage_balance=round(mean(balance),0), default_rate=round(sum(ifelse(default=="yes",1,0))/n(),3))
+
+married_group <- mutate(married_group, marital="married")
+single_group <- mutate(single_group, marital="single")
+
+marital_df <- bind_rows(married_group,single_group) %>% arrange(default_rate)
+
+kable(marital_df, caption="marital_education_default")
+```
+

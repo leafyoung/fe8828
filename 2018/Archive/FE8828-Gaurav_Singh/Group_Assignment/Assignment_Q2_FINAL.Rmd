@@ -1,0 +1,123 @@
+---
+title: "Assignment_Q2_FINAL"
+author: "Abhishek, Manav, Gaurav & Suman"
+date: "15/12/2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(fOptions)
+library(lubridate)
+library(bizdays)
+library(lubridate)
+library(kableExtra)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.table.format = "html")
+```
+
+
+#Final Assignment Question 2
+In this question, we simulate the random movement of the Stock Price using the log normal random variables in r with the function _rlnorm_. This help us simulate the stock price movement over the next 30 days using the Geometric Brownian Motion formula. 
+
+##Part 1
+The first part of this question deals with showing that when the implied volatility is the same as the realized volatility, Gamma and Theta neutralize each other, i.e.
+
+ $$0.5*\Gamma(\Delta S)^{2} + \Theta (dT) \approx 0$$
+
+```{r}
+
+S <- 100
+K <- 100
+#Part [1]
+sigma <- 0.3 # realized vol can be 0.3 for [1] or 0.5 for [2]
+drift <- 0 # drift = r - q
+N <- 30
+timestep <- 1 / 250
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+# ss is the simulated price movement for N days
+ss <- rep(S, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+df <- data_frame(S = ss, days = 1:N)
+opt <- df %>%
+  rowwise() %>%
+  mutate(price = GBSOption("c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3)@price,
+          delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3),
+          gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3),
+          theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3)) %>%
+  ungroup()
+
+opt1 <- opt %>%
+  mutate(stock_price_change = c(0,diff(S)),
+         price_change = c(0,diff(price)),
+         approx = delta * stock_price_change + 0.5 * gamma * (stock_price_change) ** 2 + theta * 1/250,
+         gt_neutralise = 0.5 * gamma * (price_change) ** 2 + theta * 1/250) %>%
+  mutate(gt_neutralise = ifelse(gt_neutralise<0.001, 0, gt_neutralise))
+
+knitr::kable(opt1 %>% select(S, days, price, stock_price_change, price_change, approx, gamma, theta, gt_neutralise), format="html", caption="Gamma and Theta neutralise (gt_neutralise)") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive")) %>%
+  column_spec(9, bold = T, color = "white", background = "#D7261E")
+
+
+ggplot(opt1) + geom_line(aes(x=days, y=gt_neutralise)) +  labs(title = "Gamma-Theta Neutralization", x = "Date", y = "0.5*Gamma*(delS)^2 + Theta*dT")
+
+```
+
+
+##Part 2
+In the second part of this question we make use of dynamic Delta Hedgin to find the daily PnL for thirty days using the strategy of buying one call option at the beginning and holding '-delta' of the underlying stock at any time t$\lt$ T (where T is the time to maturity). The example makes use of the starting stock price S=100, and the strike price, K=100. We make use of the 'GBSOption' and 'GBSGreeks' functions, similar to Part 1 to find the greeks and the call price at each time. Here we try to show that when the implied volatility and realized volatility are not the same, unlike Part 1, the overall PnL of the strategy can be given as 
+$$Vega * (Realized Volatility - Implied Volatility) * T $$
+
+Here we keep the implied volatility the same as in the previous part set to 0.3, but we change the realized volatility to 0.5. Then we calculate this value for each day in the data frame and also using the mean vega and T equal to 30 (The total duration of the strategy). We compare this with the calculated PnL which is given as,
+$$Delta(Call Premium) + (-\delta)*(\Delta S) $$
+Here the initial value is take to be the negative of the Call Price at the start. This value is also taken into account while calculating the overall PnL using the Vega formula. The result and code is as shown below.
+
+```{r}
+
+#Part [2] - Assuming long call option
+sigma <- 0.5
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+# ss is the simulated price movement for N days
+ss <- rep(S, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+df1 <- data_frame(S = ss, days = 1:N)
+
+opt2 <- df1 %>%
+  rowwise() %>%
+  mutate(price = GBSOption("c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3)@price,
+         delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3),
+         gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3),
+         theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3)) %>%
+  ungroup()
+opt3 <- opt2 %>%
+  mutate(premium_change = c(0,diff(price)),
+         stock_price_change = c(0,diff(S)),
+         PnL = ifelse(days==1, -price, premium_change + (-delta)*(stock_price_change)),
+         total_PnL = cumsum(PnL)) %>%
+   mutate(vega_del_vol = GBSGreeks("Vega", "c", S = S, X = K, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3) * (0.3-sigma) * (1/250),
+         vega = GBSGreeks("Vega", "c", S = S, X = K, Time = (N+1-days) / 250, r = 0, b = 0, sigma = 0.3))
+
+
+vega <- mean(opt3$vega)
+
+PnL <- sum(opt3$PnL)
+vega <- mean(opt3$vega)
+PnL_Total <- vega * (0.3-sigma) * (N/250) - opt2[["price"]][1]    
+
+knitr::kable(opt3 %>% select(S, days, price, delta, vega, stock_price_change, premium_change, PnL, total_PnL, vega_del_vol), format="html", caption="Vega_del_Vol and Overall PnL") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive")) %>%
+  column_spec(9, bold = T, color = "white", background = "#D7261E")
+
+cat(paste0("The total PnL of the strategy as calculated from call premium and S is: ", PnL))
+cat(paste0("The total PnL of the strategy as calculated from Vega is: ", PnL_Total))
+
+```
+
+##Conclusion
+When the implied volatility is taken to be the same as the realized volatility, the gamma and theta neutralise each other as expected, which can be seen in the table and graph of part 1.
+
+In part two, the two ways of calculating the PnL are expected to give the same value, but they are not the same, the difference can be seen above in Part 2. This result was not as expected. 

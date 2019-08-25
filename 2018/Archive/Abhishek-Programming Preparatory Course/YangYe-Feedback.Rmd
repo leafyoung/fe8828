@@ -1,0 +1,9 @@
+# Assignment 2:
+Good. But I have a few points:
+1. findnum() function doesn't have logic to handle zero-split-number case and not-found-case-if-N-in-first-group.
+
+# Assignment 3
+Well-done.
+Some highlights that I would mention:
+- Insight #5 is Good
+- Insight #10's comment is good.

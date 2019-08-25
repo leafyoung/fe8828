@@ -1,0 +1,13 @@
+# Assignment 1:
+You are among the top. Excellent content and good choice of color and pictures. The Go button is good. Good effort!
+
+# Assignment 2:
+Well-done. I have a few points:
+0. Both zero-split-number and not-found case are handled. Good!
+1. It's better to organize your codes into functions. Function contatins a smaller and focused chunk of logic; and they can be parameterized to run with different inputs.
+2. N = 5000 would get a closer answer 37. N = 10000 would be 39. Try a bit more than 1000, in one word.
+
+# Assignment 3
+For option Volatility, you may use mutate(rowwise(df), vol = GBSVolatility(...)). GBSVolatility function will be called once for each row.
+
+Your EDA is good. #7 - #10 have a focus on call duration. You have a depth; in comparison, other good assignments have more coverage. You have earned your merit.

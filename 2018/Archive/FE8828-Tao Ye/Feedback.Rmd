@@ -1,0 +1,7 @@
+Assignment 2:
+Good. But I have a few points:
+1. The case of split_num == 0 is not handled in make_choice() function.
+2. I was expecting a R Markdown file with writings inside.
+3. It's better split round number of MC run from N.
+
+I have some comments in the code.

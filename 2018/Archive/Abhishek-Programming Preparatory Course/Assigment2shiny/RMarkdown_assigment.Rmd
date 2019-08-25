@@ -1,0 +1,51 @@
+---
+title: "R Markdown Assignment week 2"
+output: pdf_document
+subtitle: 
+author: "Abhishek Vijaykumar"
+date: "November 19th, 2018"
+---
+
+
+
+```{r echo=FALSE}
+count<-c()
+probability<-c()
+EV<-c(rep(0,99))
+#N->Num of elements in the array
+looping<-function(numberofinterations,N){
+  for(j in 1:(N-1))
+  {
+    for(i in 1:numberofinterations)
+    {
+      count[i]=findnum(N,j)
+      EV[j]=EV[j]+count[i]
+      #print(EV[j])
+    }
+  sumofN=sum(count==N)
+  probability[j]=(sumofN*100)/numberofinterations
+  }
+  p=which.max(probability)/100
+  print(p)
+  plot(EV/numberofinterations)
+  plot(probability,type="l")
+  #plot(EV/numberofinterations,type="l")
+}
+
+findnum<-function(N,Split_num){
+  numlist=sample(c(1:N),N,replace=FALSE)
+  Current_Best=max(numlist[1:Split_num])
+  for(i in (Split_num+1):N)
+  {
+    if(numlist[i]> Current_Best)
+    {
+      Current_Best=numlist[i]
+      return(Current_Best)
+    }
+  }
+  return(numlist[N])
+}
+looping(100000,100)
+```
+
+
