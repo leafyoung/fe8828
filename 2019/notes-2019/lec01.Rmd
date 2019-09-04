@@ -1,9 +1,8 @@
 ---
-title: "FE8828 Programming Web Applications in Finance"
-author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+title: "FE8828 Programming Web Applications in Finance <br> <br> - Session 1 -"
+subtitle: "<sub> What's Internet? What's Web? <br> Launch into the Cloud <br> R Markdown and Shiny layout </sub>"
+author: "Dr. Yang Ye <sub> yy@runchee.com </sub>"
 date: "Sep 10, 2019"
-subtitle: <sub> Session 1 <br> What's Internet? What's Web? <br> Launch into the Cloud
-  <br> R Markdown and Shiny layout </sub>
 ---
 
 ```{r setup, include=FALSE}
@@ -13,35 +12,66 @@ knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE)
 chunk <- "```"
 inline <- function(x = "") paste0("`` `r ", x, "` ``")
 ```
-# Where does this course stands on?
-* It's about "Data Science"
-- Data -> Model -> Application
+<style type="text/css">
 
-```{r, echo = FALSE, out.width = "75%"}
+code.r{ /* Code block */
+    font-size: 23px;
+}
+
+pre { /* Code block - determines code spacing between lines */
+    font-size: 18px;
+}
+
+</style>
+
+# Where does this course mean?
+
+* Programming
+* Data science
+* Finance
+* In the world of Internet
+
+# Programming
+
+<center> Theory <-> Programming <-> Practices </center>
+
+* Programming is pratices of theory.
+* A well-designed software framework is a guide to pratices.
+* The reason to learn programming is bi-folded:
+    * We can code our own thoughts, and
+    * We can utilize other people's work.
+* We will build on beginner R to the imtermeidate/advanced R
+* You will have ample exercise in this course - for your own learning.
+
+# Data Science workflow
+
+<center> Data -> Model -> Application </center>
+
+* It's about "Data Science" workflow
+* We get data from Web and also publish new data to web.
+
+```{r, echo = FALSE, out.width = "40%"}
 knitr::include_graphics("imgs/data-science-explore.png")
 ```
 
-# Where does this course stands on? (updated in 2018)
-New version in 2018.
-
-TODO: 
+# Data Science workflow
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("new/tidyverse.png")
 ```
 
-# Where does this course stands on?
-- TidyVerse with a finance flavour
+# Finance
+
+- Tidyverse with a finance flavour
 - Reference book
 
-```{r, echo = FALSE, out.width = "60%"}
+```{r, echo = FALSE, out.width = "50%"}
 knitr::include_graphics("new/tidy1.png")
 ```
 
-# Where does this course stands on?
-- Our course
+# Our course
 
-```{r, echo = FALSE, out.width = "60%"}
+```{r, echo = FALSE, out.width = "50%"}
 knitr::include_graphics("new/tidy2.png")
 ```
 
@@ -49,57 +79,57 @@ knitr::include_graphics("new/tidy2.png")
 1. Know the way of Internet: the network, the cloud and the application.
 2. Use data manipulation and data visualization to do exploratory data analysis.
 3. To do option valuation, and trading strategy performance analysis.
-4. Build real-world data-driven reports and dashboard, data visualization.
-5. Latest technology in cryptocurrency and payment system like Bitcoin and Blockchain.
+4. Build real-world data-driven reports and dashboard, data visualization and ~predictive model~.
+5. Latest technology in cryptocurrency and payment system based on Bitcoin and Blockchain.
 
 # What does it take?
 * Programming is our tool
-    - Intermidiate level R
     - R is a system that has been designed to process data.
+    - Intermidiate-to-Advanced level R
     - Use R in other MFE courses
-    - Later in career you will learn Python, Julia, Hadoop. The principle and idea is the same.
-      Since you have practiced the full pipeline, easier to master the idea.
-* Take a habit of good analyst - Use notebook-style research, reproducible
+    - A complete suite for data science.    
+* Pick up a habit of good analyst: Use reproducible research, use notebook.
 * Take a mind of data exploration
-* Take a mind of analysis - answer is not fixed but open-ended. You need to draw conclusion and make suggestion.
+* Take a mind of analysis: answer is not fixed but open-ended. You need to draw conclusion and make suggestion.
 * Take a mind of strategy thinking
 
-# Course Outline: Week 1-3
-- Week 1:
+# Course Outline: Session 1-3
+- Session 1:
     * What's Internet? What's Web?
     * Launch into the Cloud: AWS
     * R Markdown and Shiny/1: layout
-- Week 2:
+- Session 2:
     * Intermediate R Programming
     * Shiny/2: R Web Framework
-    * Data Manipulation and EDA (Exploratory Data Analysis)/1
-- Week 3:
-    * Data Manipulation and EDA/2
+    * Data Manipulation and EDA/1
+- Session 3:
+    * Data Manipulation and EDA22
 
 # Course Outline: Week 4-6
-- Week 4
+- Session 4
     * Data Visualization and EDA
     * Shiny/3: Advanced
-- Week 5
+- Session 5
     * Building Financial Applications
-- Week 6:
+    * Building Predictive Model
+- Session 6:
     * Further topics: Blockchain
     
 # Assingments
-- Week 1: A static website. A front page, a about page and a description page. (due by week 2)
-- Week 2: Shiny application. (due by week 3)
+- Week 1: A static website: a front page, an about page and some description pages. (due by week 2)
+- Week 2: Shiny web application. (due by week 3)
 - Week 3: Data analysis (due by week 4)
 - Week 4: Data visualization (due by week 5)
 - Week 6: Group project
-- You can submit your assignment with me by Dropbox/Google drive. My account: leafyoung@gmail.com (Google/Dropbox)
-- Please organize your assignments into directories.
+- Name your directory as FE8828-Your Name. Share the directory with *leafyoung@gmail.com* on Dropbox or Google drive.
+- Organize your assignments into directories, e.g. \\Assignment 1, \\Assignment 2, ...
 
 ```{r, echo = FALSE, out.width = "70%"}
 knitr::include_graphics("new/assignment-org.png")
 ```
 
 # Keep calm and code on
-```{r, echo = FALSE, out.width = "40%"}
+```{r, echo = FALSE, out.width = "30%"}
 knitr::include_graphics("imgs/keep-calm-code-on.jpg")
 ```
 
@@ -123,16 +153,13 @@ knitr::include_graphics("imgs/dot-to-dot-connect-the-dots.jpg")
 
 # Building network
 * There are many ways to connect the devices: Network topology
-
-```{r, echo = FALSE, out.width = "55%"}
-knitr::include_graphics("imgs/Common-network-topologies.png")
-```
-
 * Which network topology is our home Wi-Fi?
-
-# Building network
 - Different network topology takes different way of communications.
 - Fully-connected network is the most costly and robust. Ring is the cheapest but vulnerable.
+
+```{r, echo = FALSE, out.width = "40%"}
+knitr::include_graphics("imgs/Common-network-topologies.png")
+```
 
 # Network talks
 What runs inside the cables?
@@ -178,7 +205,7 @@ A family of protocols but what's most famous/"fundamental" is IP and TCP.
 
 1. IP (Internet Protocol)
     - IP address.
-```{r, echo = FALSE, out.height = "30%"}
+```{r, echo = FALSE, out.height = "40%"}
 knitr::include_graphics("imgs/internet-partial.png")
 ```
 
@@ -189,23 +216,23 @@ knitr::include_graphics("imgs/internet-partial.png")
 # TCP/IP
 * Four Layers
 
-<center>![](imgs/640px-UDP_encapsulation.svg.png "UDP"){width=32%}</center>
+<center>![](imgs/640px-UDP_encapsulation.svg.png "UDP"){width=27%}</center>
 
 * Application layer runs many protocols
-```{r, echo = FALSE, out.width = "25%"}
+```{r, echo = FALSE, out.width = "20%"}
 knitr::include_graphics("imgs/tcp-ip.png")
 ```
 
 # This is why and how Internet growed in size
 A well-defined network protocles.
 
-```{r, echo = FALSE, out.width = "75%"}
+```{r, echo = FALSE, out.width = "54%"}
 knitr::include_graphics("imgs/internet-host-count.png")
 ```
 
 IETF (Internet Engineering Task Force) maintains and still gets new protocol approved.
 
-```{r, echo = FALSE, out.width = "30%"}
+```{r, echo = FALSE, out.width = "25%"}
 knitr::include_graphics("new/ietf-card.png")
 ```
 
@@ -232,7 +259,8 @@ knitr::include_graphics("imgs/jediocto.jpg")
 # When it wants to visit someone on the network? 2/2
 * Then, your device creates and send the packet "request". Wait for response.
 * Router and gateway will relay the packets to the receiver.
-```{r, echo = FALSE, out.width = "57%"}
+
+```{r, echo = FALSE, out.width = "50%"}
 knitr::include_graphics("imgs/India_Post_Letter_Box.jpg")
 ```
 
@@ -780,4 +808,3 @@ This is interactive document.
 ```{r, echo = FALSE, out.width = "75%"}
 knitr::include_graphics("imgs/runchee.png")
 ```
-

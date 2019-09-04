@@ -55,7 +55,7 @@ asset3 <- portfolioComponentReturns[,3]
 asset4 <- portfolioComponentReturns[,4]
 asset5 <- portfolioComponentReturns[,5]
 
-portfolio_returns_byhand <-   
+portfolio_returns_byhand <-
   (w_1 * asset1) + 
   (w_2 * asset2) + 
   (w_3 * asset3) +

@@ -1,17 +1,17 @@
 ---
-title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Session 3 <br> Data Manipulation and EDA/2 </sub>"
-author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+title: "FE8828 Programming Web Applications in Finance <br> <br> - Session 3 -"
+subtitle: "<sub> Data Manipulation and EDA/2 </sub>"
+author: "Dr. Yang Ye <sub> yy@runchee.com </sub>"
 date: "Sep 17, 2019"
 # runtime: shiny
 ---
 
 <style type="text/css">
 code.r{ /* Code block */
-    font-size: 22px;
+    font-size: 23px;
 }
 pre { /* Code block - determines code spacing between lines */
-    font-size: 18px;
+    font-size: 19px;
 }
 </style>
 
@@ -29,8 +29,7 @@ bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 ```
 
 # Lecture 7: Data Manipulation and EDA/2
-
-# Joins
+## Joins
 
 ```{r, echo = FALSE, out.width = "75%"}
 knitr::include_graphics("imgs/join_today_header_image.jpg")
@@ -45,17 +44,17 @@ Sample data:
 
     |   Date     | Position_id | Buy/Sell | Quantity | Risk Factor | Traded Price |
     | -----------|------------ |----------|----------|-------------|--------------|
-    | 2018-11-07 |    00010001 |        B |      100 | DCE_IO_1901 |        505.3 |
-    | 2018-11-07 |    00010002 |        B |      100 | DCE_IO_1901 |        506.8 |
+    | 2019-11-07 |    00010001 |        B |      100 | DCE_IO_1901 |        505.3 |
+    | 2019-11-07 |    00010002 |        B |      100 | DCE_IO_1901 |        506.8 |
 
 
 - data_day2
 
     |   Date     | Position_id | Buy/Sell | Quantity | Risk Factor | Traded Price |
     | -----------|------------ |----------|----------|-------------|--------------|
-    | 2018-11-07 |    00010001 |        B |      100 | DCE_IO_1901 |        505.3 |
-    | 2018-11-07 |    00010002 |        B |      100 | DCE_IO_1901 |        506.8 |
-    | 2018-11-08 |    00010003 |        S |     -100 | DCE_IO_1901 |        507.9 |
+    | 2019-11-07 |    00010001 |        B |      100 | DCE_IO_1901 |        505.3 |
+    | 2019-11-07 |    00010002 |        B |      100 | DCE_IO_1901 |        506.8 |
+    | 2019-11-08 |    00010003 |        S |     -100 | DCE_IO_1901 |        507.9 |
 
 Positions are additive (to close a position, we won't change the original position but to do a new reverse trade).
 Suppose we have two days of position data.
@@ -115,7 +114,6 @@ Table `Customer`:
     | 2         | 2        | D           | banana    | NA             |
     | 1         | 6        | B           | orange    | +456           |
 
-
 # `full_join` and `anti_join`
 - full_join(a, b): Find all combinations between table a and b.
 - anti_join(a, b): Find those in a but not in b.
@@ -136,6 +134,8 @@ df <- anti_join(data_frame(a = 1:2), data_frame(a = 2:4), by = "a")
 kable(df)
 ```
 
+# `full_join` and `anti_join` More
+
 ```{r, echo = TRUE}
 # All possible combination between job and education
 x <- full_join(distinct(bank, job) %>% mutate(dummy = 1),
@@ -151,13 +151,13 @@ df1 <- anti_join(x, y, by = c("job", "education"))
 df2 <- anti_join(y, x, by = c("job", "education"))
 ```
 
-- Empty result
+- df1: Empty result
 
 ```{r, echo = FALSE}
 kable(df1)
 ```
 
-- Empty result
+- df2: Empty result
 ```{r, echo = FALSE}
 kable(df2)
 ```
@@ -356,7 +356,7 @@ df <- summarise(bank,
 kable(df)
 ```
 
-# group_by/ungroup
+# `group_by`/`ungroup`
 `ungroup()` removes group definition, restores the "ungrouped"" data frame back to entire data.
 Because `group_by` will leave a trace 
 
@@ -379,7 +379,7 @@ kable(df_wrong)
 kable(df_correct)
 ```
 
-# group_by/ungroup
+# `group_by`/`ungroup`
 
 ```{r, echo = TRUE, results = "hide"}
 # We can't remove age
@@ -497,7 +497,7 @@ df <- tail(bind_rows(bank, summarise_if(bank, is.numeric, mean) %>%
 kable(df)
 ```
 
-# bind_cols
+# `bind_cols`
 - bind_cols is to extend the data frame in width.
 
 Use cases
@@ -548,7 +548,7 @@ kable(df[])
 
 1. How to know the row number of the wrong date
 ```{r, echo = TRUE, results = "hide"}
-df <- data.frame(dt = c("2018-10-01", "2018-31-12", "2018-03-17", "2018-02-29", "2018-09-30"))
+df <- data.frame(dt = c("2019-10-01", "2019-31-12", "2019-03-17", "2019-02-29", "2019-09-30"))
 ```
 
 ```{r, echo = FALSE}
@@ -590,7 +590,7 @@ df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE),
                  sigma = 0.3)
 ```
 
-# tidyr: gather/spread
+# tidyr: `gather`/`spread`
 
 Wide format <=> Long format
 
@@ -599,9 +599,10 @@ Wide format <=> Long format
 - Reference: Tidy data <https://en.wikipedia.org/wiki/Tidy_data>
 
 # Wide v.s. Long
-## Wide format
+Wide format
+
 ```{r echo = TRUE, results = "hide"}
-wfmt <- data_frame(date = seq(from = as.Date("2018-01-01"), by = "day", length.out = 5),
+wfmt <- data_frame(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
                    Copper_qty = round(runif(5) * 1000, 0),
                    Gold_qty = round(runif(5) * 1000, 0),
                    Silver_qty = round(runif(5) * 1000, 0))
@@ -612,7 +613,8 @@ kable(wfmt)
 ```
 
 # Wide v.s. Long
-## Long format
+Long format
+
 ```{r echo = TRUE, results = "hide"}
 library(tidyr)
 df <- gather(wfmt, key, value, -date)
@@ -652,7 +654,7 @@ kable(head(df, 7))
 ```
 ...
 
-# spread
+# `spread`
     # Original help
     spread(data, key, value)
     # My annotated version
@@ -679,7 +681,7 @@ kable(head(df, 7))
 # Combine different columns' Quantity
 
 ```{r echo = FALSE, reuslts = "hide"}
-wfmt <- data_frame(date = seq(from = as.Date("2018-01-01"), by = "day", length.out = 5),
+wfmt <- data_frame(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
                    Copper_qty = round(runif(5) * 1000, 0),
                    Gold_qty = round(runif(5) * 1000, 0),
                    Silver_qty = round(runif(5) * 1000, 0))
@@ -803,7 +805,7 @@ cat(htmltools::includeText("example/assignment.Rmd"))
 1.1 Copy the options data from
     https://www.nasdaq.com/symbol/goog/option-chain?dateindex=1
 
-    Gather data for "Dec 14, 2018" and store into following data frame format.
+    Gather data for "Dec 20, 2019" and store into following data frame format.
 
         | Expiry Date | Strike | Open Interest | Underlying | Call/Put | Bid | Ask
         
@@ -819,58 +821,10 @@ cat(htmltools::includeText("example/assignment.Rmd"))
 # Example:
 
 GBSVolatility(867.30, "c", 1135.67, 240,
-              as.numeric((as.Date("2018-12-07") - as.Date("2018-11-10")))/365, r = 0.03, b = 0)
+              as.numeric((as.Date("2019-12-20") - as.Date("2019-09-16")))/365, r = 0.03, b = 0)
 GBSVolatility(256.50, "c", 1135.67, 880.00,
-              as.numeric((as.Date("2018-12-07") - as.Date("2018-11-10")))/365, r = 0.03, b = 0)
+              as.numeric((as.Date("2019-12-20") - as.Date("2019-09-16")))/365, r = 0.03, b = 0)
 GBSVolatility(53.62, "c", 1135.67, 1120.00,
-              as.numeric((as.Date("2018-12-07") - as.Date("2018-11-10")))/365, r = 0.03, b = 0)
+              as.numeric((as.Date("2019-12-20") - as.Date("2019-09-16")))/365, r = 0.03, b = 0)
 ```
 
-# Assignment
-3. Bank
-
-        Data frame 1: Account 
-        | AcountNo | Name |
-        
-        Data frame 2: Transaction
-        | TransactionNo | Date | AccountNo | TransactionType | Amount | Currency |
-        
-        Data frame 3: Currency to SGD
-        | Currency | Conversion | Date |
-
-TransactionType can be: Withdraw/Deposit/Spend
-Write follow functions and combine them to form a small program
-
-1. Create 10 accounts with initial random deposit and credit in SGD.
-2. Create 3 currencies: CNY, USD, SGD. Download their conversion rate between 2018-07-01 and 2018-09-30.
-3. Generate random transaction data for 10 accounts during 2018-07-01 and 2018-09-30.
-   Make it more realistic, deposit is 1-2 times per month, a random number of 3000-5000, any of three currencies.
-   Spend/Withdraw can be any times [0, 60] and any amount, any currencies.
-   Deposit is positive, Withdraw/Spend is negative.
-   Constraint: You can't withdraw more than the deposit, can't spend more than credit + deposit.
-4. Generate report for transaction as month-end statement in SGD.
-
-        { Client Name }
-        { Month }
-    
-        # Transaction History
-        
-        Date | TransactionType | Amount | Currency | Deposit Balance | Credit Balance |
-             |                 |        |          |                 |                |
-             |                 |        |          |                 |                |
-             |                 |        |          |                 |                |
-        -------------------------------------------------------------------------------
-                                 Month-End Balance | Deposit         | Credit         |
-    
-        # Summary
-    
-        TransactionType | Amount |
-        ...
-
-Submission:
-
-R Markdown document, containing:
-
-1. describing design
-2. Code and explaination of result
-3. Example running result.

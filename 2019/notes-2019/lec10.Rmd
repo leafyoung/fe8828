@@ -1,7 +1,7 @@
 ---
-title: "FE8828 Programming Web Applications in Finance"
-subtitle: "<sub> Session 4 <br> Data Visualization and EDA <br> Shiny/3: Advanced </sub>"
-author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+title: "FE8828 Programming Web Applications in Finance <br> <br> - Session 4 -"
+subtitle: "<sub> Data Visualization and EDA <br> Shiny/3: Advanced </sub>"
+author: "Dr. Yang Ye <sub> yy@runchee.com </sub>"
 date: "Sep 19, 2019"
 # runtime: shiny
 ---
@@ -26,10 +26,10 @@ bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 
 <style type="text/css">
 code.r{ /* Code block */
-    font-size: 20px;
+    font-size: 23px;
 }
 pre { /* Code block - determines code spacing between lines */
-    font-size: 17px;
+    font-size: 23px;
 }
 </style>
 
@@ -109,7 +109,7 @@ If you don't know the column name, use `aes_string` to pass variable name as str
 
 Example of `aes_string`
 
-```{r, include = FALSE}
+```{r, include=FALSE}
 bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 ggplot(bank, aes(age, balance)) + geom_point()
 
@@ -126,7 +126,7 @@ selectInput("column", "col", choices = c("balance", "duration"))
 plot_bank("age", input$col)
 ```
 
-```{r, include = TRUE}
+```{r, fig.height=3, include = TRUE}
 ggplot(data = filter(bank, job == "entrepreneur"),
        aes(age, duration)) + geom_point() +
   geom_smooth(method = "lm") + facet_grid(. ~ job)
@@ -196,7 +196,7 @@ geom_smooth(aes(x = age, y = duration))
 ```
 
 # Pass `aes` down
-```{r, echo = T, fig.height=3}
+```{r, echo = T, fig.height=2}
 # But repeating is useful sometimes.
 # we can do specify different data and aes for different geom_* functions.
 ggplot(bank) +
@@ -374,7 +374,7 @@ ggplot(bank) +
   geom_point(aes(age, duration), color = "blue", size = 10, alpha = 0.4)
 ```
 
-# What's inside Bank? Things to consider
+# What's inside bank's clients? Things to consider
 
 - Which variables in data are categorical?
 
@@ -391,7 +391,7 @@ ggplot(bank) +
     + housing
     + loan
 
-# What's inside Bank? Things to consider 2
+# What's inside bank's clients? Things to consider 2
     
 - communication
     + contact: celluar v.s. telephone v.s. unknown
@@ -429,7 +429,9 @@ ggplot(bank, aes(age, job)) + geom_point()
 # Exercise 
 2. I tried to plot between job, loan and age. Any better idea? 
 ```{r, echo = TRUE}
-ggplot(bank, aes(age, job, color = loan)) + geom_point()
+suppressWarnings(
+  ggplot(bank, aes(age, job, color = loan)) + geom_point()
+)
 ```
 
 ```{r, echo = FALSE, fig.show = "hide"}
@@ -473,12 +475,12 @@ ggplot(bank, aes(age, color = job, alpha = 0.3)) + geom_density()
 ggplot(bank, aes(age, color = job, fill = job, alpha = 0.3)) + geom_density()
 ```
 
-# histogram: duration and job and binwidth = 2
+# histogram: duration and job and `binwidth = 2`
 ```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 2)
 ```
 
-# histogram: duration and job and binwidth = 100
+# histogram: duration and job and `binwidth = 100`
 ```{r, echo = TRUE}
 ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 100)
 ```
@@ -493,7 +495,7 @@ ggplot(data = bank, mapping = aes(x = age, fill = job)) + geom_histogram(binwidt
 ggplot(data = bank, mapping = aes(x = age, colour = job)) + geom_freqpoly(binwidth = 10)
 ```
 
-# geom_bar
+# `geom_bar`
 - `bar` is a statistical function: It counts.
 ```{r, echo = T, fig.show = "hide"}
 # First input parameter to geom_bar is mapping, so we can skip it.
@@ -505,7 +507,7 @@ ggplot(bank) + geom_bar(mapping = aes(x = age))
 ggplot(bank) + geom_bar(aes(x = age))
 ```
 
-# geom_bar with fill: job
+# `geom_bar` with fill: job
 ```{r, echo = TRUE}
 # comparing to colour, for Bar, we better use fill
 # ggplot(data = bank, ) + geom_bar(aes(x = age, colour = job))
@@ -655,14 +657,14 @@ ggplot(data = bank) +
   facet_grid( ~ education)
 ```
 
-# Facets - facet_wrap
+# Facets - `facet_wrap`
 ```{r, echo = TRUE}
 ggplot(data = bank) + 
   geom_point(mapping = aes(x = age, y = duration)) + 
   facet_wrap(~ education, nrow = 2)
 ```
 
-# Facets - facet_wrap multi-dimension
+# Facets - `facet_wrap` multi-dimension
 
 ```{r, echo = TRUE}
 ggplot(data = bank) + 
@@ -742,18 +744,18 @@ Use density/color on one figure
 ggplot(bank, aes(previous)) + geom_density(aes(fill = job))
 ```
 
-# With facets or without facets - Case 2
+# With facets or without facets: Case 2
 ```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_histogram() +
   facet_grid(. ~ marital)
 ```
 
-# With facets or without facets: density and fill
+# With facets or without facets: `geom_density` and `fill`
 ```{r, echo = TRUE}
 ggplot(bank, aes(previous)) + geom_density(aes(fill = marital))
 ```
 
-# With facets or without facets: xlim
+# With facets or without facets: `xlim`
 ```{r, echo = TRUE}
 ggplot(bank, aes(previous)) +
   geom_density(aes(fill = marital), alpha = 0.7) +
@@ -917,7 +919,7 @@ ggplot(world, aes(long, lat, group = group)) +
 # })
 ```
 
-# Review: observeEvent
+# Review: `observeEvent`
 - Allow binding of multiple outputs to multiple inputs.
 - Use of `isolate` to *peek* the value not to react to its change every time.
 
@@ -952,7 +954,7 @@ ggplot(world, aes(long, lat, group = group)) +
 # button -> change the data -> renderPlot
 ```
 
-# Review: When codes gets to run.
+# Review: When code gets to run.
 - `ui`: client. run once per user per session.
 - `server`: run once per session
 - code inside a reactive function runs with every input change.
@@ -1022,12 +1024,17 @@ p2 <- ggplot(bank) + geom_bar(mapping = aes(x = age, fill = education),
                               position = "fill") + coord_polar()
 ```
 
-```{r, echo = T, fig.height = 3}
+```{r, echo = TRUE, fig.height = 3}
 grid.arrange(p1, p2, ncol=2, nrow=1)
 ```
 
 ```{r, echo = TRUE}
 grid.arrange(p1, p2, ncol=2, nrow=1, widths = c(4,3))
+```
+
+# 
+
+```{r, echo = TRUE}
 grid.arrange(p1, p2, ncol=1, nrow=2, heights = c(2,4))
 ```
 

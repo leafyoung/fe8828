@@ -552,7 +552,7 @@ va.class <-
   predict(model, newdata=ds[validate, vars], type="class") %T>%
   {head(., 20) %>% print()}
 
-va.prob  <-  # Assumes 2 class
+va.prob  <- # Assumes 2 class
   predict(model, newdata=ds[validate, vars])[,2] %T>%
   {head(., 20) %>% print()}
 
@@ -600,7 +600,7 @@ te.class <-
   predict(model, newdata=ds[test, vars], type="class") %T>%
   {head(., 20) %>% print()}
 
-te.prob  <-  # Assumes 2 class
+te.prob  <- # Assumes 2 class
   predict(model, newdata=ds[test, vars])[,2] %T>%
   {head(., 20) %>% print()}
 
