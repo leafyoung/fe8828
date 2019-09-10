@@ -1,8 +1,10 @@
 ---
 title: "FE8828 Programming Web Applications in Finance <br> <br> - Session 1 -"
-subtitle: "<sub> What's Internet? What's Web? <br> Launch into the Cloud <br> R Markdown and Shiny layout </sub>"
 author: "Dr. Yang Ye <sub> yy@runchee.com </sub>"
 date: "Sep 10, 2019"
+output: pdf_document
+subtitle: <sub> What's Internet? What's Web? <br> Launch into the Cloud <br> R Markdown
+  and Shiny layout </sub>
 ---
 
 ```{r setup, include=FALSE}
@@ -33,9 +35,9 @@ pre { /* Code block - determines code spacing between lines */
 
 # Programming
 
-<center> Theory <-> Programming <-> Practices </center>
+<center> Theory <-> Programming <-> Practice </center>
 
-* Programming is pratices of theory.
+* Programming is pratice of theory.
 * A well-designed software framework is a guide to pratices.
 * The reason to learn programming is bi-folded:
     * We can code our own thoughts, and
@@ -50,7 +52,7 @@ pre { /* Code block - determines code spacing between lines */
 * It's about "Data Science" workflow
 * We get data from Web and also publish new data to web.
 
-```{r, echo = FALSE, out.width = "40%"}
+```{r, echo = FALSE, out.width = "60%"}
 knitr::include_graphics("imgs/data-science-explore.png")
 ```
 
@@ -62,17 +64,21 @@ knitr::include_graphics("new/tidyverse.png")
 
 # Finance
 
-- Tidyverse with a finance flavour
-- Reference book
+<center> Data -> Model/Valuation Engine/Trading Engine -> Appplication </center>
 
-```{r, echo = FALSE, out.width = "50%"}
-knitr::include_graphics("new/tidy1.png")
-```
+- Finance application, trading strategy and derivatives valuation.
+- Tidyverse with a finance flavour
 
 # Our course
 
-```{r, echo = FALSE, out.width = "50%"}
+```{r, echo = FALSE, out.width = "70%"}
 knitr::include_graphics("new/tidy2.png")
+```
+
+# Reference book
+
+```{r, echo = FALSE, out.width = "70%"}
+knitr::include_graphics("new/tidy1.png")
 ```
 
 # Objective
@@ -115,14 +121,15 @@ knitr::include_graphics("new/tidy2.png")
 - Session 6:
     * Further topics: Blockchain
     
-# Assingments
-- Week 1: A static website: a front page, an about page and some description pages. (due by week 2)
-- Week 2: Shiny web application. (due by week 3)
-- Week 3: Data analysis (due by week 4)
-- Week 4: Data visualization (due by week 5)
-- Week 6: Group project
-- Name your directory as FE8828-Your Name. Share the directory with *leafyoung@gmail.com* on Dropbox or Google drive.
-- Organize your assignments into directories, e.g. \\Assignment 1, \\Assignment 2, ...
+# Assingment
+- Assignment 1: A static website: a front page, an about page and some description pages. (due by week 2)
+- Assignment 2: Shiny web application. (due by week 3)
+- Assignment 3: Data analysis (due by week 4)
+- Assignment 4: Data visualization (due by week 5)
+- Assignment 5: Group project (due the Sunday after exam, I need to submit scores by Monday)
+- Submission
+    - Name your directory as FE8828-Your Name. Share the directory with *leafyoung@gmail.com* on Dropbox or Google drive.
+    - Organize your assignments into directories, e.g. \\Assignment 1, \\Assignment 2, ...
 
 ```{r, echo = FALSE, out.width = "70%"}
 knitr::include_graphics("new/assignment-org.png")
@@ -250,7 +257,7 @@ knitr::include_graphics("new/ietf-card.png")
     - Your device also receives One or more DNS server addresses so the computer knows where to send DNS requests.
     - DNS server would return the actual IP address of the domain name.
     - One kind of attack to Internet is to hijack/brings down Root Domain Servers for Global (8 of them) or a country's root DNS.
-    - Demo with nslookup.
+    - (Demo with nslookup.)
 
 ```{r, echo = FALSE, out.width = "14%"}
 knitr::include_graphics("imgs/jediocto.jpg")
@@ -313,7 +320,7 @@ When you have HTML and URL (Uniform Resource Locator), Web is born.
 - Document: https://en.wikipedia.org/wiki/World_Wide_Web
 - Resource: https://en.wikipedia.org/wiki/World_Wide_Web#/media/File:Web_Index.svg
 
-How this resource is used in the document.
+How this resource (URL) is used in document (HTML).
 
         <div class="thumbinner" style="width:302px;">
             <a href="/wiki/File:Web_Index.svg" class="image">
@@ -350,7 +357,7 @@ knitr::include_graphics("imgs/heisencat.png")
 ```
 
 # To recap
-## Why the Internet succeeded?
+## Why the Internet has succeeded?
 - Information flows by packet.
     + IP protocol sets the address for the device
     + TCP protocol transmits the packet reliably
@@ -359,9 +366,15 @@ knitr::include_graphics("imgs/heisencat.png")
 - Nework routers/gateways does the route/transmission to the destination.
 - Scalable and Efficient
 
+## Why Web has succeeded?
+- Web helps to locate universal resource.
+- Web helps to organize them in one place.
+
 # To recap
 ## Web application
-- Browser => HTML/CSS/JavaScript => HTTP => TCP => IP => Network physical.
+
+- Browser => HTML/CSS/JavaScript => HTTP => TCP => IP => Network physical lines
+- Network physical lines => IP => TCP => HTTP => HTML/CSS/JS => Browser
 
 - We will write in R Shiny, which subsequently output HTML/CSS/JavaScript to be run in browser.
 
@@ -564,7 +577,7 @@ knitr::include_graphics("imgs/ski-octo.png")
 ![Pizza](imgs/bitcoin-pizza.png){width=40%}
 
 # Formula
-MathJax. Use laTex syntax. There are many online references.
+MathJax. Use LaTex syntax. There are many online references.
 
 ## Inline with text
 

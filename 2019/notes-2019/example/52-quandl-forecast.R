@@ -29,7 +29,8 @@ cat(paste0("monthly: ", paste0(range(index(oil_monthly)), collapse = ", "), "\n"
 
 # Change index from month to day
 head(index(oil_monthly))
-index(oil_monthly) <- seq(mdy('01/01/2006'), (Sys.Date() - 365 * 2), by = 'months')
+index(oil_monthly) <- seq(mdy('01/01/2006'), Sys.Date(), by = 'months')[1:length(oil_monthly)]
+# index(oil_monthly) <- seq(mdy('01/01/2006'), (Sys.Date() - 365 * 2), by = 'months')
 str(oil_monthly)
 head(index(oil_monthly))
 

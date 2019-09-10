@@ -233,53 +233,52 @@ oil_daily <- Quandl("FRED/DCOILWTICO", type = "raw", collapse = "daily",
 # Now weekely and let's use xts as the type.
 oil_weekly <- Quandl("FRED/DCOILWTICO", type = "xts", collapse = "weekly",
                      start_date="2006-01-01", end_date = Sys.Date())
-oil_monthly <- Quandl("FRED/DCOILWTICO", type = "xts", collapse = "monthly",  
-                      start_date="2006-01-01", end_date = "2017-02-28")
+oil_monthly <- Quandl("FRED/DCOILWTICO", type = "xts", collapse = "monthly",
+                      start_date="2006-01-01", end_date = Sys.Date())
 
 # Have a quick look at our three  objects. 
 str(oil_daily)
 str(oil_weekly)
 str(oil_monthly)
 
+cat(paste0("daily: ", paste0(range(oil_daily$Date), collapse = ", "), "\n"))
+cat(paste0("weekly: ", paste0(range(index(oil_weekly)), collapse = ", "), "\n"))
+cat(paste0("monthly: ", paste0(range(index(oil_monthly)), collapse = ", "), "\n"))
+
 # Change index from month to day
 head(index(oil_monthly))
-index(oil_monthly) <- seq(mdy('01/01/2006'), mdy('02/28/2017'), by = 'months')
+index(oil_monthly) <- seq(mdy('01/01/2006'), Sys.Date(), by = 'months')[1:length(oil_monthly)]
+# index(oil_monthly) <- seq(mdy('01/01/2006'), (Sys.Date() - 365 * 2), by = 'months')
 str(oil_monthly)
 head(index(oil_monthly))
 
 dygraph(oil_monthly, main = "Monthly oil Prices")
 
-forebase1 <- oil_weekly["/2016-02-28"]
+forebase1 <- oil_weekly[paste0("/", Sys.Date() - 365 * 2)]
 forecast1 <- forecast(forebase1, h = 4 * 24)
 
 plot(forecast1, main = "Oil Forecast1")
 
-oil_forecast_data1 <- data.frame(
-  date = seq(last(index(forebase1)), 
-             by = 'week', length.out = 4 * 24 + 1)[-1],
-  Forecast = forecast1$mean,
-  Hi_95 = forecast1$upper[,2],
-  Lo_95 = forecast1$lower[,2])
+oil_forecast_data1 <- data.frame(date = seq(last(index(forebase1)), 
+                                           by = 'week', length.out = 4 * 24 + 1)[-1],
+                                Forecast = forecast1$mean,
+                                Hi_95 = forecast1$upper[,2],
+                                Lo_95 = forecast1$lower[,2])
 
-oil_forecast_xts1 <- xts(oil_forecast_data1[,-1],
-                         order.by = oil_forecast_data1[,1])
-```
+oil_forecast_xts1 <- xts(oil_forecast_data1[,-1], order.by = oil_forecast_data1[,1])
 
-```{r, echo = TRUE, eval = FALSE}
-forebase2 <- oil_weekly["/2018-11-30"]
+forebase2 <- oil_weekly[paste0("/", Sys.Date() - 30)]
 forecast2 <- forecast(forebase2, h = 4 * 3)
 
 plot(forecast2, main = "Oil Forecast2")
 
-oil_forecast_data2 <- data.frame(
-  date = seq(last(index(forebase2)), 
-             by = 'week', length.out = 4 * 3 + 1)[-1],
-  Forecast2 = forecast2$mean,
-  Hi_95_2 = forecast2$upper[,2],
-  Lo_95_2 = forecast2$lower[,2])
+oil_forecast_data2 <- data.frame(date = seq(last(index(forebase2)), 
+                                            by = 'week', length.out = 4 * 3 + 1)[-1],
+                                 Forecast2 = forecast2$mean,
+                                 Hi_95_2 = forecast2$upper[,2],
+                                 Lo_95_2 = forecast2$lower[,2])
 
-oil_forecast_xts2 <- xts(oil_forecast_data2[,-1],
-                         order.by = oil_forecast_data2[,1])
+oil_forecast_xts2 <- xts(oil_forecast_data2[,-1], order.by = oil_forecast_data2[,1])
 
 # Combine the xts objects with cbind.
 oil_combined_xts <- merge(oil_weekly, oil_forecast_xts1, oil_forecast_xts2)
@@ -567,6 +566,8 @@ plot_bband("SPY")
 ```
 
 # Lecture 11: Building Predictive Model
+
+
 
 One-hot encoding
 
