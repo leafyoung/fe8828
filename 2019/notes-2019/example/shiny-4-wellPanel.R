@@ -2,7 +2,6 @@ library(shiny)
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-  fluidPage(
     titlePanel("Hello Shiny!"),
     sidebarLayout(
       sidebarPanel(
@@ -21,7 +20,6 @@ ui <- fluidPage(
       )
     )
   )
-)
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
