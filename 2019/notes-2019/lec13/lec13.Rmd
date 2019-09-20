@@ -574,5 +574,3 @@ One-hot encoding
 Linear regression
 
 
-
-
