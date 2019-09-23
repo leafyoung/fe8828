@@ -11,7 +11,7 @@ library(tidyverse)
 library(fOptions)
 ```
 
-1. Bank
+# 1. Bank
 
         Data frame 1: Account 
         | AcountNo | Name |
@@ -22,48 +22,75 @@ library(fOptions)
         Data frame 3: Currency to SGD
         | Currency | Conversion | Date |
 
-TransactionType can be: Withdraw/Deposit/Spend
-Write follow functions and combine them to form a small program
+        TransactionType can be one of Withdraw/Deposit/Spend
 
-1. Create 10 accounts with initial random deposit and credit in SGD.
-2. Create 3 currencies: CNY, USD, SGD. Download their conversion rate between 2018-07-01 and 2018-09-30.
-3. Generate random transaction data for 10 accounts during 2018-07-01 and 2018-09-30.
-   Make it more realistic, deposit is 1-2 times per month, a random number of 3000-5000, any of three currencies.
-   Spend/Withdraw can be any times [0, 60] and any amount, any currencies.
-   Deposit is positive, Withdraw/Spend is negative.
-   Constraint: You can't withdraw more than the deposit, can't spend more than credit + deposit.
-4. Generate report for transaction as month-end statement in SGD.
+1. Create 10 client accounts with initial random deposit (random in [1000, 2000]) and credit (2000 for all) in SGD and store them in Rda file (Rda: "R data file", use save() and load()).
+
+2. Create 3 currencies: CNY, USD, SGD. Download their conversion rate during 2019-07-01 and 2019-09-30 from MAS website and store in Rda.
+
+3. Generate random transaction data for 10 accounts during 2019-07-01 and 2019-09-30 and store them in Rda.
+
+  - Make it more realistic, deposit is 1-2 times per month, a random number between 1000-2000, in any of three currencies.
+  - Spend/Withdraw can be any times [0, 1000] and any amount (could be a random number from a long-tail distribution), in any currencies
+  - Spend is increasing from credit
+  - Withdraw is deducting from balance
+  - Deposit is positive, Withdraw/Spend is negative.
+  - Interest payment from bank for end-of-month balance.
+  - Auto-generation Constraints: You can't withdraw more than the deposit, can't spend more than credit.
+
+4. Bank earns 2% from FX and 1% from SGD from client spending, gives client interest 0.5% (all annualized rates).
+
+Build a Shiny interface for
+
+1. Trigger auto-generation
+
+2. Client view: Month-end statement generation with following input
+  - Select client account
+  - Select month
+
 
         { Client Name }
         { Month }
     
+        # Chart of balance: showing credit, deposit, balance along the axis of date
+
         # Transaction History
         
-        Date | TransactionType | Amount | Currency | Deposit Balance | Credit Balance |
-             |                 |        |          |                 |                |
-             |                 |        |          |                 |                |
-             |                 |        |          |                 |                |
-        -------------------------------------------------------------------------------
-                                 Month-End Balance | Deposit         | Credit         |
+        Date | TransactionType | Currency | Amount | Amount (in SGD) | Deposit Balance | Credit Balance |
+             |                 |          |        |                 |                 |                |
+             |                 |          |        |                 |                 |                |
+             |                 |          |        |                 |                 |                |
+        -------------------------------------------------------------------------------------------------
+                                                   Month-End Balance | Deposit         | Credit         |
     
         # Summary
     
-        TransactionType | Amount |
-        ...
+        TransactionType | Amount | 
+        ...             |        |
 
-Submission:
 
-R Markdown document, containing:
+3. Bank view, Month report with following input
 
-1. describing design
-2. Code and explaination of result
-3. Example running result.
+  - Select month
+
+
+        # Chart: showing aggregated total deposit and credit along the axis of date
+        
+        # PnL table: Detail table (for every day)
+
+        Date | Total Deposit | Total Credit | PnL from Client Spending |
+        .... |               |              |                          |
+
+        # Risk table as of the end of month (sort descending by largest Credit-Deposit)
+
+        Client Name | Deposit | Credit |
+        ...         |         |        |
 
 ******
 
 <P style="page-break-after: always">
 
-2. Option trading - dynamic hedging
+# 2. Option trading - dynamic hedging
 
 Financial derivatives like Options are named so because their value is derived from its underlyings. Greeks are the sensitivity of the price of the derivaties to its underlying parameters. For example, a vanilla European option depends on *S* (Underlying price), stri*K*e, *Vol*(atility), *r* (interest rate), *q* (cost of carry), *T* (time).
 
@@ -79,102 +106,172 @@ To simplify, we set $r = q = 0$ (so Rho is zero).
 The daily PnL of option can be approximated into, according to Talyor expansion
 $\Delta V = Delta * \Delta S + 0.5 * Gamma * \Delta S ^2 + Vega * \Delta Vol + Theta * (dT) + Small \space Remainder$
 
-Option trading with dynamtic hedging uses two positions: one position in option and one position in underlying. The position on option is established at the beginning of the trade. The position in underlying is adjusted periodically (e.g. daily) to the opposite of the option delta so the strategy-delte is zero. The objective is to realize the difference between realized volatility and implied volatility.
+Option trading with dynamtic hedging uses two positions: one position in option and one position in underlying.
+The position on option is established at the beginning of the trade.
+The position in underlying is adjusted periodically (e.g. daily) to the opposite of the option delta so the strategy-delte is zero.
+The objective is to realize the difference between realized volatility and implied volatility.
 
 For example, there is a 30-day ATM call option, K = S = 100, r = q = 0, vol = 0.3 constant till option expiry.
 
 ```{r echo = TRUE}
+library(tidyverse)
+library(fOptions) # Note there are conflicts in name for functions like "filter()"
+
 days <- 20.0
-vega <- GBSGreeks("Vega", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
-delta <- GBSGreeks("Delta", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
-gamma <- GBSGreeks("Gamma", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
-theta <- GBSGreeks("Theta", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
-price <- GBSOption("c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price
+vega0 <- GBSGreeks("Vega", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+delta0 <- GBSGreeks("Delta", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+gamma0 <- GBSGreeks("Gamma", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+theta0 <- GBSGreeks("Theta", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+price0 <- GBSOption("c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price
 ```
     
 If on day 1, S1 = 98, Volatility is unchanged.
 
 ```{r echo = TRUE}
 S1 <- 98
-price1 <- GBSOption("c", S = S1, X = 100, Time = (days - 1) / 250, r = 0, b = 0, sigma = 0.3)@price
-approx <- delta * (S1 - 100) + 0.5 * gamma * (S1 - 100) ** 2 + vega * 0 + theta * 1/250
-cat(paste0("price1 - price: ", price1 - price, ", ", approx, "\n"))
-cat(paste0("diff with approx.: ", price1 - price - approx, "\n"))
-```    
+option_pnl <- GBSOption("c", S = S1, X = 100, Time = (days - 1) / 250, r = 0, b = 0, sigma = 0.3)@price - price0
+approx_pnl <- delta0 * (S1 - 100) + 0.5 * gamma0 * (S1 - 100) ** 2 + vega0 * 0 + theta0 * 1/250
+cat(paste0("option_pnl: ", option_pnl, ", ", approx_pnl, "\n"))
+cat(paste0("diff with approx.: ", option_pnl - approx_pnl, "\n"))
+```
 
-Analytically, we can prove the following:
+Generate random price series with given $S$ and $volatility$.
 
-[1] If realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other, i.e. $0.5 * Gamma * \Delta S ^2 + Theta * (dT) \approx  0$
+        S <- 100
+        K <- 100
+        sigma <- 0.3 # realized vol can be 0.3 for [2] or 0.5 for [3]
+        drift <- 0 # drift = r - q
+        timestep <- 1 / 250
+        days <- 20 / 250
+        N <- days / timestep
 
-[2] And overall Profit and Loss "overall PnL" for the strategy is $\approx Vega * (Realized \space Vol - Implied \space Vol) * T$. The overall PnL needs to count for the cost of buying the option.
+        p1 <- (drift - 0.5 * sigma * sigma) * timestep
+        p2 <- sigma * sqrt(timestep)
 
-Your task is to use simulation to prove above two points with the above-mentioned 30-day ATM call option.
-Note: that simulation would show some acceptable level of difference.
+        # ss is the simulated price movement for N days
+        ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
 
-    S <- 100
-    K <- 100
-    sigma <- 0.5 # realized vol can be 0.3 for [1] or 0.5 for [2]
-    drift <- 0 # drift = r - q
-    N <- days
-    timestep <- 1 / 250
-    
-    p1 <- (drift - 0.5 * sigma * sigma) * timestep
-    p2 <- sigma * sqrt(timestep)
-    
-    # ss is the simulated price movement for N days
-    ss <- rep(S, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
+Questions:
 
-    df <- data_frame(S = ss, days = 1:days)
+[1] Please show how good Taylor's approximation to actual PnL.
+
+We can also have the following conclusions from option hedging.
+
+[2] If realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other, i.e. $\Sigma ({0.5 * Gamma * \Delta S ^2 * dt + Theta * dt }) \approx  0$
+
+[3] If realized volatility > implied volatility, "Overall PnL" (profit and loss) for option hedging is $\approx \Sigma ({\frac {1} {2}} * Gamma * (Realized \space Vol ^ 2 - Implied \space Vol ^ 2) * dt * S) ^ 2$.
+
+Your task is to use simulation to prove above three points with the above-mentioned 30-day ATM call option and some random-generated price series.
+
+Note 1: that simulation would show some acceptable level of difference.
+Note 2: The overall PnL = the cost of buying the option + final payoff + delta PnL.
+
+    df <- tibble(S = ss, days = 1:days)
     opt <- mutate(df,
-            price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
-            delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
-            gamma = ...
-            theta = ...
-            # vega: vol is unchagned so we can skip
-          )
-    
+      price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+      delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+      gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+      theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3) / 250
+    )
     ...
     
 ```{r include = FALSE, eval = FALSE}
-days <- 20
+# Answer
+library(tidyverse)
+library(fOptions) # Note there are conflicts in name for functions like "filter()"
 
 S <- 100
 K <- 100
-sigma <- 0.5 # realized vol can be 0.3 for [1] or 0.5 for [2]
+sigma <- 0.3 # realized vol can be 0.3 for [1] or 0.5 for [2]
 drift <- 0 # drift = r - q
-N <- days / 20
-timestep <- 20 / 250
+timestep <- 1 / 250
+days <- 20 / 250
+N <- days / timestep
 
 p1 <- (drift - 0.5 * sigma * sigma) * timestep
 p2 <- sigma * sqrt(timestep)
 
-opt_price <- GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price
-delta <- GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
-vega <- GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+# ss is the simulated price movement for N days
+ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
+ss
+
+df <- tibble(S = ss, days = (N-1):0)
+opt <- mutate(df,
+  delta_S = S - lag(S),
+  # Below is end-of-day calculations
+  price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+  delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+  gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+  theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3) / 250)
+
+sd((log(opt$S / lag(opt$S))[-1])) / sqrt(1 / 250)
+
+sum(opt$theta * timestep, na.rm = TRUE)
+sum(0.5 * opt$gamma * (lead(opt$delta_S) ** 2) * timestep, na.rm = TRUE)
+```
+
+```{r include = FALSE, eval = FALSE}
+# Gamma for larger realized vol
+S <- 100
+K <- 100
+sigma <- 0.5 # realized vol can be 0.3 for [1] or 0.5 for [2]
+drift <- 0 # drift = r - q
+timestep <- 1 / 250
+days <- 20 / 250
+N <- days / timestep
+
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
 
 # ss is the simulated price movement for N days
-replicate(500,
-  {
-    ss <- rep(S, N) * cumprod(rlnorm(N, mean = p1, sd = p2))
-    pnl <- (-1) * opt_price + max(0, ss - K) + (-1) * delta * (ss - K)
-    pnl
-  }) -> aa
+ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
+ss
 
-vega_pnl <- vega * (sigma - 0.3) * sqrt(20 / 250)
-vega_pnl
+df <- tibble(S = ss, days = (N-1):0)
+opt <- mutate(df,
+  delta_S = S - lag(S),
+  # Below is end-of-day calculations
+  price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+  delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+  gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+  theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3) / 250)
 
-plot(aa - vega_pnl)
+sd((log(opt$S / lag(opt$S))[-1])) / sqrt(1 / 250)
 
-# Below line returns the realized vol
-sd(log(unlist(part_c) / 100)) / sqrt(days / 250)
+sum(0.5 * opt$gamma * (0.5 ** 2 - 0.3 ** 2) * timestep * timestemp * price * price, na.rm = TRUE)
+sum(opt$delta * lead(opt$delta_S), na.rm = TRUE) - opt$price[1] + opt$price[20]
 
+res <- replicate(1:5000, {
+  ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
+  
+  df <- tibble(S = ss, days = (N-1):0)
+  opt <- mutate(df,
+                delta_S = S - lag(S),
+                # Below is end-of-day calculations
+                price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+                delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+                gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+                theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3) / 250)
+  
+  sd((log(opt$S / lag(opt$S))[-1])) / sqrt(1 / 250)
+  
+  pnl1 <- sum(-1 * round(opt$delta, 2) * lead(opt$delta_S), na.rm = TRUE) - opt$price[1] + opt$price[20]
+  pnl2 <- sum(0.5 * opt$gamma * (0.5 ** 2 - 0.3 ** 2) * timestep * lead(opt$S) * lead(opt$S), na.rm = TRUE)
+  pnl1 - pnl2
+})
+
+hist(res)
+```
+
+```{r include = FALSE, eval = FALSE}
+sd((log(opt$S / lag(opt$S))[-1])) / sqrt(1 / 250)
 ```
 
 <P style="page-break-before: always">
 
 ******
 
-3. Option Delta Hedging (Real-world)
+# 3. Option Delta Hedging (Real-world)
 
 Show case how delta hedging works as a trading strategy.
 
@@ -241,19 +338,20 @@ Example flow of analysi:
                 Time <- (end_date - date) / 365
                 GBSOption(TypeFlag, S, X, Time, r, b, sigma)@price
         
-                df_opt <- rowwise(df) %>%
-                          mutate(premium = GBSOption(TypeFlag = "...",
-                                                     S = Close,
-                                                     X = start_price,
-                                                     Time = (end_date - date) / 365,
-                                                     r = ..., # interest rate
-                                                     b = ..., # dividend yield
-                                                     sigma = start_volatility)@price) %>%
-                          ungroup %>%
-                          mutate(Option_DoD_PnL = ifelse(date == start_date,
-                          # On the 1st date, we count the cost of buying the option
-                                                         premium * (-1), 
-                                                         premium - lag(premium)))
+                df_opt <- df %>%
+                  rowwise %>%
+                  mutate(premium = GBSOption(TypeFlag = "...",
+                                             S = Close,
+                                             X = start_price,
+                                             Time = (end_date - date) / 365,
+                                             r = ..., # interest rate
+                                             b = ..., # dividend yield
+                                             sigma = start_volatility)@price) %>%
+                  ungroup %>%
+                  mutate(Option_DoD_PnL = ifelse(date == start_date,
+                  # On the 1st date, we count the cost of buying the option
+                                                 premium * (-1), 
+                                                 premium - lag(premium)))
 
         - Hedging side:
       
