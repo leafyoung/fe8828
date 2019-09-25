@@ -278,13 +278,8 @@ df
 set.seed(7465)
 getwd()
 
-df_sel <- df_omit
-# df_sel <- df_nafix
-
 # Other tools
 # Cluster the numeric data per location.
-NCLUST <- 5
-
 add_cluster <- function(df_sel) {
   NCLUST <- 5
   
@@ -331,5 +326,5 @@ df_nafix <- add_cluster(df_nafix)
 vars <- c(vars, "cluster") %>% unique
 vars
 
-save(list = c("df_nafix", "df_omit", "vars", "inputs", "target"),
+save(list = c("df_nafix", "df_omit", "vars", "inputs", "target", "risk"),
      file = "E:/Dropbox/Docs/MFE/FE8828/2019/notes-2019/new2019/data_model.Rda")

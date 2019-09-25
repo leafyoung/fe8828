@@ -26,3 +26,6 @@ quantmod
 tidyquant
 kableExtra
 Quandl
+rpart
+lattice
+caret

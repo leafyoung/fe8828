@@ -1,0 +1,377 @@
+---
+title: "Australia Weather Prediction"
+author: "Dr. Yang Ye"
+date: "9/26/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# Load the packages - you won't know in the beginning.
+# Slowly add this list up.
+
+library(rattle)# normVarNames().
+library(readr)# Efficient reading of CSV data.
+library(dplyr)# Data wrangling, glimpse() and tbl_df().
+library(tidyr)# Prepare a tidy dataset, gather().
+library(magrittr)# Pipes %>% and %T>% and equals().
+library(glue)# Format strings.
+library(lubridate)# Dates and time.
+library(FSelector)# Feature selection, information.gain().
+library(stringi)# String concat operator %s+%.
+library(stringr)# String operations.
+library(randomForest)# Impute missing values with na.roughfix().
+library(ggplot2)# Visualise data.
+
+library(rpart)        # Model: decision tree.
+library(caret)
+
+library(magrittr)
+```
+
+# Load Data
+
+```{r}
+# dfpath <- "http://rattle.togaware.com/weatherAUS.csv"
+dfpath <- "http://bit.ly/fe8828_weatherAUS2"
+
+# load the original data first
+# weatherAUS <- read_csv(file=dfpath)
+
+# load again with more details and load again
+weatherAUS <- read_csv(file=dfpath,
+                       col_types = list(
+                         .default = col_double(),
+                         Date = col_date(format = ""),
+                         Location = col_character(),
+                         Evaporation = col_double(),
+                         Sunshine = col_double(),
+                         WindGustDir = col_character(),
+                         WindDir9am = col_character(),
+                         WindDir3pm = col_character(),
+                         RainToday = col_character(),
+                         RainTomorrow = col_character()))
+```
+
+# EDA
+
+```{r}
+
+glimpse(weatherAUS)
+
+# a copy of original data
+df <- weatherAUS
+
+# colnames
+names(df)
+
+# change all names to small cases
+names(df) <- tolower(names(df))
+
+# Find all character fields
+charc <- df %>% select_if(is.character, function(x) {x}) %>% colnames
+charc
+
+df[charc] %>% sapply(unique)
+
+df$location %>% unique() %>% length()
+df$location %>% table()
+
+# change all character fields to factor
+df <- df %>% mutate_if(is.character, function(x) factor(x))
+
+# Wind direction
+df %>% select(contains("dir")) %>% sapply(table)
+
+# Find all wind directions
+compass <- df %>% select(contains("dir")) %>% gather(type, value) %>% .$value %>% unique %>% sort
+compass
+
+# Rain
+df %>% select_at(vars("raintoday", "raintomorrow")) %>% sapply(table)
+
+# convert to logic type
+# df <- df %>% mutate(raintoday = raintoday == "Yes",
+#                    raintomorrow = raintomorrow=="Yes")
+
+# update charc
+charc <- df %>% select_if(is.character, function(x) {x}) %>% colnames
+
+df %>%
+  select(raintoday, raintomorrow) %>% 
+  summary()
+
+# With some knowledge of the data we observe risk_mm captures the amount of rain recorded
+# tomorrow. We refer to this as a risk variable, being a measure of the impact or risk of the target
+# we are predicting (rain tomorrow). The risk is an output variable and should not be used as
+# an input to the modelling—it is not an independent variable. In other circumstances it might
+# actually be treated as the target variable.
+
+# If not rains
+df %>% filter(raintomorrow == "No") %>% select(risk_mm) %>% summary()
+
+# If rains
+df %>% filter(raintomorrow == "Yes") %>% select(risk_mm) %>% summary()
+```
+
+# Feature engineering
+- _ignore_: Remove non-core data
+- _ids_: Remove data different for each row
+- _missing_: Remove missing data
+- _mostly_: Remove mostly missing data
+- _too.many_: Remove complicate data
+- _constants_: Remove identical data
+- _correlated_: Remove correlated data
+
+```{r}
+# all variables/columns
+vars <- names(df)
+
+risk <- "risk_mm"
+
+# find all numeric fields
+num1 <- df %>% select_if(is.numeric) %>% colnames
+
+# Given a date and a location we have an observation of the remaining
+# variables. Thus we note that these two variables are so-called identifiers.
+# Identifiers would not usually be used as independent variables for building predictive analytics models.
+
+id<-c("date", "location")
+
+# count per location/date
+df[id] %>%
+  group_by(location) %>% 
+  count() %>%
+  rename(days=n) %>%
+  mutate(years=round(days/365)) %>% 
+  as.data.frame() %>% 
+  sample_n(10)
+
+df[id] %>%
+  group_by(location) %>% 
+  count() %>%
+  rename(days=n) %>%
+  mutate(years=round(days/365)) %>%
+  ungroup() %>%
+  select(years) %>%
+  summary()
+
+ignore <- union(id, risk)
+ignore
+
+# We might also check for any variable that has a unique value for every observation
+ids <- df[vars] %>%
+  sapply(function(x) x %>% unique() %>% length()) %>% 
+  equals(nrow(df)) %>%
+  which() %>%
+  names()
+
+ids
+
+# Fortunately, nothing
+ignore <- union(ignore, ids)
+
+# Ignore missing
+missing <- df[vars] %>% 
+  sapply(function(x) x %>% is.na %>% sum) %>%
+  equals(nrow(df)) %>%
+  which() %>%
+  names()
+missing
+
+# Or mostly missing
+missing.threshold <- 0.7
+
+mostly <- df[vars] %>%
+  sapply(function(x) x %>% is.na() %>% sum() / length(x))
+
+mostly %>%
+  '>'(missing.threshold) %>%
+  which() %>%
+  names() %T>%
+  print()
+
+ignore <- union(ignore, missing) %>% union(mostly)
+ignore
+
+# ignore excessive level variables
+levels.threshold <- 20
+
+# Identify variables that have too many levels.
+too.many <- df[vars] %>%
+  select_if(is.character) %>%
+  names() %>%
+  sapply(function(x) df %>% extract2(x) %>% unique %>% length()) %>%
+  '>='(levels.threshold) %>%
+  which() %>%
+  names() %T>%
+  print()
+
+ignore <- union(ignore, too.many)
+ignore
+
+# ignore constants
+constants <- df[vars] %>%
+  sapply(function(x) all(x==x[1L])) %>% 
+  which() %>% 
+  names()
+constants
+
+ignore <- union(ignore, constants)
+
+# Eliminate highly correlated
+numc <- vars %>% 
+  setdiff(ignore) %>%
+  extract(df, .) %>% 
+  select_if(is.numeric) %>% 
+  colnames()
+numc
+
+df[numc] %>%
+  cor(use="complete.obs") %>% 
+  ifelse(upper.tri(.,diag=TRUE),NA, .) %>%
+  abs %>%
+  data.frame %>%
+  tbl_df %>%
+  set_colnames(numc) %>%
+  mutate(var1=numc) %>%
+  gather(var2, cor,-var1) %>%
+  na.omit %>%
+  arrange(-abs(cor))
+
+correlated<-c("temp3pm","pressure3pm","temp9am")
+
+ignore <- union(ignore, correlated)
+ignore
+
+# Use caret package
+library(caret)
+correlationMatrix <- cor(df[,numc], use="complete.obs")
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.8)
+highlyCorrelated
+
+# Just keep one variable for temperature
+correlated <- numc[highlyCorrelated]
+correlated <- correlated[-1]
+correlated
+
+# Final list of variable to build the model
+vars <- setdiff(vars, ignore)
+length(vars)
+
+vars
+```
+
+# Formulate and fix data
+
+```{r}
+# put raintomorrow first
+target <- "raintomorrow"
+vars <- c(target, vars) %>% unique()
+
+form <- df[vars] %>% formula()
+
+# Use correlation search to identify key variables.
+cfs(form , df[vars])
+
+# Use information gain to identify variable importance.
+information.gain(form, df[vars])
+
+missing.target <- df %>% extract2(target) %>% is.na()
+sum(missing.target)
+
+library(purrr)
+
+df <- df %>% filter_at(vars(target), function(x) { !is.na(x) })
+
+df <- mutate_if(df, is.character, factor)
+
+# omit na or fix
+df_omit <- df %>% filter_at(vars(vars), function(x) { !is.na(x) })
+nrow(df_omit)
+
+# convert all character to levels
+df_nafix <- df
+df_nafix[setdiff(vars, charc)] <- df_nafix[setdiff(vars, charc)] %>% randomForest::na.roughfix()
+nrow(df_nafix)
+
+df_nafix %>%
+  ggplot(aes_string(x=target)) +
+  geom_bar(width=0.2,fill="grey") +
+  theme(text=element_text(size=14))
+
+df_omit %>%
+  ggplot(aes_string(x=target)) +
+  geom_bar(width=0.2,fill="grey") +
+  theme(text=element_text(size=14))
+
+inputs <- setdiff(vars, target)
+
+set.seed(7465)
+df_sel <- df_omit
+# df_sel <- df_nafix
+
+save(list = c("df_nafix", "df_omit", "vars", "inputs", "target", "risk"),
+     file = "aus_data_model.Rda")
+
+```
+
+# Train Model
+
+```{r}
+vv <- load(file = "aus_data_model.Rda")
+vv
+
+df_sel <- df_omit
+
+# Preparing for data modeling
+form <- df_sel[vars] %>% formula() %>% print()
+form
+
+set.seed(42)
+nobs <- 10000
+df   <- df_sel[sample(nobs),]
+
+train <- nobs %>% sample(0.70*nobs)
+validate <- nobs %>% seq_len() %>% setdiff(train) %>% sample(0.15*nobs)
+test <- nobs %>% seq_len() %>% setdiff(union(train, validate))
+  
+# Cache the various actual values for target and risk.
+tr_target <- df[train,][[target]]
+va_target <- df[validate,][[target]] 
+te_target <- df[test,][[target]]
+
+# modeling
+# Train a decision tree model.
+m_rp <- rpart(form, df_sel[train, vars])
+
+summary(m_rp)
+
+ggVarImp(m_rp, log=TRUE)
+
+# Visualise the discovered knowledge.
+fancyRpartPlot(m_rp)
+```
+
+# Train with Caret
+
+```{r}
+train_control <- trainControl(
+    method = 'repeatedcv',                   # k-fold cross validation
+    number = 5,                      # number of folds
+    savePredictions = 'final',       # saves predictions for optimal tuning parameter
+    classProbs = TRUE,                  # should class probabilities be returned
+)
+
+model_rpart <- train(form, data=df_sel[train, vars], method="rpart", trControl = train_control)
+
+ggVarImp(model_rpart$finalModel, log=TRUE)
+
+fancyRpartPlot(model_rpart$finalModel)
+
+predictions <- predict(model_rpart, df_sel[train, vars])
+confusionMatrix(predictions, df_sel[train, target, drop = TRUE])
+
+predictions <- predict(model_rpart, df_sel[test, vars])
+confusionMatrix(predictions, df_sel[test, target, drop = TRUE])
+
+```

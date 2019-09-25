@@ -3,8 +3,8 @@ title: "FE8828 Programming Web Applications in Finance"
 subtitle: "<sub> Session 5 <br> Building Financial Applications </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Sep 26, 2019"
-output: html_document
-# output: pdf_document
+# output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -422,18 +422,33 @@ shinyApp(ui, server)
 
 # Lecture 11: Building Predictive Model
 
-# Machine Learning Algorithms
+# Machine Learning
 
 ```{r, echo = FALSE, out.width = "80%"}
 knitr::include_graphics("../new2019/ml_algo.png")
 ```
+
+# Statistics and Machine Learning
+
+```{r, echo = FALSE, out.width = "40%"}
+knitr::include_graphics("../new2019/comic-stat-vs-ml.jpg")
+```
+
+# Statistics and Machine Learning
+- Statistics is a age-old year subject, with many developed theory.
+- Machine learning is an algorithm that can learn from data without relying on rules-based.
+- ML uses many statistical theories in application.
+- ML emphasizes optimization and performance (accuracy) over inference (conclusion based on reasons and evidence) which is what statistics is concerned about.
+
+    | ML professional: "The model is 85% accurate in predicting Y, given a, b and c."
+    | Statistician: “The model is 85% accurate in predicting Y, given a, b and c; and I am 90% certain that you will obtain the same result.” 
 
 # Supervised v.s. Unsupervised
 - Supervised learning: It is based on example input-output pairs. It infers a function from labeled training data consisting of a set of training examples
 - Unsupervised learning: It is a type of self-organized learning that helps find previously unknown patterns in data set without pre-existing labels. It is also known as self-organization and allows modeling probability densities of given inputs.
 - Reinforcement learning: ...
 
-# Machine Learning Algorithms
+# Machine Learning
 
 - Regression
 - Classification
@@ -445,44 +460,132 @@ knitr::include_graphics("../new2019/ml_algo.png")
 
 Regression and classification are two main categories of machine learning algorithms under supervised learning.
 
-```{r, echo = FALSE, out.width = "80%"}
+```{r, echo = FALSE, out.width = "60%"}
 knitr::include_graphics("../new2019/class_reg.png")
 ```
 
 # Regression
 
-We used many linear regression methods.
+We can use many linear regression methods.
 
-```{r}
-iris
-
-ggplot(iris, aes(x = Sepal.Length, y = Petal.Width, color = Species)) +
+```{r echo=TRUE}
+p1 <- ggplot(iris, aes(x = Sepal.Length, y = Petal.Width, color = Species)) +
   geom_smooth(method = "lm") +
-  geom_point()
+  geom_point() +
+  labs(title = "Petal.Width ~ Sepal.Length")
 
-ggplot(iris, aes(x = Petal.Length, y = Petal.Width, color = Species)) +
+p2 <- ggplot(iris, aes(x = Petal.Length, y = Petal.Width, color = Species)) +
   geom_smooth(method = "lm") +
-  geom_point()
+  geom_point() +
+  labs(title = "Petal.Width ~ Petal.Length")
 
-ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+p3 <- ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
   geom_smooth(method = "lm") +
-  geom_point()
+  geom_point() +
+  labs(title = "Sepal.Width ~ Sepal.Length")
 
-ggplot(iris, aes(x = Petal.Length, y = Sepal.Width, color = Species)) +
+p4 <- ggplot(iris, aes(x = Petal.Length, y = Sepal.Width, color = Species)) +
   geom_smooth(method = "lm") +
-  geom_point()
-
+  geom_point() +
+  labs(title = "Sepal.Width ~ Petal.Length")
 ```
 
-# Caret
-links to 200 over (238 as of this version)
+# Regression
 
-https://topepo.github.io/caret/available-models.html
+```{r echo=FALSE, out.width="100%"}
+grid.arrange(p1, p2, p3, p4, nrow = 2)
+```
 
+# Classification
+
+Decision Tree
 
 ```{r}
+library(rpart)
+iris_rp <- rpart(Species ~ ., iris)
+```
+
+```{r, eval = FALSE, include=TRUE}
+# try below statment
+summary(iris_rp)
+rattle::ggVarImp(iris_rp)
+rattle::fancyRpartPlot(iris_rp)
+```
+
+```{r echo=FALSE, out.width="70%"}
+rattle::fancyRpartPlot(iris_rp)
+```
+
+```{r echo=TRUE}
+predictions <- predict(iris_rp, iris, type = "class")
+which(iris$Species != predictions)
+# caret::confusionMatrix(predictions, iris$Species)
+```
+
+# Confusion Matrix
+- Shows how model performs
+
+      Actual Target |          0        |  1  |
+      Model Output  |                   |     |
+                 0  |         90        | 10  |
+                 1  |         10        | 90  |
+
+
+# Machine Learning workflow
+
+1. Setting
+2. Exploratory Data Analysis
+3. Feature Engineering
+4. Data Preparation
+5. Modelling
+6. Conclusion
+
+# Machine Learning
+
+- Data preparation:
+
+Split into different groups. For simple data, we may split using 75/25 or 80/20. For complex data, we need to ensure selected 75 has coverage for different kinds, to avoid bias. For example, we are to predict a infrequent event (occuring 20%), shall our selected sample contain 20% or 50% or 75%?
+
+- Modeling:
+
+Choose a few models and tune the hyperparametes. Tuning of hyperparameters is model-specific. You shall learn it in-depth with each model.
+
+Measure the performacne and optimize it.
+Confusion matrix, AUC/ROC, model-specific output...
+
+# `Caret` Package
+Caret is short for _C_lassification _A_nd _RE_gression _T_raining.
+
+```{r, echo = FALSE, out.width = "50%"}
+knitr::include_graphics("../new2019/Caret-package-in-R.png")
+```
+
+Main author is Max Kuhn. He has a book "Applied Predictive Modeling", By Max Kuhn and Kjell Johnson.
+
+Max is now in RStudio, working on _parsnip_ in tidymodel.
+
+```{r, echo = FALSE, out.width = "30%"}
+knitr::include_graphics("../new2019/applied-predictive-modeling-book-cover.png")
+```
+
+# `Caret` Package
+
+Links to 200 over (238 as of this version)
+https://topepo.github.io/caret/available-models.html
+
+```{r, echo = FALSE}
+library(caret)
+modelnames <- paste(names(getModelInfo()), collapse=',  ')
+modelnames
+```
+
+# Project Iris
+Use the petal/sepal width/length to determine which species it is.
+
+```{r echo=TRUE, eval = FALSE}
 library(caret)
 
+set.seed(123)
 trainIndex <- createDataPartition(iris$Species, p = .8,
  list = FALSE,
  times = 1)
@@ -504,18 +607,19 @@ fitControl <- trainControl(
 
 # first run may need to do package installation. Caret
 # install.packages("e1071")
-dt.fit <- train(Species ~ ., data = train,
+# recursive partition = decision tree
+dt_fit <- train(Species ~ ., data = train,
  method = "rpart",
  trControl = fitControl,
  preProcess=c("center", "scale"))
 
-dt.fit
-plot(dt.fit)
+dt_fit
+plot(dt_fit)
 
-predictions <- predict(dt.fit, test)
-
+predictions <- predict(dt_fit, test)
 confusionMatrix(predictions, test$Species)
 
+# random Forests
 rf_fit <- train(Species ~ .,
                 data = train,
                 method = "ranger")
@@ -530,7 +634,7 @@ y_test[which(y_test != predictions)]
 
 ```
 
-```{r}
+```{r, eval = FALSE, include = FALSE}
 # install.packages("xgboost")
 library(xgboost)
 
@@ -581,27 +685,26 @@ y_test[which(y_test != predictions)]
 
 ```
 
-One-hot encoding
+# Project Bank
 
-Linear regression
+We previous whether our telemarketing is successful.
 
-```{r}
-bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
-bank_fit <- bank %>% select(y,
-                loan,
-                default,
-                housing,
-                poutcome,
-                job,
-                marital) %>%
-  mutate_if(is.factor, as.character) %>%
-  mutate(y = factor(y == "yes")) %>%
-  as.data.frame() %>%
-  mutate(nn = 1:n())
+The output is binary - classification for binary output is very common.
 
-```
+For model simplicity, we use logistic regression. For logistic regression, we need to use one-hot encoding.
 
-```{r, echo = FALSE}
+One-hot Encoding is implemented with dummy variables in R.
+
+If one column contains more-than-one value, e.g. "admin", "engineer", "manager", we replace it with 2 = 3 - 1 columns
+
+      | job      |        | job_admin | job_engineer |
+      | admin    |   ==>  |     1     |       0      |
+      | engineer |        |     0     |       1      |
+      | manager  |        |     0     |       0      |
+
+
+```{r eval=FALSE, include=FALSE}
+# Manual dummy variable creation, skip.
 deco_prefix <- function(df_in, prefix) {
   nn_nn <- which(colnames(df_in) == "nn")
   nn_max <- length(colnames(df_in))
@@ -611,6 +714,7 @@ deco_prefix <- function(df_in, prefix) {
 }
 
 bank_new <- bank_fit %>%
+  mutate(nn = 1:n())
   spread(job, job, fill = "0") %>% 
   deco_prefix("job.") %>%
   spread(marital, marital, fill = "0") %>%
@@ -621,418 +725,146 @@ bank_new <- bank_fit %>%
          default = ifelse(default == "yes", 1, 0),
          housing = ifelse(housing == "yes", 1, 0),
          poutcome = ifelse(poutcome == "yes", 1, 0),
-         y = ifelse(y == "yes", 1, 0)) %>%
+         y = ifelse(y == "yes", "y", "n")) %>%
   select(-nn)
 # bank_new <- bank_new %>% mutate(y = factor(y))
 ```
 
-```{r}
+# Project Bank - Load
+
+```{r echo=TRUE, eval = FALSE}
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+# We only work on following fields.
+bank_fit <- bank %>% select(y,
+                loan,
+                default,
+                housing,
+                poutcome,
+                job,
+                marital) %>%
+  mutate_if(is.factor, as.character) %>%
+  mutate(y = ifelse(y == "yes", "y", "n"))
+
 str(bank_fit)
+```
 
-dummies <- dummyVars(" ~ loan + default + housing + poutcome + job + marital", data = bank_fit, fullRank = TRUE)
+# Project Bank - Dummy Variables
 
+```{r echo=TRUE, eval = FALSE}
+# create dummy variables
+dummies <- dummyVars("y ~ loan + default + housing + poutcome + job + marital",
+                     data = bank_fit, fullRank = TRUE)
+# generate data frame of dummy variables
 bank_new <- data.frame(predict(dummies, newdata = bank_fit))
-bank_new <- bind_cols(bank_fit["y"], bank_new)
+# add back y variable to data
+bank_new <- bind_cols(bank_fit["y"], bank_new) %>% mutate(y = factor(y))
 
+summary(bank_new)
+```
+
+# Project Bank - Train/Test Data
+
+```{r echo=TRUE, eval = FALSE}
 # library(caret)
-set.seed(123)
+set.seed(1234)
 trainIndex <- createDataPartition(bank_new$y, p = .8,
  list = FALSE,
  times = 1)
 
-train <- bank_new[ trainIndex,]
-test  <- bank_new[-trainIndex,]
+bank_train <- bank_new[ trainIndex,]
+bank_test  <- bank_new[-trainIndex,]
 
-mod_fit <- train(y ~ .,  data=train, method="glm")
-
-predictions <- predict(mod_fit, test)
-confusionMatrix(predictions, test$y)
-# which(test$y != predictions)
-
-# Recursive Partitioning and Regression Trees
-model_rpart <- train(y ~ ., data=train, method='rpart')
-
-predictions <- predict(model_rpart, test)
-confusionMatrix(predictions, test$y)
-
+featurePlot(x = bank_new[-1],
+            y = bank_new$y,
+            plot = "box",
+            strip=strip.custom(par.strip.text=list(cex=.7)),
+            scales = list(x = list(relation="free"), 
+                          y = list(relation="free")))
 ```
 
-```{r}
-# Load the packages - you won't know in the beginning.
-# Slowly add this list up.
-
-
-library(rattle)# normVarNames().
-library(readr)# Efficient reading of CSV data.
-library(dplyr)# Data wrangling, glimpse() and tbl_df().
-library(tidyr)# Prepare a tidy dataset, gather().
-library(magrittr)# Pipes %>% and %T>% and equals().
-library(glue)# Format strings.
-library(lubridate)# Dates and time.
-library(FSelector)# Feature selection, information.gain().
-library(stringi)# String concat operator %s+%.
-library(stringr)# String operations.
-library(randomForest)# Impute missing values with na.roughfix().
-library(ggplot2)# Visualise data.
-
-library(magrittr)
-
-# dfpath <- "http://rattle.togaware.com/weatherAUS.csv"
-dfpath <- "https://www.dropbox.com/s/dknnj9fbjhm33iw/weatherAUS.csv?dl=1"
-
-dfpath <- "http://bit.ly/fe8828_weatherAUS2"
-
-# load the original data
-weatherAUS <- read_csv(file=dfpath)
-
-# add more details and load again
-weatherAUS <- read_csv(file=dfpath,
-                       col_types = list(
-                         .default = col_double(),
-                         Date = col_date(format = ""),
-                         Location = col_character(),
-                         Evaporation = col_double(),
-                         Sunshine = col_double(),
-                         WindGustDir = col_character(),
-                         WindDir9am = col_character(),
-                         WindDir3pm = col_character(),
-                         RainToday = col_character(),
-                         RainTomorrow = col_character()))
-
-glimpse(weatherAUS)
-
-# a copy of original data
-df <- weatherAUS
-
-# colnames
-names(df)
-
-# change all names to small cases
-names(df) <- tolower(names(df))
-
-# Find all character fields
-charc <- df %>% select_if(is.character, function(x) {x}) %>% colnames
-charc
-
-df[charc] %>% sapply(unique)
-
-df$location %>% unique() %>% length()
-df$location %>% table()
-
-# change all character fields to factor
-df %>% mutate_if(is.character, function(x) factor(x))
-
-# Wind direction
-df %>% select(contains("dir")) %>% sapply(table)
-
-# Find all wind directions
-compass <- df %>% select(contains("dir")) %>% gather(type, value) %>% .$value %>% unique %>% sort
-compass
-
-# Rain
-df %>% select_at(vars("raintoday", "raintomorrow")) %>% sapply(table)
-
-# convert to logic type
-df <- df %>% mutate(raintoday = raintoday == "Yes",
-                    raintomorrow = raintomorrow=="Yes")
-
-df %>%
-  select(raintoday, raintomorrow) %>% 
-  summary()
-
-# With some knowledge of the data we observe risk_mm captures the amount of rain recorded
-# tomorrow. We refer to this as a risk variable, being a measure of the impact or risk of the target
-# we are predicting (rain tomorrow). The risk is an output variable and should not be used as
-# an input to the modelling—it is not an independent variable. In other circumstances it might
-# actually be treated as the target variable.
-
-# If not rains
-df %>% filter(!raintomorrow) %>% select(risk_mm) %>% summary()
-
-# If rains
-df %>% filter(raintomorrow) %>% select(risk_mm) %>% summary()
-
-# all variables/columns
-vars <- names(df)
-
-risk <- "risk_mm"
-
-# find all numeric fields
-num1 <- df %>% select_if(is.numeric) %>% colnames
-
-# Given a date and a location we have an observation of the remaining
-# variables. Thus we note that these two variables are so-called identifiers.
-# Identifiers would not usually be used as independent variables for building predictive analytics models.
-
-id<-c("date", "location")
-
-# count per location/date
-df[id] %>%
-  group_by(location) %>% 
-  count() %>%
-  rename(days=n) %>%
-  mutate(years=round(days/365)) %>% 
-  as.data.frame() %>% 
-  sample_n(10)
-
-df[id] %>%
-  group_by(location) %>% 
-  count() %>%
-  rename(days=n) %>%
-  mutate(years=round(days/365)) %>%
-  ungroup() %>%
-  select(years) %>%
-  summary()
-
-ignore <- union(id, risk)
-ignore
-
-# We might also check for any variable that has a unique value for every observation
-ids <- df[vars] %>%
-  sapply(function(x) x %>% unique() %>% length()) %>% 
-  equals(nrow(df)) %>%
-  which() %>%
-  names()
-
-ids
-
-# Fortunately, nothing
-ignore <- union(ignore, ids)
-
-# Ignore missing
-missing <- df[vars] %>% 
-  sapply(function(x) x %>% is.na %>% sum) %>%
-  equals(nrow(df)) %>%
-  which() %>%
-  names()
-missing
-
-# Or mostly missing
-missing.threshold <- 0.7
-
-mostly <- df[vars] %>%
-  sapply(function(x) x %>% is.na() %>% sum() / length(x))
-
-mostly %>%
-  '>'(missing.threshold) %>%
-  which() %>%
-  names() %T>%
-  print()
-
-ignore <- union(ignore, missing) %>% union(mostly)
-ignore
-
-# ignore excessive level variables
-levels.threshold <- 20
-
-# Identify variables that have too many levels.
-too.many <- df[vars] %>%
-  select_if(is.character) %>%
-  names() %>%
-  sapply(function(x) df %>% extract2(x) %>% unique %>% length()) %>%
-  '>='(levels.threshold) %>%
-  which() %>%
-  names() %T>%
-  print()
-
-ignore <- union(ignore, too.many)
-ignore
-
-# ignore constants
-constants <- df[vars] %>%
-  sapply(function(x) all(x==x[1L])) %>% 
-  which() %>% 
-  names()
-constants
-
-ignore <- union(ignore, constants)
-
-# Eliminate highly correlated
-numc <- vars %>% 
-  setdiff(ignore) %>%
-  extract(df, .) %>% 
-  select_if(is.numeric) %>% 
-  colnames()
-numc
-
-df[numc] %>%
-  cor(use="complete.obs") %>% 
-  ifelse(upper.tri(.,diag=TRUE),NA, .) %>%
-  abs %>%
-  data.frame %>%
-  tbl_df %>%
-  set_colnames(numc) %>%
-  mutate(var1=numc) %>%
-  gather(var2, cor,-var1) %>%
-  na.omit %>%
-  arrange(-abs(cor))
-
-correlated<-c("temp3pm","pressure3pm","temp9am")
-
-ignore <- union(ignore, correlated)
-ignore
-
-# Use caret package
-library(caret)
-correlationMatrix <- cor(df[,numc], use="complete.obs")
-highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.8)
-highlyCorrelated
-
-# Just keep one variable for temperature
-correlated <- numc[highlyCorrelated]
-correlated <- correlated[-1]
-correlated
-
-# Final list of variable to build the model
-vars <- setdiff(vars, ignore)
-length(vars)
-
-vars
-
-# put raintomorrow first
-target <- "raintomorrow"
-vars <- c(target, vars) %>% unique()
-
-# Use correlation search to identify key variables.
-cfs(form, df[vars])
-
-# Use information gain to identify variable importance.
-information.gain(form, df[vars])
-
-missing.target <- df %>% extract2(target) %>% is.na()
-sum(missing.target)
-
-library(purrr)
-
-nrow(df)
-
-df <- df %>% filter_at(vars(target), compose(not, is.na))
-nrow(df)
-
-df <- mutate_if(df, is.character, factor)
-
-# omit na or fix
-df_omit <- df %>% filter_at(vars(vars), compose(not, is.na))
-nrow(df_omit)
-
-# convert all character to levels
-df_nafix <- df
-df_nafix[vars] <- df_nafix[vars] %>% randomForest::na.roughfix()
-
-nrow(df_nafix)
-
-df_nafix %>%
-  ggplot(aes_string(x=target)) +
-  geom_bar(width=0.2,fill="grey") +
-  theme(text=element_text(size=14))
-
-df_omit %>%
-  ggplot(aes_string(x=target)) +
-  geom_bar(width=0.2,fill="grey") +
-  theme(text=element_text(size=14))
-
-inputs <- setdiff(vars, target)
-inputs
-df
-
-set.seed(7465)
-getwd()
-
-df_sel <- df_omit
-# df_sel <- df_nafix
-
-# Other tools
-# Cluster the numeric data per location.
-NCLUST <- 5
-
-add_cluster <- function(df_sel) {
-  NCLUST <- 5
+# Project Bank - Feature Plot
+
+```{r echo=TRUE, eval = FALSE}
+featurePlot(x = bank_new[-1],
+            y = bank_new$y,
+            plot = "density",
+            strip=strip.custom(par.strip.text=list(cex=.7)),
+            scales = list(x = list(relation="free"), 
+                          y = list(relation="free")))
+```
+
+# Project Bank - Train
+
+```{r echo=TRUE, eval = FALSE}
+train_control <- trainControl(
+    method = 'repeatedcv',                   # k-fold cross validation
+    number = 5,                      # number of folds
+    savePredictions = 'final',       # saves predictions for optimal tuning parameter
+    classProbs = TRUE,                  # should class probabilities be returned
+)
+
+if (FALSE) {
+  # Running time is too long. Skip running.
+  adaboost_fit <- train(y ~ .,
+                    data = bank_train,
+                   method='adaboost',
+                   tuneLength=2,
+                   trControl = train_control)
+  adaboost_fit
   
-  cluster <- df_sel[c("location", numc)] %>%
-    group_by(location) %>%
-    summarise_all(funs(mean(., na.rm=TRUE))) %T>%
-    {locations <<- .$location} %>% # Store locations for later.
-    select(-location) %>%
-    sapply(function(x) ifelse(is.nan(x), 0, x)) %>%
-    as.data.frame() %>%
-    sapply(scale) %>%
-    kmeans(NCLUST) %T>%
-    print() %>%
-    extract2("cluster")
+  predictions <- predict(adaboost_fit, newdata = bank_train)
+  confusionMatrix(predictions, bank_train$y)
   
-  cluster
-  
-  ## K-means clustering with 5 clusters of sizes 4, 22, 10, 8, 5
-  ##
-  ## Cluster means:
-  ## min_temp max_temp rainfall evaporation sunshine
-  ## 1 -0.6271436 -0.5345409 0.061972675 -1.2699891 -1.21861982
-  ## 2 -0.3411683 -0.5272989 -0.007762188 0.1137179 0.09919753
-  head(cluster)
-  ## [1] 3 2 2 3 4 2
-  
-  # Index the cluster vector by the appropriate locations.
-  names(cluster) <- locations
-  # Add the cluster to the dataset.
-  df_sel %<>% mutate(cluster="area" %>%
-                       paste0(cluster[df_sel$location]) %>%
-                       as.factor)
-  # Check clusters.
-  df_sel %>% select(location, cluster) %>% sample_n(10)
-
-  print(cluster[levels(df_sel$location)] %>% sort())
-  df_sel
+  predictions <- predict(adaboost_fit, bank_test)
+  confusionMatrix(predictions, bank_test$y)
 }
 
-df_omit <- add_cluster(df_omit)
-df_nafix <- add_cluster(df_nafix)
+# Logistic regression
+log_fit <- train(y ~ .,
+                 data = bank_train,
+                 method = "glm",
+                 family = binomial,
+                 trControl = train_control)
 
-# add cluster to vars
-vars <- c(vars, "cluster") %>% unique
-vars
+predictions <- predict(log_fit, newdata = bank_train)
+confusionMatrix(predictions, bank_train$y)
 
-save(list = c("df_nafix", "df_omit", "vars", "inputs", "target"),
-     file = "E:/Dropbox/Docs/MFE/FE8828/2019/notes-2019/new2019/data_model.Rda")
-
+predictions <- predict(log_fit, bank_test)
+confusionMatrix(predictions, bank_test$y)
+# which(test$y != predictions)
 ```
 
-```{r}
-vv <- load(file = "E:/Dropbox/Docs/MFE/FE8828/2019/notes-2019/new2019/data_model.Rda")
-vv
+# Project Bank - Train with Decision Tree
 
-df_sel <- df_omit
+```{r echo=TRUE, eval = FALSE}
+# Recursive Partitioning and Regression Trees
+rpart_fit <- train(y ~ .,
+                   data = bank_train,
+                   method="rpart",
+                   trControl = train_control)
+predictions <- predict(rpart_fit, bank_train)
+confusionMatrix(predictions, bank_train$y)
 
-# Preparing for data modeling
-
-form <- df[vars] %>%
-  formula() %>%
-  print()
-form
-
-seed <- 42
-set.seed(seed)
-
-nobs <- 10000
-df   <- df_sel[sample(nobs),]
-
-train <- nobs %>% sample(0.70*nobs)
-validate <- nobs %>% seq_len() %>% setdiff(train) %>% sample(0.15*nobs)
-test <- nobs %>% seq_len() %>% setdiff(union(train, validate))
-  
-# Cache the various actual values for target and risk.
-tr_target <- df[train,][[target]]
-tr_risk <- df[train,][[risk]]
-va_target <- df[validate,][[target]] 
-va_risk <- df[validate,][[risk]]
-
-te_target <- df[test,][[target]]
-te_risk <- df[test,][[risk]]
-
-library(rpart)        # Model: decision tree.
-
-# modeling
-# Train a decision tree model.
-m_rp <- rpart(form, df[train, vars])
-
-model_rpart <- train(y.TRUE ~., data=train, method='rpart')
+predictions <- predict(rpart_fit, bank_test)
+confusionMatrix(predictions, bank_test$y)
 ```
+
+```{r echo=TRUE, eval = FALSE}
+rattle::ggVarImp(rpart_fit$finalModel, log=TRUE)
+rattle::fancyRpartPlot(rpart_fit$finalModel)
+```
+
+# Project Bank - Model comparison
+
+```{r echo=TRUE, eval = FALSE}
+models_compare <- resamples(list(RP = rpart_fit, GLM = log_fit))
+                            
+# Summary of the models performances
+summary(models_compare)
+```
+
+# Project Australia Weather
+- A complete project with some feature engineering.
+
+<https://www.dropbox.com/s/p73mdxcrx05mbwb/aus_weather_predict.Rmd?dl=1>
+
