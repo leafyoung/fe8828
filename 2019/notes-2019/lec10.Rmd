@@ -16,7 +16,7 @@ library(ggthemes)
 library(gridExtra)
 library(maps)
 library(knitr)
-library(kableExtra)
+library(kableExtra)  
 library(shiny)
 knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
 chunk <- "```"
@@ -1153,7 +1153,7 @@ kable("html") %>%
 knitr::include_graphics("imgs/virdis.png")
 ```
 
-```{r, echo = TRUE}
+```{r, echo = FALSE}
 vol_surface <- tibble(tenor = c("1M", "2M", "3M", "6M"),
                       `0.1` = c(0.472, 0.435, 0.391, 0.29),
                       `0.25` = c(0.431, 0.41, 0.337, 0.28),
@@ -1164,16 +1164,20 @@ vol_surface <- tibble(tenor = c("1M", "2M", "3M", "6M"),
 # Coloring for volatility surface:
 # Include all cells for colors, using gather, cell_spec, then spread
 library(knitr)
+
 library(kableExtra)
+
 gather(vol_surface, key = "delta", value = "vol", -tenor) %>%
-# cell_spec takes column vol. spec_color also takes column vol values into consideration.
+
+  # cell_spec takes column vol. spec_color also takes column vol values into consideration.
 # We take half of the spectrurm - yellow to red.
 # Color specturm: "magma" (or "A"), "inferno" (or "B"),
 # "plasma" (or "C"), and "viridis" (or "D", the default option).
+  
 mutate(vol = cell_spec(
-    vol, "html", color = "black", bold = T,
-    background = spec_color(vol, begin = 0.5, end = 1,
-                            option = "A", direction = -1))) %>%
+  vol, "html", color = "black", bold = T,
+  background = spec_color(vol, begin = 0.5, end = 1,
+                          option = "A", direction = -1))) %>%
 spread(key = "delta", value = "vol") %>%
   kable("html", escape = F, align = "c") %>%
   kable_styling("striped", full_width = FALSE)
