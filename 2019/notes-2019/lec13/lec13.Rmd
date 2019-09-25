@@ -586,6 +586,7 @@ One-hot encoding
 Linear regression
 
 ```{r}
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 bank_fit <- bank %>% select(y,
                 loan,
                 default,
@@ -593,16 +594,47 @@ bank_fit <- bank %>% select(y,
                 poutcome,
                 job,
                 marital) %>%
+  mutate_if(is.factor, as.character) %>%
   mutate(y = factor(y == "yes")) %>%
-  as.data.frame()
+  as.data.frame() %>%
+  mutate(nn = 1:n())
 
+```
+
+```{r, echo = FALSE}
+deco_prefix <- function(df_in, prefix) {
+  nn_nn <- which(colnames(df_in) == "nn")
+  nn_max <- length(colnames(df_in))
+  names_df <- colnames(df_in)
+  colnames(df_in) <- c(names_df[1:nn_nn], paste0(prefix, names_df[(nn_nn+1):nn_max]))
+  df_in %>% select(-nn) %>% mutate(nn = 1:n())
+}
+
+bank_new <- bank_fit %>%
+  spread(job, job, fill = "0") %>% 
+  deco_prefix("job.") %>%
+  spread(marital, marital, fill = "0") %>%
+  deco_prefix("marital.") %>%
+  mutate_at(vars(starts_with("job.")), function(x) { ifelse(x == "0", 0, 1) }) %>%
+  mutate_at(vars(starts_with("marital.")), function(x) { ifelse(x == "0", 0, 1) }) %>%
+  mutate(loan = ifelse(loan == "yes", 1, 0),
+         default = ifelse(default == "yes", 1, 0),
+         housing = ifelse(housing == "yes", 1, 0),
+         poutcome = ifelse(poutcome == "yes", 1, 0),
+         y = ifelse(y == "yes", 1, 0)) %>%
+  select(-nn)
+# bank_new <- bank_new %>% mutate(y = factor(y))
+```
+
+```{r}
 str(bank_fit)
 
-dummies <- dummyVars(" ~ .", data = bank_fit, fullRank=TRUE)
+dummies <- dummyVars(" ~ loan + default + housing + poutcome + job + marital", data = bank_fit, fullRank = TRUE)
 
-bank_new <- data.frame(predict(dummies, newdata = bank_fit)) %>%
-  mutate(y.TRUE = factor(y.TRUE))
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["y"], bank_new)
 
+# library(caret)
 set.seed(123)
 trainIndex <- createDataPartition(bank_new$y, p = .8,
  list = FALSE,
@@ -611,16 +643,14 @@ trainIndex <- createDataPartition(bank_new$y, p = .8,
 train <- bank_new[ trainIndex,]
 test  <- bank_new[-trainIndex,]
 
-str(train)
-
-mod_fit <- train(y.TRUE ~ .,  data=train, method="glm")
+mod_fit <- train(y ~ .,  data=train, method="glm")
 
 predictions <- predict(mod_fit, test)
 confusionMatrix(predictions, test$y)
 # which(test$y != predictions)
 
 # Recursive Partitioning and Regression Trees
-model_rpart <- train(y.TRUE ~., data=train, method='rpart')
+model_rpart <- train(y ~ ., data=train, method='rpart')
 
 predictions <- predict(model_rpart, test)
 confusionMatrix(predictions, test$y)

@@ -1,0 +1,9 @@
+# 2020-comment.txt
+
+- Content adjustment
+    - Combine EDA to 1 session
+    - Compress ggplot
+        - move facet to the front, Compress
+        - remove kableExtra (optional)
+
+    - remove some shiny/3 content
