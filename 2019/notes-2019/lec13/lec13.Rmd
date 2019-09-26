@@ -3,8 +3,8 @@ title: "FE8828 Programming Web Applications in Finance"
 subtitle: "<sub> Session 5 <br> Building Financial Applications </sub>"
 author: "Dr. Yang Ye <sub> <Email:yy@runchee.com> </sub>"
 date: "Sep 26, 2019"
-# output: html_document
-output: pdf_document
+output: html_document
+# output: pdf_document
 ---
 
 ```{r setup, include=FALSE}

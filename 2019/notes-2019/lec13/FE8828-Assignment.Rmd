@@ -1,9 +1,9 @@
 ---
 title: "FE8828 Programming Web Applications in Finance"
-subtitle: "Group Assignment"
 author: "Dr. Yang Ye <sub> yy@runchee.com </sub>"
 date: "Sep 24, 2019"
-output: pdf_document
+output:
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -129,7 +129,8 @@ If on day 1, S1 = 98, Volatility is unchanged.
 
 ```{r echo = TRUE}
 S1 <- 98
-option_pnl <- GBSOption("c", S = S1, X = 100, Time = (days - 1) / 250, r = 0, b = 0, sigma = 0.3)@price - price0
+option_pnl <- GBSOption("c", S = S1, X = 100,
+                        Time = (days - 1) / 250, r = 0, b = 0, sigma = 0.3)@price - price0
 approx_pnl <- delta0 * (S1 - 100) + 0.5 * gamma0 * (S1 - 100) ** 2 + vega0 * 0 + theta0 * 1/250
 cat(paste0("option_pnl: ", option_pnl, ", ", approx_pnl, "\n"))
 cat(paste0("diff with approx.: ", option_pnl - approx_pnl, "\n"))
@@ -167,7 +168,7 @@ Note 1: that simulation would show some acceptable level of difference.
 Note 2: The overall PnL = the cost of buying the option + final payoff + delta PnL.
 
     df <- tibble(S = ss, days = 1:days)
-    opt <- mutate(df,
+    opt <- rowwise(df) %>% mutate(
       price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
       delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
       gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
@@ -196,7 +197,7 @@ ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
 ss
 
 df <- tibble(S = ss, days = (N-1):0)
-opt <- mutate(df,
+opt <- rowwise(df) %>% mutate(
   delta_S = S - lag(S),
   # Below is end-of-day calculations
   price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
@@ -228,7 +229,7 @@ ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
 ss
 
 df <- tibble(S = ss, days = (N-1):0)
-opt <- mutate(df,
+opt <- rowwise(df) %>% mutate(
   delta_S = S - lag(S),
   # Below is end-of-day calculations
   price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
@@ -245,13 +246,13 @@ res <- replicate(1:5000, {
   ss <- rep(S, N) * c(1, cumprod(rlnorm(N - 1, mean = p1, sd = p2)))
   
   df <- tibble(S = ss, days = (N-1):0)
-  opt <- mutate(df,
-                delta_S = S - lag(S),
-                # Below is end-of-day calculations
-                price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
-                delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
-                gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
-                theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3) / 250)
+  opt <- rowwise(df) %>% 
+    mutate(delta_S = S - lag(S),
+          # Below is end-of-day calculations
+          price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+          delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+          gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+          theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3) / 250)
   
   sd((log(opt$S / lag(opt$S))[-1])) / sqrt(1 / 250)
   
@@ -276,7 +277,7 @@ sd((log(opt$S / lag(opt$S))[-1])) / sqrt(1 / 250)
 Show case how delta hedging works as a trading strategy.
 
 - Show how one trade works
-- Backtest for available history - one-year history from the website.
+- Backtest for available history (12-months, each month as ) - one-year history from the website.
 
 Assumption:
 
@@ -287,10 +288,17 @@ Assumption:
 - Daily PnL: (option premium change) + (stock holding quantity * price change).
 
 - You can get your favorite stocks here. There is one year of data.
-    + <https://marketchameleon.com/Overview/*Stock Code*/DailyHistory/>
-    + e.g.: <https://marketchameleon.com/Overview/GS/DailyHistory/>
-- Daily IV30 is provided, IV 30 is implied volatility for 30 days. We flat-extrapolate it to be for < 30 days.
+    + Many website started charging data download. Luckily we can have CBOE pushing VIX Index for top five active trading stocks.
+    + <http://www.cboe.com/vix>
+    + "The VIX Index is a calculation designed to produce a measure of constant, 30-day expected volatility of the U.S. stock market, derived from real-time, mid-quote prices of S&P 500® Index (SPXSM) call and put options. On a global basis, it is one of the most recognized measures of volatility -- widely reported by financial media and closely followed by a variety of market participants as a daily market indicator."
+    + Data is available to download from here. Pick one of five stocks.
+    <https://fred.stlouisfed.org/search/?st=%20CBOE%20Equity%20VIX>
+    + Combine with Yahoo's stock price series (Use Close)
+    
+- Daily IV 30 is provided, IV 30 is implied volatility for 30 days. We flat-extrapolate it to be for < 30 days (which means don't change it).
+
 - As underlying is equity, dividend yield is applicable for B-S valuation
+
 - US risk-free rate for 1M: 0.8% (annualized)
 
 Analysis: For one trade
@@ -338,8 +346,7 @@ Example flow of analysi:
                 Time <- (end_date - date) / 365
                 GBSOption(TypeFlag, S, X, Time, r, b, sigma)@price
         
-                df_opt <- df %>%
-                  rowwise %>%
+                df_opt <- rowwise(df) %>%
                   mutate(premium = GBSOption(TypeFlag = "...",
                                              S = Close,
                                              X = start_price,
@@ -355,6 +362,7 @@ Example flow of analysi:
 
         - Hedging side:
       
+                df %>%
                 rowwise() %>%
                 mutate(delta_hedge = GBSGreeks("delta", TypeFlag, S, X, Time, r, b, sigma) *
                                      quantity * (-1)) %>%
