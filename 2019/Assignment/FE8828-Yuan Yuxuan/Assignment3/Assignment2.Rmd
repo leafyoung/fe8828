@@ -1,0 +1,149 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yuxuan <sub> <Email:yuan0080@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+library(dplyr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+```
+
+# Finding #1: Data Size
+
+The bank dataset contains `r nrow(bank)`  objects with `r length(bank)` vairables.
+
+
+# Finding #2: Data Summary
+
+Based on the summary information, we can get the general profile of the bank clients.
+For example:
+
+* Average and median age of the client is around 40 years old. Majority of the clients are in the range of 30 to 50 years old.
+* The number of married clients is more than double of that of single clients. 
+* More than half of the clients own houses but less than 16% of the clients have loan. 
+* Majority of the clients obtain secondary or tertiary degree.
+* Majority of the clients have not subscribed a term deposit.
+* ...
+
+
+```{r finding2, echo = TRUE}
+summary(bank)
+```
+
+# Finding #3: Relationship between Age vs Marital
+
+* The average ages for single, married and divorced are increasing.
+* There is no single client who is older than 70 years old.
+
+```{r finding3, echo = TRUE}
+ggplot(bank, aes(marital, age)) + geom_boxplot()
+```
+
+# Finding #4 Relationship between Job vs Age
+
+For clients of this bank: 
+
+* Normally retire after 56 years old
+* Majority of students are under 30 years old
+* Housemaid has the largest age range.
+
+```{r finding4, echo = TRUE}
+ggplot(bank, aes(job, age, fill = job)) + geom_boxplot()
+```
+
+
+# Finding #5 Age Distribution
+
+The below graph shows the distribution of the client ages. 
+
+* The density of client dramatically reduced after 60 years old
+* From 19 years old (min age as shown in Found 1), the density of client increases with age getting larger. The density reaches max at around 33 years old with the value of around 4.4%, and starts to reduce afterwards,
+
+```{r finding5, echo = TRUE}
+# Marginal density plot
+ggplot(bank, aes(bank$age)) + 
+  geom_density(alpha=.5, fill = "red") + 
+  theme(legend.position = "none")
+```
+
+
+# Finding #6 Age vs Default Percentage
+
+The graph below shows the default rate for each age.
+
+* Default happens mainly between age 22 and 57 (let's call it "default age range").
+* Among the "default age range" as mentioned above, the default_percentage goes very random. Thus, we can say the probability of default seems uncorrelated with age.
+* Considering the result in Finding 4, the density/number of client outside the "default age range" is very small. The general default rate is a very small number as well. The corresponidng default rate calculated might not be accurate.
+
+
+```{r finding6, echo = TRUE}
+bank_age <- group_by(bank, age) %>%
+  summarise(
+  default_percentage = sum(ifelse(default == "no", 0, 1))/n())
+
+plot(bank_age)
+
+```
+
+# Finding #7 Job vs. Education
+
+Based on the following two barcharts with percentage fill, we can see the relationship between jon and education level.
+
+* Jobs such as management and services have high preference with eduction level
+  + Majority of management has tertinary education
+  + Majroity of services has secondary eductaion
+
+* People with different education background have different job distribution/opprotunities
+  + People with primary education have more likelihood to become blue-collar. They have very litter chance to work as entrepreneur, admin, self-employed and technician
+  + Admin, blue-collar, services and technican are the main job selections for people with secondary eductaion
+  + Majority of people with teriary eductation work as management, and seldom work as blue-collar and services
+  + Unemployed rate is low in all of the three education levels.
+
+```{r finding7}
+#filter out unknown data for better analyse
+bank_after_filter_unknown_education <- filter(bank, education!='unknown'&job!='unknown')
+ggplot(bank_after_filter_unknown_education) + geom_bar(mapping = aes(x = job, fill = education),position = "fill")
+ggplot(bank_after_filter_unknown_education) + geom_bar(mapping = aes(x = education, fill = job),position = "fill")
+```
+
+# Finding #8 Balance vs Duration
+
+The average duration for any balance amount is constantly around 250 seconds.
+The curve is generally horizontally straight, which indicates that the duration is uncorrelated with client's balance.
+The shadow area for extreme small and big balance amount is larger because the corresponding sample size is too small to make accurate estimation.
+
+```{r Finding8}
+g <- ggplot(bank, aes(x = balance, y = duration))
+g + geom_point(color = "steelblue", size = 1, alpha = 1/2) + geom_smooth()
+```
+
+# Finding #9 Default vs Balance
+
+Default clients generally have obviousely lower balance than non-default clients.
+Majority default clients have negative balance; majority non-defualt clients have positive balance.
+
+```{r finding9}
+#Not showing outliers to have better visualization
+p0 = ggplot(bank, aes(default, balance)) + geom_boxplot(outlier.shape = NA) 
+# compute lower and upper whiskers
+ylim1 = boxplot.stats(bank$balance)$stats[c(1, 5)]
+# scale y limits based on ylim1
+p0 + coord_cartesian(ylim = ylim1*1.05)
+```
+
+# Finding #10 Duration vs Age & Contact
+
+* Generally, older people tends to have longer contact duration.
+* Generally, people with telephone tends to have longer contact duration then people with cellilar.
+* People with unkown contact generally have lowest contact duration. However, if the contact is "unknow", how does the bank employee contact the client? This is the logic confusion I have for the dataset. 
+
+```{r finding10}
+ggplot(data = bank) +
+geom_point(mapping = aes(x = age, y = duration)) + geom_smooth(aes(x = age, y = balance), method = 'lm') +
+facet_grid( ~ contact)
+```

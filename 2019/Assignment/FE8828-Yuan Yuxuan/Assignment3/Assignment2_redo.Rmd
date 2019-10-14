@@ -1,0 +1,238 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yuxuan <sub> <Email:yuan0080@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(tidyr)
+library(knitr)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+```
+
+# Finding #1: Data Size
+
+The bank dataset contains `r nrow(bank)`  objects with `r length(bank)` vairables.
+
+
+# Finding #2: Data Summary
+
+Based on the summary information, we can get the general profile of the bank clients.
+For example:
+
+* Average and median age of the client is around 40 years old. Majority of the clients are in the range of 30 to 50 years old.
+* The number of married clients is more than double of that of single clients. 
+* More than half of the clients own houses but less than 16% of the clients have loan. 
+* Majority of the clients obtain secondary or tertiary degree.
+* Majority of the clients have not subscribed a term deposit.
+* ...
+```{r finding2, echo = TRUE}
+kable(summary(bank)) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+
+
+# Finding #3 Previous outcome vs days and number of contacts
+pdays is defined as "number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)"
+previous is defined as "number of contacts performed before this campaign and for this client"
+
+Disregarding the "unknown case" where client was not previously contacted (pday is around -1 and previous is 0), success cases have the average pday of 163.7132, which is much lower than 243.1673 of failure cases and 219.3858 of other cases.
+This fact indicates that the more frequently client was contacted, the more likely the campaign would be success on the corresponding client.
+
+In the case of average previous, other cases has the max value of 3.38787, followed by sucusses cases of 3.015504. Failure cases have the smallest average previous of 2.851020.
+This fact indicates that even though more contacts performed might not directly lead to campaign success, but would reduce the chance of failure cases.
+
+```{r finding3, echo = TRUE}
+kable(group_by(bank, poutcome) %>% summarise(avgPday = mean(pdays), avgPrevious = mean(previous))) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+
+# Finding #4 Age vs Default Percentage
+
+The graph below shows the default rate for each age.
+
+* Default happens mainly between age 22 and 57 (let's call it "default age range").
+* Among the "default age range" as mentioned above, the default_percentage goes very random. Thus, we can say the probability of default seems uncorrelated with age.
+* Considering the result in Finding 4, the density/number of client outside the "default age range" is very small. The general default rate is a very small number as well. The corresponidng default rate calculated might not be accurate.
+
+
+```{r finding4, echo = TRUE}
+bank_age <- group_by(bank, age) %>%
+  summarise(
+  default_percentage = sum(ifelse(default == "no", 0, 1))/n())
+
+plot(bank_age)
+
+```
+
+# Finding #5 Cdays (number of days that passed by after the client was last contacted) statistics
+
+In this quesion, I added a new varibale - cdays, whcih is defined as "the number of days that passed by after the client was last contacted." 
+Assuming that client was contacted at least once a year, i.e. I assume the year of last contact is the latest year from today.
+
+```{r finding5_1, echo = TRUE}
+getLastDate <- function(d, m, currentDate){
+  dateStr = paste0(d, "-", m, "-", year(currentDate))
+  lastDate = as.Date(dateStr, "%d-%b-%Y")
+  daysDiff = currentDate-lastDate
+  diff = ifelse(lastDate < currentDate, 0, 1)
+  return(lastDate - years(1*diff))
+}
+
+# To have the finding description static, I set the currentDate as "2019-10-06" here.
+# In ideal case, currentDate should be Sys.date()
+currentDate <- Sys.Date()
+bank <- mutate(bank, cdate = getLastDate(day, month, currentDate))
+bank <- mutate(bank, cdays = currentDate-cdate)
+
+kable(summarise(
+  bank,
+  mean = mean(cdays),
+  median = median(cdays),
+  sd = sd(cdays), 
+  var = var(cdays),
+  min = min(cdays),
+  max = max(cdays)
+)) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Based on the summary above, we know that:
+
+* The cdays mean and median are `r mean(bank$cdays)` and `r median(bank$cdays)` correspondingly. Thus, the distribution of cdays are generally `r ifelse(mean(bank$cdays) > median(bank$cdays), "positive skew with long right tail", "negative skew with long left tail")`.
+* The cdays min and max are `r min(bank$cdays)` and `r max(bank$cdays)` correspondingly. `r ifelse(min(bank$cdays)!=0, paste0("The min value indicates that the bank stuff has not contacted any client within recent ", min(bank$cdays), " days."), "")`
+* The variance and standard deviation are `r var(bank$cdays)` and `r sd(bank$cdays)` correspondingly. Thus the coefficient of variation is `r coefficient = sd(bank$cdays)/as.numeric(mean(bank$cdays))` `r coefficient`. Since coefficient is `r ifelse(coefficient>=1, "larger", "smaller")` than 1, the cdays distribution has a relatively `r ifelse(coefficient>=1, "high", "low")` variation.
+
+Following is the density plot of cdays. We can see it is not normally distributed, but a waved shape.
+
+```{r finding5_2, echo = TRUE}
+plot(density(as.numeric(bank$cdays)))
+```
+
+
+
+# Finding #6 Age Group vs. poutcome
+
+In generally, majority (81.950896%) of the previous marketing campaign result is unknown, followed by failure (10.838310%) and other status(4.357443%). Success is a reletivly rare event, with only 2.853351% of the population
+
+```{r finding6_1, echo = TRUE}
+kable(group_by(bank, poutcome) %>% summarise(nPoutcome = n(), percentage = n()/nrow(bank))) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Next, I divide the client information into 3 age groups: "young" if age is smaller or equals to 30; "middle aged" if age is between 30 and 60 (right side inclusive); "senior" if age is larger than 60.
+
+```{r finding6_2, echo = TRUE}
+bank <- mutate(bank, ageGroup = case_when(age<=30 ~ "young",
+                                          (30 < age & age <= 60) ~"middle aged",
+                                          60 <age ~ "senior"))
+
+sum_ageGroup <- group_by(bank, ageGroup) %>% summarise(nAge = n())
+kable(sum_ageGroup) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+Based on the age group table above, we know that we have 3762 middle aged clients, 632 young clients and 127 senior clients.
+
+Next, I am trying to analyse the relationship between age group and poutcome.
+Based on the summary table below, we can see that the success rate among senior client is obviously higher than young and middle-aged clients. Thus the marketing department should pay more efforts to senior clients because they are more possible to accept the marketing campaign. 
+
+```{r finding6_3, echo = TRUE}
+sum_ageGroup_poutcome <- group_by(bank, ageGroup,  poutcome) %>% summarise(n = n())
+sum_ageGroup_poutcome <- right_join(sum_ageGroup_poutcome, sum_ageGroup, by = "ageGroup") 
+sum_ageGroup_poutcome <- mutate(sum_ageGroup_poutcome, percentage = n/nAge)
+sum_ageGroup_poutcome <- select(sum_ageGroup_poutcome, ageGroup, poutcome, percentage)
+kable(spread(sum_ageGroup_poutcome, ageGroup, percentage)) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+
+# Finding #7 Term deposit vs. client loyalty 
+
+Generally, clients who subscribed a term deposit is more loyal than those without term deposit subscription. Which means:
+
+* Term deposit subscribers generally save more money into the bank --> Average balance of term deposit subscribers is 1571.956, while that of non-subscribers is only 1403.212.
+* Term deposit subscribers are willing to spend more time contacting bank staff --> Mean duration is 552.7428 second for term deposit subscribers, which is around double of that of non-subscribers.
+
+However, only 11.524% clients have subscribed a term deposit. The bank should promote its term deposit subscription more.
+
+```{r finding7, echo = TRUE}
+if("y" %in% colnames(bank))
+{
+  bank <- rename(bank, `term deposit subscription` = y)
+}
+kable(group_by(bank, `term deposit subscription`) %>% summarise(count = n(), percentage = n()/nrow(bank), mean(balance), mean(age), mean(duration))) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+
+```
+
+
+# Finding #8 Loan
+
+Most clients(47.62221%) take housing loan only, followed by clients with no loan product with 37.09356%.
+8.98031% clients have both housing loan and personal loan, and 6.30392% clients take personal loan only.
+Thus, housing loan is much more popular than personal loan, which might be the strength of the bank.
+The bank should pay more effor to promote its personal loan becuase it has more space to growth.
+
+```{r finding8, echo = TRUE}
+bank <- mutate(bank, `loan status` = ifelse(housing == "yes", ifelse(loan == "yes", "both", "housing only"), ifelse(loan == "yes", "personal only", "none")))
+kable(group_by(bank, `loan status`) %>% summarise(count = n(), percentage = n()/nrow(bank))) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+# Finding #9 Defualt Rate
+
+Even though default is a rare event, bank should know what kind of clients has higher default rate for better risk control.
+
+### Defualt Rate vs. Job
+
+Entrepreneur has sigificantly higher default rate, 4.16667%, than any other jobs. The bank should pay more attention on the risk control on entrepreneur clients.
+
+Besides entrepreneur, unemployed and self-employed's default rate are larger than 2% as well.
+
+```{r finding9_1, echo = TRUE}
+bank_job <- group_by(bank, job) %>%
+  summarise(
+  default_percentage = sum(ifelse(default == "no", 0, 1))/n())
+kable(bank_job) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+### Defualt Rate vs. Education
+
+Even though clients with secondary education have higher defalt percentage, the difference among different education groups is not that huge. 
+Thus, the eudcation level is generally not a indicator of default.
+
+```{r finding9_2, echo = TRUE}
+bank_education <- group_by(bank, education) %>%
+  summarise(
+  default_percentage = sum(ifelse(default == "no", 0, 1))/n())
+kable(bank_education) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+### Defualt Rate vs. Marital
+
+Divorced clients has sgnificant higher default percentage than other clients. The bank should pay more attention to their risk control.
+Married people have the most stable financial status.
+
+```{r finding9_3, echo = TRUE}
+bank_marital <- group_by(bank, marital) %>%
+  summarise(
+  default_percentage = sum(ifelse(default == "no", 0, 1))/n())
+kable(bank_marital) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
+
+# Finding #10 Marital vs. Loan
+
+Married clients generally has higher demand on housing loan, than other marital groups.
+Divorced clients generally has higher personal loan demand than other two marital groups.
+
+However the difference is not that significant, thus marital status and loan choice are not so close correlated.
+
+```{r finding10, echo = TRUE}
+bank_marital_housing_loan <- group_by(bank, marital) %>%
+  summarise(
+  housing_loan_percentage = sum(ifelse(housing == "no", 0, 1))/n(),
+  personal_loan_percentage = sum(ifelse(loan == "no", 0, 1))/n())
+kable(bank_marital_housing_loan) %>% kable_styling(bootstrap_options = "striped", full_width = F)
+```
