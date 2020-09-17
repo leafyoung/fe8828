@@ -1,0 +1,4 @@
+"0","group_by(bank, contact) %>%"
+"0","  summarise(balance_mean = mean(balance),"
+"0","            count = n(),"
+"0","            success_count = sum(ifelse(poutcome == ""success"", 1, 0)))"

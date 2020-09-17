@@ -1,0 +1,134 @@
+df <- data.frame(a=1:10, b=10:1)
+df[which(df$a == 3 | df$b == 3), ,]
+
+
+df[match(3, df$a), , drop=T]
+
+rbind(df,df) # combine the 2 dataframe
+
+# Delete
+df[-(which(df$a == 3 | df$b == 3)), , drop = T] # Make the drop inplace. will be deleted
+# if still want to reference the row then need to put drop=False.
+
+# Update
+df[which(df$a == 3 | df$b == 3), 2] <- 35
+
+#dplyr (deployed)
+#each function does one things only.
+library('dplyr')
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+# descriptive statistics
+View(bank)
+nrow(bank)
+ncol(bank)
+# To avoid loading everytime, use the save keyword.
+save("bank", file="C:\Users\Alan_\Desktop\R\lesson_3\bank.Rda") 
+# load
+load(file="C:\Users\Alan_\Desktop\R\lesson_3\bank.Rda")
+# remove
+rm(list="bank")
+
+
+# SELECT statement
+subset <- select(bank, marital)
+subset <- select(bank, 1) # gets tou the first column
+subset <- select(bank, -(job)) # get back all columns except job.
+
+# put the job column to the left first.
+job_first <- select(bank, job, everything())
+
+#SELECT is vertical slice but FILTER is horizontal size.
+#filter function is also in the base package.
+young <- dplyr::filter(bank, age < 40)
+another_young <- dplyr::filter(bank, age < 20 & marital == "married")
+
+#colname
+colnames(bank)
+
+# difference beteeen & and &&
+# & will compare all statements, && only compare the first statement
+second_upper <- dplyr::filter(bank, education %in% c("tertiary", "secondary"))
+
+#check na
+check <- dplyr::filter(bank, is.na(housing) | is.na(loan))
+#check the unique value
+unique(dplyr::select(bank,loan, housing))
+#finally
+poor_ppl <- nrow(dplyr::filter(bank, housing=="no" & loan =="yes"))
+
+unique(dplyr::select(bank,job))
+
+job_ppl <- nrow(dplyr::filter(bank, (job %in% c("unemployed", "retired", "student")) & age >= 20 & age <=40))/ nrow(bank)
+
+unique_job <- distinct(select(bank, job))
+
+# 2^10^100 problem in C++
+
+# final_res <- mod_x(2,10)
+# for (i in 1:99){
+#   final_res <-mod_x(final_res, 10)
+# }
+# 
+# mod_x <-function(a,b){
+#   MOD <-10001
+#   if (b==1){
+#     a%%MOD
+#   } else if (b==2){
+#     mod_x(mod_x(a,1)^2,1)
+#   } else if (b==5){
+#     mod_x(mod_x(a,2) * mod_x(a,2) *mod_x(a,1),1)
+#   } else if (b==10){
+#     mod_x(mod_x(a,2),5)
+#     } else {
+#     stop("unknown b")
+#   }
+# }
+# 
+# mod_x(2,100)
+age <- select(arrange(bank, desc(age), age),1)[1]
+
+df1 <- mutate(bank, y = ifelse(y == "yes", T, F))
+
+mutate(df, c=a/b)
+
+mutate(bank, duration_ratio = duration/max(duration) )
+
+# pipeline : helps to organise the sort from left to right to have a logical flow.
+bank %>% select(job) %>% unique(.)
+
+
+#lecture notes 3
+distinct(bank, education, job)
+
+full_join(distinct(bank, job) %>% mutate(dummy = 1),
+          distinct(bank, education) %>% mutate(dummy = 1),
+          by = "dummy") %>% select(-dummy) # after matching drop the dummy column.
+
+# find the average age in the each job
+group_by(bank, job) %>% summarise(age_mean = mean(age), age_max=max(age), age_min = min(age), ppl = n()) 
+
+df <- data.frame(dt = c("2019-10-01", "2019-31-12", "2019-03-17",
+                        "2019-02-29", "2019-09-30"))
+mydate <-c("2019-10-01", "2019-31-12", "2019-03-17",
+           "2019-02-29", "2019-09-30")
+IsDate <- function(mydate, date.format = "%y-%m-%d") {
+  tryCatch(!is.na(as.Date(mydate, date.format)),  
+           error = function(err) {FALSE})  
+}
+# exercise 1
+mutate(df, correct = !is.na(as.Date(df$dt, "%Y-%m-%d")), 
+       index=row_number()) %>% 
+  dplyr::filter(.,correct == FALSE) %>% 
+  .$index %>% {
+    cat(paste0("Wrong Date ", paste0(., collapse=","), "\n"))
+  }
+# exercise 2
+group_by(bank, job, education) %>%
+  summarise(age_mean=mean(age), mean_bal=median(balance)) %>%
+  group_by(job) %>% summarise(subtotal_age = sum(age_mean), subtotal_bal=sum(mean_bal)) %>%
+  summarise(total_age= sum(subtotal_age), total_balance= sum(subtotal_bal))
+
+
+# foptions
+# bank data:10findings

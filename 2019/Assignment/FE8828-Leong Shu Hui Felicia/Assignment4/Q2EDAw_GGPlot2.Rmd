@@ -1,0 +1,141 @@
+---
+title: "Q2 EDA with ggplot2"
+author: "Leong Shu Hui Felicia"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(ggthemes)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## Finding 1
+```{r,echo=FALSE}
+ggplot(bank, aes(age)) +
+  geom_density(aes(fill = marital),alpha = 0.6) +
+  labs(title="Density of marital status with respect to age") + theme_clean()
+```
+\
+It can be seen that a large proportion of singles are below the age of 40.\
+People start getting married and divorced after the age of 30.\
+
+## Finding 2
+
+``` {r, echo = FALSE}
+group_by(bank,age,job) %>%
+  summarise(cc = n()) %>%
+  ungroup() %>% 
+  {
+    ggplot(.) +
+      geom_point(aes(age,job,size=cc,color=job,alpha=0.2)) +
+      labs(title="Distribution of age for each job") + 
+      theme_light()
+  }
+```
+Most jobs are filled between the age of 20 and 60. \
+Unemployed stayed relatively constant. \
+People are students from before the age of 20 up till 40.\
+People started retiring after 50 years of age.\
+
+## Finding 3
+
+``` {r, echo = FALSE}
+ggplot(bank, aes(age)) +
+  geom_density(aes(fill = education),alpha = 0.6) +
+  labs(title="Distribution of education wrt age") + theme_bw()
+```
+Younger people are more likely to have higher education (tertiary or secondary). \
+Those who are older are more likely to only have primary education.\
+
+
+## Finding 4
+``` {r, echo = FALSE}
+ggplot(bank) + geom_bar(mapping = aes(x = education, fill = job)) +
+  labs(title="Distribution of jobs wrt education") + 
+  theme_minimal()
+```
+People with primary education are more likely to be blue collar workers.\
+People with secondary education are more likely to be blue collar workers,admin,services or technicians.\
+People with tertiary education are likely to work in management.\
+
+## Finding 5
+``` {r, echo = FALSE}
+g <- bank %>% group_by(poutcome) %>%
+  summarize(Duration = mean(duration))
+
+ggplot(g, aes(poutcome,Duration)) + 
+  geom_histogram(stat = "identity",aes(fill = poutcome )) +
+  labs(title="Duration for each poutcome") + 
+  theme_bw()
+```
+Those with a poutcome of success have a higher duration than the others.
+
+## Finding 6
+``` {r, echo = FALSE}
+g <- bank %>% 
+  filter(poutcome == "success") %>% 
+  group_by(campaign,poutcome) %>% 
+  summarize(success_count = n()) 
+
+ggplot(g,aes(campaign,success_count)) + 
+  geom_bar(stat = "identity",aes(fill=campaign)) + 
+  labs(title="Sucess of Compaigns") +
+  theme_test()
+```
+Campaign 1 was the most successful one.\
+Success of campaigns is declining, with a decreasing trend in the number of successes. \
+
+## Finding 7
+``` {r, echo = FALSE}
+g <- bank %>% 
+  filter(poutcome == "success") %>% 
+  group_by(month,poutcome) %>% 
+  summarize(success_count = n())
+g$month = factor(g$month, levels = tolower(month.abb))
+
+ggplot(g,aes(month,success_count)) +
+  geom_bar(stat = "identity",aes(fill = month)) +
+  labs(title="Success for each month") + 
+  theme_bw()
+```
+The highest number of success is in the month of May.\
+However, it seems that there is no pattern or seasonal relationship for the successes of each month.\
+
+## Finding 8
+``` {r, echo = FALSE}
+ggplot(bank, aes(balance, age)) + 
+  geom_point(aes(color = marital)) + 
+  scale_x_continuous(limits = c(0, 30000)) +
+  facet_grid(. ~ marital) +
+  labs(title="Distribution of age and balance for each marital status") + 
+  theme_light()
+```
+It can be seen that those who are married or single seems to have more balance in their accounts than those who are divorced at all ages. \
+This may mean that people who have trouble keeping their marriage may have trouble keeping their finances in order too.\
+
+
+## Finding 9
+``` {r, echo = FALSE}
+ggplot(bank, aes(age)) +
+  geom_density(aes(fill = contact),alpha = 0.5) +
+  labs(title="Density of contact with respect to age") + theme_bw()
+```
+Younger people are more likely to be contacted by cellular while older ones are more likely to be contacted by telephone.\
+
+## Finding 10
+``` {r, echo = FALSE}
+ggplot(bank) +
+  geom_point(mapping = aes(x = age, y = balance,colour=interaction(loan,housing))) +
+  facet_wrap(loan ~  housing, nrow = 2) + ylim(0,30000)+
+  labs(title="Balance wrt age for different Loan and Housing combinations") + theme_bw()
+```
+People without loans have higher balances on average at all ages and all housing. \
+Those with housing have a smaller age range than those without housing.\
+There are more people without loans than with loans.\  
+
+### Hope you enjoyed my 10 findings!

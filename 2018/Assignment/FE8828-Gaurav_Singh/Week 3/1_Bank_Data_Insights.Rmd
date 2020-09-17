@@ -1,0 +1,256 @@
+---
+title: "Bank Data insights - Week 3 Assignment"
+author: "Gaurav Singh"
+date: "November 25, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(kableExtra)
+library(tidyverse)
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE,fig.align = "center", echo = TRUE)
+```
+
+# Problem  : Bank Data insights
+
+```{r definition, echo=TRUE,message=FALSE}
+bank<-read.csv("https://goo.gl/PBQnBt",sep=";") %>%
+  mutate("Age Group" = case_when(
+           age < 25 ~ "Youth",
+           age < 45 ~ "Middle-age",
+           age < 60 ~ "Senior",
+           TRUE ~ "Retired"
+           )
+         )
+
+cat(paste("Brief about the Data: It has "),nrow(bank)," rows.")
+```
+
+---
+## Insight #1 - Age Distribution of the sample
+```{r run1a, echo=TRUE,message=FALSE}
+cat(paste(
+  "Age Distribution of the sample is :\n",
+  "Average Age is : ",
+  round(mean(bank$age), digits=2),
+  " Years \n",
+  "Minimun Age :",
+  min(bank$age),
+  " Years \n",
+  "Maximum Age :",
+  max(bank$age),
+  " Years \n",
+  "Median Age :",
+  median(bank$age),
+  " Years \n"
+  ))
+
+bank %>%
+  group_by(age) %>% 
+  summarize(count=n()) %>% 
+  plot(type="l",main="Frequency Distribution of Age in the Sample")
+abline(v=median(bank$age))
+text(median(bank$age),5 ,"Median")
+```
+
+### The Sample is fairly young as seen. Larger part is Middle Aged.
+```{r run1b, echo=TRUE,message=FALSE}
+bank %>%
+  group_by(`Age Group`) %>%
+  summarize(Count=n()) %>%
+  arrange(desc(Count)) %>%
+  kable() %>%
+  kable_styling()
+```
+
+## Insight #2 - Age Distribution Job Wise
+```{r run2a, echo=TRUE,message=FALSE}
+cat(paste("Age Distribution Job Wise is : \n"))
+bank %>%
+  group_by(job) %>% 
+  summarize("Median Age"=median(age),Count=n()) %>%
+  arrange(`Median Age`) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###Note: The Student group has lowest median and the retired group has the largest as expected.
+
+```{r run2b, echo=TRUE,message=FALSE}
+bank %>%
+  group_by(job) %>% 
+  summarize(Count=n()) %>%
+  arrange(desc(Count)) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###Note: The Blue-collar/associated jobs form the largest chunk, with management being the single largest group.
+
+## Insight #3 - Defaulter distribution against Jobs
+Defaulter distribution against Jobs is :
+```{r run3, echo=TRUE,message=FALSE}
+cat(paste("Total Number of Defaulters ="),sum(bank$default=="yes"),"\n")
+bank %>%
+  group_by(job) %>% 
+  summarize(Defaulters=sum(ifelse(default=="yes",1,0))) %>%
+  arrange(desc(Defaulters)) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###Note: The Default Frequncy in seen in mostly blue-collar/equivalent jobs
+
+##Insight #4 - Education distribution against Jobs
+
+###Education distribution against Jobs is :
+```{r run4, echo=TRUE,message=FALSE}
+  df4<-bank %>% 
+  group_by(job) %>% 
+  summarize(
+    Primary=sum(ifelse(education=="primary",1,0)),
+    Secondary=sum(ifelse(education=="secondary",1,0)),
+    Tertiary=sum(ifelse(education=="tertiary",1,0)),
+    Unknown=sum(ifelse(education=="unknown",1,0))
+    )
+
+  df4 %>%
+    kable() %>%
+    kable_styling()
+  
+  counts <- table(bank$education, bank$job)
+  par(mar = c(5, 7, 2, 2) + 0.2)
+  barplot(
+    counts,
+    main="Education distribution against Jobs",
+    xlab="Count",
+    col=c("orange","red","green","blue"),
+    legend = rownames(counts),
+    beside=TRUE,
+    horiz=TRUE,
+    las=2
+    )
+```
+
+###Note :
+###Tertiary education is common in Management roles.
+###Blue-Collar/Related Jobs are mostly educated upto primary/secondary.
+
+## Insight #5 - Bank Balance by Job
+```{r run5, echo=TRUE,message=FALSE}
+bank %>%
+  group_by(job) %>% 
+  summarize(
+    "Instance of Negative balance"=sum(ifelse(balance<0,1,0)),
+    "Minimum Balace"=min(balance),
+    "Maximum Balance"=max(balance),
+    "Average Balance"=round(mean(balance),digits=2)
+    ) %>%
+  arrange(`Average Balance`) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###The Blue Collar and associated jobs have a lower average bank balance & the most negative balances. The retired group has the most, and understandably so since they live off the interest mostly.
+###Surprisingly the housemaid category has the second largest balance! (Even greater than the management!)
+
+## Insight #6 - Previous Outcome vs Duration
+```{r run6, echo=TRUE,message=FALSE}
+bank %>%
+  group_by(poutcome) %>% 
+  summarize(
+    "Minimum Duration"=min(duration),
+    "Maximum Duration"=max(duration),
+    "Median Duration"=median(duration),
+    "Average Duration"=round(mean(duration),digits=2)
+    ) %>%
+  arrange(`Average Duration`) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###Successful Calls were of longer duration and failure calls were least on average.
+
+## Insight #7 - Call Duration vs Jobs
+```{r run7, echo=TRUE,message=FALSE}
+bank %>%
+  group_by(job) %>% 
+  summarize(
+    "Minimum Duration"=min(duration),
+    "Maximum Duration"=max(duration),
+    "Median Duration"=median(duration),
+    "Average Duration"=round(mean(duration),digits=2)
+    ) %>%
+    arrange(`Average Duration`) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###The unemployed and the retired spoke the most since apparently they were not engaged in jobs per se.
+###The admin and the student spoke the least on average as expected.
+###Interesting to see entrepreneurs might have been interested in the financial products/services offered by the bank and spoke more.
+
+## Insight #8 - Term Deposit conversion % vs duration
+```{r run8, echo=TRUE,message=FALSE}
+  group_by(bank,y) %>% 
+  summarize(
+    "Minimum Duration"=min(duration),
+    "Maximum Duration"=max(duration),
+    "Median Duration"=median(duration),
+    "Average Duration"=round(mean(duration),digits=2)
+    ) %>%
+    arrange(desc(`Average Duration`)) %>%
+  kable() %>%
+  kable_styling()
+```
+###The successful outcome meant longer calls. In this case, successful call on average was of around 9 minutes.
+
+## Insight #9 - Term Deposit conversion % vs past outcome
+```{r run9, echo=TRUE,message=FALSE}
+  group_by(bank,poutcome) %>% 
+  summarize(
+    Yes=round(100*sum(ifelse(y=="yes",1,0))/n(),digits=2),
+    No=round(100*sum(ifelse(y=="no",1,0))/n(),digits=2)
+    ) %>%
+    arrange(desc(Yes)) %>%
+  kable() %>%
+  kable_styling()
+```
+###The successful previous outcome has expectedly the most percentage of TD holders. Around 13% of previously unsucessful customers were converted after the given batch of calls.
+
+## Insight #10 - Term Deposit conversion % vs job
+```{r run10, echo=TRUE,message=FALSE}
+  group_by(bank,job) %>% 
+  summarize(
+    Yes=round(100*sum(ifelse(y=="yes",1,0))/n(),digits=2),
+    No=round(100*sum(ifelse(y=="no",1,0))/n(),digits=2)
+    ) %>%
+    arrange(desc(Yes)) %>%
+  kable() %>%
+  kable_styling()
+```
+
+###Retired group has the most TD conversions while the blue-collar had the minimum, maybe because of the difference in available bank balance. 
+## Legend
+```{r legend, echo=TRUE,message=FALSE}
+description<-c("age (numeric)",
+"job : type of job (categorical: 'admin.','blue-collar','entrepreneur','housemaid','management','retired','self-employed','services','student','technician','unemployed','unknown')",
+"marital : marital status (categorical: 'divorced','married','single','unknown'; note: 'divorced' means divorced or widowed)",
+"education (categorical: 'basic.4y','basic.6y','basic.9y','high.school','illiterate','professional.course','university.degree','unknown')",
+"default: has credit in default? (categorical: 'no','yes','unknown')",
+"housing: has housing loan? (categorical: 'no','yes','unknown')",
+"loan: has personal loan? (categorical: 'no','yes','unknown')# related with the last contact of the current campaign:",
+"contact: contact communication type (categorical: 'cellular','telephone') ",
+"month: last contact month of year (categorical: 'jan', 'feb', 'mar', ..., 'nov', 'dec')",
+"duration: last contact duration, in seconds (numeric). Important note: this attribute highly affects the output target (e.g., if duration=0 then y='no'). Yet, the duration is not known before a call is performed. Also, after the end of the call y is obviously known. Thus, this input should only be included for benchmark purposes and should be discarded if the intention is to have a realistic predictive model.",
+"campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)",
+"pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric; 999 means client was not previously contacted)",
+"previous: number of contacts performed before this campaign and for this client (numeric)",
+"poutcome: outcome of the previous marketing campaign (categorical: 'failure','nonexistent','success')",
+"y - has the client subscribed a term deposit? (binary: 'yes','no')")
+data.frame(SlNo=c(1:15),Column_Description=description) %>%
+  kable() %>%
+  kable_styling()
+```
+
+

@@ -1,0 +1,7 @@
+"0","library(tidyverse)"
+"0","library(lubridate)"
+"0","library(bizdays)"
+"0","library(dplyr)"
+"0","library(ggplot2)"
+"0","knitr::opts_chunk$set(echo = TRUE, fig.align=""center"", collapse = TRUE, cache = TRUE)"
+"0","bank <- read.csv(""https://goo.gl/PBQnBt"", sep = "";"")"

@@ -1,0 +1,90 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: 'Toh Zhao Zhi <sub> <Email: tohz0016pg@e.ntu.edu.sg> </sub>'
+date: "Nov 19, 2017"
+output:
+  html_notebook: default
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+```{r setup, include =FALSE}
+library(dplyr)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = T)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+#Data Insight 1: Job, Age and Default
+```{r, echo = FALSE}
+ggplot(bank, aes(job, age, color = default, size = default)) + geom_point(alpha = 0.2) + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ggtitle("Scatter Plot of Age in different Job Categories and Default Status")
+```
+The above plot shows a scatter plot of age of the different people with different jobs. An additional information is portrayed here, which is the default status of each individual.This allows us to study the age distribution of each job category as well as the age range that is more likely to default for each job category. 
+
+For admin and blue collar, the general age is in the range from around 20 to 60. However, people with admin job and defaults are generally aged 25 to 35 as compared to the wider age range for blue-collar, which spreads over 20+ to 40+.
+
+For entrepreneur, management and technician, the general age range is also between 20 to 60. The people who default under this job category covers almost the entire age range. 
+
+As for services, the age range is also 20 to 60 but the people who default are split into two groups, one in the younger range, and one in the older range of the people who have a service job.
+
+For the rest of the job categories, default are generally not so prevalent, with less than 5 people defaulting in each of these 
+
+#Data Insight 2: Age, Duration and Default
+```{r, echo = FALSE}
+ggplot(bank) + geom_point(aes(age, duration, shape = marital, color = marital), alpha = 0.5) + ggtitle("Scatter Plot of Duration Against Age for People with Different Default Status")
+```
+The above plot shows the relationship between age and duration, with an additional information - default status. It can be observed that the bulk of the sample population is in the age range of 20 to 60. And people aged abbove 60 have no tendency to speak beyond 1000seconds. In addition, bulk of the people will not speak for longer than 1000seconds. People who default also have a lower tendency to speak for long duration (they may not have the mood for such calls). Finally, nobody above 60 years old defaulted which may be the case that banks have a cut-off age for default/loan conditions.
+
+#Data Insight 3: Age, Default and Personal Loan
+```{r, echo = FALSE}
+ggplot(bank) + geom_point(aes(age,default, color = loan, size = loan), alpha = 0.5)+ ggtitle("Plot of Age for People with Different Default and Personal Loan Status")
+```
+This scatter plot shows the relationship between default status, personal loan status and age. It can be observed that the age range of people who defaults is much smaller than that of those who do not default. This makes perfect sense as the general population do not default and it is only a subset of it who defaults. The subset who defaults do not involve the youngest and oldest group of people of the sample as there may be restrictions by the bank for people to take up loans and thus people of a very young age or people who are in their 60s have low probability of defaulting. In addition, people who take personal loans are in the age range of 20 to 60. 
+
+#Data Insight 4: Age, Default and Home Loan
+```{r, echo = FALSE}
+ggplot(bank) + geom_point(aes(age,default, color = housing, size = housing), alpha = 0.5) + ggtitle("Plot of Age for People with Different Default and Housing Loan Status")
+```
+In this plot, we can observe that people with housing loan have a wider age range, with the maximum going up to 75 years old. and more people who default have housing loan as compared to personal loan (comparing with previous figure). This may be due to the fact that housing is more of a necessity and thus cannot be avoided even if one has defaulted.
+
+#Data Insight 5: Age, Balance and Marital Status
+```{r, echo = FALSE}
+ggplot(bank) + geom_point(aes(age, balance, shape = marital, color = marital), alpha = 0.5) + ggtitle("Scatter Plot of Balance Against Age for People with Different Marital Status")
+```
+The above scatter plot illustrates the relationship between age, balance and marital status. In general, balance increases with age till around 40+ years old and decreases thereafter. Majority of the population has a balance of less than 10000. In addition, majority of the population aged 30 and above are married and the people who have higher balance (>10000) are mostly married. This may imply that people who are married generally has to take a higher loan to support the family.
+
+#Data Insight 6: Age, Job and Education
+```{r, echo = FALSE}
+ggplot(bank, aes(age, color = education, fill = education)) + geom_density(alpha =0.5) + ggtitle("Density Graph for Age for People with Different Education Levels")
+```
+The above density plot illustrates the age distribution of the people with differnt education levels.People with tertiary and secondary education are generally in their 30s. People with primary education are generally in their 40s and 50s. This may indicate the evolution of the society where in the past, education was not as important and people who were born in that era were not as educated. Hence, people who are younger (30s) have higher education levels compared to those who are older (40s, 50s).
+
+#Data Insight 7: Age distribution in people with and without housing loan
+```{r, echo = FALSE}
+group_by(bank, age_group = (age %/% 5) *5, housing) %>% summarize(count = n()) %>% ungroup()-> housing_age
+
+ggplot(housing_age, aes(x = age_group, fill = housing, y = count)) +
+  geom_bar(data = filter(housing_age, housing == "no"), stat = "identity") + 
+  geom_bar(data = filter(housing_age, housing == "yes"), stat = "identity", aes(y = -count)) +  scale_y_continuous(breaks = seq(-600,600,100), labels = abs(seq(-600,600,100))) + coord_flip() + xlab("Age Group") + ylab("Number of People") + ggtitle("Population Pyramid for People with and without Housing Loans")
+```
+The above population pyramid for the people with and without housing loans. The population distributions are pretty similar in these 2 groups, with a peak at the low 30s.The proportion of people with housing loan in each age group decreases with an increasing age. This may imply that people who are older may have already paid off their housing loans then. While a higher percentage people at young age may have just started their family or have a career and just bought a house, resulting in a higher proportion of people in the younger age group to have a housing loan.
+
+#Data Insight 8: Job and Loan
+```{r, echo = FALSE}
+ggplot(bank) + geom_bar(mapping = aes(x = job, fill = loan)) + geom_line(aes(x = job, y = duration/3)) + geom_point(data = group_by(bank, job) %>% summarize(duration = median(duration/3)) %>% ungroup(), aes(x = job, y = duration), inherit.aes = FALSE) + scale_x_discrete(limit = rev(levels(reorder(bank$job, bank$duration, FUN = median)))) + xlab("Job sorted according to \nMedian Duration \n(Longest - Shortest)") + ylab("Count \n Duration/3") + coord_flip() + ggtitle("Duration and Personal Loan Status Chart for Different Job Categories")
+```
+The above plot shows the relationship between personal loan status, job and duration. It can be seen that unemployed has the highest median duration and the largest range for duration. This can be explained that unemployed may be split into 2 groups - one group who are in a bad mood due to their unemployment and are not interested in talks and another are those who has alot of unhappiness and tend to resent to the telemarketer about their life and thus a longer duration of the calls.
+
+#Data Insight 9: Duration for people with and without personal loans
+```{r, echo = FALSE}
+ggplot(bank, aes(x = age, y = duration)) + geom_point() + geom_smooth(method = "lm") + facet_grid(.~loan) + ggtitle("Plot of Duration Against Age in \n People Without Personal Loan and People With Personal Loan")
+```
+From the above scatter plot, there does not seem to be a strong linear relationship between duration and age for the people with personal loans. In contrast, for people with personal loans, there seem to be a slight negative relationship between duration and age. As age increases, duration generally decreases for people who have personal loans.
+
+#Data Insight 10
+```{r, echo = FALSE}
+ggplot(bank, aes(marital, duration)) + geom_boxplot() + coord_flip() + ggtitle("Box Plot of Duration for Different Marital Status")
+```
+The above plot shows the distributions of duration in the three different marital groups. The median, 1st and 3rd quartiles of each group are similar. However, for the married group, people generally tend to talk longer, with more people talking longer than the 3rd quartile + 1.5IQR duration, followed by single, and then divorced. This may reflect the approachability of this three marital groups, where married people tend to be more acceptable to these calls and thus speaks for a longer duration.

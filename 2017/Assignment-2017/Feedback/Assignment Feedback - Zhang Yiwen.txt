@@ -1,0 +1,51 @@
+Hi, Even
+
+Below is your assignment feedback. You did good ine course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 90
+
+Assignment 2 = 100 * 0.3 + 70 * 0.7
+Part 1: 100
+
+Part 2: 70
+# Coupon rate should be divided by coupon frequency
+
+  npvGenerator <- function(tenor, frequency, rate,yield){
+    
+    if (frequency == "Annual"){n=1}
+    if (frequency == "Semiannual"){n=2}
+    if (frequency == "Quarter"){n=4}
+    
+    seqPay <- seq(0,tenor*n,by = 1)
+    seqnpv <- seq(0,tenor*n,by = 1)
+    payTime <- length(seqPay)
+  
+    for (i in 1:payTime){
+      num <- (length(seqPay)-i) #rest payment times
+      y <- yield/n/100
+      # seqnpv[i] <- rate  * (1-1/(1+y)^num)/y+(100/(1+y)^num)
+YY>     seqnpv[i] <- rate / n * (1-1/(1+y)^num)/y+(100/(1+y)^num)
+    }
+    
+    seqnpv
+  }
+
+Assignment 3 = 0 * 0.05 + 100 * 0.25 + 90 * 0.7
+Part 1: 0 (missed a little assignment of calculating option value over a portfolio of options)
+Part 2: 90 + 10
++10: good use of ggplot
+-10: Time should be annualized.
+# as.numeric(days)
+YY> as.numeric(days) / 365
+
+Part 3: 90
+My best:
+* finding 4: Divide age group into 2, there are more elder people in retired, housemaid and unknown group.
+* finding 10
+
+Assignment 4 = 90
+My best:
+* Fig.10 Duration wrt marriage and education

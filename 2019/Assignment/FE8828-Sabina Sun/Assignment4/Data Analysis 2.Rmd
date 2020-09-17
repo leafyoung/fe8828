@@ -1,0 +1,98 @@
+---
+title: "Data Analysis 2"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(tidyr)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+Boxplot of age by job, sorted by median age  
+**Insight:** *There exist outliers of retirees in their 20s, which may represent erroneous sample.*
+```{r}
+ggplot(bank, aes(job, age, color=job)) + geom_boxplot()+coord_flip()+
+  theme(legend.position="NA")+
+scale_x_discrete(limit = rev(levels(reorder(bank$job, bank$age, FUN = median))))
+```
+# Finding #2
+Boxplot of age by education, split by marital status    
+**Insight:** *In general, age of single people are younger than that of married or divorced.*
+```{r}
+ggplot(bank, aes(education, age, color=education)) + 
+  geom_boxplot()+
+  coord_flip()+
+  theme(legend.position="NA")+
+  facet_wrap( ~ marital,nrow = 3)
+```
+# Finding #3
+Plot of people with a personal loan and housing loan by age   
+**Insight:** *There are much more people with housing loan as compared to personal loan across all ages*
+```{r}
+  ggplot(bank, aes(age, fill = loan)) + 
+    geom_bar() 
+  ggplot(bank, aes(age, fill = housing)) + 
+    geom_bar() 
+```
+# Finding #4
+Job profile of people with housing loan   
+**Insight:** *There exist students with housing loans and majority of housing loans are held by blue-collared workers*
+```{r}
+  ggplot(bank, aes(job, fill = housing)) + 
+    geom_bar() +
+    coord_flip()
+```
+# Finding #5
+Bank balance people by job  
+**Insight:** *High end outliers are from retirees and entreprenuer while low end outliers (with negative balances) arises from self-employed and entrepreneur*
+```{r}
+  ggplot(bank, aes(job, balance, color=job)) + 
+    geom_boxplot()+
+    coord_flip()+
+    theme(legend.position="NA")
+```
+# Finding #6
+Duration of phone call by job  
+**Insight:** *Highest outlier is unemployed, most likely the person has the most time to spare*
+```{r}
+  ggplot(bank, aes(job, duration, color=job)) + 
+    geom_boxplot()+
+    coord_flip()+
+    theme(legend.position="NA")
+```
+# Finding #7
+Job profile of people who have subscribed a term deposit  
+**Insight:** *Relatively high success rate coming from management clients*
+```{r}
+  ggplot(bank, aes(job, fill=y)) + 
+    geom_bar() +
+    coord_flip()
+```
+# Finding #8
+Boxplot of number of call against success of concluding with a loan  
+**Insight:** *It usually takes 5 or less calls to end with a successful client. Calls up to 50 times have ended up in vain*
+```{r}
+  ggplot(bank, aes(y,campaign,colour=y)) + 
+  geom_boxplot()+
+  coord_flip()+
+  theme(legend.position="NA")
+```
+# Finding #9  
+Plot of bank balance against age and coloured by job  
+**Insight:** *Person with highest average bank balance is a 60 year old retiree*
+```{r}
+  ggplot(bank, aes(age, balance,color=job)) + 
+    geom_point()
+```
+# Finding #10  
+Voilin plot of bank balance by education level, including quantiles    
+**Insight:** *Distribution of bank balances are similar across education levels. Large range is mainly due to outliers.*
+```{r}
+ggplot(data = bank) +
+  geom_violin(aes(education, balance),fill="lavender",draw_quantiles = c(0.25, 0.5, 0.75))+
+  coord_flip()
+```

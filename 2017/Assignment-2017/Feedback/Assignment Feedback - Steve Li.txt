@@ -1,0 +1,29 @@
+Hi, Steve
+
+Below is your assignment feedback. You did well in the course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 90
+
+Assignment 2 = 100 * 0.3 + 100 * 0.7
+Part 1: 100
+Part 2: 100
+
+Assignment 3 = 100 * 0.05 + 80 * 0.25 + 90 * 0.7
+Part 1: 100
+Part 2: 80
+PayOff shall depend on option type.
+
+Part 3: 90
+My best: #10. the summary of age and having no house
+
+The unfinished #11 could be (I didn't count this in your score.)
+
+# group_by(bank, job) %>% summarise (n=n()) %>% plot
+YY> group_by(bank, job) %>% summarise (median_balance=median(balance)) %>% plot
+
+Assignment 4 = 90
+My best: 3. The people who got divorce tend to have lower balance. That means people who are divorced tend to have higher credit risk.
+6. From the chart, management have higher density to get divorce.

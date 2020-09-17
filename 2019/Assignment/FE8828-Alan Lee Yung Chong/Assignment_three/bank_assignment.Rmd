@@ -1,0 +1,157 @@
+---
+title: "Bank Data Exploratary Data Analysis"
+author: "Alan Lee (G1900405J)"
+date: "October 2, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Markdown Exercise
+
+The following document is for exploratory dataset for the bank dataset used in lesson 3 of FE8828: Programming Web Application in Finance. The following report will include 10 data exploratory insights from the dataset. Hopefully find something interesting.
+
+```{r, echo=FALSE}
+summary(bank)
+```
+### How do the distribution of the balance data differ across different jobs?
+
+Finding 1: We wish to investigate the balance's descriptive statistics segmented by jobs. From the summary statistics, we see that retired individual has the highest average balance followed by housemaids, management and entrepreneur. Retired should have highest average balance in  It is quite surprising to see that housemaids is number 2 and that even management is lower in rank.
+
+```{r, echo=FALSE}
+df_1 <- bank %>% group_by(., job) %>% summarise(avg_balance = mean(balance), max_balance=max(balance), min_balance = min(balance), var_balance=(sd(balance)), count = n()) %>% arrange( desc(avg_balance))
+
+df_1
+
+# barplot(df_1$avg_balance, main="Distribution of average balance in bank by jobs",         xlab="Jobs", ylab="Balance", names.arg=df_1$job, col="gold", border=FALSE)
+```
+
+### Does education affects the amount of balance in bank?
+
+Finding 2: We wish to confirm if having higher education means having higher paying jobs, for this particular dataset, we see that the individual having the highest balance in the bank are management who only has primary school education. while technicians having only primary school education follows very closely behind the first group.
+```{r, echo=FALSE}
+`%notin%` <- Negate(`%in%`)
+bank %>% group_by(job, education)%>% dplyr::filter(education !="unknown"  & job %notin% c("unemployed","retired", "unknown", "housemaid") ) %>% summarise(avg_balance = mean(balance), max_balance=max(balance), min_balance = min(balance), var_balance=(sd(balance)), count = n()) %>% arrange(desc(avg_balance)) 
+```
+
+### Among the customers with loans, do they on average have a lower balance in bank due to higher debt and default more frequently?
+
+Finding 3: We wish to discover if the customers with loans or housing have lower balance in bank due to higher debt and default more frequently. We see that people with no loans, no housing, and no record of default usually has good credit character and has higher average balance in the bank account.
+
+```{r, echo=FALSE}
+bank %>% group_by(loan, housing, default)%>% summarise(avg_balance = mean(balance), var_balance=(sd(balance)), count=n()) %>% arrange(desc(avg_balance)) 
+```
+
+### How does the mid career individual grouped by jobs differ in the bank balance in the bank? 
+
+Finding 4: For individuals in mid career, defined as someone between the age of 30 and 45 years old, managment role has the highest median income but is ranked third in terms of average balance in bank. This means that the range of salary for management is high but the variability of salary is lower because the average balance is lower than job such as housemaid and entrepreneur. 
+
+```{r, echo=FALSE}
+df4 <- bank %>% mutate(.,age_group=case_when(age<30 ~ "young",
+                                   age>=30 & age < 45 ~ "mid career",
+                                   age>=45 & age < 60 ~ "late career",
+                                   age>=60 ~ "senior citizen")) %>% filter((age_group == "mid career") & job != "unknown")%>% group_by(job) %>% summarise(median_balance =                    median(balance), avg_balance = mean(balance), count=n())  %>%             arrange(desc(avg_balance))
+
+df4
+# barplot(df4$median_balance, main="Distribution of median balance among the mid career individual", xlab="Jobs", ylab="Balance", names.arg=df_1$job, col="light green", border=FALSE)
+# plot scatterplot 
+```
+
+### What are the break down of proportion of jobs and education level of young people with more than $500 balance in the bank's data? 
+
+Finding 5: for individual still in the early career what is the breakdown of the jobs? we see that mostly people in the 'early career' phrase are managers with tertiary education accounting for 15.46% of the population. Admin, blue-collar workers and students account for the next three largest groups consisting of 12.89%, 12.89% and 10.82% respectively.
+
+```{r, echo=FALSE}
+df5 <- bank %>% mutate(.,age_group=case_when(age<30 ~ "early career",
+                                   age>=30 & age < 45 ~ "mid career",
+                                   age>=45 & age < 60 ~ "late career",
+                                   age>=60 ~ "senior citizen"))
+
+early <- df5 %>% filter(age_group=="early career" & balance>=500 & job !="unknown") %>% group_by(job, education) %>% summarize(count=n()) %>% ungroup() %>%mutate( `Composition (%)` = round((count/sum(count))*100,digits =2)) %>% arrange(desc(count))
+
+early
+
+```
+
+Finding 6: Continuing from the analysis above, we see that for the population in the "mid career" phrase, they are mostly involved in management positions with tertiary education accounting for 23.85% of the population. Following closely behind are the blue collar workers and technicians with secondary school education accounting for 12.77% and 11.61% respectively. We see that as compared to the 'early career' phrase population, significantly more people have tertiary education status and are involved in the management role. This tells us that the popuation given usually work in their early years to gain experience before pursuing higher education and transit to management role.
+
+```{r, echo=FALSE}
+df6 <- bank %>% mutate(.,age_group=case_when(age<30 ~ "early career",
+                                   age>=30 & age < 45 ~ "mid career",
+                                   age>=45 & age < 60 ~ "late career",
+                                   age>=60 ~ "senior citizen"))
+
+mid <- df6 %>% filter(age_group=="mid career" & balance>=500 & job !="unknown") %>% group_by(job, education) %>% summarize(count=n()) %>% ungroup() %>% mutate( `Composition (%)` = round((count/sum(count))*100,digits =2)) %>% arrange(desc(count))
+
+mid
+
+```
+
+### Does the month of joining as the member correlates with the balance in the bank?
+
+Finding 7: We see that customer joining in the month of december tends to have highest median balance in the bank and those who joined in July tends to have the lowest median balance after at least a year of being a customer with the bank. Interestingly, the results do not change when the average balance is ranked in descending order, this means that on average and median, customers who join in the month of december have higher bank balance.
+```{r, echo=FALSE}
+df7 <- bank %>% filter(duration>365) %>% group_by(month) %>% summarize(`median balance`=median(balance), `average balance` = mean(balance), count=n()) %>% arrange(desc(`median balance`))
+
+df7
+
+```
+
+### What groups of people are more likely to get a loan denoted by "outcome" in the bank dataset?
+
+Finding 8: By aggregation by jobs, education level, balance level, housing and loans, what kind of people are likely to get a loan denoted by y. It appear from our analysis, management roles with high education with no housing or outstanding loans to pay are most likely to get approval in loans. The balance in their bank account do not need to be very high as indicated by the overwhelming number of people with loans approved with balance of `$500` to `$5000` dollar.
+
+```{r, echo=FALSE}
+df8 <- bank %>% mutate(.,balance_group=case_when(balance<= 0 ~ "Negative balance",
+                          balance>0 & balance < 500 ~ "Low balance",
+                          balance>=500 & balance < 5000 ~ "Acceptable balance",
+                          balance>=5000 & balance < 10000 ~ "Moderate Balance",
+                          balance>=10000 & balance < 20000 ~ "High Balance",
+                          balance>=20000 & balance < 50000 ~ "Very high Balance",
+                          balance>50000 ~ "Very Wealthy"))
+df8 %>% filter(balance>=500 & job !="unknown" & y =="yes") %>% select(job, education, balance_group, housing, loan, y) %>% group_by (balance_group, job, education, housing, loan) %>% summarise(count = n()) %>% ungroup() %>% mutate( `Composition (%)` = round((count/sum(count))*100,digits =2)) %>% arrange(desc(`Composition (%)`))
+
+
+```
+
+### Does being contactable through any forms of medium and no negative balance in the account improve the chance of a client subscribing to a term deposit?
+
+Finding 9: We see that being contactable and having positive balance in the bank correlates with the outcome of client subscribing to a term deposit since it only account for over 45.95% of the occurence. It may be seen that individual positive balance has lower occurence of subscripting to a term deposit plan, probably because they do not have issue of self-control and need not use a term deposit plan.
+
+```{r, echo=FALSE}
+
+df9 <- bank %>% mutate(.,balance_group=case_when(balance<= 0 ~ "Negative balance",
+                          balance > 0 ~ 'Positive balance'))
+df_result <- df9 %>% group_by(contact, balance_group, y) %>% summarise(count =n()) %>% ungroup() %>% mutate(`Composition (%)` = round(count/sum(count)*100,2)) %>% arrange(desc(`Composition (%)`))
+
+df_result
+```
+
+
+### Does older people have more money than younger people in the population, how does the mean and quantile compares with each other?
+
+Finding 10: It would appear that senior citizen have more balance in the bank account than their younger counterparts. The 25th percentile of balance of senior citizen is `$303.25`, almost 6 times higher than mid career category The 75th percentile of the senior citizen category is `$3015.75`, almost twice of that of the mid career and late career category. This probably implies that the pension system of the country where the bank resides is robust.
+
+```{r, echo=FALSE}
+
+df10 <- bank %>% mutate(.,age_group=case_when(age<30 ~ "early career",
+                                   age>=30 & age < 45 ~ "mid career",
+                                   age>=45 & age < 60 ~ "late career",
+                                   age>=60 ~ "senior citizen")) 
+
+df_result <- df10 %>% group_by(age_group) %>% summarise(count =n(), 
+                      mean_balance = mean(balance), median_balance=median(balance),                       `25th percentile` = quantile(balance, probs = .25),
+                      `75th percentile` = quantile(balance, probs = .75)) %>%                           ungroup() %>% mutate(`Composition (%)` =             round(count/sum(count)*100,2)) %>% arrange(desc(`Composition (%)`))
+
+df_result
+
+```

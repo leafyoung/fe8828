@@ -1,0 +1,20 @@
+---
+title: "Data Analysis Report"
+author: "Yang Ye"
+date: "October 23, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Report
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+```{r pressure, echo=FALSE}
+plot(pressure)
+```

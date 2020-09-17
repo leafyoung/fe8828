@@ -1,0 +1,165 @@
+---
+title: "Exploratory Data Work for the bank dataset"
+author: "Feng Ruiwan <sub> <Email:feng0107@e.ntu.edu.sg> </sub>" 
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE} 
+library(tidyverse) 
+library(dplyr) 
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE) 
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1
+```{r 1}
+data <- bank %>%
+  group_by(job) %>%
+  summarise(primary = sum(ifelse(education == "primary", 1, 0)),
+            secondary = sum(ifelse(education == "secondary", 1, 0)),
+            tertiary = sum(ifelse(education == "tertiary", 1, 0))) %>%
+  arrange(desc(tertiary))
+knitr::kable(data)
+```
+
+__Most people with higher education backgroud are in management sector; 
+  Blue collars hardly have a tertiary background, and most with primary background are blue collars;
+  Most administrators and technicians have primary or secondary education level.__
+
+
+
+# Finding 2
+```{r 2}
+data <- (group_by(bank, education) %>% 
+           summarise(mean_balance = mean(balance), 
+                     house_mean = mean(ifelse(housing == "yes", 1, 0)), 
+                     default_mean = mean(ifelse(housing == "yes", 1, 0)), count = n()))
+knitr::kable(data)
+plot(data$education, data$mean_balance)
+```
+__We can see that people have tertiary education backgroud tend to have more balance and housing loans compared with people with other backgroud, maybe they tend to borrow money for house rather than use own balance at on time;
+Most of people have a secondary education background, and people with secondary education level are more likely to have default behavior.__
+
+
+
+# Finding 3
+```{r 3}
+df <- bank %>%
+  group_by(job) %>%
+  filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+  arrange(job, balance)
+knitr::kable(df)
+```
+
+__Retired people are likely to save money, enterpreneurs tend to have more balance, with students and blue-collars have less in money account.__
+
+
+# Finding 4
+```{r 4}
+df <- bank %>%
+  group_by(y) %>%
+  summarise(mean_balance = mean(balance), 
+            mean_pdays = mean(pdays), 
+            mean_pre_contact = mean(previous), 
+            mean_in_contact = mean(campaign),
+            mean_pre_success = mean(ifelse(poutcome == "success", 1, 0)),
+            count = n())
+knitr::kable(df)
+```
+
+__Most of people refuse to subscribe.
+It is more likely to success when marketing towards clients with more money in accounts. The contact times before campaign positively influence the outcome, and the time interval(since last contact for previous campaign) seems matter the outcome, if the last contact passed longer, the clients are more likely to subscribe a deposit. And previous subscribers tend to be more willing to subscribe again.__
+
+
+# Finding 5
+```{r 5}
+df <- bank %>%
+  group_by(y) %>%
+  summarise(shouse_loan = sum(ifelse(housing == "yes", 1, 0)), 
+            sloan = sum(ifelse(loan == "yes", 1, 0)), 
+            smarital = sum(ifelse(marital == "married", 1, 0)), 
+            sdefault = sum(ifelse(default == "yes", 1, 0)),
+            count = n())
+knitr::kable(df)
+```
+
+__Peole without loan and housing loan are more likely subscribe, only few people subscribed had default behavior before.__
+
+
+# Finding 6
+```{r 6}
+df <- bank %>% filter(balance > mean(balance), y == "yes") %>%
+  group_by(job, education) %>% summarise(n = n())
+knitr::kable(df)
+```
+
+__Peole who have more balance compared to the average level with higher education level tend to subscribe. Managers and administrators are likely to subcribe.__
+
+
+# Finding 7
+```{r 7}
+df <- bank %>% 
+  group_by(marital) %>% 
+   summarise(m_balance = median(balance),
+             m_age = median(age),
+             house_loan = mean(ifelse(housing == "yes", 1, 0)), 
+            loan_ = mean(ifelse(loan == "yes", 1, 0)))
+  
+knitr::kable(df)
+```
+
+__Married people are more likely to have house loan, higher propotion of divorced have personal loan. For the median level, devorced people have lower balance compared to others__
+
+
+# Finding 8
+```{r 8}
+df <- bank %>% 
+  group_by(age) %>% 
+   summarise(yes = sum(ifelse(y == "yes", 1, 0)),
+             no = sum(ifelse(y == "no", 1, 0)))
+df1 <-  gather(df, subscribe, count, -age) %>% arrange(age, subscribe)
+knitr::kable(df1)
+```
+
+__People aged from 20 to 60 are more likely to refuse to subscribe__
+
+# Finding 9
+```{r 9}
+df <- mutate(bank, age_group = case_when(
+  age < 25 ~ "youth",
+  age < 50 ~ "mid-age",
+  TRUE ~ "senior"
+))
+df1 <- df %>% 
+  group_by(age_group) %>% 
+  summarise(married_ratio = sum(ifelse(marital == "married", 1, 0))/n()) %>%
+  arrange(married_ratio)
+knitr::kable(df1)
+```
+
+__Marital ratio is highest among senior group, lowest within the youth__
+
+
+# Finding 10
+```{r 10}
+df <- mutate(bank, balance_status = case_when(
+  balance < 0 ~ "poor",
+  balance < 5000 ~ "just so so",
+  balance < 20000 ~ "middle class",
+  balance < 30000 ~ "rich",
+  TRUE ~ "wow"
+))
+df1 <- df %>% 
+  group_by(balance_status) %>% 
+  summarise(subscribe_ratio = sum(ifelse(y == "yes", 1, 0))/n(),
+            aver_contact = mean(duration),
+            count = n()) %>%
+  arrange(count)
+knitr::kable(df1)
+```
+
+__Most people own balance between 0-5000, and numbers of people with negative balance ranked the second place.
+People belong to the "middle class" and "just so so" group are more likely to subscribe__
+

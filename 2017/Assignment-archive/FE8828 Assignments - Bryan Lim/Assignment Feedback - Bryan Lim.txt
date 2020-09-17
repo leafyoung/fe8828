@@ -1,0 +1,39 @@
+Hi, Bryan
+
+Below is the assignment feedback. You did well in the course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 100
+
+Assignment 2 = 100 * 0.3 + 100 * 0.7
+Part 1: 100
+Part 2: 100
+
+Assignment 3 = 0 * 0.05 + 75 * 0.25 + 90 * 0.7
+Part 1: 0 (missed a little assignment of calculating option value over a portfolio of options)
+Part 2: 80 (source data file is not provided, volatility surface didn't draw for OTM options only)
+Part 3: 90 (Good. A ballad of default)
+
+Assignment 4 = 80
+* Repetitive the theme of default.
+* Plots can be refined.
+
+For example,
+
+#Finding 5 
+The mean, maximum and minimum age of the default cases are:
+
+default_age <- filter(select(bank, default,age), default == "yes")
+mean_age <- summarize(group_by(default_age, default), age = mean(age))
+max_age <- summarize(group_by(default_age, default), age = max(age))
+min_age <- summarize(group_by(default_age, default), age = min(age))
+# ggplot(bank, aes(age, default)) + geom_point()
+YY> ggplot(default_age, aes(age, default)) + geom_point() +
+YY>   geom_point(data = mean_age, color = 'blue', size = 5, alpha = 0.3) +
+YY>   geom_point(data = max_age, color = 'green', size = 5, alpha = 0.3) +
+YY>   geom_point(data = min_age, color = 'red', size = 5, alpha = 0.3)
+
+
+

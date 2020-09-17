@@ -1,0 +1,157 @@
+---
+title: "BackTesting"
+author: "Dong Jiaqi, Fang You, Ng Lay Yong, Tao Ye, Wu Siying"
+date: "16 December 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(fOptions)
+library(lubridate)
+library(quantmod)
+library(ggplot2)
+library(plotly)
+library(shiny)
+library(gridExtra)
+library(kableExtra)
+GS <- read.csv("GS.csv", header = TRUE)
+```
+
+```{r backtesting}
+GS <- mutate(GS,Date = as.Date(Date, format = "%d-%b-%y"))
+GSxts <- tk_xts(GS)
+
+allDates = index(GSxts)
+firstDate <- min(allDates)
+lastDate <- max(allDates)-30 #find the last start_date
+while(!lastDate %in% allDates)
+  lastDate <- lastDate-1
+
+result <- data.frame(`StartDate` = as.Date(character()), `OptionPnL` = double(), `HedgingPnL` = double(), `FinalPnL` = double(), `MaxDrawdown` = double(), `SharpeRatio` = double(), `StartPrice`= double(), `EndPrice` = double(), `AvgPrice` = double(), `AvgGrowthRate` = double())
+startD <- firstDate
+for(startD in firstDate:lastDate){
+  startD <- as.Date(startD)
+  if(startD %in% allDates){
+    endD <- startD+30
+    #adjust the end date backwards if end date (a calendar day) is not in the xts
+    while(!endD %in% allDates)
+      endD <- endD-1
+    
+    xts_obj <- GSxts[paste(c(startD,endD),collapse = "/")]
+    
+    quantity = 100
+    dates <- index(xts_obj)
+    start_date <- min(dates)
+    end_date <- max(dates)
+    start_price <- as.numeric(xts_obj[start_date, "Close"])
+    start_volatility <- as.numeric(xts_obj[start_date, "IV30"])
+    
+    df <- tibble(Date = dates)
+    df$Close <- coredata(xts_obj[, "Close"])
+    df$IV30 <- coredata(xts_obj[, "IV30"])
+    avgChange <- as.numeric(mean(xts_obj[, "Change"],na.rm=TRUE))
+    #X <- start_price
+    #sigma = start_volatility
+    r <- 0.8 / 100
+    # Vary S and Time everyday
+    #S <- df$Close
+    #Time <- (end_date - df$Date) / 365
+    
+    #GBSOption(TypeFlag, S, X, Time, r, b, sigma)@price
+    
+    df_opt <- rowwise(df) %>%
+    #this is the premium for one unit of call option  
+    mutate(premium = GBSOption(TypeFlag = "c",
+    S = Close,
+    X = as.numeric(start_price),
+    Time = as.numeric((end_date - Date) / 365),
+    r = r, # interest rate
+    b = 1.85/100, # dividend yield obtained from https://www.dividend.com/dividend-stocks/financial/investment-brokerage-national/gs-goldman-sachs/
+    sigma = as.numeric(start_volatility/100))@price,
+    
+    #this is the delta of a call option (before negation)
+    delta_hedge = GBSGreeks("delta", TypeFlag = "c", 
+                            S = Close, 
+                            X = as.numeric(start_price), 
+                            Time = as.numeric((end_date - Date) / 365), 
+                            r = r, 
+                            b = 1.85/100, 
+                            sigma = as.numeric(start_volatility/100))) %>%
+    ungroup() %>%
+      
+    #delta hedging strategy selected: SHORT CALL LONG STOCK (from BlackS Scholes formula, such strategy should approximate a long position in risk free)
+    mutate(Option_DoD_PnL = ifelse(Date == start_date, # On the 1st date, we count the cost of buying the option
+    0, #quantity*premium, #on the first day, receive the call option premium and short the option
+    -quantity*(premium - Lag(premium))), #if subsequently call option price rises, there is a loss
+    
+    Hedging_DoD_Pnl = ifelse(Date == start_date, 0, 
+                             ifelse(Date == end_date, yes = quantity * Lag(delta_hedge) * (Close - Lag(Close)), 
+                                    #at the last day, there is no rebalancing of number of shares.
+                                    no = quantity * delta_hedge * (Close - Lag(Close)))), #long stock - if stock price increase, there is a profit
+    
+    DoD_PnL = Option_DoD_PnL + Hedging_DoD_Pnl) %>%
+    mutate(PnL_to_date = cumsum(DoD_PnL),
+           HPnL_to_date = cumsum(Hedging_DoD_Pnl), 
+           OPnL_to_date = cumsum(Option_DoD_PnL))
+    
+    maxDrawDown <- {
+    xs <- df_opt$PnL_to_date
+    max(cummax(xs) - cummin(xs))
+    }
+    
+    #The initial outflow of funds is the cost to buy stocks minus option premium received 
+    #InitialInvt = (df_opt[[1,"delta_hedge"]]*df_opt[[1,"Close"]] - df_opt[[1,"premium"]])*quantity #OUTFLOW of funds
+    #profitability = df_opt[df_opt$Date==end_date,"PnL_to_date"]/InitialInvt
+    #df_opt<-mutate(df_opt, PortValue = InitialInvt + PnL_to_date, PortReturn = DoD_PnL/Lag(PortValue))
+    
+    #ggplotly(p=ggplot(df_opt) + geom_line(aes(TTM,Option_DoD_PnL),color = "blue") + ggtitle("option profit - TTM"))
+    #ggplotly(p=ggplot(df_opt) + geom_line(aes(TTM,Hedging_DoD_Pnl))+ggtitle("stock profit - TTM"))
+    
+    #renderTable(tail(df_opt,1))
+    
+    
+    #renderText(paste0("the Sharpe Ratio is ",round(SR,4)))
+    #renderText(paste0("The maximum drawdown is ", round(maxDrawDown,4)))
+    hedgingPnl <- as.numeric(df_opt[df_opt$Date==end_date,"HPnL_to_date"])
+    finalPnl <- as.numeric(df_opt[df_opt$Date==end_date,"PnL_to_date"])
+    optionPnl <- as.numeric(df_opt[df_opt$Date==end_date,"OPnL_to_date"])
+    endPrice <- as.numeric(df_opt[df_opt$Date==end_date,"Close"])
+    avgPrice <- as.numeric(mean(df_opt$Close,na.rm=TRUE))
+    SR <- as.numeric((finalPnl/30)/stdev(df_opt$DoD_PnL, na.rm = TRUE)) #r is omitted
+    result <- rbind(result,data.frame("StartDate" = start_date, "OptionPnL" = optionPnl, "HedgingPnL" = hedgingPnl, "FinalPnL" = finalPnl, "MaxDrawdown" = maxDrawDown, "SharpeRatio" = SR,"StartPrice"=start_price , "EndPrice" = endPrice, "AvgPrice" = avgPrice, "AvgGrowthRate" = avgChange))
+    
+  }}
+    ggplotly(p = ggplot(GS) + geom_line(aes(Date, Close))) #stock close price
+    ggplotly(p = ggplot(GS) + geom_density(aes(Close))) #density of close price
+    ggplotly(p=ggplot(result) + geom_point(aes(AvgPrice,FinalPnL, color=AvgGrowthRate)) + ggtitle("avg price - final pnl"))
+    ggplotly(p=ggplot(result) + geom_point(aes(AvgGrowthRate,FinalPnL))+ggtitle("avg growth rate - final pnl"))
+    
+    ggplotly(p=ggplot(result) + geom_point(aes(StartPrice,FinalPnL))+ggtitle("start price - final pnl"))
+    ggplotly(p=ggplot(result) + geom_point(aes(EndPrice,FinalPnL))+ggtitle("end price - final pnl"))
+    
+    p1 <- ggplot(result) + geom_point(aes(AvgPrice, OptionPnL)) + ggtitle("avg price - option pnl")
+    p2<-ggplot(result) + geom_point(aes(AvgPrice, HedgingPnL)) + ggtitle("avg price - hedging pnl")
+    grid.arrange(p1,p2,nrow = 1)
+    
+    a1 <- ggplot(result) + geom_point(aes(AvgGrowthRate,OptionPnL))+ggtitle("avg growth rate - option pnl")
+    a2 <- ggplot(result) + geom_point(aes(AvgGrowthRate,HedgingPnL))+ggtitle("avg growth rate - hedging pnl")
+    grid.arrange(a1,a2, nrow = 1)
+    
+    a3 <- ggplot(result) + geom_point(aes(x = StartPrice, y = EndPrice, color = OptionPnL), alpha = 0.7)+ggtitle("start & end price - option pnl")
+     a4 <-ggplot(result) + geom_point(aes(x = StartPrice, y = EndPrice, color = HedgingPnL), alpha = 0.7)+ggtitle("start & end price - hedging pnl")
+     grid.arrange(a3,a4, nrow=1)
+```
+    
+  As can be seen from the graphs, we get extreme and volatile final PnL when average prices are about 230 and 260, where the density function of stock prices also peaked around the same level. As we explore further, these extreme pnl points occur only when start price is close to 220 and end price is close to 237.5, or start price is close to 250 and end price is close to 268. 
+  Comparing the the hedging and option PnL, we clearly see a hedging relationship between option and stock position in this strategy.There also seems to exist a linear relationship between final p&L and average growth rate of stock, which is consistent with our expectation.
+  
+  Sharpe ratio doesn't have significant correlation with average growth rate, which means hedging is successful and the portfolio has little exposure to stock's risk. What's more, comparing sharpe ratio with final pnl, we find that the volatility changes dramatically during this period.
+     
+     
+```{r}
+     kable(head(result,20))
+```

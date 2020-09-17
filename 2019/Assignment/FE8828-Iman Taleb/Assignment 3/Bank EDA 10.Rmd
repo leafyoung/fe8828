@@ -1,0 +1,111 @@
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# **Iman Taleb Assignment 3: Bank EDA**
+# Finding #1
+## Average Call Time
+
+```{r}
+avgcall<-group_by(bank,age) %>%
+  summarise(`Average Call Time`=mean(duration))
+avgcall
+```
+
+# Finding #2
+## Success Rate per Contacts
+```{r}
+success<-group_by(bank,campaign)%>%
+  summarise(Count=n(),
+            Subscribed=sum(ifelse(y=="yes",1,0)),
+            `Success Rate %`=(Subscribed/Count)*100)
+success
+
+```
+
+# Finding #3
+## Holiday Season
+```{r}
+hol<- group_by(bank,month)%>%
+  filter(month==c("jan","dec","jun","jul"))%>%
+  select(month,job,duration)%>%
+  arrange(month)
+hol
+```
+
+# Finding #4
+## Plot of balance against age for majority balances
+```{r}
+newbal<-subset(bank,balance<40000)
+plot(newbal$age,newbal$balance)
+```
+
+# Finding #5
+## Effect of previous campaign on current
+```{r}
+preveff<-group_by(bank,y) %>%
+  summarise(Count=n(),
+            `Days Since Prev`=mean(pdays),
+            `Prev Contacts`=mean(previous),
+            `Prev Failures`=sum(ifelse(poutcome=="failure",1,0)),
+            `Prev Success`=sum(ifelse(poutcome=="success",1,0)))
+
+preveff 
+```
+  
+
+# Finding #6
+## Most popular time of the month to contact
+```{r}
+group_by(bank,day) %>% summarise(n=n()) %>% plot
+```
+
+# Finding #7
+## Lowest and Highest Balances
+```{r}
+bind<-arrange(bank,balance) %>%
+  {bind_rows(head(.,n=5),tail(.,n=5))} %>%
+  select(balance,housing,loan,default,y)
+
+bind
+```
+
+# Finding #8
+## Top 10 Call Times with unique jobs
+```{r}
+ug<-group_by(bank,job) %>%
+  filter(duration==max(duration)) %>%
+  ungroup %>%
+  select(-job)%>%
+  head(n=10)
+  
+ug
+```
+  
+# Finding #9
+## Singles within education level
+```{r}
+gtr<-group_by(bank,education)%>%
+  summarize(single=sum(ifelse(marital=="single",1,0)),
+            other=sum(ifelse(marital!="single",1,0)))
+
+tbl<-gather(gtr,marital,value,-education) %>%
+  arrange(education)
+tbl
+```
+
+# Finding #10
+## Total times contacted
+```{r}
+cont<-group_by(bank,age)%>%
+  summarise(Prev=sum(previous),
+            Current=sum(campaign))%>%
+  mutate(Total=Prev + Current)
+
+cont
+```

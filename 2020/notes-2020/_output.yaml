@@ -1,0 +1,8 @@
+beamer_presentation:
+    ## template: ./latex-beamer.tex
+    keep_tex: false
+    latex_engine: pdflatex # pdflatex / xelatex work here
+    # dev: cairo_pdf # I typically comment this out if latex_engine: pdflatex
+    slide_level: 2
+    theme: "Boadilla"
+    toc: true

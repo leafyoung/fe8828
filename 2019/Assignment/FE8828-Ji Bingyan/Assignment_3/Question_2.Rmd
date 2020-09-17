@@ -1,0 +1,132 @@
+---
+title: "Question_2"
+author: "Jay"
+date: "2 October 2019"
+output: html_document
+---
+
+---
+title: "Assignment_3_Question_2"
+output: html_document
+---
+**Note: some of the conclusions are not rigorous, just for fun!**
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1
+```{r finding_1}
+bank <- bank %>% 
+  mutate(age_group = floor(age/10)) 
+bank %>%
+  group_by(age_group) %>%
+  summarise(`Average Balance` = mean(balance))
+```
+
+The average balance steadily increases as people become older.
+
+# Finding 2
+```{r finding_2}
+bank %>% 
+  group_by(job) %>%
+  summarise(Ave_bal = mean(balance)) %>%
+  arrange(Ave_bal)
+```
+
+- It is very interesting that students are not those with lowest balance, which may be due to the fact that they do not have too much spending. 
+- Blue-collar workers have even slightly lower balance than the unemployed.
+- Housemaid and retired people have highest average balance in their accounts.
+
+# Finding_3
+```{r finding_3}
+bank %>% 
+  group_by(education) %>%
+  summarise(Ave_bal = mean(balance)) %>%
+  arrange(Ave_bal)
+```
+
+People with tertiary education have average higher balance in their accounts, which means that we are not wasting time to get a **master degree**!
+
+# Finding_4
+```{r finding_4}
+default <- bank %>% 
+  filter(default == "yes") %>%
+  group_by(month) %>%
+  summarise(count = n()) 
+non_default <- bank %>% 
+  filter(default == "no") %>%
+  group_by(month) %>%
+  summarise(count = n())
+percent_default <- list()
+for (mon in default$month){
+  percent_default[[mon]] <- default[default$month == mon, ][2] / (default[default$month == mon, ][2] + non_default[non_default$month == mon, ][2])
+}
+sort(unlist(percent_default))
+```
+The above figures are the percentage of default in different month. It seems that in Feburary and July, the default probability is somehow higher. 
+
+# Finding_5
+```{r}
+bank %>% 
+  group_by(age_group, marital) %>%
+  summarise(count = n()) %>%
+  arrange(marital)
+```
+Most of the divorced people are in their 30s to 50s. Most of the married people are in their 30s and most of the single peopel are also in their 30s. Thus, there may be a *turning point of life* in our 30s and we should be careful.  
+
+# Finding_6
+```{r}
+bank %>% 
+  group_by(housing) %>%
+  summarise(Ave_balance = mean(balance)) %>%
+  arrange(desc(Ave_balance))
+```
+Average balance is higher for those who don't have housing, which may due to the fact that they don't need to pay mortgage.
+
+# Finding_7
+```{r}
+bank %>% 
+  group_by(marital) %>%
+  summarise(Ave_balance = mean(balance)) %>%
+  arrange(desc(Ave_balance))
+```
+The average difference of account balance between married and single people is very small. However, divorced people have significantly lower balance, which may be the reason that they got divorced and also could be the aftermath of divorce. 
+
+# Finding_8
+```{r}
+bank %>% 
+  group_by(marital, housing) %>%
+  summarise(Ave_balance = mean(balance)) %>%
+  arrange(desc(Ave_balance))
+```
+- Married people without housing have the highest balance, which may due to the fact that they share the earnings of their spouse and don't need to pay for mortgage.
+- The average balances of single people with or without housing are largely the same.
+- Married people with housing have significantly lower balance than those married people without housing. This fact indicates that **housing may be a huge burden** for married couples and this difference drags back the average balance for married people to the same level of single peolpe. 
+
+# Finding_9
+```{r}
+bank %>%
+  group_by(default) %>%
+  summarise(mean(balance))
+```
+For those with defalut history, their average account balance is negative which is significantly lower then the account balance of those who don't have default history. 
+
+# Finding_10
+```{r}
+bank %>% 
+  group_by(housing, education) %>%
+  summarise(count = n())
+count_tertiary_nohousing <- nrow(bank %>% 
+  filter(education == "tertiary", housing == "no"))
+count_tertiary_yeshousing <- nrow(bank %>% 
+  filter(education == "tertiary", housing == "yes"))
+count_housing <- nrow(bank %>% 
+  filter(housing == "yes"))
+cat(paste0("Tietiary: housing/no housing ratio: ", round(count_tertiary_yeshousing/count_tertiary_nohousing, 4)*100, "%"))
+cat(paste0("Percentage of tertiary education among people with housing: ", round(count_tertiary_yeshousing/count_housing, 4)*100, "%"))
+```
+It seems that whether you have a house is relevant to whether you have obtained tertiary education. In fact, only half of people with tertiary education do have house and they account for a small percentage among all people with housing. Thus, obtaining a master degree cannot guarantee that you can afford a house! 
+

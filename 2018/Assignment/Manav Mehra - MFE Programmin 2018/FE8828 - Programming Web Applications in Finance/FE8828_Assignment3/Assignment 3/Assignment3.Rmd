@@ -1,0 +1,266 @@
+---
+title: "FE8828 Assignment 3"
+author: "Manav Mehra"
+date: "25/11/2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(fOptions)
+library(dplyr)
+library(kableExtra)
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.table.format = "html") 
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+
+#Findings from Exploratory Data Analysis of Bank Dataset
+
+##Finding 1
+The bank is actively trying to campiagn and get new customers. We can see this from the data of the previous and current campaign. On analysis, it can be seen that the previous campaign resulted in 129 customers which is marked as 'successful' in *poutcome* column. We can also see that the bank is working hard to target the 'failures'. They have contacted the customers they failed to attract in the previous marketing campaign 958 times in the current campaign
+
+```{r}
+
+find_1 <- bank %>% 
+  group_by(poutcome) %>% 
+  summarise(count = n(), curr_calls=sum(campaign), prev_calls=sum(previous)) %>%
+  dplyr::filter(poutcome=="success" | poutcome=="failure")
+
+knitr::kable(find_1, format="html", caption="Calls in Prev/Current campaign") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 2
+The second analysis was regarding the average yearly balance in the accounts (in Euros) for each job. On grouping by the jobs and finding the mean of the yearly balance, it seems that the highest yearly balance is of the retired people. This seems a bit strange, but maybe it is because of the low spending and withdrawal of the retired people and their accumulated earnings over the years. Unemployed people as expected are near the bottom whereas management is closer to the top. 
+
+```{r}
+
+find_2 <- bank %>% 
+  group_by(job) %>% 
+  summarise(mean_bal = mean(balance)) %>% 
+  arrange(desc(mean_bal))
+
+knitr::kable(find_2, format="html", caption="Average yearly balance per Job") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 3
+The third finding is related to the defaults. This shows how many percent of the people who have defaults have a house loan or a personal loan. Astonishingly, only 59.2% of the people who default have a housing loan and an even lower 32.9% have a personal loan. In total, out of the defaults, about 77.6% of them had at least one of the loans (personal/housing).
+
+```{r}
+
+find_3 <- bank %>% group_by(default) %>% summarise(perc_h_loan = sum(ifelse(housing=="yes", 1, 0))/n(), perc_p_loan = sum(ifelse(loan=="yes", 1, 0))/n(), perc_no_loan = sum(ifelse((housing=="no") & (loan=="no"), 1, 0))/n())
+
+knitr::kable(find_3, format="html", caption="Defaults and Loans") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+##Finding 4
+The fourth finding is regarding bank accounts that have a negative average yearly balance. There seem to be ' large number of such accounts and grouping by jobs shows that 'blue-collar' has the maximum numnber of negative balance accounts followed by management. This seems to be counter-intuitive. 
+
+```{r}
+
+find_4 <- bank %>% group_by(job) %>% summarize(neg_bal = sum(ifelse(balance<0, 1, 0))) %>% arrange(desc(neg_bal))
+
+knitr::kable(find_4, format="html", caption="Negative Balance Acounts per Job") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 5
+The fifth finding is regarding the education levels for different jobs. Here we can see the percentage of people in each job with 'Primary', 'Secondary'. and 'Tertiary' education. It is apparent that 81.2% of the managers have completed 'Tertiary' education which makes sense. Also, this shows that a large percentage of the 'Unemployed' also have at least received 'Primary' education. 
+
+```{r}
+
+find_5 <- bank %>% group_by(job) %>% 
+  summarise(primary = sum(ifelse(education=="primary", 1, 0))*100/n(), 
+            secondary = sum(ifelse(education=="secondary", 1, 0))*100/n(),
+            tertiary = sum(ifelse(education=="tertiary", 1, 0))*100/n())
+
+knitr::kable(find_5, format="html", caption="Education %ages per Job") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 6
+The sixth finding shows the mean average yearly account balances for each education category. Here, it seems that 'Tertiary' education is the category with the highest mean balance which is expected. Also, 'Unknown' category has a very high mean balance, which could mean that a lot of the 'Unkown' categories actually might be part of the 'Tertiary' education category.
+
+```{r}
+
+find_6 <- bank %>% group_by(education) %>% summarise(mean_bal = mean(balance))
+
+knitr::kable(find_6, format="html", caption="Average Balance per Education level") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+##Finding 7
+The seventh finding shows how many of the people who were contacted in the previous campaign ended up defaulting. It shows that one of the people who the bank contacted and failed to procure ended up defaulting. Also, it seems that most of the people who defaulted, fall in the 'Unknown' and 'Other' category from the previous campaign. This could mean that maybe they were contacted just because of their defaults.
+
+```{r}
+
+find_7 <- bank %>% 
+  group_by(poutcome) %>% 
+  summarize(defaults = sum(ifelse(default=="yes", 1, 0)))
+
+knitr::kable(find_7, format="html", caption="No. of defaults per previous campaign outcome") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 8
+The eighth finding is reagrding how many term deposits are opened by people in different job roles. It also shows the loans and defaults for each job. The highest number of term deposits seems to be for 'Management' whereas the lowest are for 'Unemployed' adn 'Unknown'. This makes sense as the term deposits will only be opened mostly by people who are looking to invest large amount of savings. 
+
+```{r}
+
+find_8 <- bank %>% 
+  group_by(job) %>% 
+  summarize(h_loan = sum(ifelse(housing=="yes", 1, 0)), p_loan = sum(ifelse(loan=="yes", 1, 0)), 
+            term_dep = sum(ifelse(y=="yes", 1, 0)), 
+            defaults = sum(ifelse(default=="yes", 1, 0))) %>% 
+  arrange(desc(term_dep))
+
+knitr::kable(find_8, format="html", caption="Term Deposits per Job") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 9
+The ninth finding is to see the number od newly contacted peoplein this campaign. The bank is taking the initiative to contact and source for many new customers in this current campaign. They tried to contact 3705 people who they have never contacted before.
+
+```{r}
+
+find_9 <- bank %>% summarise(new_ppl_contacted = sum(ifelse(pdays==-1, 1, 0)))
+
+knitr::kable(find_9, format="html", caption="Number of New People Contacted") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+```
+
+
+##Finding 10
+The tenth finding is the average age for each job type. 
+
+```{r}
+
+find_10 <- bank %>% group_by(job) %>% summarise(mean_age = mean(age)) %>% arrange(desc(mean_age))
+
+knitr::kable(find_10, format="html", caption="Average age per Job") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+plot(find_10$job, find_10$mean_age, main="Mean age per Job")
+
+```
+
+
+
+#To evaluate a portfolio of options for it's total value
+
+First, we create a data frama containing 100 randomized options. This data frame contains the option type (Call/Put), The strike (K), the underlying Stock price (S) which are randomly sampled. The Time to maturity (T), the risk-free rate (r) and the volatility ($\sigma$) are fixed. 
+
+The next step is to use the **GBSOption** function from the *fOptions* package to find the price of each of these options. For this we just simply use the mutate function. Before using mutate, we have to use the *rowwise()* function because the *GBSOption* function has to be applied to each row. After mutating the df, it contains a new column titles 'valuation' which contatins the price of each of the options. The *summarise()* function then calculates the sum of all the prices which shows the total cost of the portfolio and the sum of all the payoffs of the options, which shows the total value of the portfolio. This is assuming that we own 100 options, i.e. one of each created in the randomized data frame.
+
+```{r}
+df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
+
+output <- df %>% rowwise() %>%
+  mutate(valuation = 
+           GBSOption(as.character(type), underlying, strike, Time, r, b, sigma)@price) %>%
+  ungroup() %>%
+  summarise(portfolio_price = sum(valuation), 
+            portfolio_value = sum(ifelse(type=="c", max(underlying-strike, 0), 
+                                         max(strike-underlying,0))))
+
+knitr::kable(output, format="html", caption="Portfolio Cost/Value") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+```
+#Book Options Trade
+
+For this question, first, the data was sources from <https://www.nasdaq.com/symbol/goog/option-chain?dateindex=1>. The option data for Google stock was downloaded and pre-processed in Excel first, to end up with a CSV file that can be directly read in as a data frame in R. Then using this data frame, the *summarise()* function was used to find the total valuations, both for Calls and Puts. 
+
+Now, to find 'In the Money' options, the last day's closing price of GOOG was also taken directly from NASDAQ's website. The closing price for the underlying as of Friday, 23 Nov 2018 was $1023.88. To check whether the options are in the money
+* For a call option, we check whether the underlying price is greater than the strike price and
+* For a put option we check whether the underlying price is lower than the strike price
+
+With this now we sum up the *Open Interest* for all of these in the money options and that concludes part 3 of this question.
+
+For the final part of the question, we use the **GBSVolatility** function to find the volatility of the options. Here we choose the option price as mentioned in the question
+* If Strike < Current Price, use Put's price
+* If Strike > Current Price, use Call's price
+
+This essentially means that the out of the money option's price is being used out of the two for each strike price. Thus, similar to part 3, the 'Out of the Money' options are filtered out and then their prices are directly used into the *GBSVolatility()* function row-wise, using the mutate function. This also makes use of the *ifelse()* function to check whether the Option is a call or a put in order to set the type parameter correctly in the *GBSVolatility()* function. 
+
+```{r}
+
+#Read data from the created csv file (part 1)
+goog_option_data <- read.csv("Book2.csv")
+
+#Calculate the valuations of Call, Put and both (part 2)
+valuations <- goog_option_data %>% group_by(Call.Put) %>%
+  summarise(valuation = sum(Open.Int * (Bid + Ask)/2))
+call_valuation <- valuations[1,2]
+put_valuation <- valuations[2,2]
+total_valuation <- sum(valuations[["valuation"]])
+
+knitr::kable(valuations, format="html", caption="Call/Put Valutations") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+#GOOG closing price as of 23 Nov, 2018
+goog_close <- 1023.88 #As of 23 Nov 2018
+
+#Find all the ITM Calls and sum their Open Interest (part 3)
+itm_open_int <- goog_option_data %>% 
+  mutate(itm = ifelse(Call.Put=="Call", 
+                      ifelse(goog_close>Strike, 1, 0), 
+                      ifelse(goog_close<Strike, 1, 0))) %>% 
+  dplyr::filter(itm==1) %>%
+  summarize(total_open_int = sum(Open.Int))
+
+knitr::kable(itm_open_int, format="html", caption="Open Interest in ITM Options") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"), full_width = F)
+
+#Calculate the volatilities for each strike level (part 4)
+goog_volatilities <- goog_option_data %>% 
+  mutate(itm = ifelse(Call.Put=="Call", ifelse(goog_close>Strike, 1, 0), 
+                      ifelse(goog_close<Strike, 1, 0))) %>% 
+  dplyr::filter(itm==0) %>% 
+  arrange(Strike) %>% 
+  rowwise() %>% 
+  mutate(.,volatility = ifelse(Call.Put=="Call", 
+                               GBSVolatility((Bid+Ask)/2, "c", goog_close, Strike, 
+                                             as.numeric((as.Date("2018-12-14") - 
+                                                           as.Date("2018-11-23")))/365, 
+                                             r=0.03, b=0), 
+                               GBSVolatility((Bid+Ask)/2, "p", goog_close, Strike, 
+                                             as.numeric((as.Date("2018-12-14") - 
+                                                           as.Date("2018-11-23")))/365, 
+                                             r=0.03, b=0)))
+
+knitr::kable(goog_volatilities[1:5, ], format="html", caption="Volatilites") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "responsive"))
+
+#Plot the volatility smile (vol vs. strike)
+plot(goog_volatilities$Strike, goog_volatilities$volatility, type = "l", main="Volatility vs. Strike", xlab = "Strike Price", ylab = "Volatility")
+
+```

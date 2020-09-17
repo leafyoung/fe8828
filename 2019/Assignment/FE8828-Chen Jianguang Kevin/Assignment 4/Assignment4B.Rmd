@@ -1,0 +1,153 @@
+---
+title: "Assignment 4B"
+author: "Chen Jianguang Kevin"
+date: "10/8/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tidyr)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(readxl)
+library(caret)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+The bank wants to decide how to segment different banking tiers (Retail, Premier, Treasures) based on existing clients' bank balances. After analysis, the bank sees core concentration of bank balances below $30,000. As such, the bank decided to set Treasures Banking as >$20K, Premier Banking as >$10K and Retail Banking as <=$10K.
+```{r}
+bank %>%
+ group_by(bal_grp = (balance %/% 1000) * 1000) %>%
+ summarise(count = n()) %>%
+ arrange(bal_grp) -> banktier
+banktier
+ggplot(banktier, aes(bal_grp, count)) +
+  geom_point() +
+  geom_smooth(method = "auto", se = F) +
+  scale_x_log10()
+```
+
+# Finding #2
+The bank wants a general snapshot view on the characteristics of the clients in order to start series of advertisments targeting different core groups of clients. The bank wishes to segment the clients into different groups based on education level. Then it wishes to see the distribution of particular age clients of particular occupations would tend to have what amount of bank balances.
+```{r}
+ggplot(bank, aes(age, balance)) +
+  geom_point(aes(color=job), size = 4, alpha = 1/2) +
+  facet_grid(. ~ education) +
+  scale_y_log10()
+
+```
+
+# Finding #3
+The bank wants to find out which three jobs poses the highest default risk, so the bank can create more stringent credit checks on loan applications from these individuals in future. After analysis, they are entrepreneurs (4.17%), self-employed (2.19%) and unemployed (2.34%).
+```{r}
+bank %>%
+ group_by(job) %>%
+ summarise(count = n(),
+           default_count = sum(ifelse(default == "no", 0, 1)),
+           default_perc = default_count * 100 / count) %>%
+            arrange(job) -> defaultconc
+defaultconc
+defaultconc %>%
+ggplot(aes(x = job, y = default_perc, color = job)) +
+  geom_point(aes(size = 20))
+```
+
+# Finding #4
+The bank wants to find out whether it is feasible to launch a campaign based on marital status and housing loans. In particular, the bank also wants to focus on different marital status and those with houses but no loans.
+```{r}
+df1 <- group_by(bank, marital) %>%
+  summarise(`With housing` = sum(housing=="yes"))
+df2 <- group_by(bank, marital) %>%
+  summarise(`Without loan` = sum(loan=="no"))
+df3 <- group_by(bank, marital) %>%
+  summarise(`With house and no loan` = sum(housing=="yes" & loan=="no"))
+df4 <- left_join (df1, df2, by = "marital")
+df <- left_join (df4, df3, by = "marital")
+df
+ggplot(df,aes(x = marital, y = `With house and no loan`)) +
+  geom_col()
+```
+
+# Finding #5
+The bank is planning to create a programme to cater to clients with the highest balances. The bank needs to first understand what is the maximum balance for age group and in particular, which occupation, before customizing this programme.
+```{r}
+df <- group_by(bank, job) %>%
+  filter(balance == max(balance))
+df
+df %>%
+ggplot(aes(x = age, y = balance)) +
+  geom_point() +
+  geom_point(aes(color = job), size = 5, alpha = 1/2)
+```
+
+# Finding #6
+The bank is thinking of launching a massive bank-wide campaign. It wants to find out which occupation coupled with a particular marital status would have the highest mean balance. The bank also wants to know the median age of a client in such a particular segment so that it can customize its campaign benefits.
+```{r}
+bank_summary <- function(frame1) {
+  frame1 %>%
+    group_by(job, marital) %>%
+    summarise(median_of_age = median(age), mean_of_balance = mean(balance)) %>%
+    ungroup() %>% 
+    mutate_if(is.factor, as.character)
+}
+frame2 <- bank %>%
+  bank_summary()
+frame3 <- bank %>%
+  mutate(marital = "+") %>% 
+  bank_summary()
+frame4 <- bank %>%
+  mutate(marital = "+", job = "+") %>%
+  bank_summary()
+frame5 <- bind_rows(frame2, frame3, frame4)
+frame5
+
+ggplot(frame5, aes(median_of_age, mean_of_balance)) +
+  geom_point() +
+  geom_point(aes(color=job), size=5, alpha=0.2) +
+  geom_smooth(se=F) +
+  facet_grid(. ~ marital)
+
+```
+
+# Finding #7
+A new CEO just got appointed from DBS Bank. He wants to analyze the education level for clients of different age groups. Then he wants to analyze whether the same distribution ratio holds based on different marital status. The CEO believes this knowledge would give him the necessary information to create investment products targeted at different segments of clients.
+```{r}
+ggplot(bank, aes(age, fill=education)) +
+  geom_histogram(binwidth = 10) +
+  facet_grid(. ~ marital)
+```
+
+# Finding #8
+The new CEO next wants to focus on the distribution of marital status within each occupation. He believes this information would let him understand the personal priorities of people within different occupations.
+```{r}
+ggplot(bank, aes(x=job, fill=marital)) +
+  geom_bar(position = "fill") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+  coord_flip()
+```
+
+# Finding #9
+The new CEO decides to up the ante. He wants to do a serious analysis on bank balances. In particular, the CEO wants a snapshot on bank balance quartile ranges for the different occupations. He is concerned that the educational level of clients may impact his analysis. As such, the CEO wants to split the presentation of results based on different education levels.
+
+```{r}
+ggplot(bank, aes(x=reorder(job, balance, FUN=median), 
+                 y=balance, fill=education)) +
+  geom_boxplot() + 
+  scale_y_discrete(limit = 30000) +
+  coord_flip()
+```
+
+# Finding #10
+The new CEO decides that the simpliest and fastest way to generate business results is to run a teleconsulting campaign on clients for bank loans. Either getting a fresh housing loan or for refinancing. The length of the loans offered depends on their age. The possibility of adding additional products to their housing loans depend on their education. The CEO requests a snapshot of these factors.
+
+```{r}
+ggplot(bank) +
+  geom_point (aes(x=education, y= age), size = 0.1, alpha = 1/2, color = "blue") +
+  facet_wrap (loan ~ housing ~ contact) +
+  theme (axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+```

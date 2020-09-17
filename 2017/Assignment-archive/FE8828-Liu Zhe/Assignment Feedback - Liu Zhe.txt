@@ -1,0 +1,62 @@
+﻿Hi, Liu Zhe
+
+Below is your assignment feedback. You did very good in the course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 80
+a bit rough
+
+Assignment 2 = 100 * 0.3 + 70 * 0.7
+Part 1: 100
+
+Part 2: 70
+# Coupon rate should be divided by coupon frequency. 
+
+  #function to calculate NPV value
+  NPVGenerator <- function(C, Y, freq, N){
+    if (freq == "Annual"){f=1}
+    if (freq == "Semiannual"){f=2}
+    if (freq == "Quarterly"){f=4}
+    n <- f*N
+    y <- (Y/f)/100
+    # C*(1-1/(1+y)^n)/y+(100/(1+y)^n)
+    (C/f)*(1-1/(1+y)^n)/y+(100/(1+y)^n)
+  }
+
+Assignment 3: = 0 * 0.05 + 80 * 0.25 + 110 * 0.7
+Part 1: 0 (missed a little assignment of calculating option value over a portfolio of options)
+Part 2: 80 (Volatility is as high as 400%. Time should be annualized.)
+
+# mutate(Volat = GBSVolatility(Price, tolower(substring(CallPut,1,1)),as.numeric(StockPrice), as.numeric(Strike),
+# (as.numeric(Expiration) - as.numeric(Date)), 0.01, 0)) 
+
+YY> mutate(Volat = GBSVolatility(Price, tolower(substring(CallPut,1,1)),as.numeric(StockPrice), as.numeric(Strike),
+YY> (as.numeric(Expiration) - as.numeric(Date)) / 365, 0.01, 0)) 
+
+Part 3: 90 + 10
++10: age_group and neg balance are key targets of your analysis.
+Always join on the side of the unfiltered group so you don't lose a group.
+
+AgeGrpNumber is a un-filtered group.
+
+AgeGrpTable <- mutate(bank, AgeGroup = (age %/% 10) * 10)
+AgeGrpNumber <- group_by(AgeGrpTable, AgeGroup) %>% summarize(TotalNumber=n())
+
+# left_join(UnemployedNumber, AgeGrpNumber, by = "AgeGroup")
+YY> right_join(UnemployedNumber, AgeGrpNumber, by = "AgeGroup")
+
+Assignment 4: = 90 + 10
+My best: Finding #5
++10: It's very pleasant to read the summary.
+90: some conclusions are contrary to the result.
+
+Quote you
+
+    # Finding #10
+    Also, after “retired” people are taken out from the “No Job” group, the “No Job” group average bank account balance has a significant fall of $200,
+    and becomes lower than that of Employed people.
+
+However, figure reads that employed's mean balance is 1358 and unemployed (excluding retired) is 1545.
+

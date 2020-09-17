@@ -1,0 +1,200 @@
+---
+title: "Bank Data insights - Week 3 Assignment"
+author: "Arihant Jain"
+date: "October 2, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(kableExtra)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+## since I can't read from office system i downloaded the file and reading the data
+# bank <- read.csv("C:\\Users\\arihant.jain\\Documents\\Assignment_3\\bank.csv", sep = ";")
+```
+
+# Problem  : Bank Data insights
+
+## Insight #1 - Education qualification against Jobs
+
+```{r run1, echo=FALSE, message=FALSE}
+
+  bank %>% 
+  group_by(job) %>% 
+  summarize(
+    Primary=sum(ifelse(education=="primary",1,0)),
+    Secondary=sum(ifelse(education=="secondary",1,0)),
+    Tertiary=sum(ifelse(education=="tertiary",1,0)),
+    Unknown=sum(ifelse(education=="unknown",1,0))
+    ) %>%
+  mutate(Total = Primary+Secondary+Tertiary) %>%
+  arrange(desc(Total)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+  
+  counts <- table(bank$education, bank$job)
+  par(mar = c(5, 7, 2, 2) + 0.2)
+  barplot(
+    counts,
+    main="Education qualification against Jobs",
+    xlab="Count",
+    col=c("brown","pink","yellow","red"),
+    legend = rownames(counts),
+    beside=TRUE,
+    horiz=TRUE,
+    las=2
+    )
+```
+
+#### Clearly, we see that blue-collar and related services people are more educated, with management having highest tertiary qualified people. Interestingly, the sample shows that if you are educated up to primary level, you can land in blue-collar job but in niche field like technician you need to study more than just primary education.
+
+## Insight #2 - % Housing Loan against Job
+
+```{r run2, echo=FALSE, message=FALSE}
+  bank %>% 
+  group_by(job) %>% 
+  summarize(Prcnt=round(100*sum(ifelse(housing=="yes",1,0))/n(),2)) %>%
+  arrange(desc(Prcnt)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+  
+```
+
+#### As expected: more people with jobs that can have regular and good income have taken housing loans. Bank too consider income as one of the criteria before providing loan. We can see that student, retiree and housemaid are in the categories of job where people are least interested in taking house loan.
+
+## Insight #3 - Negative Bank Balance Summary by Job
+
+```{r run3, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(job) %>%
+  summarize(
+    "Count" = sum(ifelse(balance<0,1,0)),
+    "Total Negative Balance"=sum(ifelse(balance<0,balance,0)),
+    "Avergae"=`Total Negative Balance`/Count
+    ) %>%
+  arrange((`Avergae`)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+  
+```
+
+#### We see here that even though count for negative balance is highest for blue-collar job, the average of negative balance is not the highest for the same. Infact, jobs like entrepreneur and self-employed which have lower count, still have the highest average - suggesting that the average amount of negative balance for people in these jobs are much more than any other jobs.
+
+
+## Insight #4 - Age Distribution Job Wise
+```{r run4, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(job) %>% 
+  summarize("Median Age"=median(age),Count=n()) %>%
+  arrange(`Median Age`) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```
+
+#### The Student group has lowest median and the retired group has the largest as expected. Management has the highest count in the sample followed by blue-collar job.
+
+## Insight #5 - % Term Deposit Conversion Job wise
+```{r run5, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(job) %>% 
+  summarize(
+    Yes=round(100*sum(ifelse(y=="yes",1,0))/n(),2),
+    No=round(100*sum(ifelse(y=="no",1,0))/n(),2)
+    ) %>%
+  arrange(desc(Yes)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```
+#### One can see that highest % of term deposit conversion lies with retired age group people as expected and which is what get targeted by telemarketing company. Surprisingly, student were in the second highest criteria which is not normal to observe.
+
+```{r definition, echo=FALSE, message=FALSE}
+bank<- bank %>%
+  mutate("Age Group" = case_when(
+           age < 25 ~ "Youth",
+           age < 45 ~ "Middle-age",
+           age < 60 ~ "Senior",
+           TRUE ~ "Retired"
+           )
+         )
+```
+
+
+## Insight #6 - % Term Deposit Conversion Age group wise
+```{r run6, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(`Age Group`) %>% 
+  summarize(
+    Yes=round(100*sum(ifelse(y=="yes",1,0))/n(),2),
+    No=round(100*sum(ifelse(y=="no",1,0))/n(),2)
+    ) %>%
+  arrange(desc(Yes)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```
+#### In align with our insight 5, the % term deposit conversion is highest in retired age group followed by youth. Though the percentage difference between top 2 groups is huge, evidently that's common in real world.
+
+## Insight #7 - Duration of calls made based on age group
+```{r run7, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(`Age Group`) %>% 
+  summarize(
+    "Average Duration"=round(mean(duration),2)
+    ) %>%
+  arrange(desc(`Average Duration`)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```
+#### This means that lengthy calls made to explain about the plans to targeted audience were successful. Clearly more than 5mins on average per call is in-line with above insights where we see the highest conversion rate. 
+
+
+## Insight #8 - Contacts made during this campaign
+```{r run8, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(`Age Group`) %>% 
+  summarize(
+    "Total"=sum(campaign),
+    "Average"=mean(campaign)
+    ) %>%
+  arrange(desc(Total)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```
+#### Clearly the focus of this campaign was to target middle age people so that they can open term deposit account. As we saw from pervious insights, that this category of people has space for opening new accounts, hence lots of contact were made to them.
+
+## Insight #9 - % Term Deposit conversion compared to past outcome
+```{r run9, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(poutcome) %>% 
+  summarize(
+    Yes=round(100*sum(ifelse(y=="yes",1,0))/n(),2),
+    No=round(100*sum(ifelse(y=="no",1,0))/n(),2)
+    ) %>%
+  arrange(desc(Yes)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```
+#### This shows that around 13% of previously unsuccessful customers were converted after new campaign launch.
+
+## Insight #10 - Age Distribution of the sample
+```{r run10a, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(age) %>% 
+  summarize(count=n()) %>% 
+  plot(type="l",main="Frequency Distribution of Age in the Sample")
+  abline(v=median(bank$age))
+  text(median(bank$age),5 ,"Median")
+```
+
+#### The Sample is young, larger part is Middle Aged.
+```{r run10b, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(`Age Group`) %>%
+  summarize(Count=n()) %>%
+  arrange(desc(Count)) %>%
+  kable(align=rep('c', length(.[,1]))) %>%
+  kable_styling(full_width = F)
+```

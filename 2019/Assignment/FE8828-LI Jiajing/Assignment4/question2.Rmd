@@ -1,0 +1,173 @@
+---
+title: "Question2"
+author: "Li Jiajing"
+date: "2019/9/28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse) 
+library(lubridate) 
+library(bizdays) 
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r age_housing}
+age_housing <- group_by(bank,age) %>%
+  summarise(n = n(),
+            housing_ratio = sum(ifelse(default == "no", 0, 1))/n)
+arrange(age_housing) -> finding1
+finding1
+ggplot(finding1, aes(age, housing_ratio)) +
+  geom_point()
+```
+
+* Housing ratio of people around 20 and above 60 is 0.
+
+* Housing ratio of people between 20 and 60 has no clear trend with respect to age increasing(approximately random).
+
+# Finding #2
+```{r age_balance}
+age_balance <- group_by(bank,age) %>%
+  summarise(n = n(),
+            balance = mean(balance))
+arrange(age_balance) -> finding2
+finding2
+finding2 <- as.data.frame(finding2)
+ggplot(finding2, aes(age, balance)) +
+  geom_point() + 
+  geom_smooth(method = "loess", se = FALSE)
+```
+
+* Average balance of people above 60 fluctuates more violently than that of people below 60.
+
+# Finding #3
+```{r job_balance}
+min <- group_by(bank, job) %>%
+  summarise("min" = min(balance))
+max <- group_by(bank, job) %>%
+  summarise("max" = max(balance))
+job_balance <- distinct(bank, job) %>% arrange(job)
+job_balance <- left_join(job_balance, min, by = "job")
+job_balance <- left_join(job_balance, max, by = "job")
+job_balance <- mutate(job_balance, "range" = max - min)
+arrange(job_balance) -> finding3
+finding3
+ggplot(bank, aes(job, balance)) + 
+  geom_boxplot()
+```
+
+* Count the minimum, the maximum and the range of balance of each job.
+
+* The highest maximum balance is from retired and the lowest minimum balance is from self-employed.
+
+# Finding #4
+```{r job_education}
+job_education <- group_by(bank,job) %>%
+  summarise(n = n())
+arrange(job_education) -> finding4
+finding4
+ggplot(bank) + 
+  geom_bar(aes(x = job, stat = "count", fill = education))
+```
+
+* Most people in management are tertiary education.
+
+* The proportion of primary education is significantly higher in blue-collar, housemaid and retired than in other jobs.
+
+* Secondary education takes the largest proportion in people of job admin., blue-collar, retired, services, student, technician and unemployed.
+
+# Finding #5
+```{r duration_pdays}
+duration_pdays <- group_by(bank,contact) %>%
+  summarise(n = n(),
+            duration = mean(duration),
+            pdays = mean(pdays))
+arrange(duration_pdays) -> finding5
+finding5
+ggplot(bank) + 
+  geom_point(aes(duration, pdays, color = contact))
+```
+
+* Cellular is the most used communication type.
+
+* Ignore the 0 ones, the distribution of number of days that passed by after the client was last contacted from a previous campaign is approximately concentrated in the range of 62.5 to 375.
+
+* People who have "pdays" more than 375 hardly take duration longer than 500 seconds.
+
+# Finding #6
+```{r job_marital}
+job_marital <- group_by(bank,job) %>%
+  summarise(n = n(),
+            marital_ratio = sum(ifelse(marital == "married", 1, 0))/n) 
+arrange(job_marital) -> finding6
+finding6
+ggplot(finding6, aes(job, marital_ratio)) +
+  geom_point()
+```
+
+* Students have the lowest marital ratio (of course lol).
+
+# Finding #7
+```{r job_count}
+job_count <- group_by(bank,job) %>%
+  summarise(n = n())
+arrange(job_count) -> finding7
+finding7
+ggplot(bank) +  
+  geom_bar(aes(x = job)) 
+```
+
+* The job type which includes largest population is management.
+
+* The job type which includes least population except for unknown is student.
+
+# Finding #8
+```{r balance_distribution}
+balance_distribution <- group_by(bank,education) %>%
+  summarise(n = n(),
+            balance = mean(balance))
+arrange(balance_distribution) -> finding8
+finding8
+ggplot(bank, aes(balance, color = education)) + 
+  geom_density()
+```
+
+* The average balance of tertiary education people is the highest among all four educations.
+
+* The shapes of the distribution of balance seem to be similar despite the different value of peaks among different educations.
+
+# Finding #9
+```{r month_count}
+month_count <- group_by(bank, month) %>%
+  summarise(n = n())
+arrange(month_count) -> finding9
+finding9
+ggplot(bank) + 
+  geom_bar(aes(x = month, fill = poutcome))
+```
+
+* May is the month which happens most last contacts, while December is the month which happens least last contacts.
+
+* The most common contact result is "unknown".
+
+* "Failure" happens more frequently or as frequently as "success" in each month.
+
+
+# Finding #10
+```{r job_loan}
+job_loan <- group_by(bank, job) %>%
+  summarise(n = n(),
+            loan_ratio = sum(ifelse(loan == "yes", 1, 0))/n)
+arrange(job_loan) -> finding10
+finding10
+ggplot(finding10, aes(job, loan_ratio)) +
+  geom_point()
+```
+
+* Entrepreneurs are most likely to have personal loans, while students are least likely to have personal loans.
+
+
+

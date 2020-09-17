@@ -1,0 +1,6 @@
+"0","v1 = c(nrow(filter(bank, (marital == ""married"") & (housing == ""yes""))), nrow(filter(bank, (marital == ""married"") & !(housing == ""yes""))))"
+"0","v2 = c(nrow(filter(bank, !(marital == ""married"") & (housing == ""yes""))), nrow(filter(bank, !(marital == ""married"") & !(housing == ""yes""))))"
+"0","df = as.data.frame(rbind(v1,v2))"
+"0","rownames(df) = c(""married"", ""single"")"
+"0","colnames(df) = c(""housing"", ""no housing"")"
+"0","df"

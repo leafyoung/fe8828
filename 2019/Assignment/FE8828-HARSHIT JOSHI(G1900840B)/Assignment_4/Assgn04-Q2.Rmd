@@ -1,0 +1,172 @@
+---
+title: "EDA 1"
+author: "HARSHIT JOSHI"
+date: "10/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+library(reshape2)
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Q1 - profession with highest number of accounts##### DONE 1
+
+```{r}
+accounts<-bank%>%
+  group_by(job)%>%
+  summarise(number_of_accounts=n())%>%
+  arrange(desc(number_of_accounts))
+
+ggplot(accounts, aes(job, number_of_accounts), color=job)+
+  geom_bar(stat="identity", fill="#F6AE2D")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+# Q2 - profession with highest number of loans#### DONE 2
+
+```{r}
+loan_taken<-bank%>%
+  group_by(job, loan)%>%
+  summarise(loan_count=n())%>%
+  filter(loan=="yes")
+  
+ggplot(loan_taken, aes(job, loan_count))+
+  geom_bar(stat="identity", fill="#33658A")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+# Q3 - relation between education and bank balance############# DONE
+
+```{r}
+edu_bal<-bank%>%
+  group_by(education)%>%
+  summarise(net_bal=100*(sum(balance)/sum(bank$balance)))
+
+
+  ggplot(edu_bal, aes(x="", y=net_bal, fill=education)) + 
+  geom_bar(stat="identity", width=1)+
+  coord_polar("y", start=0)+
+  geom_text(aes(label = paste0(round(net_bal), "%")), 
+              position = position_stack(vjust = 0.5))  +
+  scale_fill_manual(values=c("#55DDE0", "#33658A", "#2F4858", "#F6AE2D", "#F26419", "#999999"))+
+  labs(x = NULL, y = NULL, fill = NULL, title = "Education/Net Bank balance relation ")+
+  theme_classic() + 
+  theme(axis.line = element_blank(),
+                          axis.text = element_blank(),
+                          axis.ticks = element_blank(),
+                          plot.title = element_text(hjust = 0.5, color = "#666666"))
+```
+
+# Q4 - Balance by profession pie chart#### DONE 4
+
+```{r}
+max_balance<-bank%>%
+  group_by(job)%>%
+  summarise(tot_balance=sum(balance))%>%
+  mutate(balance_by_profession=100*(tot_balance/sum(bank$balance)))
+
+ggplot(max_balance, aes(x="", y=balance_by_profession, fill=job)) + 
+  geom_bar(stat="identity", width=1)+
+  coord_polar("y", start=0)+
+  geom_text(aes(label = paste0(round(balance_by_profession), "%")), 
+            position = position_stack(vjust = 0.5))  +
+  labs(x = NULL, y = NULL, fill = NULL, title = "Education/Net Bank balance relation ")+
+  theme_classic() + 
+  theme(axis.line = element_blank(),
+        axis.text = element_blank(),
+        axis.ticks = element_blank(),
+        plot.title = element_text(hjust = 0.5, color = "#666666"))
+```
+
+# Q5 - job and age boxplot######### DONE 3
+
+```{r}
+ggplot(bank, aes(job, age)) + 
+  geom_boxplot()+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+# Q6 - highest default rates by profession-TOP 5#### DONE 5
+
+```{r}
+default_rate<-merge(
+  x=(bank%>%
+       group_by(job, default)%>%
+       summarise(default_count=n())) , 
+  y=bank%>%
+    group_by(job)%>%
+    summarise(number_of_accounts=n()), 
+  by="job", all=TRUE)%>%
+  mutate(percent_default=(default_count/number_of_accounts)*100)%>%
+  filter(default=="yes")
+
+ggplot(default_rate, aes(job, percent_default))+
+  geom_bar(stat="identity", fill = "#FF6666")+
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+# Q7 - relation between mode of contact and outcome of the campaign#### DONE
+
+```{r}
+df<-bank%>%
+  group_by(contact, y)%>%
+  summarise(outcome_stat = n())
+
+ggplot(df, aes(x = contact, y = outcome_stat)) + 
+  geom_bar(stat = "identity") +
+  geom_col(aes(fill = y), width = 0.7)+
+  xlab("\nType") +
+  ylab("Time\n") +
+  theme_bw()
+```
+
+# Q8 - marital status and housing loan####### DONE
+
+```{r}
+xx<-bank%>%
+  group_by(marital, housing)%>%
+  summarise(hloan=n())
+
+ggplot(xx, aes(x = marital, y = hloan))+
+  geom_bar(stat = "identity") +
+  geom_col(aes(fill = housing), width = 0.7)+
+  xlab("\nMarital status") +
+  ylab("Housing loan status\n") +
+  theme_light()
+```
+
+# Q9 - relation between profession and the outcome of this campaign#### DONE
+
+```{r}
+yy<-bank%>%
+  group_by(job, y)%>%
+  summarise(yon=n())
+
+ggplot(yy, aes(x=job, y=yon))+
+  geom_bar(stat = "identity") +
+  geom_col(aes(fill = y), width = 0.7)+
+  xlab("\nMarital status") +
+  ylab("Housing loan status\n") +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+
+# Q10 - relation between education qualification and outcome of this campaign####
+
+```{r}
+zz<-bank%>%
+  group_by(education, y)%>%
+  summarise(yn=n())
+
+ggplot(zz, aes(x=education, y=yn))+
+  geom_bar(stat = "identity") +
+  geom_col(aes(fill = y), width = 0.7)+
+  xlab("\nMarital status") +
+  ylab("Housing loan status\n") +
+  theme(axis.text.x=element_text(angle=90,hjust=1,vjust=0.5))
+```
+  

@@ -1,0 +1,24 @@
+\frametitle{\texttt {purrr::map} and \texttt {sapply()} Function - 2}
+\protect\hypertarget{purrrmap-and-sapply-function---2}{}
+\footnotesize
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# This is what we really want to do.}
+\CommentTok{\# Generate ten normal distribution and get their mean.}
+\CommentTok{\# rnorm(n, mean = 0, sd = 1). Where does the input go to?}
+\NormalTok{res \textless{}{-}}\StringTok{ }\NormalTok{purrr}\OperatorTok{::}\KeywordTok{map}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{, rnorm, }\DataTypeTok{n =} \DecValTok{1000}\NormalTok{)}
+\KeywordTok{map\_dbl}\NormalTok{(res, mean)}
+\CommentTok{\#\#  [1]  1.019905  2.048421  3.012500  3.967535  5.031277  5.985041  6.986432}
+\CommentTok{\#\#  [8]  7.981051  8.990855 10.091227}
+
+\CommentTok{\# sapply() achieves the same as purrr::map(), a bit slower.}
+\CommentTok{\# Package purrr succeeds original R base.}
+\KeywordTok{sapply}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) x }\OperatorTok{\^{}}\StringTok{ }\DecValTok{2}\NormalTok{ )}
+\CommentTok{\#\#  [1]   1   4   9  16  25  36  49  64  81 100}
+\KeywordTok{sapply}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) }\StringTok{\textasciigrave{}}\DataTypeTok{\^{}}\StringTok{\textasciigrave{}}\NormalTok{ (x, }\DecValTok{2}\NormalTok{) )}
+\CommentTok{\#\#  [1]   1   4   9  16  25  36  49  64  81 100}
+\KeywordTok{sapply}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{, }\ControlFlowTok{function}\NormalTok{(x) }\StringTok{\textasciigrave{}}\DataTypeTok{\^{}}\StringTok{\textasciigrave{}}\NormalTok{ (}\DecValTok{2}\NormalTok{, x) )}
+\CommentTok{\#\#  [1]    2    4    8   16   32   64  128  256  512 1024}
+\end{Highlighting}
+\end{Shaded}

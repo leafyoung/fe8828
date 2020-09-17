@@ -1,0 +1,192 @@
+---
+title: "Group Project Question 3: Delta Hedging"
+author: "Li Enwen, Feng Ruiwan, Yuan Yuxuan, Xiao Lijian, Li Jiajing"
+date: "OCT-27-2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyquant)
+library(xts)
+library(Quandl) 
+library(tidyverse)
+library(fOptions)
+knitr::opts_chunk$set(echo = TRUE)
+data<-read.csv("https://drive.google.com/uc?authuser=0&id=1pGM1K7mhbLK4rsrlCw9DrfXBIz7-tlRb&export=download")
+```
+
+## Data selection & processing
+- We choose APPLE as our underlying assets, while our implied volatility is VIX30.
+- Our data is from 2018-01-02 to 2019-01-11. 
+
+```{r Data processing}
+getSymbols('AAPL', src = 'yahoo', adjusted = TRUE, output.size = 'full')
+xts_obj <- AAPL[as.Date(data$observation_date), c("AAPL.Close")]
+colnames(xts_obj)<-"Close"
+VIX<-xts(data$VIX, as.Date(data$observation_date))
+colnames(VIX)<-"IV30"
+xts_obj<-merge(VIX,xts_obj,join="right")
+```
+
+```{r Data choosing}
+quantity = 100
+rf=0.008
+dates<-index(xts_obj)
+start_date<-min(dates)-30
+```
+
+```{r Backtesting}
+
+#df_backtest stores all the data of 12 backtests.
+df_backtest <- tibble()
+df_backtest_plot <- tibble()
+#df_backtest_sum comprises the index including Maxmarkdown, FinaL-pnl of our 12 backtests.
+df_backtest_sum<-tibble()
+
+for(i in 1:12){
+  
+  start_date<-start_date+30
+  if(!(start_date %in% dates)){start_date<-start_date+3}
+  end_date <- start_date + 29
+  start_price <- xts_obj[start_date, "Close"]  
+  start_volatility <- xts_obj[start_date,"IV30"]
+  xts_1trade<-xts_obj[paste0(start_date,"/",end_date)]
+  df<-data.frame(date=index(xts_1trade),coredata(xts_1trade[,"Close"]))
+  #We apply df_opt to store our trading data.
+  df_opt <- rowwise(df) %>%
+    #option_premium
+    mutate(premium = GBSOption(TypeFlag = "c", 
+                               S = Close, 
+                               X = as.numeric(start_price), 
+                               Time = (as.numeric(end_date)-as.numeric(date))/365, 
+                               r=rf,
+                               b=0,# no dividend yield 
+                               sigma = as.numeric(start_volatility))@price) %>% 
+    ungroup %>% 
+    #Option_DoD_Pnl
+    mutate(Option_DoD_PnL = ifelse(date == start_date, 
+                                   premium * (-1), 
+                                   premium - dplyr::lag(premium))) %>%
+    #Hedging stocks
+    rowwise() %>%
+    mutate(delta_hedge = GBSGreeks("delta", 
+                                   TypeFlag="c", 
+                                   S=Close,
+                                   X=as.numeric(start_price), 
+                                   Time=(as.numeric(end_date)-as.numeric(date))/365, 
+                                   r=rf,
+                                   b=0,
+                                   sigma = as.numeric(start_volatility)) * quantity * (-1)) %>% 
+    ungroup() %>%
+    #Heding_DoD_PnL
+    mutate(Hedging_DoD_Pnl = ifelse(date == start_date,0,delta_hedge * (Close - dplyr::lag(Close)))) %>%
+    #Total DoD_PnL, Time to Expiry and Cost of heding
+    rowwise() %>%
+    mutate(DoD_PnL = Option_DoD_PnL + Hedging_DoD_Pnl,
+           Time_to_Expiry = end_date-date,
+           Cost_of_Hedging = Close*delta_hedge) %>%
+    ungroup() %>%
+    #Cumulative pnl
+    mutate(Cum_Pnl = cumsum(DoD_PnL),
+           Option_Cum_Pnl =cumsum(Option_DoD_PnL),
+           Stock_Cum_Pnl = cumsum(Hedging_DoD_Pnl))
+  #df_sum is to store index of one trade.
+  df_sum<-data.frame(Expiry_date=end_date,
+    maxdrawdown=(max(df_opt$Cum_Pnl)-min(df_opt$Cum_Pnl)),
+                    Final_pnl=df_opt$Cum_Pnl[nrow(df_opt)],
+                    Final_stock=df_opt$Stock_Cum_Pnl[nrow(df_opt)],
+                    Final_option=df_opt$Option_Cum_Pnl[nrow(df_opt)],
+                    SharpeRatio=(mean(df_opt$DoD_PnL)-rf*(df_opt$premium[1]+max(df_opt$Cost_of_Hedging)))/stdev(df_opt$DoD_PnL))
+  #we apply row to separate our trades.
+  row<-data.frame(date=start_date,Close=i,premium=i,Option_DoD_PnL=i,
+                  delta_hedge=i,Hedging_DoD_Pnl=i,DoD_PnL=i,Time_to_Expiry=i,
+                  Cost_of_Hedging=i,Cum_Pnl=i,Option_Cum_Pnl=i,Stock_Cum_Pnl=i)
+  #all data of backtest.
+  df_backtest<-dplyr::bind_rows(df_backtest,row,df_opt)
+  df_backtest_plot<-dplyr::bind_rows(df_backtest_plot,df_opt)
+  #all index of backtest.
+  df_backtest_sum<-dplyr::bind_rows(df_backtest_sum,df_sum)
+}
+```
+
+
+
+## One Trade
+We dicuss the last trade, which started from 2018-12-13 and ended at 2019-01-11.
+
+### 1. Total data
+```{r One trade, echo=FALSE}
+#we use the df_opt we get from the previous proggraming.
+print(df_opt)
+```
+
+### 2. Daily PnL v.s. Time to expiry
+```{r Plot Daily pnl}
+ggplot(df_opt) + 
+  geom_line(aes(Time_to_Expiry,DoD_PnL, color = "DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Hedging_DoD_Pnl, color = "Stock_DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Option_DoD_PnL, color = "Option_DoD_PnL")) +
+  ggtitle("Daily PnL vs. Time to Expiry (2018/12/13 - 2019/01/11)") +
+  scale_x_reverse()
+```
+
+### 3. Final PnL
+```{r Final Pnl}
+ggplot(df_opt) + 
+  geom_line(aes(Time_to_Expiry,Cum_Pnl, color = "DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Stock_Cum_Pnl, color = "Stock_DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Option_Cum_Pnl, color = "Option_DoD_PnL")) +
+  ggtitle("Daily PnL vs. Time to Expiry (2018/12/13 - 2019/01/11)") +
+  scale_x_reverse()
+```
+
+### 4. Max drawdown
+```{r max drawdown}
+cat(paste0(max(df_opt$Cum_Pnl)-min(df_opt$Cum_Pnl)))
+```
+
+### 5. Sharpe ratio
+```{r Sharpe ratio}
+cat(paste0((mean(df_opt$DoD_PnL)-rf*(df_opt$premium[1]+max(df_opt$Cost_of_Hedging)))/stdev(df_opt$DoD_PnL)))
+```
+
+
+
+## Backtesting
+
+### 1.Distribution of Final PnL
+- In this part we plot cum pnl against time to expiry.
+```{r }
+ggplot(df_backtest_plot,aes(x=Cum_Pnl, y=Time_to_Expiry)) +
+  geom_point(color = "blue", size = 1, alpha = 0.4)+
+  geom_smooth()+
+  ggtitle("Distribution of Final Pnl against Time to Expiry")
+```
+
+### 2.Distribution of Max Drawdown
+```{r }
+ggplot(df_backtest_sum, aes(x = maxdrawdown)) + 
+  geom_density() +
+  geom_vline(aes(xintercept=mean(df_backtest_sum$maxdrawdown)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Max Drawdown")
+```
+
+### 3.Final PnL v.s. Option Expiry Date
+- In this part we plot the Final Pnl against different expiry date (i.e. the end date).
+```{r }
+ggplot(df_backtest_sum)+
+  geom_line(aes(x=Expiry_date,y=Final_pnl,color="Final_Pnl"))+
+  geom_line(aes(x=Expiry_date,y=Final_stock,color="Final_stock"))+
+  geom_line(aes(x=Expiry_date,y=Final_option,color="Final_option"))+
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+
+  ggtitle("Final PnL vs. Option Expiry Date") 
+  
+```
+
+### 4.Distribution of Sharpe ratio
+```{r }
+ggplot(df_backtest_sum, aes(x = SharpeRatio)) + 
+  geom_density() +
+  geom_vline(aes(xintercept=mean(df_backtest_sum$SharpeRatio)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Sharpe")
+```
+

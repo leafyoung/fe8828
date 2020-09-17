@@ -1,0 +1,146 @@
+---
+title: "Exploratory Data Work for the bank dataset"
+author: "Feng Ruiwan <sub> <Email:feng0107@e.ntu.edu.sg> </sub>" 
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE} 
+library(tidyverse) 
+library(dplyr) 
+library(ggplot2)
+library(ggthemes)
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE) 
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1
+```{r 1}
+ggplot(bank, aes(job, balance, color = age)) + 
+  geom_point() + 
+  scale_colour_gradient(low="white", high="blue") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+__The balance of people wihin a certain sector are not so correlated to their age (except the manegement sector), more aged people are self-employed or technicians.__
+
+# Finding 2
+```{r 2}
+ggplot(bank, aes(age, job, color = contact)) + 
+  geom_point() + scale_colour_wsj() +
+  scale_y_discrete(limit = rev(levels(bank$job)))
+```
+
+__Most people have a cellular contact type, although the aged(>70) are more like ly to have a telephone one__
+
+
+# Finding 3
+```{r 3}
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = y))
+```
+__Most people in this dataset are between 30 and 40, although the number of people subscribed are not varing too much through different age.__
+
+
+
+# Finding 4
+```{r 4}
+df <- mutate(bank, age_group = case_when(
+  age < 20 ~ "<20",
+  age < 25 ~ "20-25",
+  age < 30 ~ "25-30",
+  age < 35 ~ "30-35",
+  age < 40 ~ "35-40",
+  age < 45 ~ "40-45",
+  age < 50 ~ "45-50",
+  age < 55 ~ "50-55",
+  age < 60 ~ "55-60",
+  TRUE ~ "60+"
+)) %>%
+  arrange(age_group)
+ggplot(df, aes(age_group, balance)) + geom_boxplot()
+```
+
+__Median of balance across different age group dosen't vary to much, balance in age group 20-25 and 40-45 are more centralised. Few people have balance with more than 20000.__
+
+
+# Finding 5
+```{r 5}
+df <- bank %>% filter(balance < 20000)
+ggplot(df, aes(balance, color = default)) + geom_density()
+```
+
+__Peole with balance between 0 and 2000 are more likely to have default credit.__
+
+
+# Finding 6
+```{r 6}
+df <- mutate(bank, age_group = case_when(
+  age < 20 ~ "<20",
+  age < 25 ~ "20-25",
+  age < 30 ~ "25-30",
+  age < 35 ~ "30-35",
+  age < 40 ~ "35-40",
+  age < 45 ~ "40-45",
+  age < 50 ~ "45-50",
+  age < 55 ~ "50-55",
+  age < 60 ~ "55-60",
+  TRUE ~ "60+"
+)) 
+ggplot(df, mapping = aes(x = reorder(age_group, balance, FUN = mean), fill = marital)) +
+  geom_bar() + scale_colour_wsj() +
+  coord_flip()
+```
+
+__Peole older than 40 tend to have more balance. Since 35, most people are more likely to getting married.__
+
+
+# Finding 7
+```{r 7}
+ggplot(bank, mapping = aes(x = duration, fill = marital)) + geom_histogram()
+```
+
+__Duration for most people are less than 500, and is not so correlated with their marital status.__
+
+
+# Finding 8
+```{r 8}
+ggplot(bank) +
+  geom_point(mapping = aes(x = age, y = balance)) +
+  facet_wrap( y ~ poutcome )
+```
+
+__Most people refused previous marketing, people with balance between 0 and 10000 are more likely to accept marketing.__
+
+
+# Finding 9
+```{r 9}
+df <- mutate(bank, balance_status = case_when(
+  balance < 0 ~ "poor",
+  balance < 5000 ~ "just so so",
+  balance < 20000 ~ "middle class",
+  balance < 30000 ~ "rich",
+  TRUE ~ "wow"
+))
+ggplot(df, aes(duration)) + geom_histogram(aes(color = balance_status)) +
+  facet_grid(.~balance_status)
+```
+
+__Most people own balance between 0-5000, and distribution of duration doesn't change to much across balance status group, most duration are less than 500.__
+
+
+# Finding 10
+```{r 10}
+df <- mutate(bank, balance_status = case_when(
+  balance < 0 ~ "poor",
+  balance < 5000 ~ "just so so",
+  balance < 20000 ~ "middle class",
+  balance < 30000 ~ "rich",
+  TRUE ~ "wow"
+))
+ggplot(df, aes(balance_status, age)) + geom_point(aes(color = job)) +
+  facet_grid(.~job) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+__Except student and retired people, other jobs do not have certain age features. In administion, blue-collar, service and technical sector, there are more people with balance less than 0. Most middle class are in management sector.__

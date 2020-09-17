@@ -1,0 +1,5 @@
+"0","group_by(bank, age) %>%"
+"0","  mutate(stdev_balance = sd(balance)) %>%"
+"0","  distinct(stdev_balance) %>%"
+"0","  na.omit(.)%>%"
+"0","  filter(.,stdev_balance==max(.$stdev_balance) | stdev_balance == min(.$stdev_balance))"

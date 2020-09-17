@@ -1,0 +1,326 @@
+---
+title: "Assignment4"
+author: "Matthew Chan"
+date: "1 October 2019"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(fOptions)
+```
+
+Q1. Exercise 3: slides 72
+
+Q1.1 Copy the options data from https://www.nasdaq.com/symbol/goog/option-chain?dateindex=1 
+
+Copy and pasted into excel and converted to csv (calls.csv and puts.csv)
+
+```{r}
+coltypes <- c(rep("character", 2), rep("numeric", 9))
+calls <- read.csv("calls.csv", sep = ";", colClasses = coltypes)
+puts <- read.csv("puts.csv", sep = ";", colClasses = coltypes)
+columns <- c("Contract Name", "Last Trade Date",	"Strike",	"Last Price",	
+              "Bid", "Ask",	"Change",	"% Change",	"Volume",	"Open Interest",
+              "Implied Volatility")
+colnames(calls) <- columns
+colnames(puts) <- columns
+
+calls_df <- data.frame(Expiry_Date = rep(as.Date("2019-12-20"), nrow(calls)),
+                       Strike = calls$Strike,
+                       Open_Interest = calls$`Open Interest`,
+                       Underlying = rep(1234.03, nrow(calls)),
+                       Call_Put = "c",
+                       Bid = calls$Bid,
+                       Ask = calls$Ask,
+                       stringsAsFactors = F)
+puts_df <- data.frame(Expiry_Date = rep(as.Date("2019-12-20"), nrow(puts)),
+                      Strike = puts$Strike,
+                      Open_Interest = puts$`Open Interest`,
+                      Underlying = rep(1234.03, nrow(puts)),
+                      Call_Put = "p",
+                      Bid = puts$Bid,
+                      Ask = puts$Ask,
+                      stringsAsFactors = F)
+head(calls_df)
+head(puts_df)
+```
+
+Q1.2 Count the total valuation of 1) call alone, 2) put alone, 3) call and put. Valuation = Open Interest * (Bid + Ask) / 2
+
+```{r}
+calls_df$Val <- calls_df$Open_Interest * ((calls_df$Bid + calls_df$Ask) / 2)
+puts_df$Val <- puts_df$Open_Interest * ((puts_df$Bid + puts_df$Ask) / 2)
+print(paste("Total Valuation for Calls:", sum(calls_df$Val)))
+print(paste("Total Valuation for Puts:", sum(puts_df$Val)))
+print(paste("Total Valuation for Calls & Puts:", sum(puts_df$Val) + sum(calls_df$Val)))
+```
+
+Q1.3 Find those in the money and get their total Open Interest.
+
+```{r}
+ITM_Calls <- calls_df %>% 
+  dplyr::filter(Underlying > Strike) %>%
+  summarise(Sum_OI_Calls = sum(Open_Interest))
+
+ITM_Puts <- puts_df %>% 
+  dplyr::filter(Underlying < Strike) %>%
+  summarise(Sum_OI_Puts = sum(Open_Interest))
+
+print(paste("Total Open Interest for In-The-Money Puts and Calls:", ITM_Calls[1,1]+ITM_Puts[1,1]))
+```
+
+Q1.4. Plot the volatility curve, strike v.s. vol. For strike < current price, use puts' price; for strike > current price, use calls' price.
+
+```{r}
+calls_df$Vol <- NA
+calls_df$Price <- calls$`Last Price`
+calls_df$Vol <- sapply(1:nrow(calls_df), 
+                       function(e){
+                         return(GBSVolatility(calls_df$Price[e], 
+                                              calls_df$Call_Put[e], 
+                                              calls_df$Underlying[e],
+                                              calls_df$Strike[e],
+                                              as.numeric(calls_df$Expiry_Date[e]-as.Date("2019-09-24"))/365,
+                                              r=0.03,
+                                              b=0))
+                       })
+puts_df$Vol <- NA
+puts_df$Price <- puts$`Last Price`
+puts_df$Vol <- sapply(1:nrow(puts_df), 
+                       function(e){
+                         return(GBSVolatility(puts_df$Price[e], 
+                                              puts_df$Call_Put[e], 
+                                              puts_df$Underlying[e],
+                                              puts_df$Strike[e],
+                                              as.numeric(puts_df$Expiry_Date[e]-as.Date("2019-09-24"))/365,
+                                              r=0.03,
+                                              b=0))
+                       })
+
+c_df <- calls_df %>%
+  dplyr::filter(Underlying < Strike) %>%
+  dplyr::select(Strike, Vol)
+p_df <- puts_df %>%
+  dplyr::filter(Underlying > Strike) %>%
+  dplyr::select(Strike, Vol)
+df <- rbind(p_df, c_df)  
+
+ggplot(df, aes(Strike, Vol)) +
+  geom_point() +
+  geom_smooth(method="loess", se=FALSE)
+```
+
+Q2. EDA with ggplot2
+
+(For reference) Interpretation of columns, from Kaggle:  
+  1 - age (numeric)  
+  2 - job : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student",   
+                          "blue-collar","self-employed","retired","technician","services")   
+  3 - marital : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)  
+  4 - education (categorical: "unknown","secondary","primary","tertiary")  
+  5 - default: has credit in default? (binary: "yes","no")  
+  6 - balance: average yearly balance, in euros (numeric)   
+  7 - housing: has housing loan? (binary: "yes","no")  
+  8 - loan: has personal loan? (binary: "yes","no")   
+  # related with the last contact of the current campaign:  
+  9 - contact: contact communication type (categorical: "unknown","telephone","cellular")   
+  10 - day: last contact day of the month (numeric)  
+  11 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")  
+  12 - duration: last contact duration, in seconds (numeric)  
+  # other attributes:  
+  13 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)  
+  14 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously   contacted)
+  15 - previous: number of contacts performed before this campaign and for this client (numeric)  
+  16 - poutcome: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")  
+  17 - y - has the client subscribed a term deposit? (binary: "yes","no")  
+
+# Finding 1:
+
+Let's visualize the types of jobs held by people with different education levels. I will use a jitter plot to visualize the raw data. 
+
+```{r}
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+
+ggplot(bank, aes(education, job)) + 
+  geom_jitter(aes(colour=job))
+```
+
+From the jitter plot, we can see that people with primary education are most likely to be blue-collar workers, people with tertiary education are most likely to be in management, while people with secondary education are generally in the blue-collar, admin, services, and technician jobs. 
+
+However, education levels with more observations will seem more clustered naturally. 
+
+```{r}
+summary(bank$education)
+```
+
+Tertiary education has twice the number of observations compared to Primary education, while secondary education has around 1.7 times the number of observations compared to Tertiary education.
+
+I will plot normalized bar charts to compare proportions of different types of jobs within each education level, to make a fair comparison.
+
+```{r}
+ggplot(bank, aes(education, fill=job)) + 
+  geom_bar(position="fill")
+```
+
+It seems like our original conclusion (from the jitter plot) holds.
+
+# Finding 2:
+
+Let's see how balance varies with age.
+
+```{r}
+ggplot(bank, aes(age, balance)) +
+  geom_smooth(method = "lm") 
+```
+
+We can see that there is a positive (linear) relationship between balance and age. This is intuitive as older workers are expected to have more money than younger ones. However, the confidence interval widens significantly at extreme values of age.
+
+```{r}
+ggplot(bank, aes(age)) +
+  geom_density(fill="green", alpha=0.35)
+```
+
+Looking at the distribution of age, we see that there are significantly less observations at the extreme ages, just as a normal population demographic would be like, hence the confidence intervals are wider at extreme ages.
+
+# Finding 3:
+
+Let's explore deeper and breakdown our previous finding based on type of job.
+
+```{r}
+ggplot(bank, aes(age, balance, col=job)) +
+  geom_smooth(method = "lm") + 
+  facet_wrap(.~job)
+```
+
+We can see that the positive (linear) relationship between age and balance does not apply to all occupations. In particular, students, entrepreneurs and housemaids have negative (linear) relationship. 
+
+
+# Finding 4:
+
+Let's see how distribution of balance differs with housing and personal loans.
+
+```{r}
+ggplot(dplyr::filter(bank, housing=="yes"), aes(balance, col=housing, fill=housing, alpha=0.1)) +
+  geom_density() +
+  geom_density(data=dplyr::filter(bank, housing=="no")) +
+  scale_x_continuous(limits = c(-2000, 10000))
+```
+
+From the density plots, we see that distribution of balance for those without housing loan has a fatter right tail and also a lower peak, compared to those with housing loan.
+
+```{r}
+ggplot(dplyr::filter(bank, loan=="yes"), aes(balance, col=loan, fill=loan, alpha=0.1)) +
+  geom_density() +
+  geom_density(data=dplyr::filter(bank, loan=="no")) +
+  scale_x_continuous(limits = c(-2000, 10000))
+```
+
+We observe similar results, but the difference between the distributions are much more pronounced here. We see that the distribution of balance for those without personal loan has a much fatter right tail and also a much lower peak.
+
+With the 2 plots above, we can hypothesize (without the means of confirmation) that people with loans generally have lower balance, perhaps due to their obligations to repay loans. 
+
+# Finding 5:
+
+Let's see how marital status varies with age.
+
+```{r}
+ggplot(bank, aes(age, fill=marital)) +
+  geom_bar(position="fill")
+```
+
+As age increases, the proportion of people who are single generally decreases while the proportion of people married and proportion of people divorced generally increases. This is within expectations people start off as singles and then possibly get married, before possibly getting divorced. So the rise in proportion of people divorced lags the rise in proportion of people married.
+
+It might be better to visualize with bigger age bins.
+
+```{r}
+ggplot(bank, aes(age, fill=marital)) +
+  geom_histogram(position="fill", binwidth = 5) 
+```
+
+The trends are clearer from this plot.
+
+# Finding 6:
+
+Let's compare the average balance across different types of jobs. I will normalize the "balance" column and then sort job types based on their mean balance.
+
+```{r}
+bank2 <- bank %>%
+  dplyr::group_by(job) %>%
+  dplyr::summarise(mean_balance=mean(balance))
+bank2$balance_norm <- round((bank2$mean_balance - mean(bank2$mean_balance))/sd(bank2$mean_balance), 2) 
+bank2$balance_type <- ifelse(bank2$balance_norm < 0, "below", "above")
+bank2 <- bank2[order(bank2$balance_norm), ]
+bank2$job <- ordered(bank2$job, levels=levels(bank2$job)[unclass(bank2$job)])
+
+ggplot(bank2, aes(x=job, y=balance_norm)) + 
+  geom_bar(stat='identity', aes(fill=balance_type), width=.5)  +
+  coord_flip()
+```
+
+We might initially expect people in occupations that pay more to have higher average balance. This is supported by the fact that occupations like management and services having higher average balance than blue-collar jobs. However, it seems like another important factor is the source of spending. Retirees and students do not earn salaries, so they spend from their savings and hence they have greater need to save (i.e higher balance). Similarly, entrepreneurs have uncertain future cashflows and might not draw salaries from their business ventures, so they might spend directly from their savings and they need to save more in case their business fails (rainy-day funds). Perhaps the most interesting point in this chart is the fact that students have higher average balance than more than half of the other occupation types. 
+
+# Finding 7:
+
+Let's visualize the distribution of age for different types of jobs.
+
+```{r}
+ggplot(bank, aes(age, col=job, fill=job, alpha=0.3)) +
+  geom_density() +
+  facet_wrap(.~job)
+```
+
+Many of the distributions are right skewed and resemble lognormal distribution. 
+
+# Finding 8:
+
+Let's visualize the relationship between last contact duration and response to current campaign.  
+
+```{r}
+ggplot(bank, aes(y, duration, fill=y)) +
+  geom_boxplot(outlier.shape = NA) +
+  scale_y_continuous(limits=c(-100, 1500)) + 
+  facet_wrap(.~job)
+```
+
+It seems that regardless of occupation, last contact duration is higher for people who responded positively to the current campaign. 
+
+# Finding 9:
+
+Let's visualize the relationship between previous outcome and response to current campaign
+
+```{r}
+ggplot(bank, aes(poutcome, fill=y)) +
+  geom_bar(position="fill") +
+  facet_wrap(.~job)
+```
+
+We see that having a successful outcome previously boosts the success rate of the current campaign significantly, across all occupations, except for "unknown" occupation. 
+
+# Finding 10:
+
+Let's visualize the relationship between occupation and response to current campaign. Similar to Finding 6, I will normalize the success rate of each job and then sort job types based on their success rate.
+
+```{r}
+bank4 <- bank %>% 
+  dplyr::group_by(job) %>%
+  dplyr::summarise(count=n())
+bank5 <- bank %>%
+  dplyr::filter(y=="yes") %>%
+  dplyr::group_by(job) %>%
+  dplyr::summarise(count_y=n())
+bank6 <- dplyr::left_join(bank4, bank5, by="job")
+bank6$success_rate <- bank6$count_y / bank6$count
+
+bank6$success_rate_norm <- round((bank6$success_rate - mean(bank6$success_rate))/sd(bank6$success_rate), 2) 
+bank6$success_type <- ifelse(bank6$success_rate_norm < 0, "below", "above")
+bank6 <- bank6[order(bank6$success_rate_norm), ]
+bank6$job <- ordered(bank6$job, levels=levels(bank6$job)[unclass(bank6$job)])
+
+ggplot(bank6, aes(x=job, y=success_rate_norm)) + 
+  geom_bar(stat='identity', aes(fill=success_type), width=.5)  +
+  coord_flip()
+```
+
+We see that retirees and students are significantly more likely to take up the deposit in the current campaign, compared to other occupations. 

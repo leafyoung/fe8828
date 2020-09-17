@@ -1,0 +1,150 @@
+---
+title: "session3_exploratory"
+author: "Tan Wang Quan"
+date: "9/22/2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(dplyr)
+library(lubridate)
+library(bizdays)
+library(kableExtra)
+library(stringr)
+
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1: Data Count
+This data contains **`r nrow(bank)`** rows.  
+
+# Finding 2: Age Group
+```{r agegroup}
+# Find the big age group
+bank %>%
+ group_by(age_group = (age %/% 10) * 10) %>%
+ summarise(count = n()) %>%
+ arrange(age_group) -> res
+plot(res$age_group, res$count,main="Distribution of Age Group",xlab="Age Group", ylab="Count")
+```  
+
+# Finding 3: Top Employment
+```{r employment}
+#apply function group_by,summarise, arrange, rename.
+bank%>%group_by(job)%>% summarise(Total=n())%>%arrange(-Total)%>% rename(Job=job) -> sortedJob
+
+knitr::kable(head(sortedJob,n=3),format = "html",padding = 2) %>%kable_styling(full_width = TRUE)
+
+```
+
+The top three jobs are **`r first(sortedJob$Job)`** followed by **`r nth(sortedJob$Job,2)`** and **`r nth(sortedJob$Job,3)`**
+
+
+# Finding 4: Marital Status by Percentage
+```{r maritalstatus }
+#apply function group_by, mutate
+bank%>%group_by(marital)%>%summarise(Total=n())%>%mutate(Percentage=round(Total/sum(Total),digits=2))%>%arrange(-Total)%>%rename(`Marital Status`=marital)->status
+
+knitr::kable(status, format = "html",padding = 2) %>%kable_styling(full_width = TRUE)
+
+```
+The top marital status is **`r first(status$"Marital Status")`** with percentage of **`r first(status$"Percentage")`**
+
+# Finding 5: Mean Age and Balance by Job
+```{r ByJob}
+#apply group by, summarise, filter function
+bank_summary1 <- function(df) {
+  df %>%
+    group_by(job) %>%
+      summarise(`Mean Age` = mean(age), `Mean Balance` = mean(balance))
+}
+
+df1<- bank%>% bank_summary1()
+knitr::kable(df1,format = "html",padding = 2)  %>%kable_styling(full_width = TRUE)
+a1<-dplyr::filter(df1,`Mean Age`==min(df1$`Mean Age`))%>%select(job)
+a2<-dplyr::filter(df1,`Mean Age`==max(df1$`Mean Age`))%>%select(job)
+a3<-dplyr::filter(df1,`Mean Balance`==min(df1$"Mean Balance"))%>%select(job)
+a4<-dplyr::filter(df1,`Mean Balance`==max(df1$"Mean Balance"))%>%select(job)
+
+```
+The job with the lowest mean age is **`r a1$job`**.  
+The job with the highest mean age is **`r a2$job`**.  
+The job with the lowest mean balance is **`r a3$job`**.  
+The job with the highest mean balance is **`r a4$job`**.
+
+# Finding 6: Range of Balance by Marital Status
+```{r ByMaritalStatus}
+#apply filter and left join function
+bank_summary2 <- function(df) {
+  df %>%
+    group_by(marital) %>%
+      dplyr::filter(min_rank(balance)==1|min_rank(desc(balance))==1)%>%arrange(marital,balance)%>%select(marital,balance)
+}
+
+df2<- bank%>% bank_summary2()
+
+
+
+df2%>%group_by(marital)%>%summarise(Range=max(balance)-min(balance)) -> df3
+df4<-left_join(df2,df3,by="marital")
+
+knitr::kable(head(df4),format = "html",padding = 2) %>%kable_styling(full_width = TRUE)
+
+```
+The marital status with the highest range in balance is **`r dplyr::filter(df4, Range==max(df4$Range))%>%select(marital)%>%head(.$marital,n=1)`**.
+
+
+
+# Finding 7: Mean Age and Balance by Education
+```{r byEducation }
+#apply group_by, summarize, arrange
+bank_summary3 <- function(df) {
+  df %>%
+    group_by(education) %>%
+      summarise(Count=n(),`Mean Age` = mean(age), `Mean Balance` = mean(balance)) %>%arrange(-Count)
+}
+
+df3<- bank%>% bank_summary3()
+knitr::kable(head(df3),format = "html",padding = 2) %>%kable_styling(full_width = TRUE)
+```
+The majority of the population has a **`r first(df3$education)`** education level. The mean age and balance of people in this category are **`r first(df3$"Mean Age")`** and **`r first(df3$"Mean Balance")`** respectively. 
+
+
+# Finding 8: Mean Balance by Age Group
+```{r balancebyage}
+#apply case_when function
+bank_summary4 <- function(df) {
+  df %>%
+    mutate('Age Group'= case_when(age<20~"Youth", age<40~"Middle", age<65~"Senior",TRUE~"Above 65") ) %>% group_by(`Age Group`)%>%summarise(`Mean Balance`=mean(balance))%>%arrange(-`Mean Balance`)
+      
+}
+
+df4<- bank%>% bank_summary4()
+
+knitr::kable(df4,format = "html",padding = 2)  %>%kable_styling(full_width = TRUE)
+
+```
+The age group with the highest mean balance is **`r first(df4$"Age Group")`**
+
+# Finding 9: Housing and Loan Combination
+```{r house_loan}
+#apply string combine function 
+
+y <- bank %>% mutate(Housing_Loan_Combination = str_c(housing,loan,sep=",")) %>% group_by(Housing_Loan_Combination) %>% summarise(Count=n())%>%arrange(-Count)
+y
+
+knitr::kable(y,format = "html",padding = 2)  %>%kable_styling(full_width = TRUE)
+
+```
+The majority of the population fall in this housing and loan combination **`r first(y$"Housing_Loan_Combination")`**
+
+# Finding 10: Age and Balance by Default Count
+```{r EducationByAge}
+#apply group_by , summarise, arrange function. 
+df_default<- bank%>% group_by(default)%>% summarise(Count=n(),`Mean Age`= mean(age), `Mean Balance`= mean(balance)) %>% arrange(-Count)
+knitr::kable(df_default,format = "html",padding = 2)  %>%kable_styling(full_width = TRUE)
+
+```
+
+The default rate is **`r last(df_default$Count)/(last(df_default$Count)+first(df_default$Count))`** and the mean age of defaultee is **`r last(df_default$"Mean Age")`**

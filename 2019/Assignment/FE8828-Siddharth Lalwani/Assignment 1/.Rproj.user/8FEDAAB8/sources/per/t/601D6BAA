@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1568705297352.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4159860118",
+    "id" : "601D6BAA",
+    "lastKnownWriteTime" : 1568705946,
+    "last_content_update" : 1568705946792,
+    "path" : "E:/R Assignments/demo3/GTrend.Rmd",
+    "project_path" : "GTrend.Rmd",
+    "properties" : {
+        "cursorPosition" : "7,42",
+        "scrollLine" : "0",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

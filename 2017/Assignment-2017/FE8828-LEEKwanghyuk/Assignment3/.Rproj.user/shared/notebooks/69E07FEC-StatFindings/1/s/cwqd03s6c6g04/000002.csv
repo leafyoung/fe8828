@@ -1,0 +1,2 @@
+"0","rng <- range(arrange(bank, balance)$balance)"
+"0","hist(arrange(bank, balance)$balance, xlim=rng, nclass=10, xlab=""balance"", main=""Histogram of balance"")"

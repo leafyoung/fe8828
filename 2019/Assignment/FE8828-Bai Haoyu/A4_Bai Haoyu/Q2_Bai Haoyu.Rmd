@@ -1,0 +1,182 @@
+---
+title: "EDA with ggplot2"
+author: "Bai Haoyu G1900411H"
+date: "13/10/2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+"housing" is an indicator of whether a custormer has housing. The result is actually quite surprising.
+<p>
+Intuitivly, older people should have a higher chance of having a house, as they have had a longer period of accumulating wealth and a higher possibility of settling down. However, the graph shows aged people (age > 60) are much less likely to have a house. 
+<p>
+One explanation comes from marital status. 
+For Single aged customers, they do not have the incentive to settle down anymore, so buying a house will not increase their happiness. For Married aged customer, they may live in their husband/wife's house, so no need to buy a house.For Divorced aged customer, they may simply have lost their house when divoring...
+```{r Finding 1, echo = TRUE}
+ggplot(bank, aes(age, marital, color = housing)) + geom_point()
+```
+
+# Finding #2
+If aged (age>60) customers are less likely to have a house, are they more likely to be rich(a balance higher than 15000)? or rather have a loan?
+<p>
+From the graph, we can see aged customers (age>60) are less likely to be rich, but also less likely to have a loan.
+This can be interpreted using marital status and housing status.
+<p>
+1. From Finding #1, we know aged customers are less likely to have a house, so they are less likely to have a loan for housing. Meanwhile, older people are more conservative, and are less likely to apply for a loan for daily spends. Thus, it is understandable that aged customers are less likely to have a loan. 
+<p>
+2. For Single and Divorced aged customers, they do not have an incentive to leave a legacy to children, so they are more likely to spend more, and thus have lower bank balances
+<p>
+3. For Married aged customers, they may have give their money to children to buy houses (a common practice in China - POOR PARENTS), and thus have lower bank balances.
+```{r Finding 2, echo = TRUE}
+# we use balance > 15000 to indicate rich
+bank <- mutate(bank, deposit_sign = ifelse(balance > 15000,"rich","poor"))
+ggplot(bank, aes(age, marital, alpha = deposit_sign)) + geom_point()
+ggplot(bank, aes(age, marital, alpha = loan)) + geom_point()
+```
+
+# Finding #3
+Poor aged people, no matter the marital status, they are less likely to have a house, less likely to be rich, but luckily less likely to have a loan.
+<p>
+Then, how's their daily life? My assumption is, if someone is living a good life, they won't have too much time to spend on the line with the bank.
+<p>
+From the graph, we can see aged customers (age>60) on average spend a higher time(duration) on the line with the bank. So they are not living a good life. This finding is consistent with Finding 1 and Finding 2. 
+```{r Finding 3, echo = TRUE}
+bank <- mutate(bank, age_group = (age %/% 10) * 10)
+ggplot(bank, aes(age_group, duration, group = age_group)) + geom_point() + geom_boxplot() +
+  stat_summary(fun.y = mean,geom = "point", colour="red", size=2)
+```
+<p>
+So SAD! Investigating aged customers (age>60) breaks my heart. I need to move on to something else.
+
+# Finding #4
+My parents always tell me, there is gold houses and beautiful girls in books, study hard I can get both(an old chinese saying). But, is it true?
+Well, the girl part is not contained in the data, the "getting rich" part is investigated. My assumption is a high balance implies being rich.
+<p>
+Intially the first graph was generated, but no conclution could be drawn from it, as it is so badly affected by outliers. So I limited the balance to be less than 20000 and generated the density graph again.
+<p>
+Well, guess what? balance has similar distribution for different education levels, a higher education level not necessarily give you a higher possibility to be rich! (But, the girls part still could be true!)
+```{r Finding 4, echo = TRUE}
+ggplot(bank, aes(balance, fill= education)) + geom_density()
+bank_f4 <- dplyr::filter(bank, balance<20000)
+ggplot(bank_f4, aes(balance, color = education, alpha = 0.3)) + geom_density()
+```
+
+# Finding #5
+Education makes people more civilized and have greater sense of responsibility. Does higher education level implies better mirrage?
+From the graph, no, the probabilities of geting divorced are very similar among all education levels.
+<p>
+And higher education level (tertiary) can even lead to higher possibility of being single...
+```{r Finding 5, echo = TRUE}
+ggplot(bank) + geom_bar(mapping = aes(x=education, fill = marital), position = "fill")
+```
+
+# Finding #6
+Being well-educated cannot lead to better bank balance or marrige, so I move my focus to choosing a right career path. 
+<p>
+I am interested in the roles of "management", "entrepreneur" and "technician", so I investigate their balance vs age.
+<p>
+1. For entrepreneur, it's balance is very volatile and has the possibility of being lower than the population balance.
+<p>
+2. For technician, it's balance is better than "entrepreneur", but still has a high chance to be lower than the population balance. 
+<p>
+3. For management, it has advantage at all ages except early 20's, and has a longer career length (until 70)
+<p>
+4. Comparing with the three, management still seems to be the best choice.
+```{r Finding 6, echo = TRUE}
+managements <- dplyr::filter(bank, job == "management")
+ggplot(managements) +
+  geom_point(aes(x = age, y = balance)) +
+  geom_smooth(data = managements,
+              aes(x = age, y = balance), color = "red", method = "loess") +  
+  geom_smooth(data = bank, 
+              aes(x = age, y = balance), color = "black", method = "loess") +
+ylim(-500, 15000)
+
+entrepreneurs <- dplyr::filter(bank, job == "entrepreneur")
+ggplot(entrepreneurs) +
+  geom_point(aes(x = age, y = balance)) +
+  geom_smooth(data = entrepreneurs,
+              aes(x = age, y = balance), color = "red", method = "loess") +  
+  geom_smooth(data = bank, 
+              aes(x = age, y = balance), color = "black", method = "loess") +
+ylim(-500, 15000)
+
+technicians <- dplyr::filter(bank, job == "technician")
+ggplot(technicians) +
+  geom_point(aes(x = age, y = balance)) +
+  geom_smooth(data = technicians,
+              aes(x = age, y = balance), color = "red", method = "loess") +  
+  geom_smooth(data = bank, 
+              aes(x = age, y = balance), color = "black", method = "loess") +
+ylim(-500, 15000)
+
+allthree <- bind_rows(managements, entrepreneurs)
+allthree <- bind_rows(allthree, technicians)
+ggplot(technicians) +
+  geom_point(aes(x = age, y = balance)) +
+  geom_smooth(data = dplyr::filter(allthree, job == "management"),
+              aes(x = age, y = balance), color = "red", method = "loess") +  
+  geom_smooth(data = dplyr::filter(allthree, job == "entrepreneur"), 
+              aes(x = age, y = balance), color = "yellow", method = "loess") +
+  geom_smooth(data = dplyr::filter(allthree, job == "technician"), 
+              aes(x = age, y = balance), color = "green", method = "loess") +
+ylim(-500, 15000)
+```
+
+# Finding #7
+So, what does it take to work in the management? Education? Marriage? or Contact(cellular means more travels)?
+<p>
+1. Apparently, being a management requires better education. Management has the highest percentage of "tertiary".
+<p>
+2. Managment has the highest possibility of getting divorced, and second highest possibility of of being single.
+<p>
+3. Management has the highest percentage of using cellular, so they do travel more.
+```{r Finding 7, echo = TRUE}
+ggplot(allthree) + geom_bar(mapping = aes(x=job, fill = education), position = "fill")
+ggplot(allthree) + geom_bar(mapping = aes(x=job, fill = marital), position = "fill")
+ggplot(allthree) + geom_bar(mapping = aes(x=job, fill = contact), position = "fill")
+```
+<p>
+I guess I will continue studying hard!
+
+# Finding #8
+1. No matter with a house or not, divorced customers tend to have a low balance. This is consistent with Finding #9 in Assignment 3.
+<p>
+2. Married customers with no housing tend to have higher balance than those who have housing - very intuitive, especially when housing price is this high!
+<p>
+3. Single customers have similar balance no matter with or without housing.
+```{r Finding 8, echo = TRUE}
+ggplot(data = bank) +
+    geom_point(mapping = aes(x = age, y = balance)) +
+    facet_wrap(marital ~ housing, nrow = 3)
+```
+
+# Finding #9
+1. Not supurisingly, higher education level means higher probability of having a positive balance. 
+<p>
+2. However, entrepreneurs are less likely to have a negative balance according to the graph, which againsts with finding 6. One possible explanation is PE/VC always provide enough funding to the entrepreneurs to keep them from bankruptcy.
+```{r Finding 9, echo = TRUE}
+bank <- mutate(bank, balance_sign = ifelse(balance > 0, "+", "-"))
+allthree <- mutate(allthree, balance_sign = ifelse(balance > 0, "+", "-"))
+ggplot(bank) + geom_bar(aes(x = education, fill = balance_sign), position = "fill") 
+ggplot(allthree) + geom_bar(aes(x = job, fill = balance_sign), position = "fill") 
+```
+
+# Finding #10
+Two simple observation to wrap up this long and in-depth analyis.
+<p>
+1. People tend to get married in early 20's and start to get divorced in late 20's. After 70 there is nealy no new divorced customer.
+<p>
+2. Most customers in this dataset have age between 20 and 60. Before 20 young people are not eligible to apply for credit card, and older people like to use cash.
+```{r Finding 10, echo = TRUE}
+ggplot(bank) + geom_bar(mapping = aes(x=age, fill = marital), position = "fill")
+ggplot(bank) + geom_bar(mapping = aes(x=age))
+```

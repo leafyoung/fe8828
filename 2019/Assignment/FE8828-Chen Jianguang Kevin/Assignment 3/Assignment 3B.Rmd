@@ -1,0 +1,133 @@
+---
+title: "FE8828 Assignment 3B: Exploratory Data Analysis"
+author: "Chen Jianguang Kevin"
+date: "10/4/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(tidyr)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align = "center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+This bank wants to know Level 1 (External) information on the data set. The data contains `r dim(bank)[1]` observations and `r ncol(bank)` variables.
+
+# Finding #2
+This bank wants to know Level 2 (Internal) information on the data set. The total bank balance is $`r sum(bank$balance)`, the median bank balance is $`r median(bank$balance)` and the average bank balance is $`r round(mean(bank$balance),2)`.
+
+# Finding #3
+The bank wants to decide how to segment different banking tiers (Retail, Premier, Treasures) based on existing clients' bank balances. After analysis, the bank sees core concentration of bank balances below $30,000. As such, the bank decided to set Treasures Banking as >$20K, Premier Banking as >$10K and Retail Banking as <=$10K.
+```{r}
+bank %>%
+ group_by(bal_grp = (balance %/% 1000) * 1000) %>%
+ summarise(count = n()) %>%
+ arrange(bal_grp) -> banktier
+banktier
+plot(banktier$bal_grp, banktier$bal_grp)
+```
+
+# Finding #4
+The bank wants to find out which three jobs poses the highest default risk, so the bank can create more stringent credit checks on loan applications from these individuals in future. After analysis, they are entrepreneurs (4.17%), self-employed (2.19%) and unemployed (2.34%).
+```{r}
+bank %>%
+ group_by(job) %>%
+ summarise(count = n(),
+           default_count = sum(ifelse(default == "no", 0, 1)),
+           default_ratio = default_count * 100 / count) %>%
+            arrange(job) -> defaultconc
+defaultconc
+defaultconc %>%
+ggplot(aes(x = job, y = default_ratio)) +
+  geom_point(aes(size = 20), alpha = 1/2, color = "red")
+```
+
+# Finding #5
+The bank wants to find out whether it is feasible to launch a campaign based on marital status and housing loans. In particular, the bank also wants to focus on different marital status and those with houses but no loans.
+```{r}
+df1 <- group_by(bank, marital) %>%
+  summarise(`With housing` = sum(housing=="yes"))
+df2 <- group_by(bank, marital) %>%
+  summarise(`Without loan` = sum(loan=="no"))
+df3 <- group_by(bank, marital) %>%
+  summarise(`With house and no loan` = sum(housing=="yes" & loan=="no"))
+df4 <- left_join (df1, df2, by = "marital")
+df <- left_join (df4, df3, by = "marital")
+df
+```
+
+# Finding #6
+The bank is planning to create a programme to cater to clients with the highest balances. The bank needs to first understand what is the maximum balance for each occupation before customizing this programme.
+```{r}
+df <- group_by(bank, job) %>%
+  filter(balance == max(balance))
+df
+df %>%
+ggplot(aes(x = job, y = balance)) +
+  geom_point(aes(size = 20), alpha = 1/2, color = "green")
+```
+
+# Finding #7
+The bank wants to understands who are its most loyal clients (has been with the bank for at least 2 years). Then it can create a long-term campaign to target these loyal clients with less fear of them leaving the bank. After analysis, it finds out that they are the blue collar (68), management (53) and technician (37).
+```{r}
+df <- bank%>%
+  group_by(job) %>%
+  summarize (`No. Of Loyal Clients` = sum(duration > 2*365))
+df
+```
+
+# Finding #8
+The management team is very busy and just wants a quick overview on existing bank balances. As such, the balances are split into 8 quantiles and each quantile is identified with its median value.
+```{r}
+df <- group_by(bank, quantile = ntile(balance, 8)) %>%
+  summarise(Median_Of_Segment = median(balance))
+df
+df %>%
+ggplot(aes(x = quantile, y = Median_Of_Segment)) +
+  geom_point(aes(size = 20), alpha = 1/2, color = "blue") +
+  geom_smooth(se=FALSE)
+```
+
+# Finding #9
+The bank is thinking of launching a massive bank-wide campaign. It wants to find out which occupation coupled with a particular marital status would have the highest mean balance. The bank also wants to know the median age of a client in such a particular segment so that it can customize its campaign benefits.
+```{r}
+bank_summary <- function(frame1) {
+  frame1 %>%
+    group_by(job, marital) %>%
+    summarise(median_of_age = median(age), mean_of_balance = mean(balance)) %>%
+    ungroup() %>% 
+    mutate_if(is.factor, as.character)
+}
+frame2 <- bank %>%
+  bank_summary()
+frame3 <- bank %>%
+  mutate(marital = "+") %>% 
+  bank_summary()
+frame4 <- bank %>%
+  mutate(marital = "+", job = "+") %>%
+  bank_summary()
+frame5 <- bind_rows(frame2, frame3, frame4)
+frame5
+```
+
+# Finding #10
+The bank wants to create a special campaign for loans. It wants to target the occupation with the most number of people with no existing loans (Management (849), Blue-collar(790)) by offering special low interest rate packages. The bank also wants to target the occupation with the most number of people with existing loans (Blue-collar (156), Management (120))so that it can come up with special refinancing rates to ensure these clients do not leave the bank.
+```{r}
+df1 <- group_by(bank, job) %>% 
+  summarize(withloan = sum(ifelse(loan == "yes", 1, 0)),
+            noloan = sum(ifelse(loan == "no", 1, 0)))
+df2 <- gather(df1, loan_or_noloan, cases , -job) %>% 
+        arrange(desc(cases), loan_or_noloan, job)
+df2
+```
+
+
+
+
+
+

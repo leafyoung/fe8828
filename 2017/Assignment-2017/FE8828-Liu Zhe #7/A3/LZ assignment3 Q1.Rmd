@@ -1,0 +1,84 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Liu Zhe"
+date: "Nov 26, 2017"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = T)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+This data contains `r ncol(bank)` columns.
+
+# Finding #2
+Average age of bank customers: 41.17
+```{r Finding2, echo = TRUE, warning = FALSE}
+summarise(bank, AverageAge = sum(age)/nrow(bank))
+```
+
+# Finding #3
+Marital status of bank customers:
+```{r Finding3, echo = TRUE, warning = FALSE}
+group_by(bank, marital) %>% summarize(n=n())
+```
+
+# Finding #4
+Plot to find out which age group has higest unemployment NUMBER: 30s
+```{r Finding4, echo = TRUE, warning = FALSE}
+AgeGrpTable <- mutate(bank, AgeGroup = (age %/% 10) * 10)
+AgeGrpNumber <- group_by(AgeGrpTable, AgeGroup) %>% summarize(TotalNumber=n())
+
+UnemployedNumber <- (dplyr::filter(AgeGrpTable, job == "unemployed") %>%
+group_by(AgeGroup) %>% summarize(UnemployedNumber=n()))
+
+plot(UnemployedNumber)
+```
+
+# Finding #5
+Plot to find out which age group has higest unemployment RATE: 20s
+```{r Finding5, echo = TRUE, warning = FALSE}
+left_join(UnemployedNumber, AgeGrpNumber, by = "AgeGroup") %>% 
+  mutate(UnempRate = UnemployedNumber/TotalNumber) %>% arrange(desc(UnempRate))
+```
+
+# Finding #6
+How many people have negative bank account balance: 366
+```{r Finding6, echo = TRUE, warning = FALSE}
+summarize(bank, "balance <0" = sum(balance<0))
+```
+# Finding #7
+Which age group has most number of negative bank account balance: 30s
+```{r Finding7, echo = TRUE, warning = FALSE}
+NegAgeNumber <- dplyr::filter(AgeGrpTable, balance<0) %>% group_by(AgeGroup) %>% summarize(NegBalanceCount=n())
+plot(NegAgeNumber)
+```
+
+# Finding #8
+Which age group has highest ratio/likelihood of having negative bank account balance: 40s
+```{r Finding8, echo = TRUE, warning = FALSE}
+left_join(NegAgeNumber, AgeGrpNumber, by = "AgeGroup") %>% 
+  mutate(NegRatio = NegBalanceCount/TotalNumber) %>% arrange(desc(NegRatio))
+
+```
+
+# Finding #9
+Which job has most number of negative bank account balance: Blue-collar
+```{r Finding9, echo = TRUE, warning = FALSE}
+dplyr::filter(AgeGrpTable, balance<0) %>% group_by(job) %>% summarize(NegBalanceCount=n()) %>% arrange(desc(NegBalanceCount))
+```
+
+# Finding #10
+Are married people less likely to default? Yes, married people are less likely to default
+```{r Finding10, echo = TRUE, warning = FALSE}
+MarriedNum <- mutate(bank, married = ifelse(marital == "married","Married","Not Married")) 
+SumMarriedNum <- group_by(MarriedNum, married) %>% summarize(MarriedNumber = n())
+
+DefaultNum <-((dplyr::filter(MarriedNum, default == "yes")) %>% group_by(married) %>% summarize(defaultCount = n()))
+left_join(SumMarriedNum, DefaultNum, by = "married") %>% mutate(DefaultRatio = defaultCount/MarriedNumber)
+
+```
+

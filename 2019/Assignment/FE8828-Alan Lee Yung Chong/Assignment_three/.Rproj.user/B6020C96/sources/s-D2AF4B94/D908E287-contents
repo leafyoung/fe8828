@@ -1,0 +1,17 @@
+library(shiny)
+library(dplyr)
+
+
+ui <- fluidPage(
+  h4("Overall Data Visualisation"),
+  hr(),
+  tableOutput("t1")
+)
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+  # read the main data set
+  data <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+  output$t1 <- renderTable(data[1:10, ], striped=TRUE, hover=TRUE)
+}
+# Run the application
+shinyApp(ui = ui, server = server)

@@ -1,0 +1,103 @@
+---
+title: "10 Findings"
+author: "Zhou Xueming"
+date: "December 4, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse=TRUE, cache=TRUE)
+library(readr)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Markdown
+
+# Finding #1
+relationship between marital status and education
+```{r Finding1, echo = TRUE}
+ggplot(bank) + geom_bar(mapping = aes(x=education, fill = marital), position = "fill") + coord_flip()
+```
+
+#Finding 2
+Relationship between education and default:
+There's no obvious relationship between education level and default.But we can see from the plot that default risk may be larger in 
+younger groups.
+```{r finding2, echo=TRUE}
+ggplot(bank, aes(x = age, y = default, color = education)) +
+geom_point() +theme(legend.position="right")
+```
+
+#Finding 3
+relationship between loan status and age.
+we can see that more younger people are under loan while people above 60 generally under no loan. 
+```{r finding3, echo=TRUE}
+ggplot(bank)+geom_histogram(mapping=aes(x=age,fill=loan), position="dodge")
+```
+
+#Finding 4
+relationship between balance and age, grouped by housing status and education level.
+we can see that primary eudcation with housing group has lowest balance.
+```{r finding4, echo=TRUE}
+ggplot(data = bank) +
+geom_point(mapping = aes(age,balance)) +
+facet_wrap(education ~ housing, nrow = 1)
+```
+
+#Finding 5
+Relationship between defaul and age
+```{r finding5, echo=TRUE}
+ggplot(bank, aes(age, default)) + geom_point()
+```
+
+#Finding 6
+Relationship between marital and age
+```{r finding6, echo=TRUE}
+ggplot(bank, aes(age, marital)) + geom_point()
+```
+
+#Finding 7
+```{r finding7, echo=TRUE}
+ggplot(bank, mapping = aes(x = job, fill = housing)) +
+geom_bar() + coord_flip()+
+ggtitle("housing vs job")
+```
+
+#Finding 8
+duration according to age and contact
+Telephone group has shorter duration compared to other groups.
+```{r finding8, echo=TRUE}
+ggplot(bank) + geom_point(aes(age, duration, color = contact))
+```
+
+
+
+#Finding 9
+Relationship between housing and balance
+```{r finding9, echo=TRUE}
+ggplot(bank, aes(age,balance)) +
+  geom_bar(aes(fill = housing), stat = "identity") +
+  ggtitle("housing vs balance")
+```
+
+#Finding 10
+marital status in different kind of jobs
+```{r finding10, echo=TRUE}
+ggplot(data = bank, mapping=aes(x=reorder(job, age, FUN=mean), fill=marital))+
+  geom_bar()+coord_flip()
+```
+
+
+
+
+
+
+
+
+
+
+

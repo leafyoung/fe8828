@@ -1,0 +1,104 @@
+---
+title: "FE8828 Assignment for Data"
+author: "Juilee Save <sub> <Email:juilee001@e.ntu.edu.sg> </sub>"
+date: "Dec 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding 1
+**Customers age vs balance**  
+Balance increases slightly with age
+```{r, echo = TRUE}
+ggplot(bank, aes(age, balance)) + 
+  geom_point() + 
+  geom_smooth(method = "loess") 
+```
+
+# Finding 2
+**Customers age vs balance with education as second geometry**  
+Balance of customers with tertiary education are more spread out
+```{r, echo = TRUE}
+ggplot(bank, aes(age, balance, color = education)) + 
+  geom_point() + 
+  theme(legend.position="bottom")
+```
+
+# Finding 3
+**Boxplot of duration vs type of contact**  
+Duration of campaign calls are higher on cellular phones
+```{r, echo = TRUE}
+ggplot(bank, aes(contact, duration)) + 
+  geom_boxplot() + 
+  coord_flip()
+```
+
+# Finding 4
+**Bar Graph of jobs grouped by education**  
+Management profesionals followed by technicians tend to have tertiary education   
+Blue collared and housemaids tend to have primary education
+```{r, echo = TRUE}
+ggplot(data = bank, mapping = aes(x = job, fill = education)) +
+  geom_bar() +
+  coord_flip()
+```
+
+# Finding 5
+**Histogram of age grouped by housing**  
+The median age group, around 30-45 tends to have more people owning housing
+```{r, echo = TRUE}
+ggplot(bank, mapping = aes(x = age, fill = housing)) + 
+  geom_histogram(binwidth = 5)
+```
+
+# Finding 6
+**Density plot of age by education**  
+Younger customers tend to be more educated
+```{r, echo = TRUE}
+ggplot(bank, aes(age, color = education)) + geom_density() 
+```
+
+# Finding 7
+**Bar plot of age grouped by marital status**  
+Percentage of married and divorced people increases with age
+```{r, echo = TRUE}
+ggplot(bank) + 
+  geom_bar(mapping = aes(x = age, fill = marital), position = "fill")
+```
+
+# Finding 8
+**Plot age group with duration statistics**  
+The minimum and mean duration of calls increases with age
+```{r, echo = TRUE}
+ggplot(data = bank) +
+stat_summary(
+mapping = aes(x = age, y = duration),
+fun.ymin = min,
+fun.ymax = max,
+fun.y = mean)
+```
+
+# Finding 9
+**Density of customers subscribing to term deposit by duration of campaign calls**  
+Chances of subscribing increase with duration of call
+```{r, echo = TRUE}
+ggplot(bank, aes(duration, color = y, fill = y, alpha = .5)) + geom_density() 
+```
+
+# Finding 10
+**Balance vs age grouped into facets by job**  
+Management and technicians tend to have higher balances  
+Students are the youngest age group, retired people are the oldest  
+Entrepreneurs and retired people have large variations in balance
+```{r, echo = TRUE}
+ggplot(data = bank) +
+geom_point(mapping = aes(x = age, y = balance, color = job)) +
+facet_wrap(~ job, nrow = 2)
+```

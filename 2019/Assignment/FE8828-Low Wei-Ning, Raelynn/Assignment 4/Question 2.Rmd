@@ -1,0 +1,139 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Low Wei-Ning, Raelynn"
+date: "9/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+library(ggplot2)
+library(gridExtra)
+library(tidyverse)
+library(knitr)
+```
+
+# Data Insight #1
+
+``` {r show_figure1, fig.width = 8, fig.height =3}
+df1 <- bank %>% filter(education!="unknown")
+ggplot(df1,aes(age,duration)) +
+geom_smooth(aes(color=education),method="lm") +
+facet_grid(. ~education) +
+scale_y_log10()
+```
+
+## Customers with secondary education are more willing to entertain promotional calls as they grow older while customers with tertiary education are less willing to entertain promotional calls as they grow older.
+
+# Data Insight #2
+
+``` {r show_figure2, fig.width = 8, fig.height = 5}
+    df2 <- bank %>% 
+    filter(job!="student",job!="unknown")
+    ggplot(df2) +
+    geom_bar(aes(x=job,fill=marital),position="fill") +
+    coord_polar()
+```
+
+## Excluding students and the customers whose jobs are unknown, people who are technicians are the most likely to be single.
+
+# Data Insight #3
+
+``` {r show_figure3, fig.width = 6, fig.height = 3}
+    df3 <- bank %>% filter(pdays!=-1) 
+    ggplot(df3, aes(marital,pdays)) +
+    geom_boxplot(notch=TRUE,outlier.colour="red") + 
+    coord_flip() 
+```
+    
+## Among customers who have been contacted for previous campaigns, divorced customers on average have not been contacted for a longer period of time.
+
+# Data Insight #4
+
+``` {r show_figure4, fig.width = 6, fig.height =3}
+    df4 <- bank %>% 
+    mutate(Month=paste(toupper(substr(month,1,1)),substr(month,2,3),sep="")) %>% 
+    group_by(Month) %>% summarise(count=n())
+    df4$Month = factor(df4$Month, levels = month.abb)
+    ggplot(df4, aes(Month, count)) + geom_point() + scale_x_discrete(limits = month.abb)
+```
+
+## Fewest contacts for current campaign were made in December while the most contacts were made in May.
+
+# Data Insight #5
+
+``` {r show_figure5, fig.width = 6, fig.height =3}
+    df5 <- bank %>% filter(job!="unknown") %>% group_by(job) %>% summarise(`Proportion of current contacts`=mean(campaign/(campaign+previous)))
+    ggplot(df5) + 
+    geom_point(aes(`Proportion of current contacts`,job),color="orange")
+```
+
+## Of all jobs, students have the lowest proportion of current contacts performed for the current campaign.
+
+# Data Insight #6
+
+``` {r show_figure6, fig.width = 8, fig.height =3}
+    df6 <- bank %>% filter(poutcome=="success") %>% group_by(education) %>%
+    summarise(housingyes=sum(ifelse(housing=="yes",1,0)))
+    df7 <- bank %>% filter(poutcome=="success") %>% group_by(education) %>%
+    summarise(housingno=sum(ifelse(housing=="yes",0,1)))
+    df8 <- distinct(bank,education) %>% arrange(education)
+    df8 <- left_join(df6,df6, by = "education")
+    df8 <- left_join(df6,df7, by = "education") 
+    ggplot(df8) + 
+    geom_point(aes(housingno,housingyes),color="green",size=3,alpha=0.5) +
+    facet_grid(. ~education) 
+```
+
+## Previous campaign was most popular with customers with secondary education and without housing loan.
+
+# Data Insight #7
+
+``` {r show_figure7, fig.width = 8, fig.height =3}
+    df9 <- bank %>% filter(y=="yes") %>% group_by(education) %>%
+    summarise(housingyes=sum(ifelse(housing=="yes",1,0)))
+    df10 <- bank %>% filter(y=="yes") %>% group_by(education) %>%
+    summarise(housingno=sum(ifelse(housing=="yes",0,1)))
+    df11 <- distinct(bank,education) %>% arrange(education)
+    df11 <- left_join(df11,df9, by = "education")
+    df11 <- left_join(df11,df10, by = "education")
+    ggplot(df11) + 
+    geom_point(aes(housingno,housingyes),color="purple",size=3,alpha=0.5) +
+    facet_grid(. ~education) 
+```
+    
+## Current campaign is most popular with customers with secondary education and without housing loan.
+
+# Data Insight #8
+
+``` {r show_figure8, fig.width = 6, fig.height =3}
+    df12 <- bank %>% group_by(y) %>%
+    summarise(`Mean duration`=mean(duration))
+    ggplot(df12) + 
+    geom_point(aes(y,`Mean duration`,size=`Mean duration`),alpha=0.5,color="darkblue")
+```
+
+## Customers which have subscribed for term deposit have an longer mean duration of the last contact by 326 seconds.
+
+# Data Insight #9
+
+``` {r show_figure9, fig.width = 8, fig.height =3}
+    df13 <- bank %>%
+    filter(education!="unknown")
+    ggplot(df13) + 
+    geom_bar(aes(x = job, fill = education),position = "fill") + 
+    coord_flip()
+```
+
+## Management has the highest proportion of people with teritary education.
+
+# Data Insight #10
+
+``` {r show_figure10, fig.width = 8, fig.height =3}
+    df14 <- bank %>% filter(default== "yes")
+    ggplot(df14, aes(age,fill=housing,alpha=0.2)) +
+    geom_density()
+```
+    
+## Customers with credit in default are more likely to around age 30 with housing loan.

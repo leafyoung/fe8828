@@ -1,0 +1,154 @@
+---
+title: "Q3OneTradeAnalysis"
+author: "TEAMPROJECT"
+date: "December 17, 2018"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(fOptions)
+library(dplyr)
+library(xts)
+```
+
+## ShowCase how deltahedging works as a trading strategy
+##How one trade works
+
+```{r SingleTrade,echo=FALSE}
+OptionsDataInitial <- read_excel("E:/gdrive/MFECourse/FE8828/2018/FE8828-Gaurav_Singh/Group_Assignment/QUESTION 3 FINAL RMD and EXCELFILES/optionsdata(datafor1month).xlsx")
+Optionsdata<-data.frame(OptionsDataInitial$Date,OptionsDataInitial$Close,OptionsDataInitial$IV30)
+Previous_Close<-Optionsdata$OptionsDataInitial.Close
+Optionsdata <- na.omit(Optionsdata)
+Previous_Close<-na.omit(Previous_Close)
+Previous_Close<-tail(Previous_Close,-1)
+Optionsdata<-head(Optionsdata,-1)
+Optionsdata<-data.frame(Optionsdata,Previous_Close)
+names(Optionsdata)[1]="Date"
+names(Optionsdata)[2]="Close"
+names(Optionsdata)[3]="IV30"
+names(Optionsdata)[4]="Previous_Close"
+Optionsdata <- na.omit(Optionsdata)
+xts_obj<-xts(Optionsdata,order.by=Optionsdata[,1])
+```
+
+
+
+```{r DATAPOOL, echo=FALSE}
+dates <- index(xts_obj)
+start_date <- min(dates)
+end_date <- max(dates)
+start_price <- xts_obj[start_date, "Close"]
+start_volatility <- xts_obj[start_date, "IV30"]
+```
+
+
+```{r ,echo=FALSE}
+df <- tibble(date = dates)
+df$Close <- xts_obj$Close
+df$IV30 <- coredata(xts_obj[, "IV30"])
+df$Previous_Close<-coredata(xts_obj[, "Previous_Close"])
+
+X <- start_price
+sigma = as.numeric(start_volatility)/100
+r <- 0.8 / 100
+b=1.73/100
+
+```
+
+##ANALYIS FOR ONE TRADE
+
+
+```{r analysis,echo=FALSE}
+#S <- df$Close
+vec1<-c()
+vec2<-c()
+Time1 <-as.numeric((end_date - df$date)/31536000)
+quantity=100
+#GBSOption(TypeFlag, S, X, Time, r, b, sigma)@price
+Strike_Price=round(as.numeric(df$Previous_Close[1]))
+delta1<-0
+    for(j in 1:20)
+    {
+      vec1[j]<-GBSGreeks("delta", TypeFlag="c", S=as.numeric(df$Previous_Close[1]), X=Strike_Price, Time=Time1[1], r=0.8/100, b=1.73/100, sigma=sigma)-0.4
+      vec2[j]=Strike_Price
+      Strike_Price=Strike_Price+1
+    }
+GBSGreeks("delta", TypeFlag="c", S=as.numeric(df$Previous_Close[1]), X=Strike_Price, Time=30/365, r=0.8/100, b=1.73/100, sigma=sigma)
+GBSOption(TypeFlag = "c",
+          S = as.numeric(df$Close[1]),
+          X =Strike_Price,
+          Time =Time1[1],
+          r=r,
+          b=b,
+          sigma=sigma)@price
+
+df_opt <-mutate(df,premium=GBSOption(TypeFlag = "c",
+                                                S = as.numeric(Previous_Close),
+                                                X =Strike_Price,
+                                                Time =Time1,
+                                                r=r,
+                                                b=b,
+                                                sigma=sigma)@price)%>%
+  ungroup%>%mutate(Option_DoD_PnL = ifelse(date == start_date,
+                                           premium * (-1)*quantity,
+                                           (premium*quantity) - dplyr::lag(premium*quantity)))
+
+
+df_opt <-mutate(df_opt,delta_hedge = round(GBSGreeks("delta", TypeFlag= "c", S = as.numeric(Previous_Close),  X =Strike_Price, Time=Time1, r=r,
+                                               b=b, sigma=as.numeric(IV30[1])/100) *
+        quantity * (-1)))
+  
+df_opt <-mutate(df_opt,Hedging_DoD_Pnl = ifelse(date == start_date,(delta_hedge * (as.numeric(Close) - (as.numeric(Previous_Close)))),(delta_hedge * (as.numeric(Close) - dplyr::lag(as.numeric(Close))))))
+df_opt<-mutate(df_opt,Net_PnL = Option_DoD_PnL + Hedging_DoD_Pnl)
+
+#sum(df_opt$Net_PnL)
+
+
+
+mutate(df_opt,PnL = cumsum(Hedging_DoD_Pnl)) %>%
+{
+  xs <- .$PnL
+  max(cummax(xs) - cummin(xs))
+}
+knitr::kable(
+  df_opt,
+  caption = "OPTIONS"
+)%>%kableExtra::kable_styling(full_width=F,position="left")
+
+```
+##Daily PnL Vs Time to Maturity ;split into stock and option
+##Final PnL:Accumulative of Daily PnL;split into stock and option
+
+```{r Plots,echo=FALSE}
+ggplot() + 
+  geom_line(color="Blue") + 
+  geom_line(aes(x=Time1*365,y=df_opt$Option_DoD_PnL), color="red") +
+  geom_line(aes(x=Time1*365,y=df_opt$Hedging_DoD_Pnl), color="blue") + 
+  theme_minimal()+scale_x_reverse()+labs(title = "Stock and Option PNL",x = "Time to Expiry", y = "Option(red) and Stock(blue) PnL ") 
+
+ggplot(df_opt, aes(x=Time1*365,y=df_opt$Net_PnL)) + 
+  geom_line(color="Blue") + 
+  theme_minimal()+labs(title = "Net Profit/Loss",x = "Time to Expiry", y = "Net PnL ") +scale_x_reverse()
+
+paste0(cat("FinalPnL:Accumulative of Daily PnL",cumsum(df_opt$Net_PnL)))
+```
+
+#SHARPE RATIO vs MONTH , MAXDRAWDOWN vs MONTH
+
+```{r SHARPE_MAXDRAWDOWN}
+ 
+SharpeRatio<-((sum(df_opt$Net_PnL)/(-1*df_opt$Net_PnL[1]))-(r*100))/stdev(cumsum(df_opt$Net_PnL))
+  MaxDrawdown<-mutate(df_opt,PnL=cumsum(df_opt$Net_PnL))%>%{
+    xs<- .$PnL
+    max(cummax(xs)-cummin(xs))
+  }
+paste(cat("Sharpe Ratio "), SharpeRatio)
+paste(cat("MaxDrawdown "), MaxDrawdown)
+```

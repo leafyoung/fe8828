@@ -1,0 +1,119 @@
+---
+title: "Assignment2"
+author: "Matthew Chan"
+date: "23 September 2019"
+output: html_document
+---
+
+Q1. Create count_bizday <- function(year) {  } with only base functions.
+
+I will loop over dates from 1st Jan to 31st Dec of the given year, then increase count (starting from 0) if it is not a weekend.  
+This does not account for holidays.
+
+```{r}
+count_bizday <- function(year){
+  start <- as.Date(paste0(year,"-01-01"))
+  end <- as.Date(paste0(year, "-12-31"))
+  dates <- seq(start, end, by = "days")
+  
+  output <- lapply(as.list(dates),
+                   function(e){
+                     out <- ifelse(strftime(e,'%A') != "Saturday",
+                                   ifelse(strftime(e,'%A') != "Sunday",
+                                          1, 0),
+                                   0)
+                   })
+  output <- sum(unlist(output, use.names=FALSE))
+  
+  return(output)
+}
+
+print(paste0("Number of business days (ex holidays) in 2000: ", count_bizday(2000)))
+print(paste0("Number of business days (ex holidays) in 2005: ", count_bizday(2005)))
+print(paste0("Number of business days (ex holidays) in 2019: ", count_bizday(2019)))
+print(paste0("Number of business days (ex holidays) in 2017: ", count_bizday(2017)))
+```
+
+Q2. secretary question
+
+Step 1: make_choice <- function(N, split_number)  
+
+I will create a make_choice function that simulates one iteration. Note that the person at the position of "split_number" is included in the evaluation group, not the selection group. Also note that if none in the selection group is better than the "best" from evaluation group (i.e. 100 is in evaluation group), then the last person will be selected. This is not material since we are interested in only the binary outcome of whether we get N or not in the selection group.
+
+```{r}
+make_choice <- function(N, split_number){
+  input_list <- sample(1:N, N)
+  eval_grp <- input_list[1:split_number]
+  sel_grp <- input_list[(split_number+1):N]
+  best <- max(eval_grp)
+  
+  select <- ifelse(length(which(sel_grp>=best))!=0,
+                   sel_grp[min(which(sel_grp>=best))],
+                   tail(sel_grp, 1))
+  return(select)
+}
+
+```
+
+Step 2: find_optimal(), calls Step 1 a few (hundred) times for each of the split number from 1 to N/2. So we can find the optimal value for the split for the N.  
+
+```{r}
+find_optimal <- function(N, iter){
+  results_vec <- 1:iter
+  splits_vec <- 1:round(N/2)
+  
+  splits_vec <- sapply(splits_vec, 
+                       function(e) {
+                         results <- sapply(results_vec, 
+                                           function(f){
+                                             output <- ifelse(make_choice(N, e)==N, T, F)
+                                             return(output)
+                                           })
+                         return(sum(results)/iter)
+                       })
+  plot(splits_vec, type="l")
+  print(paste0("Max probability of selecting N is ", max(splits_vec), ", with split_number = ", which(splits_vec==max(splits_vec))))
+}
+set.seed(200)
+find_optimal(100, 1000)
+```
+
+Q3. Birth ratio question. https://mathoverflow.net/questions/17960/google-question-in-a-country-in-which-people-only-want-boys  
+Simulate for 10 families, get the distribution of the ratio.  
+
+I will create a function (num_girls) that returns the number of girls a single family is simulated to have. I will create another function to simulate one iteration of this problem, with 10 families and using the num_girls() function. Note that I will use "percentage of girls" (rather than boys to girls ratio) since there is a chance that total number of girls in the 10 families is 0, resulting in NAs
+
+```{r}
+num_girls <- function(){
+  loop_switch <- T
+  count <- 0
+  while (loop_switch){
+    kid <- sample(c("girl","boy"), 1)
+    if (kid=="girl"){
+      count = count + 1
+    } else {
+      loop_switch <- F
+    }
+  }
+  return(count)
+}
+
+iter <- function(num_fam = 10){
+  results_vec <- sapply(1:num_fam, 
+                        function(e){
+                          return(num_girls())
+                        })
+  return(sum(results_vec)/(10+sum(results_vec)))
+}
+
+results_vec <- sapply(1:100000,
+                      function(e){
+                        return(iter())
+                      })
+hist(results_vec)
+summary(results_vec)
+```
+
+
+
+

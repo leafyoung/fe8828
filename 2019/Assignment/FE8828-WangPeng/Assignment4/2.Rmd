@@ -1,0 +1,104 @@
+---
+title: "FE8828 Assignment for EDA with ggplot"
+author: "Wang Peng <sub> <Email:pwang012@e.ntu.edu.sg> </sub>"
+date: "2019/10/13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(tidyr) 
+library(ggplot2)
+library(gridExtra)
+library(tidyquant)
+library(xts)
+library(dplyr)
+library(tibble)
+library(Quandl)
+library(caret)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r}
+#The 6th group of clients which is ordered according to balance has spent on average longer duration on last call of contract.
+fun_mean <- function(x){
+  mean(x) %>%
+  data.frame(y=.,label=mean(x,na.rm=T))}
+bank %>%mutate(balance_group = as.character(ntile(balance,10)))%>%
+group_by(balance_group) %>%
+arrange(balance_group) -> res1
+ggplot(res1, aes(balance_group, duration)) + geom_boxplot() + geom_point()+
+   stat_summary(fun.y = mean,geom = "point", colour="blue", size=3) + 
+  stat_summary(fun.data=fun_mean, geom="text", vjust= -0.5)
+```
+
+# Finding #2
+```{r}
+#The distribution of the balance of all clients is highly concentrated and clients with median account balance have large portion of default situations. 
+bank %>%arrange(balance)  -> res2
+ggplot(res2,aes(balance))+geom_density(aes(fill = default))
+```
+
+# Finding #3
+```{r}
+#We find that the maximum balance and age has a relationship characterized by U-shape curve.
+bank %>%
+group_by(age) %>%
+summarise(max_balance = max(balance))%>%
+arrange(age) -> res3
+ggplot(res3,aes(age,max_balance))+geom_point()+geom_smooth()
+```
+# Finding #4
+```{r}
+#The age group of 30s has the largest amount of loan situations 
+bank%>%mutate(age_group = (age %/% 10) * 10) %>%
+  ggplot(.) + geom_bar(mapping = aes(x=age_group, fill=loan))+coord_flip()
+```
+# Finding#5
+```{r}
+#Senior group will be more likely to subscribe a term deposit because they have generally more balance.
+bank%>%mutate(Senior = ifelse(age >= 60, "Senior", "Not Senior Yet")) %>% 
+  ggplot(.) + geom_bar(mapping = aes(x=Senior, fill=y),position = "fill")
+```
+# Finding#6
+```{r}
+#We find the distribution of balance for each group classfied by default status.
+ggplot(bank, aes(balance)) + geom_histogram() +
+facet_grid(. ~ default)
+```
+# Finding#7
+```{r}
+#Find the distribution of balance for each group classfied by education level. 
+ggplot(bank, aes(balance)) + geom_histogram() + facet_grid(. ~ education)
+
+```
+# Finding#8
+```{r}
+#We find that in general, clients with no occupations have lower balance in average and larger portion of them have lower level of education.
+bank8<- bank%>%mutate( employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "Not Employed"))
+res8 <- dplyr::filter(bank8, employment == "Not Employed")
+ggplot(data = res8) +
+geom_point(mapping = aes(x = age, y = balance)) +geom_smooth(aes(x = age, y = balance))+
+facet_wrap(~ education, nrow = 2)
+```
+# Finding#9
+```{r}
+#Clients with jobs will have lower chance of default across different group classfied by education level.
+bank9<- mutate(bank, employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "Not Employed"))
+res9 <- dplyr::filter(bank9, employment == "Employed")
+ggplot(data = res9) +
+geom_bar(mapping = aes(x=balance, fill=default),position = "fill") +
+facet_wrap(~ education, nrow = 2)
+```
+# Finding#10
+```{r}
+#Whether clients are employed or not does not have a major impact on whether they will have a positive balance account or not.
+bank10<- bank%>%mutate(employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "Not Employed"))
+res10 <- mutate(bank10, positive_balance = ifelse(balance >0, "positive_balance", "negative_balance"))
+ggplot(res10) + geom_bar(aes(x = employment, fill = positive_balance), position = "fill") 
+```

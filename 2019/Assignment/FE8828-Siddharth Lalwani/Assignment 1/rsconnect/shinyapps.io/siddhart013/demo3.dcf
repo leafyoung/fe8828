@@ -1,0 +1,12 @@
+name: demo3
+title: demo3
+username:
+account: siddhart013
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1204010
+bundleId: 2419653
+url: https://siddhart013.shinyapps.io/demo3/
+when: 1568707128.08905
+asMultiple: FALSE
+asStatic: FALSE

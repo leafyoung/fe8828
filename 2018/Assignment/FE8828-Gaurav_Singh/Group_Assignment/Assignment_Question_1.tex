@@ -1,0 +1,1835 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Group Assignment 1},
+            pdfauthor={Abhishek Vijaykumar,Gaurav Singh,Manav Mehra,Suman Gunda},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+
+  \title{Group Assignment 1}
+    \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+    \author{Abhishek Vijaykumar,Gaurav Singh,Manav Mehra,Suman Gunda}
+    \preauthor{\centering\large\emph}
+  \postauthor{\par}
+      \predate{\centering\large\emph}
+  \postdate{\par}
+    \date{December 17, 2018}
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+
+\begin{document}
+\maketitle
+
+\subsection{1.Setup for global
+configuration/libraries}\label{setup-for-global-configurationlibraries}
+
+\subsection{2.Random Account Numbers and
+Names}\label{random-account-numbers-and-names}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{startDateOrig<-}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2018-07-01"}\NormalTok{)}
+\NormalTok{endDateOrig<-}\KeywordTok{as.Date}\NormalTok{(}\StringTok{"2018-09-30"}\NormalTok{)}
+\NormalTok{startDate<-startDateOrig}
+\NormalTok{endDate<-endDateOrig}
+
+\CommentTok{#df1 Account num with names}
+\NormalTok{names<-}\KeywordTok{randomNames}\NormalTok{(}\DecValTok{10}\NormalTok{)}
+\NormalTok{sampleSize<-}\DecValTok{10}
+\NormalTok{accountNums<-}\KeywordTok{sample}\NormalTok{(}\DecValTok{100000}\OperatorTok{:}\DecValTok{100999}\NormalTok{,sampleSize,}\DataTypeTok{replace=}\OtherTok{FALSE}\NormalTok{)}
+\NormalTok{df1<-}\KeywordTok{data.frame}\NormalTok{(}\StringTok{"AccountNo"}\NormalTok{=accountNums,}\StringTok{"Name"}\NormalTok{=names)}
+\KeywordTok{kable}\NormalTok{(df1) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{kable_styling}\NormalTok{(}\DataTypeTok{bootstrap_options =} \KeywordTok{c}\NormalTok{(}\StringTok{"striped"}\NormalTok{,}\StringTok{"hover"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{r|l}
+\hline
+AccountNo & Name\\
+\hline
+100503 & Powers, Nichole\\
+\hline
+100413 & Tran, Stephanie\\
+\hline
+100765 & Thornton, Najavee\\
+\hline
+100493 & al-Kassem, Hasnaa\\
+\hline
+100302 & al-Nassif, Maa'iz\\
+\hline
+100683 & Marstrand, Ronald\\
+\hline
+100410 & Wu, Payton\\
+\hline
+100810 & el-Jafri, Musaaid\\
+\hline
+100253 & Atufunwa, Taylor\\
+\hline
+100747 & Mantelli, Ian\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{3.Making Empty Data Frame for
+Transactions}\label{making-empty-data-frame-for-transactions}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df2 <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\KeywordTok{matrix}\NormalTok{(}\DataTypeTok{ncol =} \DecValTok{6}\NormalTok{, }\DataTypeTok{nrow =} \DecValTok{0}\NormalTok{))}
+\KeywordTok{colnames}\NormalTok{(df2) <-}\StringTok{ }\KeywordTok{c}\NormalTok{(}\StringTok{"TransactionNo"}\NormalTok{,}\StringTok{"Date"}\NormalTok{,}\StringTok{"AccountNo"}\NormalTok{,}\StringTok{"TransactionType"}\NormalTok{,}\StringTok{"Amount"}\NormalTok{,}\StringTok{"Currency"}\NormalTok{)}
+\KeywordTok{kable}\NormalTok{(df2) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{kable_styling}\NormalTok{(}\DataTypeTok{bootstrap_options =} \KeywordTok{c}\NormalTok{(}\StringTok{"striped"}\NormalTok{,}\StringTok{"hover"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|l|l|l|l|l}
+\hline
+TransactionNo & Date & AccountNo & TransactionType & Amount & Currency\\
+
+
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{4.Making Data Frame for Currency Conversion With Values
+adjusted for missing days by taking the last known
+value}\label{making-data-frame-for-currency-conversion-with-values-adjusted-for-missing-days-by-taking-the-last-known-value}
+
+\subsection{Data from the internet stored in excel file and
+imported}\label{data-from-the-internet-stored-in-excel-file-and-imported}
+
+\begin{verbatim}
+## [1] "Sample Currency Concersion Table \n"
+\end{verbatim}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|l|r|l}
+\hline
+  & Currency & Conversion & Date\\
+\hline
+75 & CNY & 4.8632 & 2018-07-05\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{5.Seeding initial balance}\label{seeding-initial-balance}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{df4 <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\StringTok{"AccountNo"}\NormalTok{=accountNums,}\StringTok{"DepositBalance"}\NormalTok{=}\KeywordTok{sample}\NormalTok{(}\DecValTok{5000}\OperatorTok{:}\DecValTok{10000}\NormalTok{,sampleSize),}\StringTok{"CreditBalance"}\NormalTok{=}\KeywordTok{sample}\NormalTok{(}\DecValTok{5000}\OperatorTok{:}\DecValTok{10000}\NormalTok{,sampleSize))}
+\KeywordTok{kable}\NormalTok{(df4) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{kable_styling}\NormalTok{(}\DataTypeTok{bootstrap_options =} \KeywordTok{c}\NormalTok{(}\StringTok{"striped"}\NormalTok{,}\StringTok{"hover"}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{r|r|r}
+\hline
+AccountNo & DepositBalance & CreditBalance\\
+\hline
+100503 & 7922 & 9057\\
+\hline
+100413 & 8050 & 9034\\
+\hline
+100765 & 5090 & 7246\\
+\hline
+100493 & 8085 & 5034\\
+\hline
+100302 & 8858 & 9889\\
+\hline
+100683 & 5568 & 8760\\
+\hline
+100410 & 6667 & 9963\\
+\hline
+100810 & 7754 & 9160\\
+\hline
+100253 & 9706 & 8505\\
+\hline
+100747 & 6515 & 5565\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{6.Seeding random Transactionsentries ( value to be added
+later
+)}\label{seeding-random-transactionsentries-value-to-be-added-later}
+
+\subsection{7.Seeding random Transactions values based on boundary
+conditions}\label{seeding-random-transactions-values-based-on-boundary-conditions}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|l|l|r|r|l|r|r|r|r|r}
+\hline
+  & Date & Currency & TransactionNo & AccountNo & TransactionType & Amount & DepositBalance & CreditBalance & EquivalentSGD & Conversion\\
+\hline
+30 & 2018-07-03 & USD & 2018011 & 100503 & Payment & -3036.00 & 7922.00 & 6021 & 0 & 0.7327\\
+\hline
+51 & 2018-07-05 & SGD & 2018012 & 100503 & Payment & -609.00 & 7922.00 & 5412 & 0 & 1.0000\\
+\hline
+53 & 2018-07-05 & USD & 2018013 & 100503 & Payment & -7715.00 & 5619.00 & 0 & 0 & 0.7328\\
+\hline
+72 & 2018-07-06 & SGD & 2018014 & 100503 & Withdrawal & -3889.00 & 1730.00 & 0 & 0 & 1.0000\\
+\hline
+101 & 2018-07-09 & SGD & 2018015 & 100503 & Deposit & 3460.00 & 5190.00 & 0 & 0 & 1.0000\\
+\hline
+108 & 2018-07-09 & USD & 2018016 & 100503 & Payment & -1546.00 & 3644.00 & 0 & 0 & 0.7370\\
+\hline
+121 & 2018-07-10 & USD & 2018017 & 100503 & Withdrawal & -2024.00 & 1620.00 & 0 & 0 & 0.7368\\
+\hline
+124 & 2018-07-11 & SGD & 2018018 & 100503 & Withdrawal & -1551.00 & 69.00 & 0 & 0 & 1.0000\\
+\hline
+125 & 2018-07-11 & SGD & 2018019 & 100503 & Withdrawal & -32.00 & 37.00 & 0 & 0 & 1.0000\\
+\hline
+126 & 2018-07-11 & SGD & 2018020 & 100503 & Payment & -1.00 & 36.00 & 0 & 0 & 1.0000\\
+\hline
+172 & 2018-07-14 & SGD & 2018021 & 100503 & Payment & -13.00 & 23.00 & 0 & 0 & 1.0000\\
+\hline
+164 & 2018-07-14 & CNY & 2018022 & 100503 & Withdrawal & -6.00 & 17.00 & 0 & 0 & 4.9000\\
+\hline
+262 & 2018-07-21 & USD & 2018023 & 100503 & Withdrawal & -6.00 & 11.00 & 0 & 0 & 0.7339\\
+\hline
+258 & 2018-07-21 & SGD & 2018024 & 100503 & Withdrawal & -11.00 & 0.00 & 0 & 0 & 1.0000\\
+\hline
+597 & 2018-08-16 & USD & 2018065 & 100503 & Deposit & 857.73 & 857.73 & 0 & 0 & 0.7268\\
+\hline
+596 & 2018-08-16 & USD & 2018066 & 100503 & Payment & -624.00 & 233.73 & 0 & 0 & 0.7268\\
+\hline
+592 & 2018-08-16 & SGD & 2018067 & 100503 & Payment & -51.00 & 182.73 & 0 & 0 & 1.0000\\
+\hline
+602 & 2018-08-17 & CNY & 2018068 & 100503 & Withdrawal & -28.00 & 154.73 & 0 & 0 & 5.0166\\
+\hline
+621 & 2018-08-18 & USD & 2018069 & 100503 & Payment & -110.00 & 44.73 & 0 & 0 & 0.7295\\
+\hline
+611 & 2018-08-18 & CNY & 2018070 & 100503 & Payment & -19.00 & 25.73 & 0 & 0 & 5.0166\\
+\hline
+618 & 2018-08-18 & SGD & 2018071 & 100503 & Withdrawal & -20.00 & 5.73 & 0 & 0 & 1.0000\\
+\hline
+624 & 2018-08-19 & CNY & 2018072 & 100503 & Withdrawal & -3.00 & 2.73 & 0 & 0 & 5.0188\\
+\hline
+635 & 2018-08-20 & SGD & 2018074 & 100503 & Withdrawal & -2.00 & 0.73 & 0 & 0 & 1.0000\\
+\hline
+679 & 2018-08-23 & USD & 2018081 & 100503 & Deposit & 2557.73 & 2558.45 & 0 & 0 & 0.7278\\
+\hline
+674 & 2018-08-23 & SGD & 2018082 & 100503 & Withdrawal & -1763.00 & 795.45 & 0 & 0 & 1.0000\\
+\hline
+682 & 2018-08-24 & SGD & 2018083 & 100503 & Withdrawal & -596.00 & 199.45 & 0 & 0 & 1.0000\\
+\hline
+683 & 2018-08-24 & SGD & 2018084 & 100503 & Withdrawal & -124.00 & 75.45 & 0 & 0 & 1.0000\\
+\hline
+725 & 2018-08-27 & USD & 2018085 & 100503 & Payment & -48.00 & 27.45 & 0 & 0 & 0.7340\\
+\hline
+722 & 2018-08-27 & SGD & 2018086 & 100503 & Withdrawal & -11.00 & 16.45 & 0 & 0 & 1.0000\\
+\hline
+733 & 2018-08-28 & SGD & 2018087 & 100503 & Payment & -6.00 & 10.45 & 0 & 0 & 1.0000\\
+\hline
+757 & 2018-08-30 & CNY & 2018088 & 100503 & Payment & -7.00 & 3.45 & 0 & 0 & 5.0051\\
+\hline
+766 & 2018-08-30 & USD & 2018089 & 100503 & Withdrawal & -2.00 & 1.45 & 0 & 0 & 0.7312\\
+\hline
+767 & 2018-08-30 & USD & 2018092 & 100503 & Payment & -1.00 & 0.45 & 0 & 0 & 0.7312\\
+\hline
+942 & 2018-09-18 & SGD & 2018124 & 100503 & Deposit & 3544.00 & 3544.45 & 0 & 0 & 1.0000\\
+\hline
+943 & 2018-09-18 & SGD & 2018125 & 100503 & Payment & -2680.00 & 864.45 & 0 & 0 & 1.0000\\
+\hline
+946 & 2018-09-18 & USD & 2018126 & 100503 & Payment & -226.00 & 638.45 & 0 & 0 & 0.7295\\
+\hline
+944 & 2018-09-18 & USD & 2018127 & 100503 & Withdrawal & -423.00 & 215.45 & 0 & 0 & 0.7295\\
+\hline
+945 & 2018-09-18 & USD & 2018128 & 100503 & Withdrawal & -114.00 & 101.45 & 0 & 0 & 0.7295\\
+\hline
+952 & 2018-09-19 & SGD & 2018129 & 100503 & Payment & -55.00 & 46.45 & 0 & 0 & 1.0000\\
+\hline
+955 & 2018-09-19 & SGD & 2018130 & 100503 & Payment & -45.00 & 1.45 & 0 & 0 & 1.0000\\
+\hline
+963 & 2018-09-20 & SGD & 2018132 & 100503 & Withdrawal & -1.00 & 0.45 & 0 & 0 & 1.0000\\
+\hline
+1038 & 2018-09-30 & SGD & 2018149 & 100503 & Deposit & 656.00 & 656.45 & 0 & 0 & 1.0000\\
+\hline
+1036 & 2018-09-30 & CNY & 2018150 & 100503 & Payment & -553.00 & 103.45 & 0 & 0 & 5.0251\\
+\hline
+1041 & 2018-09-30 & USD & 2018151 & 100503 & Payment & -65.00 & 38.45 & 0 & 0 & 0.7313\\
+\hline
+2 & 2018-07-01 & CNY & 2018152 & 100413 & Withdrawal & -3151.00 & 4899.00 & 9034 & 0 & 4.8611\\
+\hline
+45 & 2018-07-04 & USD & 2018153 & 100413 & Payment & -8111.00 & 4899.00 & 923 & 0 & 0.7327\\
+\hline
+57 & 2018-07-05 & USD & 2018154 & 100413 & Withdrawal & -4847.00 & 52.00 & 923 & 0 & 0.7328\\
+\hline
+48 & 2018-07-05 & CNY & 2018155 & 100413 & Payment & -137.00 & 52.00 & 786 & 0 & 4.8632\\
+\hline
+56 & 2018-07-05 & USD & 2018156 & 100413 & Payment & -724.00 & 52.00 & 62 & 0 & 0.7328\\
+\hline
+62 & 2018-07-06 & CNY & 2018157 & 100413 & Withdrawal & -36.00 & 16.00 & 62 & 0 & 4.8945\\
+\hline
+71 & 2018-07-06 & SGD & 2018158 & 100413 & Payment & -18.00 & 16.00 & 44 & 0 & 1.0000\\
+\hline
+65 & 2018-07-06 & CNY & 2018159 & 100413 & Withdrawal & -15.00 & 1.00 & 44 & 0 & 4.8945\\
+\hline
+79 & 2018-07-07 & CNY & 2018161 & 100413 & Payment & -21.00 & 1.00 & 23 & 0 & 4.8945\\
+\hline
+89 & 2018-07-07 & USD & 2018162 & 100413 & Withdrawal & -1.00 & 0.00 & 23 & 0 & 0.7368\\
+\hline
+95 & 2018-07-08 & USD & 2018164 & 100413 & Payment & -2.00 & 0.00 & 21 & 0 & 0.7369\\
+\hline
+134 & 2018-07-11 & USD & 2018167 & 100413 & Payment & -13.00 & 0.00 & 8 & 0 & 0.7330\\
+\hline
+138 & 2018-07-12 & CNY & 2018171 & 100413 & Payment & -4.00 & 0.00 & 4 & 0 & 4.8911\\
+\hline
+157 & 2018-07-13 & SGD & 2018172 & 100413 & Payment & -2.00 & 0.00 & 2 & 0 & 1.0000\\
+\hline
+173 & 2018-07-14 & SGD & 2018173 & 100413 & Deposit & 2791.00 & 2791.00 & 2 & 0 & 1.0000\\
+\hline
+170 & 2018-07-14 & SGD & 2018174 & 100413 & Payment & -1536.00 & 1257.00 & 0 & 0 & 1.0000\\
+\hline
+165 & 2018-07-14 & CNY & 2018175 & 100413 & Payment & -193.00 & 1064.00 & 0 & 0 & 4.9000\\
+\hline
+178 & 2018-07-14 & USD & 2018176 & 100413 & Payment & -823.00 & 241.00 & 0 & 0 & 0.7322\\
+\hline
+190 & 2018-07-15 & USD & 2018177 & 100413 & Payment & -160.00 & 81.00 & 0 & 0 & 0.7322\\
+\hline
+204 & 2018-07-16 & USD & 2018178 & 100413 & Payment & -64.00 & 17.00 & 0 & 0 & 0.7341\\
+\hline
+200 & 2018-07-16 & CNY & 2018179 & 100413 & Withdrawal & -17.00 & 0.00 & 0 & 0 & 4.9122\\
+\hline
+245 & 2018-07-20 & USD & 2018185 & 100413 & Deposit & 4387.73 & 4387.73 & 0 & 0 & 0.7339\\
+\hline
+234 & 2018-07-20 & CNY & 2018186 & 100413 & Withdrawal & -1421.00 & 2966.73 & 0 & 0 & 4.9696\\
+\hline
+256 & 2018-07-21 & SGD & 2018187 & 100413 & Withdrawal & -2589.00 & 377.73 & 0 & 0 & 1.0000\\
+\hline
+257 & 2018-07-21 & SGD & 2018188 & 100413 & Withdrawal & -377.00 & 0.73 & 0 & 0 & 1.0000\\
+\hline
+472 & 2018-08-07 & CNY & 2018216 & 100413 & Deposit & 4892.01 & 4892.74 & 0 & 0 & 5.0069\\
+\hline
+491 & 2018-08-08 & CNY & 2018217 & 100413 & Withdrawal & -3990.00 & 902.74 & 0 & 0 & 5.0172\\
+\hline
+498 & 2018-08-08 & USD & 2018218 & 100413 & Withdrawal & -869.00 & 33.74 & 0 & 0 & 0.7339\\
+\hline
+528 & 2018-08-10 & USD & 2018219 & 100413 & Payment & -5.00 & 28.74 & 0 & 0 & 0.7281\\
+\hline
+604 & 2018-08-17 & CNY & 2018220 & 100413 & Withdrawal & -16.00 & 12.74 & 0 & 0 & 5.0166\\
+\hline
+616 & 2018-08-18 & SGD & 2018221 & 100413 & Payment & -3.00 & 9.74 & 0 & 0 & 1.0000\\
+\hline
+627 & 2018-08-19 & SGD & 2018222 & 100413 & Withdrawal & -5.00 & 4.74 & 0 & 0 & 1.0000\\
+\hline
+689 & 2018-08-25 & CNY & 2018226 & 100413 & Withdrawal & -3.00 & 1.74 & 0 & 0 & 4.9847\\
+\hline
+712 & 2018-08-26 & USD & 2018227 & 100413 & Payment & -1.00 & 0.74 & 0 & 0 & 0.7329\\
+\hline
+798 & 2018-09-03 & CNY & 2018232 & 100413 & Deposit & 986.97 & 987.71 & 0 & 0 & 4.9741\\
+\hline
+17 & 2018-07-01 & USD & 2018233 & 100765 & Payment & -2627.00 & 5090.00 & 4619 & 0 & 0.7338\\
+\hline
+18 & 2018-07-01 & USD & 2018234 & 100765 & Payment & -4461.00 & 5090.00 & 158 & 0 & 0.7338\\
+\hline
+44 & 2018-07-04 & USD & 2018235 & 100765 & Withdrawal & -2605.00 & 2485.00 & 158 & 0 & 0.7327\\
+\hline
+41 & 2018-07-04 & SGD & 2018236 & 100765 & Withdrawal & -410.00 & 2075.00 & 158 & 0 & 1.0000\\
+\hline
+76 & 2018-07-06 & USD & 2018237 & 100765 & Withdrawal & -818.00 & 1257.00 & 158 & 0 & 0.7368\\
+\hline
+86 & 2018-07-07 & USD & 2018238 & 100765 & Payment & -783.00 & 632.00 & 0 & 0 & 0.7368\\
+\hline
+88 & 2018-07-07 & USD & 2018239 & 100765 & Withdrawal & -26.00 & 606.00 & 0 & 0 & 0.7368\\
+\hline
+87 & 2018-07-07 & USD & 2018240 & 100765 & Withdrawal & -160.00 & 446.00 & 0 & 0 & 0.7368\\
+\hline
+112 & 2018-07-09 & USD & 2018241 & 100765 & Withdrawal & -134.00 & 312.00 & 0 & 0 & 0.7370\\
+\hline
+111 & 2018-07-09 & USD & 2018242 & 100765 & Withdrawal & -11.00 & 301.00 & 0 & 0 & 0.7370\\
+\hline
+117 & 2018-07-10 & SGD & 2018243 & 100765 & Withdrawal & -276.00 & 25.00 & 0 & 0 & 1.0000\\
+\hline
+116 & 2018-07-10 & CNY & 2018244 & 100765 & Withdrawal & -15.00 & 10.00 & 0 & 0 & 4.8852\\
+\hline
+133 & 2018-07-11 & USD & 2018245 & 100765 & Withdrawal & -4.00 & 6.00 & 0 & 0 & 0.7330\\
+\hline
+129 & 2018-07-11 & SGD & 2018246 & 100765 & Payment & -5.00 & 1.00 & 0 & 0 & 1.0000\\
+\hline
+150 & 2018-07-12 & USD & 2018248 & 100765 & Withdrawal & -1.00 & 0.00 & 0 & 0 & 0.7336\\
+\hline
+250 & 2018-07-21 & CNY & 2018262 & 100765 & Deposit & 1557.97 & 1557.97 & 0 & 0 & 4.9696\\
+\hline
+265 & 2018-07-22 & CNY & 2018263 & 100765 & Withdrawal & -107.00 & 1450.97 & 0 & 0 & 4.9648\\
+\hline
+280 & 2018-07-23 & SGD & 2018264 & 100765 & Payment & -1256.00 & 194.97 & 0 & 0 & 1.0000\\
+\hline
+285 & 2018-07-23 & USD & 2018265 & 100765 & Withdrawal & -37.00 & 157.97 & 0 & 0 & 0.7325\\
+\hline
+297 & 2018-07-24 & SGD & 2018266 & 100765 & Withdrawal & -2.00 & 155.97 & 0 & 0 & 1.0000\\
+\hline
+298 & 2018-07-24 & SGD & 2018267 & 100765 & Withdrawal & -19.00 & 136.97 & 0 & 0 & 1.0000\\
+\hline
+307 & 2018-07-25 & CNY & 2018268 & 100765 & Withdrawal & -37.00 & 99.97 & 0 & 0 & 4.9834\\
+\hline
+321 & 2018-07-26 & CNY & 2018269 & 100765 & Withdrawal & -98.00 & 1.97 & 0 & 0 & 4.9815\\
+\hline
+333 & 2018-07-27 & CNY & 2018270 & 100765 & Withdrawal & -1.00 & 0.97 & 0 & 0 & 5.0031\\
+\hline
+607 & 2018-08-17 & USD & 2018304 & 100765 & Deposit & 1695.73 & 1696.70 & 0 & 0 & 0.7295\\
+\hline
+601 & 2018-08-17 & CNY & 2018305 & 100765 & Withdrawal & -553.00 & 1143.70 & 0 & 0 & 5.0166\\
+\hline
+636 & 2018-08-20 & SGD & 2018306 & 100765 & Withdrawal & -603.00 & 540.70 & 0 & 0 & 1.0000\\
+\hline
+641 & 2018-08-20 & USD & 2018307 & 100765 & Payment & -181.00 & 359.70 & 0 & 0 & 0.7304\\
+\hline
+644 & 2018-08-21 & SGD & 2018308 & 100765 & Withdrawal & -132.00 & 227.70 & 0 & 0 & 1.0000\\
+\hline
+648 & 2018-08-21 & USD & 2018309 & 100765 & Withdrawal & -171.00 & 56.70 & 0 & 0 & 0.7321\\
+\hline
+658 & 2018-08-22 & SGD & 2018310 & 100765 & Payment & -41.00 & 15.70 & 0 & 0 & 1.0000\\
+\hline
+652 & 2018-08-22 & CNY & 2018311 & 100765 & Payment & -3.00 & 12.70 & 0 & 0 & 5.0064\\
+\hline
+662 & 2018-08-22 & USD & 2018312 & 100765 & Payment & -8.00 & 4.70 & 0 & 0 & 0.7318\\
+\hline
+672 & 2018-08-23 & SGD & 2018313 & 100765 & Withdrawal & -1.00 & 3.70 & 0 & 0 & 1.0000\\
+\hline
+680 & 2018-08-23 & USD & 2018314 & 100765 & Withdrawal & -1.00 & 2.70 & 0 & 0 & 0.7278\\
+\hline
+685 & 2018-08-24 & SGD & 2018315 & 100765 & Withdrawal & -2.00 & 0.70 & 0 & 0 & 1.0000\\
+\hline
+800 & 2018-09-03 & SGD & 2018325 & 100765 & Deposit & 216.00 & 216.70 & 0 & 0 & 1.0000\\
+\hline
+809 & 2018-09-04 & SGD & 2018326 & 100765 & Withdrawal & -194.00 & 22.70 & 0 & 0 & 1.0000\\
+\hline
+821 & 2018-09-06 & SGD & 2018327 & 100765 & Deposit & 2476.00 & 2498.70 & 0 & 0 & 1.0000\\
+\hline
+822 & 2018-09-06 & USD & 2018328 & 100765 & Withdrawal & -2406.00 & 92.70 & 0 & 0 & 0.7276\\
+\hline
+862 & 2018-09-10 & SGD & 2018329 & 100765 & Payment & -67.00 & 25.70 & 0 & 0 & 1.0000\\
+\hline
+926 & 2018-09-17 & CNY & 2018330 & 100765 & Payment & -6.00 & 19.70 & 0 & 0 & 4.9977\\
+\hline
+956 & 2018-09-19 & USD & 2018331 & 100765 & Payment & -12.00 & 7.70 & 0 & 0 & 0.7305\\
+\hline
+948 & 2018-09-19 & CNY & 2018332 & 100765 & Withdrawal & -7.00 & 0.70 & 0 & 0 & 5.0023\\
+\hline
+1 & 2018-07-01 & CNY & 2018337 & 100493 & Payment & -2916.00 & 8085.00 & 2118 & 0 & 4.8611\\
+\hline
+20 & 2018-07-02 & CNY & 2018338 & 100493 & Withdrawal & -2270.00 & 5815.00 & 2118 & 0 & 4.8700\\
+\hline
+28 & 2018-07-03 & SGD & 2018339 & 100493 & Withdrawal & -3814.00 & 2001.00 & 2118 & 0 & 1.0000\\
+\hline
+27 & 2018-07-03 & CNY & 2018340 & 100493 & Payment & -2964.00 & 1155.00 & 0 & 0 & 4.8670\\
+\hline
+32 & 2018-07-03 & USD & 2018341 & 100493 & Payment & -274.00 & 881.00 & 0 & 0 & 0.7327\\
+\hline
+37 & 2018-07-04 & SGD & 2018342 & 100493 & Withdrawal & -138.00 & 743.00 & 0 & 0 & 1.0000\\
+\hline
+39 & 2018-07-04 & SGD & 2018343 & 100493 & Payment & -407.00 & 336.00 & 0 & 0 & 1.0000\\
+\hline
+35 & 2018-07-04 & CNY & 2018344 & 100493 & Withdrawal & -330.00 & 6.00 & 0 & 0 & 4.8591\\
+\hline
+50 & 2018-07-05 & SGD & 2018345 & 100493 & Payment & -4.00 & 2.00 & 0 & 0 & 1.0000\\
+\hline
+61 & 2018-07-05 & USD & 2018346 & 100493 & Payment & -1.00 & 1.00 & 0 & 0 & 0.7328\\
+\hline
+74 & 2018-07-06 & SGD & 2018348 & 100493 & Withdrawal & -1.00 & 0.00 & 0 & 0 & 1.0000\\
+\hline
+212 & 2018-07-17 & USD & 2018367 & 100493 & Deposit & 4920.73 & 4920.73 & 0 & 0 & 0.7327\\
+\hline
+218 & 2018-07-18 & CNY & 2018369 & 100493 & Withdrawal & -3104.00 & 1816.73 & 0 & 0 & 4.9219\\
+\hline
+224 & 2018-07-18 & USD & 2018370 & 100493 & Payment & -958.00 & 858.73 & 0 & 0 & 0.7325\\
+\hline
+226 & 2018-07-19 & CNY & 2018371 & 100493 & Withdrawal & -183.00 & 675.73 & 0 & 0 & 4.9422\\
+\hline
+225 & 2018-07-19 & CNY & 2018372 & 100493 & Withdrawal & -151.00 & 524.73 & 0 & 0 & 4.9422\\
+\hline
+235 & 2018-07-20 & CNY & 2018373 & 100493 & Withdrawal & -258.00 & 266.73 & 0 & 0 & 4.9696\\
+\hline
+239 & 2018-07-20 & SGD & 2018374 & 100493 & Withdrawal & -114.00 & 152.73 & 0 & 0 & 1.0000\\
+\hline
+260 & 2018-07-21 & SGD & 2018375 & 100493 & Withdrawal & -82.00 & 70.73 & 0 & 0 & 1.0000\\
+\hline
+253 & 2018-07-21 & CNY & 2018376 & 100493 & Payment & -63.00 & 7.73 & 0 & 0 & 4.9696\\
+\hline
+249 & 2018-07-21 & CNY & 2018377 & 100493 & Payment & -3.00 & 4.73 & 0 & 0 & 4.9696\\
+\hline
+255 & 2018-07-21 & CNY & 2018378 & 100493 & Payment & -2.00 & 2.73 & 0 & 0 & 4.9696\\
+\hline
+254 & 2018-07-21 & CNY & 2018379 & 100493 & Payment & -1.00 & 1.73 & 0 & 0 & 4.9696\\
+\hline
+286 & 2018-07-23 & USD & 2018382 & 100493 & Withdrawal & -1.00 & 0.73 & 0 & 0 & 0.7325\\
+\hline
+303 & 2018-07-24 & USD & 2018383 & 100493 & Deposit & 2066.73 & 2067.47 & 0 & 0 & 0.7331\\
+\hline
+295 & 2018-07-24 & SGD & 2018384 & 100493 & Withdrawal & -1357.00 & 710.47 & 0 & 0 & 1.0000\\
+\hline
+318 & 2018-07-25 & USD & 2018385 & 100493 & Withdrawal & -285.00 & 425.47 & 0 & 0 & 0.7361\\
+\hline
+304 & 2018-07-25 & CNY & 2018386 & 100493 & Payment & -208.00 & 217.47 & 0 & 0 & 4.9834\\
+\hline
+326 & 2018-07-26 & SGD & 2018387 & 100493 & Withdrawal & -108.00 & 109.47 & 0 & 0 & 1.0000\\
+\hline
+319 & 2018-07-26 & CNY & 2018388 & 100493 & Payment & -46.00 & 63.47 & 0 & 0 & 4.9815\\
+\hline
+336 & 2018-07-27 & CNY & 2018389 & 100493 & Payment & -43.00 & 20.47 & 0 & 0 & 5.0031\\
+\hline
+348 & 2018-07-28 & CNY & 2018390 & 100493 & Payment & -18.00 & 2.47 & 0 & 0 & 5.0031\\
+\hline
+351 & 2018-07-28 & SGD & 2018391 & 100493 & Withdrawal & -1.00 & 1.47 & 0 & 0 & 1.0000\\
+\hline
+356 & 2018-07-28 & USD & 2018392 & 100493 & Withdrawal & -1.00 & 0.47 & 0 & 0 & 0.7342\\
+\hline
+483 & 2018-08-07 & USD & 2018408 & 100493 & Deposit & 3259.73 & 3260.20 & 0 & 0 & 0.7329\\
+\hline
+476 & 2018-08-07 & SGD & 2018409 & 100493 & Payment & -1295.00 & 1965.20 & 0 & 0 & 1.0000\\
+\hline
+480 & 2018-08-07 & USD & 2018410 & 100493 & Payment & -918.00 & 1047.20 & 0 & 0 & 0.7329\\
+\hline
+485 & 2018-08-07 & USD & 2018411 & 100493 & Withdrawal & -450.00 & 597.20 & 0 & 0 & 0.7329\\
+\hline
+504 & 2018-08-09 & SGD & 2018412 & 100493 & Withdrawal & -124.00 & 473.20 & 0 & 0 & 1.0000\\
+\hline
+510 & 2018-08-09 & USD & 2018413 & 100493 & Payment & -299.00 & 174.20 & 0 & 0 & 0.7311\\
+\hline
+515 & 2018-08-10 & CNY & 2018414 & 100493 & Withdrawal & -160.00 & 14.20 & 0 & 0 & 4.9855\\
+\hline
+517 & 2018-08-10 & CNY & 2018415 & 100493 & Payment & -9.00 & 5.20 & 0 & 0 & 4.9855\\
+\hline
+536 & 2018-08-11 & USD & 2018416 & 100493 & Payment & -4.00 & 1.20 & 0 & 0 & 0.7281\\
+\hline
+535 & 2018-08-11 & USD & 2018417 & 100493 & Withdrawal & -1.00 & 0.20 & 0 & 0 & 0.7281\\
+\hline
+1010 & 2018-09-26 & CNY & 2018468 & 100493 & Deposit & 1185.04 & 1185.24 & 0 & 0 & 5.0370\\
+\hline
+1016 & 2018-09-26 & USD & 2018469 & 100493 & Payment & -383.00 & 802.24 & 0 & 0 & 0.7323\\
+\hline
+1035 & 2018-09-29 & USD & 2018470 & 100493 & Payment & -801.00 & 1.24 & 0 & 0 & 0.7318\\
+\hline
+24 & 2018-07-02 & USD & 2018471 & 100302 & Payment & -10507.00 & 8240.00 & 0 & 0 & 0.7304\\
+\hline
+43 & 2018-07-04 & SGD & 2018472 & 100302 & Withdrawal & -7971.00 & 269.00 & 0 & 0 & 1.0000\\
+\hline
+42 & 2018-07-04 & SGD & 2018473 & 100302 & Payment & -89.00 & 180.00 & 0 & 0 & 1.0000\\
+\hline
+52 & 2018-07-05 & SGD & 2018474 & 100302 & Payment & -95.00 & 85.00 & 0 & 0 & 1.0000\\
+\hline
+46 & 2018-07-05 & CNY & 2018475 & 100302 & Withdrawal & -70.00 & 15.00 & 0 & 0 & 4.8632\\
+\hline
+59 & 2018-07-05 & USD & 2018476 & 100302 & Payment & -10.00 & 5.00 & 0 & 0 & 0.7328\\
+\hline
+91 & 2018-07-08 & CNY & 2018478 & 100302 & Payment & -4.00 & 1.00 & 0 & 0 & 4.8927\\
+\hline
+113 & 2018-07-09 & USD & 2018479 & 100302 & Deposit & 2496.74 & 2497.74 & 0 & 0 & 0.7370\\
+\hline
+120 & 2018-07-10 & SGD & 2018480 & 100302 & Withdrawal & -451.00 & 2046.74 & 0 & 0 & 1.0000\\
+\hline
+132 & 2018-07-11 & USD & 2018481 & 100302 & Withdrawal & -404.00 & 1642.74 & 0 & 0 & 0.7330\\
+\hline
+128 & 2018-07-11 & SGD & 2018482 & 100302 & Withdrawal & -1578.00 & 64.74 & 0 & 0 & 1.0000\\
+\hline
+140 & 2018-07-12 & SGD & 2018483 & 100302 & Payment & -29.00 & 35.74 & 0 & 0 & 1.0000\\
+\hline
+156 & 2018-07-13 & SGD & 2018484 & 100302 & Withdrawal & -3.00 & 32.74 & 0 & 0 & 1.0000\\
+\hline
+180 & 2018-07-15 & CNY & 2018485 & 100302 & Payment & -28.00 & 4.74 & 0 & 0 & 4.9019\\
+\hline
+186 & 2018-07-15 & SGD & 2018486 & 100302 & Withdrawal & -1.00 & 3.74 & 0 & 0 & 1.0000\\
+\hline
+247 & 2018-07-20 & USD & 2018488 & 100302 & Payment & -3.00 & 0.74 & 0 & 0 & 0.7339\\
+\hline
+355 & 2018-07-28 & SGD & 2018499 & 100302 & Deposit & 1582.00 & 1582.74 & 0 & 0 & 1.0000\\
+\hline
+365 & 2018-07-29 & USD & 2018500 & 100302 & Withdrawal & -1134.00 & 448.74 & 0 & 0 & 0.7344\\
+\hline
+362 & 2018-07-29 & CNY & 2018501 & 100302 & Withdrawal & -53.00 & 395.74 & 0 & 0 & 5.0027\\
+\hline
+359 & 2018-07-29 & CNY & 2018502 & 100302 & Payment & -37.00 & 358.74 & 0 & 0 & 5.0027\\
+\hline
+380 & 2018-07-30 & SGD & 2018503 & 100302 & Payment & -37.00 & 321.74 & 0 & 0 & 1.0000\\
+\hline
+388 & 2018-07-31 & CNY & 2018504 & 100302 & Withdrawal & -164.00 & 157.74 & 0 & 0 & 5.0038\\
+\hline
+387 & 2018-07-31 & CNY & 2018505 & 100302 & Payment & -56.00 & 101.74 & 0 & 0 & 5.0038\\
+\hline
+395 & 2018-07-31 & USD & 2018506 & 100302 & Payment & -20.00 & 81.74 & 0 & 0 & 0.7345\\
+\hline
+411 & 2018-08-01 & USD & 2018507 & 100302 & Withdrawal & -26.00 & 55.74 & 0 & 0 & 0.7343\\
+\hline
+402 & 2018-08-01 & CNY & 2018508 & 100302 & Withdrawal & -37.00 & 18.74 & 0 & 0 & 5.0103\\
+\hline
+442 & 2018-08-05 & CNY & 2018509 & 100302 & Payment & -12.00 & 6.74 & 0 & 0 & 5.0005\\
+\hline
+455 & 2018-08-05 & USD & 2018510 & 100302 & Withdrawal & -1.00 & 5.74 & 0 & 0 & 0.7317\\
+\hline
+490 & 2018-08-07 & USD & 2018511 & 100302 & Withdrawal & -2.00 & 3.74 & 0 & 0 & 0.7329\\
+\hline
+507 & 2018-08-09 & USD & 2018513 & 100302 & Deposit & 1422.73 & 1426.47 & 0 & 0 & 0.7311\\
+\hline
+505 & 2018-08-09 & SGD & 2018514 & 100302 & Withdrawal & -258.00 & 1168.47 & 0 & 0 & 1.0000\\
+\hline
+519 & 2018-08-10 & CNY & 2018515 & 100302 & Payment & -1137.00 & 31.47 & 0 & 0 & 4.9855\\
+\hline
+527 & 2018-08-10 & USD & 2018516 & 100302 & Payment & -4.00 & 27.47 & 0 & 0 & 0.7281\\
+\hline
+532 & 2018-08-11 & SGD & 2018518 & 100302 & Withdrawal & -16.00 & 11.47 & 0 & 0 & 1.0000\\
+\hline
+553 & 2018-08-13 & CNY & 2018519 & 100302 & Withdrawal & -7.00 & 4.47 & 0 & 0 & 5.0092\\
+\hline
+556 & 2018-08-13 & SGD & 2018520 & 100302 & Payment & -3.00 & 1.47 & 0 & 0 & 1.0000\\
+\hline
+550 & 2018-08-13 & CNY & 2018521 & 100302 & Payment & -1.00 & 0.47 & 0 & 0 & 5.0092\\
+\hline
+875 & 2018-09-11 & CNY & 2018554 & 100302 & Deposit & 4531.00 & 4531.46 & 0 & 0 & 4.9967\\
+\hline
+881 & 2018-09-12 & CNY & 2018555 & 100302 & Withdrawal & -96.00 & 4435.46 & 0 & 0 & 5.0004\\
+\hline
+899 & 2018-09-13 & SGD & 2018556 & 100302 & Withdrawal & -1444.00 & 2991.46 & 0 & 0 & 1.0000\\
+\hline
+893 & 2018-09-13 & CNY & 2018557 & 100302 & Payment & -2540.00 & 451.46 & 0 & 0 & 4.9950\\
+\hline
+904 & 2018-09-14 & CNY & 2018558 & 100302 & Payment & -181.00 & 270.46 & 0 & 0 & 4.9985\\
+\hline
+912 & 2018-09-15 & CNY & 2018559 & 100302 & Deposit & 1310.00 & 1580.46 & 0 & 0 & 4.9985\\
+\hline
+911 & 2018-09-15 & CNY & 2018560 & 100302 & Payment & -493.00 & 1087.46 & 0 & 0 & 4.9985\\
+\hline
+914 & 2018-09-15 & USD & 2018561 & 100302 & Payment & -493.00 & 594.46 & 0 & 0 & 0.7277\\
+\hline
+918 & 2018-09-16 & CNY & 2018562 & 100302 & Withdrawal & -298.00 & 296.46 & 0 & 0 & 4.9953\\
+\hline
+921 & 2018-09-16 & SGD & 2018563 & 100302 & Payment & -161.00 & 135.46 & 0 & 0 & 1.0000\\
+\hline
+928 & 2018-09-17 & CNY & 2018564 & 100302 & Withdrawal & -125.00 & 10.46 & 0 & 0 & 4.9977\\
+\hline
+940 & 2018-09-18 & CNY & 2018565 & 100302 & Payment & -9.00 & 1.46 & 0 & 0 & 5.0053\\
+\hline
+964 & 2018-09-20 & USD & 2018569 & 100302 & Payment & -1.00 & 0.46 & 0 & 0 & 0.7328\\
+\hline
+22 & 2018-07-02 & SGD & 2018581 & 100683 & Payment & -2992.00 & 5568.00 & 5768 & 0 & 1.0000\\
+\hline
+25 & 2018-07-02 & USD & 2018582 & 100683 & Payment & -10749.00 & 587.00 & 0 & 0 & 0.7304\\
+\hline
+31 & 2018-07-03 & USD & 2018583 & 100683 & Payment & -186.00 & 401.00 & 0 & 0 & 0.7327\\
+\hline
+40 & 2018-07-04 & SGD & 2018584 & 100683 & Payment & -334.00 & 67.00 & 0 & 0 & 1.0000\\
+\hline
+38 & 2018-07-04 & SGD & 2018585 & 100683 & Withdrawal & -42.00 & 25.00 & 0 & 0 & 1.0000\\
+\hline
+58 & 2018-07-05 & USD & 2018586 & 100683 & Withdrawal & -9.00 & 16.00 & 0 & 0 & 0.7328\\
+\hline
+60 & 2018-07-05 & USD & 2018587 & 100683 & Payment & -8.00 & 8.00 & 0 & 0 & 0.7328\\
+\hline
+54 & 2018-07-05 & USD & 2018588 & 100683 & Withdrawal & -1.00 & 7.00 & 0 & 0 & 0.7328\\
+\hline
+66 & 2018-07-06 & CNY & 2018589 & 100683 & Payment & -6.00 & 1.00 & 0 & 0 & 4.8945\\
+\hline
+68 & 2018-07-06 & SGD & 2018590 & 100683 & Withdrawal & -1.00 & 0.00 & 0 & 0 & 1.0000\\
+\hline
+272 & 2018-07-22 & USD & 2018611 & 100683 & Deposit & 4860.73 & 4860.73 & 0 & 0 & 0.7347\\
+\hline
+264 & 2018-07-22 & CNY & 2018612 & 100683 & Withdrawal & -701.00 & 4159.73 & 0 & 0 & 4.9648\\
+\hline
+301 & 2018-07-24 & USD & 2018613 & 100683 & Payment & -114.00 & 4045.73 & 0 & 0 & 0.7331\\
+\hline
+330 & 2018-07-26 & USD & 2018614 & 100683 & Payment & -2700.00 & 1345.73 & 0 & 0 & 0.7333\\
+\hline
+347 & 2018-07-27 & USD & 2018615 & 100683 & Payment & -538.00 & 807.73 & 0 & 0 & 0.7342\\
+\hline
+353 & 2018-07-28 & SGD & 2018616 & 100683 & Deposit & 3969.00 & 4776.73 & 0 & 0 & 1.0000\\
+\hline
+357 & 2018-07-28 & USD & 2018617 & 100683 & Payment & -2188.00 & 2588.73 & 0 & 0 & 0.7342\\
+\hline
+349 & 2018-07-28 & CNY & 2018618 & 100683 & Payment & -2047.00 & 541.73 & 0 & 0 & 5.0031\\
+\hline
+367 & 2018-07-29 & USD & 2018619 & 100683 & Payment & -474.00 & 67.73 & 0 & 0 & 0.7344\\
+\hline
+371 & 2018-07-30 & CNY & 2018621 & 100683 & Payment & -7.00 & 60.73 & 0 & 0 & 5.0058\\
+\hline
+377 & 2018-07-30 & SGD & 2018622 & 100683 & Payment & -54.00 & 6.73 & 0 & 0 & 1.0000\\
+\hline
+385 & 2018-07-30 & USD & 2018623 & 100683 & Withdrawal & -3.00 & 3.73 & 0 & 0 & 0.7346\\
+\hline
+370 & 2018-07-30 & CNY & 2018624 & 100683 & Withdrawal & -3.00 & 0.73 & 0 & 0 & 5.0058\\
+\hline
+415 & 2018-08-02 & SGD & 2018628 & 100683 & Deposit & 4004.00 & 4004.73 & 0 & 0 & 1.0000\\
+\hline
+412 & 2018-08-02 & CNY & 2018629 & 100683 & Withdrawal & -3281.00 & 723.73 & 0 & 0 & 4.9993\\
+\hline
+428 & 2018-08-03 & CNY & 2018630 & 100683 & Withdrawal & -518.00 & 205.73 & 0 & 0 & 5.0003\\
+\hline
+484 & 2018-08-07 & USD & 2018631 & 100683 & Withdrawal & -172.00 & 33.73 & 0 & 0 & 0.7329\\
+\hline
+514 & 2018-08-09 & USD & 2018632 & 100683 & Withdrawal & -19.00 & 14.73 & 0 & 0 & 0.7311\\
+\hline
+534 & 2018-08-11 & SGD & 2018633 & 100683 & Withdrawal & -10.00 & 4.73 & 0 & 0 & 1.0000\\
+\hline
+546 & 2018-08-12 & SGD & 2018634 & 100683 & Payment & -3.00 & 1.73 & 0 & 0 & 1.0000\\
+\hline
+692 & 2018-08-25 & CNY & 2018638 & 100683 & Deposit & 2917.98 & 2919.72 & 0 & 0 & 4.9847\\
+\hline
+694 & 2018-08-25 & SGD & 2018639 & 100683 & Payment & -2686.00 & 233.72 & 0 & 0 & 1.0000\\
+\hline
+753 & 2018-08-29 & USD & 2018640 & 100683 & Payment & -147.00 & 86.72 & 0 & 0 & 0.7329\\
+\hline
+765 & 2018-08-30 & USD & 2018641 & 100683 & Payment & -70.00 & 16.72 & 0 & 0 & 0.7312\\
+\hline
+782 & 2018-08-31 & USD & 2018642 & 100683 & Withdrawal & -13.00 & 3.72 & 0 & 0 & 0.7288\\
+\hline
+799 & 2018-09-03 & CNY & 2018644 & 100683 & Withdrawal & -1.00 & 2.72 & 0 & 0 & 4.9741\\
+\hline
+808 & 2018-09-04 & CNY & 2018645 & 100683 & Withdrawal & -1.00 & 1.72 & 0 & 0 & 4.9734\\
+\hline
+819 & 2018-09-06 & SGD & 2018646 & 100683 & Payment & -1.00 & 0.72 & 0 & 0 & 1.0000\\
+\hline
+977 & 2018-09-21 & USD & 2018661 & 100683 & Deposit & 2517.73 & 2518.45 & 0 & 0 & 0.7330\\
+\hline
+972 & 2018-09-21 & SGD & 2018662 & 100683 & Payment & -614.00 & 1904.45 & 0 & 0 & 1.0000\\
+\hline
+974 & 2018-09-21 & SGD & 2018663 & 100683 & Withdrawal & -1169.00 & 735.45 & 0 & 0 & 1.0000\\
+\hline
+984 & 2018-09-22 & USD & 2018664 & 100683 & Payment & -41.00 & 694.45 & 0 & 0 & 0.7330\\
+\hline
+995 & 2018-09-23 & USD & 2018665 & 100683 & Withdrawal & -593.00 & 101.45 & 0 & 0 & 0.7326\\
+\hline
+997 & 2018-09-24 & CNY & 2018666 & 100683 & Withdrawal & -39.00 & 62.45 & 0 & 0 & 5.0204\\
+\hline
+1002 & 2018-09-24 & SGD & 2018667 & 100683 & Payment & -60.00 & 2.45 & 0 & 0 & 1.0000\\
+\hline
+999 & 2018-09-24 & CNY & 2018669 & 100683 & Payment & -2.00 & 0.45 & 0 & 0 & 5.0204\\
+\hline
+4 & 2018-07-01 & CNY & 2018673 & 100410 & Withdrawal & -2763.00 & 3904.00 & 9963 & 0 & 4.8611\\
+\hline
+21 & 2018-07-02 & SGD & 2018674 & 100410 & Payment & -3257.00 & 3904.00 & 6706 & 0 & 1.0000\\
+\hline
+19 & 2018-07-02 & CNY & 2018675 & 100410 & Withdrawal & -2595.00 & 1309.00 & 6706 & 0 & 4.8700\\
+\hline
+49 & 2018-07-05 & SGD & 2018676 & 100410 & Payment & -3706.00 & 1309.00 & 3000 & 0 & 1.0000\\
+\hline
+63 & 2018-07-06 & CNY & 2018677 & 100410 & Payment & -26.00 & 1309.00 & 2974 & 0 & 4.8945\\
+\hline
+80 & 2018-07-07 & SGD & 2018678 & 100410 & Withdrawal & -878.00 & 431.00 & 2974 & 0 & 1.0000\\
+\hline
+109 & 2018-07-09 & USD & 2018679 & 100410 & Withdrawal & -346.00 & 85.00 & 2974 & 0 & 0.7370\\
+\hline
+103 & 2018-07-09 & SGD & 2018680 & 100410 & Payment & -543.00 & 85.00 & 2431 & 0 & 1.0000\\
+\hline
+127 & 2018-07-11 & SGD & 2018681 & 100410 & Payment & -173.00 & 85.00 & 2258 & 0 & 1.0000\\
+\hline
+135 & 2018-07-12 & CNY & 2018682 & 100410 & Payment & -706.00 & 85.00 & 1552 & 0 & 4.8911\\
+\hline
+136 & 2018-07-12 & CNY & 2018683 & 100410 & Payment & -750.00 & 85.00 & 802 & 0 & 4.8911\\
+\hline
+176 & 2018-07-14 & USD & 2018684 & 100410 & Payment & -576.00 & 85.00 & 226 & 0 & 0.7322\\
+\hline
+162 & 2018-07-14 & CNY & 2018685 & 100410 & Payment & -293.00 & 18.00 & 0 & 0 & 4.9000\\
+\hline
+161 & 2018-07-14 & CNY & 2018686 & 100410 & Withdrawal & -8.00 & 10.00 & 0 & 0 & 4.9000\\
+\hline
+181 & 2018-07-15 & CNY & 2018687 & 100410 & Payment & -7.00 & 3.00 & 0 & 0 & 4.9019\\
+\hline
+183 & 2018-07-15 & CNY & 2018688 & 100410 & Payment & -1.00 & 2.00 & 0 & 0 & 4.9019\\
+\hline
+189 & 2018-07-15 & USD & 2018689 & 100410 & Withdrawal & -2.00 & 0.00 & 0 & 0 & 0.7322\\
+\hline
+246 & 2018-07-20 & USD & 2018696 & 100410 & Deposit & 54.73 & 54.73 & 0 & 0 & 0.7339\\
+\hline
+244 & 2018-07-20 & USD & 2018697 & 100410 & Payment & -14.00 & 40.73 & 0 & 0 & 0.7339\\
+\hline
+242 & 2018-07-20 & SGD & 2018698 & 100410 & Withdrawal & -10.00 & 30.73 & 0 & 0 & 1.0000\\
+\hline
+238 & 2018-07-20 & SGD & 2018699 & 100410 & Payment & -4.00 & 26.73 & 0 & 0 & 1.0000\\
+\hline
+270 & 2018-07-22 & USD & 2018700 & 100410 & Withdrawal & -15.00 & 11.73 & 0 & 0 & 0.7347\\
+\hline
+273 & 2018-07-22 & USD & 2018701 & 100410 & Withdrawal & -9.00 & 2.73 & 0 & 0 & 0.7347\\
+\hline
+269 & 2018-07-22 & SGD & 2018702 & 100410 & Withdrawal & -2.00 & 0.73 & 0 & 0 & 1.0000\\
+\hline
+340 & 2018-07-27 & SGD & 2018712 & 100410 & Deposit & 2727.00 & 2727.73 & 0 & 0 & 1.0000\\
+\hline
+345 & 2018-07-27 & SGD & 2018713 & 100410 & Payment & -1624.00 & 1103.73 & 0 & 0 & 1.0000\\
+\hline
+342 & 2018-07-27 & SGD & 2018714 & 100410 & Payment & -231.00 & 872.73 & 0 & 0 & 1.0000\\
+\hline
+368 & 2018-07-29 & USD & 2018715 & 100410 & Payment & -823.00 & 49.73 & 0 & 0 & 0.7344\\
+\hline
+375 & 2018-07-30 & SGD & 2018716 & 100410 & Withdrawal & -28.00 & 21.73 & 0 & 0 & 1.0000\\
+\hline
+374 & 2018-07-30 & SGD & 2018717 & 100410 & Payment & -19.00 & 2.73 & 0 & 0 & 1.0000\\
+\hline
+379 & 2018-07-30 & SGD & 2018718 & 100410 & Withdrawal & -2.00 & 0.73 & 0 & 0 & 1.0000\\
+\hline
+593 & 2018-08-16 & SGD & 2018719 & 100410 & Deposit & 3230.00 & 3230.73 & 0 & 0 & 1.0000\\
+\hline
+675 & 2018-08-23 & USD & 2018720 & 100410 & Deposit & 4363.73 & 7594.46 & 0 & 0 & 0.7278\\
+\hline
+678 & 2018-08-23 & USD & 2018721 & 100410 & Payment & -200.00 & 7394.46 & 0 & 0 & 0.7278\\
+\hline
+787 & 2018-09-01 & SGD & 2018722 & 100410 & Payment & -6412.00 & 982.46 & 0 & 0 & 1.0000\\
+\hline
+796 & 2018-09-02 & USD & 2018723 & 100410 & Payment & -326.00 & 656.46 & 0 & 0 & 0.7286\\
+\hline
+814 & 2018-09-05 & CNY & 2018724 & 100410 & Withdrawal & -272.00 & 384.46 & 0 & 0 & 4.9643\\
+\hline
+839 & 2018-09-08 & CNY & 2018725 & 100410 & Payment & -212.00 & 172.46 & 0 & 0 & 4.9634\\
+\hline
+857 & 2018-09-09 & SGD & 2018726 & 100410 & Payment & -68.00 & 104.46 & 0 & 0 & 1.0000\\
+\hline
+848 & 2018-09-09 & CNY & 2018727 & 100410 & Payment & -24.00 & 80.46 & 0 & 0 & 4.9612\\
+\hline
+849 & 2018-09-09 & CNY & 2018728 & 100410 & Payment & -11.00 & 69.46 & 0 & 0 & 4.9612\\
+\hline
+860 & 2018-09-10 & CNY & 2018729 & 100410 & Withdrawal & -45.00 & 24.46 & 0 & 0 & 4.9723\\
+\hline
+878 & 2018-09-11 & USD & 2018730 & 100410 & Payment & -24.00 & 0.46 & 0 & 0 & 0.7270\\
+\hline
+950 & 2018-09-19 & SGD & 2018739 & 100410 & Deposit & 2087.00 & 2087.46 & 0 & 0 & 1.0000\\
+\hline
+965 & 2018-09-20 & USD & 2018740 & 100410 & Payment & -763.00 & 1324.46 & 0 & 0 & 0.7328\\
+\hline
+979 & 2018-09-22 & CNY & 2018741 & 100410 & Payment & -569.00 & 755.46 & 0 & 0 & 5.0263\\
+\hline
+981 & 2018-09-22 & SGD & 2018742 & 100410 & Withdrawal & -590.00 & 165.46 & 0 & 0 & 1.0000\\
+\hline
+1005 & 2018-09-24 & SGD & 2018743 & 100410 & Payment & -89.00 & 76.46 & 0 & 0 & 1.0000\\
+\hline
+1031 & 2018-09-28 & SGD & 2018744 & 100410 & Withdrawal & -49.00 & 27.46 & 0 & 0 & 1.0000\\
+\hline
+1037 & 2018-09-30 & SGD & 2018745 & 100410 & Withdrawal & -22.00 & 5.46 & 0 & 0 & 1.0000\\
+\hline
+15 & 2018-07-01 & SGD & 2018746 & 100810 & Withdrawal & -939.00 & 6815.00 & 9160 & 0 & 1.0000\\
+\hline
+16 & 2018-07-01 & SGD & 2018747 & 100810 & Withdrawal & -4525.00 & 2290.00 & 9160 & 0 & 1.0000\\
+\hline
+23 & 2018-07-02 & SGD & 2018748 & 100810 & Deposit & 1538.00 & 3828.00 & 9160 & 0 & 1.0000\\
+\hline
+26 & 2018-07-02 & USD & 2018749 & 100810 & Payment & -1266.00 & 3828.00 & 7894 & 0 & 0.7304\\
+\hline
+34 & 2018-07-03 & USD & 2018750 & 100810 & Payment & -187.00 & 3828.00 & 7707 & 0 & 0.7327\\
+\hline
+29 & 2018-07-03 & SGD & 2018751 & 100810 & Payment & -4998.00 & 3828.00 & 2709 & 0 & 1.0000\\
+\hline
+36 & 2018-07-04 & CNY & 2018752 & 100810 & Withdrawal & -3341.00 & 487.00 & 2709 & 0 & 4.8591\\
+\hline
+55 & 2018-07-05 & USD & 2018753 & 100810 & Payment & -2186.00 & 487.00 & 523 & 0 & 0.7328\\
+\hline
+69 & 2018-07-06 & SGD & 2018754 & 100810 & Payment & -137.00 & 487.00 & 386 & 0 & 1.0000\\
+\hline
+67 & 2018-07-06 & CNY & 2018755 & 100810 & Payment & -70.00 & 487.00 & 316 & 0 & 4.8945\\
+\hline
+82 & 2018-07-07 & SGD & 2018756 & 100810 & Withdrawal & -412.00 & 75.00 & 316 & 0 & 1.0000\\
+\hline
+84 & 2018-07-07 & USD & 2018757 & 100810 & Payment & -315.00 & 75.00 & 1 & 0 & 0.7368\\
+\hline
+96 & 2018-07-08 & USD & 2018758 & 100810 & Withdrawal & -58.00 & 17.00 & 1 & 0 & 0.7369\\
+\hline
+106 & 2018-07-09 & SGD & 2018759 & 100810 & Payment & -15.00 & 3.00 & 0 & 0 & 1.0000\\
+\hline
+107 & 2018-07-09 & SGD & 2018760 & 100810 & Withdrawal & -1.00 & 2.00 & 0 & 0 & 1.0000\\
+\hline
+130 & 2018-07-11 & USD & 2018761 & 100810 & Payment & -2.00 & 0.00 & 0 & 0 & 0.7330\\
+\hline
+338 & 2018-07-27 & CNY & 2018785 & 100810 & Deposit & 4280.00 & 4280.00 & 0 & 0 & 5.0031\\
+\hline
+334 & 2018-07-27 & CNY & 2018786 & 100810 & Payment & -2701.00 & 1579.00 & 0 & 0 & 5.0031\\
+\hline
+337 & 2018-07-27 & CNY & 2018787 & 100810 & Withdrawal & -334.00 & 1245.00 & 0 & 0 & 5.0031\\
+\hline
+352 & 2018-07-28 & SGD & 2018788 & 100810 & Withdrawal & -744.00 & 501.00 & 0 & 0 & 1.0000\\
+\hline
+360 & 2018-07-29 & CNY & 2018789 & 100810 & Payment & -215.00 & 286.00 & 0 & 0 & 5.0027\\
+\hline
+373 & 2018-07-30 & SGD & 2018790 & 100810 & Payment & -92.00 & 194.00 & 0 & 0 & 1.0000\\
+\hline
+376 & 2018-07-30 & SGD & 2018791 & 100810 & Withdrawal & -24.00 & 170.00 & 0 & 0 & 1.0000\\
+\hline
+390 & 2018-07-31 & SGD & 2018792 & 100810 & Payment & -18.00 & 152.00 & 0 & 0 & 1.0000\\
+\hline
+392 & 2018-07-31 & SGD & 2018793 & 100810 & Payment & -142.00 & 10.00 & 0 & 0 & 1.0000\\
+\hline
+394 & 2018-07-31 & SGD & 2018794 & 100810 & Payment & -8.00 & 2.00 & 0 & 0 & 1.0000\\
+\hline
+400 & 2018-07-31 & USD & 2018795 & 100810 & Payment & -2.00 & 0.00 & 0 & 0 & 0.7345\\
+\hline
+407 & 2018-08-01 & SGD & 2018796 & 100810 & Deposit & 19.00 & 19.00 & 0 & 0 & 1.0000\\
+\hline
+421 & 2018-08-02 & USD & 2018797 & 100810 & Withdrawal & -16.00 & 3.00 & 0 & 0 & 0.7306\\
+\hline
+418 & 2018-08-02 & USD & 2018798 & 100810 & Withdrawal & -1.00 & 2.00 & 0 & 0 & 0.7306\\
+\hline
+431 & 2018-08-03 & SGD & 2018799 & 100810 & Withdrawal & -2.00 & 0.00 & 0 & 0 & 1.0000\\
+\hline
+558 & 2018-08-13 & USD & 2018814 & 100810 & Deposit & 1424.73 & 1424.73 & 0 & 0 & 0.7269\\
+\hline
+555 & 2018-08-13 & SGD & 2018815 & 100810 & Withdrawal & -137.00 & 1287.73 & 0 & 0 & 1.0000\\
+\hline
+561 & 2018-08-13 & USD & 2018816 & 100810 & Withdrawal & -152.00 & 1135.73 & 0 & 0 & 0.7269\\
+\hline
+567 & 2018-08-14 & CNY & 2018817 & 100810 & Withdrawal & -270.00 & 865.73 & 0 & 0 & 4.9962\\
+\hline
+568 & 2018-08-14 & CNY & 2018818 & 100810 & Withdrawal & -848.00 & 17.73 & 0 & 0 & 4.9962\\
+\hline
+564 & 2018-08-14 & CNY & 2018819 & 100810 & Payment & -17.00 & 0.73 & 0 & 0 & 4.9962\\
+\hline
+868 & 2018-09-10 & USD & 2018855 & 100810 & Deposit & 1721.73 & 1722.46 & 0 & 0 & 0.7253\\
+\hline
+861 & 2018-09-10 & CNY & 2018856 & 100810 & Withdrawal & -139.00 & 1583.46 & 0 & 0 & 4.9723\\
+\hline
+871 & 2018-09-11 & CNY & 2018857 & 100810 & Payment & -79.00 & 1504.46 & 0 & 0 & 4.9967\\
+\hline
+872 & 2018-09-11 & CNY & 2018858 & 100810 & Withdrawal & -319.00 & 1185.46 & 0 & 0 & 4.9967\\
+\hline
+886 & 2018-09-12 & SGD & 2018859 & 100810 & Deposit & 4093.00 & 5278.46 & 0 & 0 & 1.0000\\
+\hline
+885 & 2018-09-12 & SGD & 2018860 & 100810 & Withdrawal & -3921.00 & 1357.46 & 0 & 0 & 1.0000\\
+\hline
+896 & 2018-09-13 & SGD & 2018861 & 100810 & Payment & -221.00 & 1136.46 & 0 & 0 & 1.0000\\
+\hline
+909 & 2018-09-14 & USD & 2018862 & 100810 & Withdrawal & -520.00 & 616.46 & 0 & 0 & 0.7277\\
+\hline
+931 & 2018-09-17 & SGD & 2018863 & 100810 & Payment & -128.00 & 488.46 & 0 & 0 & 1.0000\\
+\hline
+1007 & 2018-09-24 & USD & 2018864 & 100810 & Withdrawal & -191.00 & 297.46 & 0 & 0 & 0.7321\\
+\hline
+1021 & 2018-09-27 & SGD & 2018866 & 100810 & Payment & -70.00 & 227.46 & 0 & 0 & 1.0000\\
+\hline
+1042 & 2018-09-30 & USD & 2018867 & 100810 & Withdrawal & -171.00 & 56.46 & 0 & 0 & 0.7313\\
+\hline
+85 & 2018-07-07 & USD & 2018868 & 100253 & Payment & -8081.00 & 9706.00 & 424 & 0 & 0.7368\\
+\hline
+123 & 2018-07-11 & CNY & 2018869 & 100253 & Payment & -1465.00 & 8665.00 & 0 & 0 & 4.8975\\
+\hline
+158 & 2018-07-13 & SGD & 2018870 & 100253 & Deposit & 2877.00 & 11542.00 & 0 & 0 & 1.0000\\
+\hline
+317 & 2018-07-25 & USD & 2018871 & 100253 & Deposit & 512.74 & 12054.74 & 0 & 0 & 0.7361\\
+\hline
+419 & 2018-08-02 & USD & 2018872 & 100253 & Deposit & 2339.73 & 14394.47 & 0 & 0 & 0.7306\\
+\hline
+417 & 2018-08-02 & SGD & 2018873 & 100253 & Withdrawal & -11021.00 & 3373.47 & 0 & 0 & 1.0000\\
+\hline
+441 & 2018-08-04 & USD & 2018874 & 100253 & Withdrawal & -1523.00 & 1850.47 & 0 & 0 & 0.7318\\
+\hline
+452 & 2018-08-05 & SGD & 2018875 & 100253 & Payment & -1756.00 & 94.47 & 0 & 0 & 1.0000\\
+\hline
+445 & 2018-08-05 & CNY & 2018876 & 100253 & Withdrawal & -41.00 & 53.47 & 0 & 0 & 5.0005\\
+\hline
+454 & 2018-08-05 & USD & 2018877 & 100253 & Payment & -53.00 & 0.47 & 0 & 0 & 0.7317\\
+\hline
+764 & 2018-08-30 & SGD & 2018912 & 100253 & Deposit & 4905.00 & 4905.47 & 0 & 0 & 1.0000\\
+\hline
+763 & 2018-08-30 & SGD & 2018913 & 100253 & Withdrawal & -907.00 & 3998.47 & 0 & 0 & 1.0000\\
+\hline
+770 & 2018-08-31 & CNY & 2018914 & 100253 & Withdrawal & -2609.00 & 1389.47 & 0 & 0 & 4.9783\\
+\hline
+786 & 2018-09-01 & CNY & 2018915 & 100253 & Withdrawal & -795.00 & 594.47 & 0 & 0 & 4.9783\\
+\hline
+794 & 2018-09-02 & CNY & 2018916 & 100253 & Payment & -158.00 & 436.47 & 0 & 0 & 4.9812\\
+\hline
+804 & 2018-09-03 & USD & 2018917 & 100253 & Payment & -8.00 & 428.47 & 0 & 0 & 0.7290\\
+\hline
+801 & 2018-09-03 & USD & 2018918 & 100253 & Withdrawal & -384.00 & 44.47 & 0 & 0 & 0.7290\\
+\hline
+812 & 2018-09-04 & USD & 2018919 & 100253 & Withdrawal & -36.00 & 8.47 & 0 & 0 & 0.7267\\
+\hline
+815 & 2018-09-05 & SGD & 2018921 & 100253 & Payment & -1.00 & 7.47 & 0 & 0 & 1.0000\\
+\hline
+813 & 2018-09-05 & CNY & 2018922 & 100253 & Payment & -4.00 & 3.47 & 0 & 0 & 4.9643\\
+\hline
+825 & 2018-09-06 & USD & 2018923 & 100253 & Withdrawal & -2.00 & 1.47 & 0 & 0 & 0.7276\\
+\hline
+830 & 2018-09-07 & SGD & 2018924 & 100253 & Withdrawal & -1.00 & 0.47 & 0 & 0 & 1.0000\\
+\hline
+930 & 2018-09-17 & SGD & 2018944 & 100253 & Deposit & 936.00 & 936.47 & 0 & 0 & 1.0000\\
+\hline
+936 & 2018-09-17 & USD & 2018945 & 100253 & Withdrawal & -674.00 & 262.47 & 0 & 0 & 0.7288\\
+\hline
+927 & 2018-09-17 & CNY & 2018946 & 100253 & Payment & -60.00 & 202.47 & 0 & 0 & 4.9977\\
+\hline
+938 & 2018-09-17 & USD & 2018947 & 100253 & Withdrawal & -7.00 & 195.47 & 0 & 0 & 0.7288\\
+\hline
+947 & 2018-09-18 & USD & 2018948 & 100253 & Payment & -119.00 & 76.47 & 0 & 0 & 0.7295\\
+\hline
+957 & 2018-09-19 & USD & 2018949 & 100253 & Withdrawal & -70.00 & 6.47 & 0 & 0 & 0.7305\\
+\hline
+960 & 2018-09-20 & CNY & 2018950 & 100253 & Payment & -4.00 & 2.47 & 0 & 0 & 5.0175\\
+\hline
+967 & 2018-09-20 & USD & 2018951 & 100253 & Withdrawal & -2.00 & 0.47 & 0 & 0 & 0.7328\\
+\hline
+3 & 2018-07-01 & CNY & 2018968 & 100747 & Payment & -11111.00 & 969.00 & 0 & 0 & 4.8611\\
+\hline
+33 & 2018-07-03 & USD & 2018969 & 100747 & Deposit & 4011.73 & 4980.73 & 0 & 0 & 0.7327\\
+\hline
+47 & 2018-07-05 & CNY & 2018970 & 100747 & Payment & -4139.00 & 841.73 & 0 & 0 & 4.8632\\
+\hline
+90 & 2018-07-08 & CNY & 2018971 & 100747 & Withdrawal & -94.00 & 747.73 & 0 & 0 & 4.8927\\
+\hline
+100 & 2018-07-09 & CNY & 2018972 & 100747 & Withdrawal & -468.00 & 279.73 & 0 & 0 & 4.8766\\
+\hline
+118 & 2018-07-10 & SGD & 2018973 & 100747 & Withdrawal & -107.00 & 172.73 & 0 & 0 & 1.0000\\
+\hline
+160 & 2018-07-13 & USD & 2018974 & 100747 & Payment & -45.00 & 127.73 & 0 & 0 & 0.7322\\
+\hline
+174 & 2018-07-14 & USD & 2018975 & 100747 & Withdrawal & -11.00 & 116.73 & 0 & 0 & 0.7322\\
+\hline
+201 & 2018-07-16 & SGD & 2018976 & 100747 & Withdrawal & -62.00 & 54.73 & 0 & 0 & 1.0000\\
+\hline
+214 & 2018-07-18 & CNY & 2018977 & 100747 & Payment & -38.00 & 16.73 & 0 & 0 & 4.9219\\
+\hline
+219 & 2018-07-18 & SGD & 2018978 & 100747 & Withdrawal & -1.00 & 15.73 & 0 & 0 & 1.0000\\
+\hline
+227 & 2018-07-19 & SGD & 2018979 & 100747 & Withdrawal & -15.00 & 0.73 & 0 & 0 & 1.0000\\
+\hline
+381 & 2018-07-30 & USD & 2018987 & 100747 & Deposit & 4260.73 & 4261.47 & 0 & 0 & 0.7346\\
+\hline
+372 & 2018-07-30 & CNY & 2018988 & 100747 & Payment & -627.00 & 3634.47 & 0 & 0 & 5.0058\\
+\hline
+382 & 2018-07-30 & USD & 2018989 & 100747 & Withdrawal & -1272.00 & 2362.47 & 0 & 0 & 0.7346\\
+\hline
+424 & 2018-08-03 & CNY & 2018990 & 100747 & Payment & -1240.00 & 1122.47 & 0 & 0 & 5.0003\\
+\hline
+423 & 2018-08-03 & CNY & 2018991 & 100747 & Payment & -68.00 & 1054.47 & 0 & 0 & 5.0003\\
+\hline
+434 & 2018-08-04 & CNY & 2018992 & 100747 & Payment & -392.00 & 662.47 & 0 & 0 & 5.0003\\
+\hline
+436 & 2018-08-04 & CNY & 2018993 & 100747 & Withdrawal & -362.00 & 300.47 & 0 & 0 & 5.0003\\
+\hline
+435 & 2018-08-04 & CNY & 2018994 & 100747 & Withdrawal & -231.00 & 69.47 & 0 & 0 & 5.0003\\
+\hline
+451 & 2018-08-05 & SGD & 2018995 & 100747 & Payment & -47.00 & 22.47 & 0 & 0 & 1.0000\\
+\hline
+470 & 2018-08-06 & USD & 2018996 & 100747 & Withdrawal & -10.00 & 12.47 & 0 & 0 & 0.7309\\
+\hline
+469 & 2018-08-06 & SGD & 2018997 & 100747 & Withdrawal & -12.00 & 0.47 & 0 & 0 & 1.0000\\
+\hline
+723 & 2018-08-27 & USD & 2019020 & 100747 & Deposit & 4707.73 & 4708.20 & 0 & 0 & 0.7340\\
+\hline
+724 & 2018-08-27 & USD & 2019021 & 100747 & Payment & -2329.00 & 2379.20 & 0 & 0 & 0.7340\\
+\hline
+715 & 2018-08-27 & CNY & 2019022 & 100747 & Withdrawal & -1411.00 & 968.20 & 0 & 0 & 5.0028\\
+\hline
+737 & 2018-08-28 & SGD & 2019023 & 100747 & Payment & -909.00 & 59.20 & 0 & 0 & 1.0000\\
+\hline
+738 & 2018-08-28 & USD & 2019024 & 100747 & Withdrawal & -49.00 & 10.20 & 0 & 0 & 0.7331\\
+\hline
+735 & 2018-08-28 & SGD & 2019025 & 100747 & Withdrawal & -10.00 & 0.20 & 0 & 0 & 1.0000\\
+\hline
+880 & 2018-09-12 & CNY & 2019038 & 100747 & Deposit & 2285.00 & 2285.20 & 0 & 0 & 5.0004\\
+\hline
+929 & 2018-09-17 & CNY & 2019039 & 100747 & Withdrawal & -1685.00 & 600.20 & 0 & 0 & 4.9977\\
+\hline
+975 & 2018-09-21 & USD & 2019040 & 100747 & Payment & -397.00 & 203.20 & 0 & 0 & 0.7330\\
+\hline
+987 & 2018-09-23 & CNY & 2019041 & 100747 & Payment & -117.00 & 86.20 & 0 & 0 & 5.0121\\
+\hline
+1017 & 2018-09-26 & USD & 2019042 & 100747 & Withdrawal & -62.00 & 24.20 & 0 & 0 & 0.7323\\
+\hline
+1039 & 2018-09-30 & SGD & 2019043 & 100747 & Withdrawal & -17.00 & 7.20 & 0 & 0 & 1.0000\\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{8.Month End Statement Customer-wise,
+Month-wise}\label{month-end-statement-customer-wise-month-wise}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{#print(df1)}
+\NormalTok{txnData2<-txnData[,}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{3}\NormalTok{,}\DecValTok{5}\NormalTok{,}\DecValTok{6}\NormalTok{,}\DecValTok{2}\NormalTok{,}\DecValTok{7}\NormalTok{,}\DecValTok{8}\NormalTok{)]}
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \DecValTok{1}\OperatorTok{:}\NormalTok{sampleSize)}
+\NormalTok{\{}
+  \ControlFlowTok{for}\NormalTok{(j }\ControlFlowTok{in} \KeywordTok{month}\NormalTok{(startDateOrig)}\OperatorTok{:}\KeywordTok{month}\NormalTok{(endDateOrig))}
+\NormalTok{  \{}
+    \KeywordTok{paste}\NormalTok{(}\KeywordTok{cat}\NormalTok{(}\StringTok{"Client Name : "}\NormalTok{,}\KeywordTok{as.character}\NormalTok{(df1}\OperatorTok{$}\NormalTok{Name[[}\KeywordTok{which}\NormalTok{(df1}\OperatorTok{$}\NormalTok{AccountNo }\OperatorTok{==}\StringTok{ }\NormalTok{accountNums[i])]]),}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{))}
+    \KeywordTok{paste}\NormalTok{(}\KeywordTok{cat}\NormalTok{(}\StringTok{"Month : "}\NormalTok{,month.abb[j],}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{))}
+    \KeywordTok{print}\NormalTok{(}\KeywordTok{select}\NormalTok{(txnData2 }\OperatorTok{%>%}\StringTok{ }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{filter}\NormalTok{((}\KeywordTok{month}\NormalTok{(Date)}\OperatorTok{==}\NormalTok{j)}\OperatorTok{&}\NormalTok{(AccountNo}\OperatorTok{==}\NormalTok{accountNums[i])),}\KeywordTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{,}\DecValTok{4}\NormalTok{,}\DecValTok{5}\NormalTok{,}\DecValTok{6}\NormalTok{,}\DecValTok{7}\NormalTok{,}\DecValTok{8}\NormalTok{)))}
+    \KeywordTok{print}\NormalTok{(}\StringTok{"Month-End Balance}\CharTok{\textbackslash{}n}\StringTok{"}\NormalTok{)}
+    \KeywordTok{print}\NormalTok{(txnData2 }\OperatorTok{%>%}\StringTok{ }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{filter}\NormalTok{((}\KeywordTok{month}\NormalTok{(Date)}\OperatorTok{==}\NormalTok{j)}\OperatorTok{&}\NormalTok{AccountNo}\OperatorTok{==}\NormalTok{accountNums[i]) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{summarise}\NormalTok{(}\StringTok{"TotalDeposit"}\NormalTok{=}\KeywordTok{sum}\NormalTok{(DepositBalance),}\StringTok{"TotalCredit"}\NormalTok{=}\KeywordTok{sum}\NormalTok{(CreditBalance)))}
+    \KeywordTok{print}\NormalTok{(}\StringTok{"----------------------------"}\NormalTok{)}
+\NormalTok{  \}}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Client Name :  Powers, Nichole 
+## Month :  Jul 
+##          Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1  2018-07-03         Payment  -3036      USD           7922          6021
+## 2  2018-07-05         Payment   -609      SGD           7922          5412
+## 3  2018-07-05         Payment  -7715      USD           5619             0
+## 4  2018-07-06      Withdrawal  -3889      SGD           1730             0
+## 5  2018-07-09         Deposit   3460      SGD           5190             0
+## 6  2018-07-09         Payment  -1546      USD           3644             0
+## 7  2018-07-10      Withdrawal  -2024      USD           1620             0
+## 8  2018-07-11      Withdrawal  -1551      SGD             69             0
+## 9  2018-07-11      Withdrawal    -32      SGD             37             0
+## 10 2018-07-11         Payment     -1      SGD             36             0
+## 11 2018-07-14         Payment    -13      SGD             23             0
+## 12 2018-07-14      Withdrawal     -6      CNY             17             0
+## 13 2018-07-21      Withdrawal     -6      USD             11             0
+## 14 2018-07-21      Withdrawal    -11      SGD              0             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1        33840       11433
+## [1] "----------------------------"
+## Client Name :  Powers, Nichole 
+## Month :  Aug 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-08-16         Deposit   857.73      USD         857.73             0
+## 2  2018-08-16         Payment  -624.00      USD         233.73             0
+## 3  2018-08-16         Payment   -51.00      SGD         182.73             0
+## 4  2018-08-17      Withdrawal   -28.00      CNY         154.73             0
+## 5  2018-08-18         Payment  -110.00      USD          44.73             0
+## 6  2018-08-18         Payment   -19.00      CNY          25.73             0
+## 7  2018-08-18      Withdrawal   -20.00      SGD           5.73             0
+## 8  2018-08-19      Withdrawal    -3.00      CNY           2.73             0
+## 9  2018-08-20      Withdrawal    -2.00      SGD           0.73             0
+## 10 2018-08-23         Deposit  2557.73      USD        2558.45             0
+## 11 2018-08-23      Withdrawal -1763.00      SGD         795.45             0
+## 12 2018-08-24      Withdrawal  -596.00      SGD         199.45             0
+## 13 2018-08-24      Withdrawal  -124.00      SGD          75.45             0
+## 14 2018-08-27         Payment   -48.00      USD          27.45             0
+## 15 2018-08-27      Withdrawal   -11.00      SGD          16.45             0
+## 16 2018-08-28         Payment    -6.00      SGD          10.45             0
+## 17 2018-08-30         Payment    -7.00      CNY           3.45             0
+## 18 2018-08-30      Withdrawal    -2.00      USD           1.45             0
+## 19 2018-08-30         Payment    -1.00      USD           0.45             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      5197.07           0
+## [1] "----------------------------"
+## Client Name :  Powers, Nichole 
+## Month :  Sep 
+##          Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1  2018-09-18         Deposit   3544      SGD        3544.45             0
+## 2  2018-09-18         Payment  -2680      SGD         864.45             0
+## 3  2018-09-18         Payment   -226      USD         638.45             0
+## 4  2018-09-18      Withdrawal   -423      USD         215.45             0
+## 5  2018-09-18      Withdrawal   -114      USD         101.45             0
+## 6  2018-09-19         Payment    -55      SGD          46.45             0
+## 7  2018-09-19         Payment    -45      SGD           1.45             0
+## 8  2018-09-20      Withdrawal     -1      SGD           0.45             0
+## 9  2018-09-30         Deposit    656      SGD         656.45             0
+## 10 2018-09-30         Payment   -553      CNY         103.45             0
+## 11 2018-09-30         Payment    -65      USD          38.45             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      6210.95           0
+## [1] "----------------------------"
+## Client Name :  Tran, Stephanie 
+## Month :  Jul 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-07-01      Withdrawal -3151.00      CNY        4899.00          9034
+## 2  2018-07-04         Payment -8111.00      USD        4899.00           923
+## 3  2018-07-05      Withdrawal -4847.00      USD          52.00           923
+## 4  2018-07-05         Payment  -137.00      CNY          52.00           786
+## 5  2018-07-05         Payment  -724.00      USD          52.00            62
+## 6  2018-07-06      Withdrawal   -36.00      CNY          16.00            62
+## 7  2018-07-06         Payment   -18.00      SGD          16.00            44
+## 8  2018-07-06      Withdrawal   -15.00      CNY           1.00            44
+## 9  2018-07-07         Payment   -21.00      CNY           1.00            23
+## 10 2018-07-07      Withdrawal    -1.00      USD           0.00            23
+## 11 2018-07-08         Payment    -2.00      USD           0.00            21
+## 12 2018-07-11         Payment   -13.00      USD           0.00             8
+## 13 2018-07-12         Payment    -4.00      CNY           0.00             4
+## 14 2018-07-13         Payment    -2.00      SGD           0.00             2
+## 15 2018-07-14         Deposit  2791.00      SGD        2791.00             2
+## 16 2018-07-14         Payment -1536.00      SGD        1257.00             0
+## 17 2018-07-14         Payment  -193.00      CNY        1064.00             0
+## 18 2018-07-14         Payment  -823.00      USD         241.00             0
+## 19 2018-07-15         Payment  -160.00      USD          81.00             0
+## 20 2018-07-16         Payment   -64.00      USD          17.00             0
+## 21 2018-07-16      Withdrawal   -17.00      CNY           0.00             0
+## 22 2018-07-20         Deposit  4387.73      USD        4387.73             0
+## 23 2018-07-20      Withdrawal -1421.00      CNY        2966.73             0
+## 24 2018-07-21      Withdrawal -2589.00      SGD         377.73             0
+## 25 2018-07-21      Withdrawal  -377.00      SGD           0.73             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     23171.92       11961
+## [1] "----------------------------"
+## Client Name :  Tran, Stephanie 
+## Month :  Aug 
+##         Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1 2018-08-07         Deposit  4892.01      CNY        4892.74             0
+## 2 2018-08-08      Withdrawal -3990.00      CNY         902.74             0
+## 3 2018-08-08      Withdrawal  -869.00      USD          33.74             0
+## 4 2018-08-10         Payment    -5.00      USD          28.74             0
+## 5 2018-08-17      Withdrawal   -16.00      CNY          12.74             0
+## 6 2018-08-18         Payment    -3.00      SGD           9.74             0
+## 7 2018-08-19      Withdrawal    -5.00      SGD           4.74             0
+## 8 2018-08-25      Withdrawal    -3.00      CNY           1.74             0
+## 9 2018-08-26         Payment    -1.00      USD           0.74             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      5887.66           0
+## [1] "----------------------------"
+## Client Name :  Tran, Stephanie 
+## Month :  Sep 
+##         Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1 2018-09-03         Deposit 986.97      CNY         987.71             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1       987.71           0
+## [1] "----------------------------"
+## Client Name :  Thornton, Najavee 
+## Month :  Jul 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-07-01         Payment -2627.00      USD        5090.00          4619
+## 2  2018-07-01         Payment -4461.00      USD        5090.00           158
+## 3  2018-07-04      Withdrawal -2605.00      USD        2485.00           158
+## 4  2018-07-04      Withdrawal  -410.00      SGD        2075.00           158
+## 5  2018-07-06      Withdrawal  -818.00      USD        1257.00           158
+## 6  2018-07-07         Payment  -783.00      USD         632.00             0
+## 7  2018-07-07      Withdrawal   -26.00      USD         606.00             0
+## 8  2018-07-07      Withdrawal  -160.00      USD         446.00             0
+## 9  2018-07-09      Withdrawal  -134.00      USD         312.00             0
+## 10 2018-07-09      Withdrawal   -11.00      USD         301.00             0
+## 11 2018-07-10      Withdrawal  -276.00      SGD          25.00             0
+## 12 2018-07-10      Withdrawal   -15.00      CNY          10.00             0
+## 13 2018-07-11      Withdrawal    -4.00      USD           6.00             0
+## 14 2018-07-11         Payment    -5.00      SGD           1.00             0
+## 15 2018-07-12      Withdrawal    -1.00      USD           0.00             0
+## 16 2018-07-21         Deposit  1557.97      CNY        1557.97             0
+## 17 2018-07-22      Withdrawal  -107.00      CNY        1450.97             0
+## 18 2018-07-23         Payment -1256.00      SGD         194.97             0
+## 19 2018-07-23      Withdrawal   -37.00      USD         157.97             0
+## 20 2018-07-24      Withdrawal    -2.00      SGD         155.97             0
+## 21 2018-07-24      Withdrawal   -19.00      SGD         136.97             0
+## 22 2018-07-25      Withdrawal   -37.00      CNY          99.97             0
+## 23 2018-07-26      Withdrawal   -98.00      CNY           1.97             0
+## 24 2018-07-27      Withdrawal    -1.00      CNY           0.97             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     22093.73        5251
+## [1] "----------------------------"
+## Client Name :  Thornton, Najavee 
+## Month :  Aug 
+##          Date TransactionType  Amount Currency DepositBalance CreditBalance
+## 1  2018-08-17         Deposit 1695.73      USD         1696.7             0
+## 2  2018-08-17      Withdrawal -553.00      CNY         1143.7             0
+## 3  2018-08-20      Withdrawal -603.00      SGD          540.7             0
+## 4  2018-08-20         Payment -181.00      USD          359.7             0
+## 5  2018-08-21      Withdrawal -132.00      SGD          227.7             0
+## 6  2018-08-21      Withdrawal -171.00      USD           56.7             0
+## 7  2018-08-22         Payment  -41.00      SGD           15.7             0
+## 8  2018-08-22         Payment   -3.00      CNY           12.7             0
+## 9  2018-08-22         Payment   -8.00      USD            4.7             0
+## 10 2018-08-23      Withdrawal   -1.00      SGD            3.7             0
+## 11 2018-08-23      Withdrawal   -1.00      USD            2.7             0
+## 12 2018-08-24      Withdrawal   -2.00      SGD            0.7             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1       4065.4           0
+## [1] "----------------------------"
+## Client Name :  Thornton, Najavee 
+## Month :  Sep 
+##         Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1 2018-09-03         Deposit    216      SGD          216.7             0
+## 2 2018-09-04      Withdrawal   -194      SGD           22.7             0
+## 3 2018-09-06         Deposit   2476      SGD         2498.7             0
+## 4 2018-09-06      Withdrawal  -2406      USD           92.7             0
+## 5 2018-09-10         Payment    -67      SGD           25.7             0
+## 6 2018-09-17         Payment     -6      CNY           19.7             0
+## 7 2018-09-19         Payment    -12      USD            7.7             0
+## 8 2018-09-19      Withdrawal     -7      CNY            0.7             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1       2884.6           0
+## [1] "----------------------------"
+## Client Name :  al-Kassem, Hasnaa 
+## Month :  Jul 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-07-01         Payment -2916.00      CNY        8085.00          2118
+## 2  2018-07-02      Withdrawal -2270.00      CNY        5815.00          2118
+## 3  2018-07-03      Withdrawal -3814.00      SGD        2001.00          2118
+## 4  2018-07-03         Payment -2964.00      CNY        1155.00             0
+## 5  2018-07-03         Payment  -274.00      USD         881.00             0
+## 6  2018-07-04      Withdrawal  -138.00      SGD         743.00             0
+## 7  2018-07-04         Payment  -407.00      SGD         336.00             0
+## 8  2018-07-04      Withdrawal  -330.00      CNY           6.00             0
+## 9  2018-07-05         Payment    -4.00      SGD           2.00             0
+## 10 2018-07-05         Payment    -1.00      USD           1.00             0
+## 11 2018-07-06      Withdrawal    -1.00      SGD           0.00             0
+## 12 2018-07-17         Deposit  4920.73      USD        4920.73             0
+## 13 2018-07-18      Withdrawal -3104.00      CNY        1816.73             0
+## 14 2018-07-18         Payment  -958.00      USD         858.73             0
+## 15 2018-07-19      Withdrawal  -183.00      CNY         675.73             0
+## 16 2018-07-19      Withdrawal  -151.00      CNY         524.73             0
+## 17 2018-07-20      Withdrawal  -258.00      CNY         266.73             0
+## 18 2018-07-20      Withdrawal  -114.00      SGD         152.73             0
+## 19 2018-07-21      Withdrawal   -82.00      SGD          70.73             0
+## 20 2018-07-21         Payment   -63.00      CNY           7.73             0
+## 21 2018-07-21         Payment    -3.00      CNY           4.73             0
+## 22 2018-07-21         Payment    -2.00      CNY           2.73             0
+## 23 2018-07-21         Payment    -1.00      CNY           1.73             0
+## 24 2018-07-23      Withdrawal    -1.00      USD           0.73             0
+## 25 2018-07-24         Deposit  2066.73      USD        2067.47             0
+## 26 2018-07-24      Withdrawal -1357.00      SGD         710.47             0
+## 27 2018-07-25      Withdrawal  -285.00      USD         425.47             0
+## 28 2018-07-25         Payment  -208.00      CNY         217.47             0
+## 29 2018-07-26      Withdrawal  -108.00      SGD         109.47             0
+## 30 2018-07-26         Payment   -46.00      CNY          63.47             0
+## 31 2018-07-27         Payment   -43.00      CNY          20.47             0
+## 32 2018-07-28         Payment   -18.00      CNY           2.47             0
+## 33 2018-07-28      Withdrawal    -1.00      SGD           1.47             0
+## 34 2018-07-28      Withdrawal    -1.00      USD           0.47             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     31948.19        6354
+## [1] "----------------------------"
+## Client Name :  al-Kassem, Hasnaa 
+## Month :  Aug 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-08-07         Deposit  3259.73      USD         3260.2             0
+## 2  2018-08-07         Payment -1295.00      SGD         1965.2             0
+## 3  2018-08-07         Payment  -918.00      USD         1047.2             0
+## 4  2018-08-07      Withdrawal  -450.00      USD          597.2             0
+## 5  2018-08-09      Withdrawal  -124.00      SGD          473.2             0
+## 6  2018-08-09         Payment  -299.00      USD          174.2             0
+## 7  2018-08-10      Withdrawal  -160.00      CNY           14.2             0
+## 8  2018-08-10         Payment    -9.00      CNY            5.2             0
+## 9  2018-08-11         Payment    -4.00      USD            1.2             0
+## 10 2018-08-11      Withdrawal    -1.00      USD            0.2             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1         7538           0
+## [1] "----------------------------"
+## Client Name :  al-Kassem, Hasnaa 
+## Month :  Sep 
+##         Date TransactionType  Amount Currency DepositBalance CreditBalance
+## 1 2018-09-26         Deposit 1185.04      CNY        1185.24             0
+## 2 2018-09-26         Payment -383.00      USD         802.24             0
+## 3 2018-09-29         Payment -801.00      USD           1.24             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      1988.72           0
+## [1] "----------------------------"
+## Client Name :  al-Nassif, Maa'iz 
+## Month :  Jul 
+##          Date TransactionType    Amount Currency DepositBalance CreditBalance
+## 1  2018-07-02         Payment -10507.00      USD        8240.00             0
+## 2  2018-07-04      Withdrawal  -7971.00      SGD         269.00             0
+## 3  2018-07-04         Payment    -89.00      SGD         180.00             0
+## 4  2018-07-05         Payment    -95.00      SGD          85.00             0
+## 5  2018-07-05      Withdrawal    -70.00      CNY          15.00             0
+## 6  2018-07-05         Payment    -10.00      USD           5.00             0
+## 7  2018-07-08         Payment     -4.00      CNY           1.00             0
+## 8  2018-07-09         Deposit   2496.74      USD        2497.74             0
+## 9  2018-07-10      Withdrawal   -451.00      SGD        2046.74             0
+## 10 2018-07-11      Withdrawal   -404.00      USD        1642.74             0
+## 11 2018-07-11      Withdrawal  -1578.00      SGD          64.74             0
+## 12 2018-07-12         Payment    -29.00      SGD          35.74             0
+## 13 2018-07-13      Withdrawal     -3.00      SGD          32.74             0
+## 14 2018-07-15         Payment    -28.00      CNY           4.74             0
+## 15 2018-07-15      Withdrawal     -1.00      SGD           3.74             0
+## 16 2018-07-20         Payment     -3.00      USD           0.74             0
+## 17 2018-07-28         Deposit   1582.00      SGD        1582.74             0
+## 18 2018-07-29      Withdrawal  -1134.00      USD         448.74             0
+## 19 2018-07-29      Withdrawal    -53.00      CNY         395.74             0
+## 20 2018-07-29         Payment    -37.00      CNY         358.74             0
+## 21 2018-07-30         Payment    -37.00      SGD         321.74             0
+## 22 2018-07-31      Withdrawal   -164.00      CNY         157.74             0
+## 23 2018-07-31         Payment    -56.00      CNY         101.74             0
+## 24 2018-07-31         Payment    -20.00      USD          81.74             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     18573.58           0
+## [1] "----------------------------"
+## Client Name :  al-Nassif, Maa'iz 
+## Month :  Aug 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-08-01      Withdrawal   -26.00      USD          55.74             0
+## 2  2018-08-01      Withdrawal   -37.00      CNY          18.74             0
+## 3  2018-08-05         Payment   -12.00      CNY           6.74             0
+## 4  2018-08-05      Withdrawal    -1.00      USD           5.74             0
+## 5  2018-08-07      Withdrawal    -2.00      USD           3.74             0
+## 6  2018-08-09         Deposit  1422.73      USD        1426.47             0
+## 7  2018-08-09      Withdrawal  -258.00      SGD        1168.47             0
+## 8  2018-08-10         Payment -1137.00      CNY          31.47             0
+## 9  2018-08-10         Payment    -4.00      USD          27.47             0
+## 10 2018-08-11      Withdrawal   -16.00      SGD          11.47             0
+## 11 2018-08-13      Withdrawal    -7.00      CNY           4.47             0
+## 12 2018-08-13         Payment    -3.00      SGD           1.47             0
+## 13 2018-08-13         Payment    -1.00      CNY           0.47             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      2762.46           0
+## [1] "----------------------------"
+## Client Name :  al-Nassif, Maa'iz 
+## Month :  Sep 
+##          Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1  2018-09-11         Deposit   4531      CNY        4531.46             0
+## 2  2018-09-12      Withdrawal    -96      CNY        4435.46             0
+## 3  2018-09-13      Withdrawal  -1444      SGD        2991.46             0
+## 4  2018-09-13         Payment  -2540      CNY         451.46             0
+## 5  2018-09-14         Payment   -181      CNY         270.46             0
+## 6  2018-09-15         Deposit   1310      CNY        1580.46             0
+## 7  2018-09-15         Payment   -493      CNY        1087.46             0
+## 8  2018-09-15         Payment   -493      USD         594.46             0
+## 9  2018-09-16      Withdrawal   -298      CNY         296.46             0
+## 10 2018-09-16         Payment   -161      SGD         135.46             0
+## 11 2018-09-17      Withdrawal   -125      CNY          10.46             0
+## 12 2018-09-18         Payment     -9      CNY           1.46             0
+## 13 2018-09-20         Payment     -1      USD           0.46             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     16386.98           0
+## [1] "----------------------------"
+## Client Name :  Marstrand, Ronald 
+## Month :  Jul 
+##          Date TransactionType    Amount Currency DepositBalance CreditBalance
+## 1  2018-07-02         Payment  -2992.00      SGD        5568.00          5768
+## 2  2018-07-02         Payment -10749.00      USD         587.00             0
+## 3  2018-07-03         Payment   -186.00      USD         401.00             0
+## 4  2018-07-04         Payment   -334.00      SGD          67.00             0
+## 5  2018-07-04      Withdrawal    -42.00      SGD          25.00             0
+## 6  2018-07-05      Withdrawal     -9.00      USD          16.00             0
+## 7  2018-07-05         Payment     -8.00      USD           8.00             0
+## 8  2018-07-05      Withdrawal     -1.00      USD           7.00             0
+## 9  2018-07-06         Payment     -6.00      CNY           1.00             0
+## 10 2018-07-06      Withdrawal     -1.00      SGD           0.00             0
+## 11 2018-07-22         Deposit   4860.73      USD        4860.73             0
+## 12 2018-07-22      Withdrawal   -701.00      CNY        4159.73             0
+## 13 2018-07-24         Payment   -114.00      USD        4045.73             0
+## 14 2018-07-26         Payment  -2700.00      USD        1345.73             0
+## 15 2018-07-27         Payment   -538.00      USD         807.73             0
+## 16 2018-07-28         Deposit   3969.00      SGD        4776.73             0
+## 17 2018-07-28         Payment  -2188.00      USD        2588.73             0
+## 18 2018-07-28         Payment  -2047.00      CNY         541.73             0
+## 19 2018-07-29         Payment   -474.00      USD          67.73             0
+## 20 2018-07-30         Payment     -7.00      CNY          60.73             0
+## 21 2018-07-30         Payment    -54.00      SGD           6.73             0
+## 22 2018-07-30      Withdrawal     -3.00      USD           3.73             0
+## 23 2018-07-30      Withdrawal     -3.00      CNY           0.73             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     29946.49        5768
+## [1] "----------------------------"
+## Client Name :  Marstrand, Ronald 
+## Month :  Aug 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-08-02         Deposit  4004.00      SGD        4004.73             0
+## 2  2018-08-02      Withdrawal -3281.00      CNY         723.73             0
+## 3  2018-08-03      Withdrawal  -518.00      CNY         205.73             0
+## 4  2018-08-07      Withdrawal  -172.00      USD          33.73             0
+## 5  2018-08-09      Withdrawal   -19.00      USD          14.73             0
+## 6  2018-08-11      Withdrawal   -10.00      SGD           4.73             0
+## 7  2018-08-12         Payment    -3.00      SGD           1.73             0
+## 8  2018-08-25         Deposit  2917.98      CNY        2919.72             0
+## 9  2018-08-25         Payment -2686.00      SGD         233.72             0
+## 10 2018-08-29         Payment  -147.00      USD          86.72             0
+## 11 2018-08-30         Payment   -70.00      USD          16.72             0
+## 12 2018-08-31      Withdrawal   -13.00      USD           3.72             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      8249.71           0
+## [1] "----------------------------"
+## Client Name :  Marstrand, Ronald 
+## Month :  Sep 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-09-03      Withdrawal    -1.00      CNY           2.72             0
+## 2  2018-09-04      Withdrawal    -1.00      CNY           1.72             0
+## 3  2018-09-06         Payment    -1.00      SGD           0.72             0
+## 4  2018-09-21         Deposit  2517.73      USD        2518.45             0
+## 5  2018-09-21         Payment  -614.00      SGD        1904.45             0
+## 6  2018-09-21      Withdrawal -1169.00      SGD         735.45             0
+## 7  2018-09-22         Payment   -41.00      USD         694.45             0
+## 8  2018-09-23      Withdrawal  -593.00      USD         101.45             0
+## 9  2018-09-24      Withdrawal   -39.00      CNY          62.45             0
+## 10 2018-09-24         Payment   -60.00      SGD           2.45             0
+## 11 2018-09-24         Payment    -2.00      CNY           0.45             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      6024.76           0
+## [1] "----------------------------"
+## Client Name :  Wu, Payton 
+## Month :  Jul 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-07-01      Withdrawal -2763.00      CNY        3904.00          9963
+## 2  2018-07-02         Payment -3257.00      SGD        3904.00          6706
+## 3  2018-07-02      Withdrawal -2595.00      CNY        1309.00          6706
+## 4  2018-07-05         Payment -3706.00      SGD        1309.00          3000
+## 5  2018-07-06         Payment   -26.00      CNY        1309.00          2974
+## 6  2018-07-07      Withdrawal  -878.00      SGD         431.00          2974
+## 7  2018-07-09      Withdrawal  -346.00      USD          85.00          2974
+## 8  2018-07-09         Payment  -543.00      SGD          85.00          2431
+## 9  2018-07-11         Payment  -173.00      SGD          85.00          2258
+## 10 2018-07-12         Payment  -706.00      CNY          85.00          1552
+## 11 2018-07-12         Payment  -750.00      CNY          85.00           802
+## 12 2018-07-14         Payment  -576.00      USD          85.00           226
+## 13 2018-07-14         Payment  -293.00      CNY          18.00             0
+## 14 2018-07-14      Withdrawal    -8.00      CNY          10.00             0
+## 15 2018-07-15         Payment    -7.00      CNY           3.00             0
+## 16 2018-07-15         Payment    -1.00      CNY           2.00             0
+## 17 2018-07-15      Withdrawal    -2.00      USD           0.00             0
+## 18 2018-07-20         Deposit    54.73      USD          54.73             0
+## 19 2018-07-20         Payment   -14.00      USD          40.73             0
+## 20 2018-07-20      Withdrawal   -10.00      SGD          30.73             0
+## 21 2018-07-20         Payment    -4.00      SGD          26.73             0
+## 22 2018-07-22      Withdrawal   -15.00      USD          11.73             0
+## 23 2018-07-22      Withdrawal    -9.00      USD           2.73             0
+## 24 2018-07-22      Withdrawal    -2.00      SGD           0.73             0
+## 25 2018-07-27         Deposit  2727.00      SGD        2727.73             0
+## 26 2018-07-27         Payment -1624.00      SGD        1103.73             0
+## 27 2018-07-27         Payment  -231.00      SGD         872.73             0
+## 28 2018-07-29         Payment  -823.00      USD          49.73             0
+## 29 2018-07-30      Withdrawal   -28.00      SGD          21.73             0
+## 30 2018-07-30         Payment   -19.00      SGD           2.73             0
+## 31 2018-07-30      Withdrawal    -2.00      SGD           0.73             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     17656.22       42566
+## [1] "----------------------------"
+## Client Name :  Wu, Payton 
+## Month :  Aug 
+##         Date TransactionType  Amount Currency DepositBalance CreditBalance
+## 1 2018-08-16         Deposit 3230.00      SGD        3230.73             0
+## 2 2018-08-23         Deposit 4363.73      USD        7594.46             0
+## 3 2018-08-23         Payment -200.00      USD        7394.46             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     18219.65           0
+## [1] "----------------------------"
+## Client Name :  Wu, Payton 
+## Month :  Sep 
+##          Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1  2018-09-01         Payment  -6412      SGD         982.46             0
+## 2  2018-09-02         Payment   -326      USD         656.46             0
+## 3  2018-09-05      Withdrawal   -272      CNY         384.46             0
+## 4  2018-09-08         Payment   -212      CNY         172.46             0
+## 5  2018-09-09         Payment    -68      SGD         104.46             0
+## 6  2018-09-09         Payment    -24      CNY          80.46             0
+## 7  2018-09-09         Payment    -11      CNY          69.46             0
+## 8  2018-09-10      Withdrawal    -45      CNY          24.46             0
+## 9  2018-09-11         Payment    -24      USD           0.46             0
+## 10 2018-09-19         Deposit   2087      SGD        2087.46             0
+## 11 2018-09-20         Payment   -763      USD        1324.46             0
+## 12 2018-09-22         Payment   -569      CNY         755.46             0
+## 13 2018-09-22      Withdrawal   -590      SGD         165.46             0
+## 14 2018-09-24         Payment    -89      SGD          76.46             0
+## 15 2018-09-28      Withdrawal    -49      SGD          27.46             0
+## 16 2018-09-30      Withdrawal    -22      SGD           5.46             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      6917.36           0
+## [1] "----------------------------"
+## Client Name :  el-Jafri, Musaaid 
+## Month :  Jul 
+##          Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1  2018-07-01      Withdrawal   -939      SGD           6815          9160
+## 2  2018-07-01      Withdrawal  -4525      SGD           2290          9160
+## 3  2018-07-02         Deposit   1538      SGD           3828          9160
+## 4  2018-07-02         Payment  -1266      USD           3828          7894
+## 5  2018-07-03         Payment   -187      USD           3828          7707
+## 6  2018-07-03         Payment  -4998      SGD           3828          2709
+## 7  2018-07-04      Withdrawal  -3341      CNY            487          2709
+## 8  2018-07-05         Payment  -2186      USD            487           523
+## 9  2018-07-06         Payment   -137      SGD            487           386
+## 10 2018-07-06         Payment    -70      CNY            487           316
+## 11 2018-07-07      Withdrawal   -412      SGD             75           316
+## 12 2018-07-07         Payment   -315      USD             75             1
+## 13 2018-07-08      Withdrawal    -58      USD             17             1
+## 14 2018-07-09         Payment    -15      SGD              3             0
+## 15 2018-07-09      Withdrawal     -1      SGD              2             0
+## 16 2018-07-11         Payment     -2      USD              0             0
+## 17 2018-07-27         Deposit   4280      CNY           4280             0
+## 18 2018-07-27         Payment  -2701      CNY           1579             0
+## 19 2018-07-27      Withdrawal   -334      CNY           1245             0
+## 20 2018-07-28      Withdrawal   -744      SGD            501             0
+## 21 2018-07-29         Payment   -215      CNY            286             0
+## 22 2018-07-30         Payment    -92      SGD            194             0
+## 23 2018-07-30      Withdrawal    -24      SGD            170             0
+## 24 2018-07-31         Payment    -18      SGD            152             0
+## 25 2018-07-31         Payment   -142      SGD             10             0
+## 26 2018-07-31         Payment     -8      SGD              2             0
+## 27 2018-07-31         Payment     -2      USD              0             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1        34956       50042
+## [1] "----------------------------"
+## Client Name :  el-Jafri, Musaaid 
+## Month :  Aug 
+##          Date TransactionType  Amount Currency DepositBalance CreditBalance
+## 1  2018-08-01         Deposit   19.00      SGD          19.00             0
+## 2  2018-08-02      Withdrawal  -16.00      USD           3.00             0
+## 3  2018-08-02      Withdrawal   -1.00      USD           2.00             0
+## 4  2018-08-03      Withdrawal   -2.00      SGD           0.00             0
+## 5  2018-08-13         Deposit 1424.73      USD        1424.73             0
+## 6  2018-08-13      Withdrawal -137.00      SGD        1287.73             0
+## 7  2018-08-13      Withdrawal -152.00      USD        1135.73             0
+## 8  2018-08-14      Withdrawal -270.00      CNY         865.73             0
+## 9  2018-08-14      Withdrawal -848.00      CNY          17.73             0
+## 10 2018-08-14         Payment  -17.00      CNY           0.73             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      4756.38           0
+## [1] "----------------------------"
+## Client Name :  el-Jafri, Musaaid 
+## Month :  Sep 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-09-10         Deposit  1721.73      USD        1722.46             0
+## 2  2018-09-10      Withdrawal  -139.00      CNY        1583.46             0
+## 3  2018-09-11         Payment   -79.00      CNY        1504.46             0
+## 4  2018-09-11      Withdrawal  -319.00      CNY        1185.46             0
+## 5  2018-09-12         Deposit  4093.00      SGD        5278.46             0
+## 6  2018-09-12      Withdrawal -3921.00      SGD        1357.46             0
+## 7  2018-09-13         Payment  -221.00      SGD        1136.46             0
+## 8  2018-09-14      Withdrawal  -520.00      USD         616.46             0
+## 9  2018-09-17         Payment  -128.00      SGD         488.46             0
+## 10 2018-09-24      Withdrawal  -191.00      USD         297.46             0
+## 11 2018-09-27         Payment   -70.00      SGD         227.46             0
+## 12 2018-09-30      Withdrawal  -171.00      USD          56.46             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     15454.52           0
+## [1] "----------------------------"
+## Client Name :  Atufunwa, Taylor 
+## Month :  Jul 
+##         Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1 2018-07-07         Payment -8081.00      USD        9706.00           424
+## 2 2018-07-11         Payment -1465.00      CNY        8665.00             0
+## 3 2018-07-13         Deposit  2877.00      SGD       11542.00             0
+## 4 2018-07-25         Deposit   512.74      USD       12054.74             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     41967.74         424
+## [1] "----------------------------"
+## Client Name :  Atufunwa, Taylor 
+## Month :  Aug 
+##         Date TransactionType    Amount Currency DepositBalance CreditBalance
+## 1 2018-08-02         Deposit   2339.73      USD       14394.47             0
+## 2 2018-08-02      Withdrawal -11021.00      SGD        3373.47             0
+## 3 2018-08-04      Withdrawal  -1523.00      USD        1850.47             0
+## 4 2018-08-05         Payment  -1756.00      SGD          94.47             0
+## 5 2018-08-05      Withdrawal    -41.00      CNY          53.47             0
+## 6 2018-08-05         Payment    -53.00      USD           0.47             0
+## 7 2018-08-30         Deposit   4905.00      SGD        4905.47             0
+## 8 2018-08-30      Withdrawal   -907.00      SGD        3998.47             0
+## 9 2018-08-31      Withdrawal  -2609.00      CNY        1389.47             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     30060.23           0
+## [1] "----------------------------"
+## Client Name :  Atufunwa, Taylor 
+## Month :  Sep 
+##          Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1  2018-09-01      Withdrawal   -795      CNY         594.47             0
+## 2  2018-09-02         Payment   -158      CNY         436.47             0
+## 3  2018-09-03         Payment     -8      USD         428.47             0
+## 4  2018-09-03      Withdrawal   -384      USD          44.47             0
+## 5  2018-09-04      Withdrawal    -36      USD           8.47             0
+## 6  2018-09-05         Payment     -1      SGD           7.47             0
+## 7  2018-09-05         Payment     -4      CNY           3.47             0
+## 8  2018-09-06      Withdrawal     -2      USD           1.47             0
+## 9  2018-09-07      Withdrawal     -1      SGD           0.47             0
+## 10 2018-09-17         Deposit    936      SGD         936.47             0
+## 11 2018-09-17      Withdrawal   -674      USD         262.47             0
+## 12 2018-09-17         Payment    -60      CNY         202.47             0
+## 13 2018-09-17      Withdrawal     -7      USD         195.47             0
+## 14 2018-09-18         Payment   -119      USD          76.47             0
+## 15 2018-09-19      Withdrawal    -70      USD           6.47             0
+## 16 2018-09-20         Payment     -4      CNY           2.47             0
+## 17 2018-09-20      Withdrawal     -2      USD           0.47             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1      3207.99           0
+## [1] "----------------------------"
+## Client Name :  Mantelli, Ian 
+## Month :  Jul 
+##          Date TransactionType    Amount Currency DepositBalance CreditBalance
+## 1  2018-07-01         Payment -11111.00      CNY         969.00             0
+## 2  2018-07-03         Deposit   4011.73      USD        4980.73             0
+## 3  2018-07-05         Payment  -4139.00      CNY         841.73             0
+## 4  2018-07-08      Withdrawal    -94.00      CNY         747.73             0
+## 5  2018-07-09      Withdrawal   -468.00      CNY         279.73             0
+## 6  2018-07-10      Withdrawal   -107.00      SGD         172.73             0
+## 7  2018-07-13         Payment    -45.00      USD         127.73             0
+## 8  2018-07-14      Withdrawal    -11.00      USD         116.73             0
+## 9  2018-07-16      Withdrawal    -62.00      SGD          54.73             0
+## 10 2018-07-18         Payment    -38.00      CNY          16.73             0
+## 11 2018-07-18      Withdrawal     -1.00      SGD          15.73             0
+## 12 2018-07-19      Withdrawal    -15.00      SGD           0.73             0
+## 13 2018-07-30         Deposit   4260.73      USD        4261.47             0
+## 14 2018-07-30         Payment   -627.00      CNY        3634.47             0
+## 15 2018-07-30      Withdrawal  -1272.00      USD        2362.47             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     18582.44           0
+## [1] "----------------------------"
+## Client Name :  Mantelli, Ian 
+## Month :  Aug 
+##          Date TransactionType   Amount Currency DepositBalance CreditBalance
+## 1  2018-08-03         Payment -1240.00      CNY        1122.47             0
+## 2  2018-08-03         Payment   -68.00      CNY        1054.47             0
+## 3  2018-08-04         Payment  -392.00      CNY         662.47             0
+## 4  2018-08-04      Withdrawal  -362.00      CNY         300.47             0
+## 5  2018-08-04      Withdrawal  -231.00      CNY          69.47             0
+## 6  2018-08-05         Payment   -47.00      SGD          22.47             0
+## 7  2018-08-06      Withdrawal   -10.00      USD          12.47             0
+## 8  2018-08-06      Withdrawal   -12.00      SGD           0.47             0
+## 9  2018-08-27         Deposit  4707.73      USD        4708.20             0
+## 10 2018-08-27         Payment -2329.00      USD        2379.20             0
+## 11 2018-08-27      Withdrawal -1411.00      CNY         968.20             0
+## 12 2018-08-28         Payment  -909.00      SGD          59.20             0
+## 13 2018-08-28      Withdrawal   -49.00      USD          10.20             0
+## 14 2018-08-28      Withdrawal   -10.00      SGD           0.20             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1     11369.96           0
+## [1] "----------------------------"
+## Client Name :  Mantelli, Ian 
+## Month :  Sep 
+##         Date TransactionType Amount Currency DepositBalance CreditBalance
+## 1 2018-09-12         Deposit   2285      CNY         2285.2             0
+## 2 2018-09-17      Withdrawal  -1685      CNY          600.2             0
+## 3 2018-09-21         Payment   -397      USD          203.2             0
+## 4 2018-09-23         Payment   -117      CNY           86.2             0
+## 5 2018-09-26      Withdrawal    -62      USD           24.2             0
+## 6 2018-09-30      Withdrawal    -17      SGD            7.2             0
+## [1] "Month-End Balance\n"
+##   TotalDeposit TotalCredit
+## 1       3206.2           0
+## [1] "----------------------------"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{txnData2 }\OperatorTok{%>%}\StringTok{ }\KeywordTok{group_by}\NormalTok{(.,TransactionType) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{summarise}\NormalTok{(}\StringTok{"Amount:"}\NormalTok{=}\KeywordTok{sum}\NormalTok{(Amount))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 3 x 2
+##   TransactionType `Amount:`
+##   <fct>               <dbl>
+## 1 Deposit           123498.
+## 2 Payment          -159753 
+## 3 Withdrawal       -119074
+\end{verbatim}
+
+
+\end{document}

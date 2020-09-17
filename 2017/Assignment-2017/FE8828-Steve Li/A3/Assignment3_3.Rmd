@@ -1,0 +1,38 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+1. copy the equation in the powerpoint
+
+```{r}
+library(fOptions)
+
+GBSOption(TypeFlag = "p", S = 3500, X = 3765,
+          Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
+## [1] 300.0049
+df <- data.frame(type = sample(c("c", "p"), 100, replace = T),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
+```
+
+```{r}
+library(fOptions)
+library(dplyr)
+df %>%
+  rowwise(.) %>% 
+  mutate(., price=GBSOption(TypeFlag=type, S=underlying, X=strike, Time=Time, r=r, b=b, sigma=sigma)@price) %>% 
+  ungroup %>% 
+  summarise(sum=sum(price))
+```
+
+
+

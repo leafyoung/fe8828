@@ -1,0 +1,117 @@
+---
+title: "Assignment3 for Exploratory Data Analysis"
+author: "Li Enwen <sub><Email:lien0004@e.ntu.edu.sg></sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Data interpretation:
+This data contains `r nrow(bank)` rows.
+
+# Finding #1
+- Most tertiary-educated people secure high-income employments like management, technician.
+- The housing rate of tertiary-educated people is relatively high compared with others.
+```{r finding_1}
+filter(bank,education =="tertiary") %>%
+  group_by(job) %>%
+  summarize(count=n(),
+            mean_balance=mean(balance),
+            count_housing=sum(as.character(housing)=="yes"),
+            housing_rate=(count_housing/count)) %>%
+  arrange(desc(count))
+```
+
+# Finding #2
+61.9% of customers have been married, and their average married age is 43.5.
+```{r finding_2}
+group_by(bank,marital) %>% 
+  summarize(mean_age=mean(age),count=n(),) %>% 
+  mutate(rate=count/sum(count))
+```
+
+# Finding #3
+Elder people are more likely to have more balance than the youth.
+```{r finding_3}
+group_by(bank,age) %>% 
+  summarize(mean_balance=mean(balance)) %>% 
+  arrange(desc(mean_balance))
+```
+
+# Finding #4
+- Most customers have education background higher than secondary school.
+- People who have tertiary education background have more balance and are most likely to have high balance. 
+```{r finding_4}
+group_by(bank,education) %>% summarize(count=n(),
+                                  mean_balance=mean(balance),
+                                  'balance>1000'=sum(balance>1000),
+                                  'balance<=1000'=sum(balance<=1000)) %>% mutate(rate=count/sum(count),high_balance_rate=(`balance>1000`/count))
+```
+
+# Finding #5
+Customers without loan are more likely to have more balance than those with loan.
+```{r finding_5}
+group_by(bank,loan) %>% 
+  summarize(mean_balance=mean(balance))
+```
+
+# Finding #6
+- The retired have the highest mean balance followed by the housemaid workers.
+- The blue-collar have the lowest mean balance, even less than unemployed.
+```{r finding_6}
+group_by(bank,job) %>% 
+  summarize(mean_balance=mean(balance)) %>% 
+  arrange(desc(mean_balance))
+```
+
+# Finding #7
+The retired have the highest high balance rate, while the services employers have the lowest high balance rate.
+```{r finding_7}
+group_by(bank,job) %>% 
+  summarize('balance>1000'=sum(balance>1000),
+            'balance<=1000'=sum(balance<=1000),
+            count=n(),
+            high_balance_rate=(`balance>1000`/count)) %>% 
+  arrange(desc(high_balance_rate))
+```
+
+# Finding #8
+- The retired has the highest divorced rate, fellow by the unemployed.
+- Apart from the retired, people with low mean balance are more likely to divorce.
+```{r finding_8}
+group_by(bank,job) %>% 
+  summarize(count=n(),
+            mean_balance=mean(balance),
+            divorced_count=sum(as.character(marital)=="divorced"),
+            divorced_rate=(divorced_count/count)) %>% 
+  arrange(desc(divorced_rate))
+```
+
+# Finding #9
+- Students have the highest single rate.
+- Single rates of Technician, management and admin. are relatively high, maybe because of their heavy workload.
+```{r finding_9}
+group_by(bank,job) %>% 
+  summarize(mean_balance=mean(balance),
+            count=n(),
+            single_count=sum(as.character(marital) == "single"),
+            single_rate=(single_count/count)) %>% 
+  arrange(desc(single_rate))
+```
+
+# Finding #10
+- Blue-collar holds the highest housing rate, fellow by services and admin.
+- Loan_rate has slight relevance to housing rate, people who have house are more likely to have loan.
+```{r finding_10}
+group_by(bank,job) %>% 
+  summarize(mean_balance=mean(balance),
+            count=n(),
+            housing_rate=sum(as.character(housing)=="yes")/count,
+            loan_rate=sum(as.character(loan)=="yes")/count) %>% 
+  arrange(desc(housing_rate))
+```

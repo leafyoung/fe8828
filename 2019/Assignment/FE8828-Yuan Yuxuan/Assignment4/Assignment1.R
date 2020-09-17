@@ -5,7 +5,7 @@ library(dplyr)
 library(fOptions)
 
 #1.1 Copy the options data
-CallOptions <- read_excel("Dropbox/FE8828-Yuan Yuxuan/Assignment4/GoogleOptionData.xlsx", 
+CallOptions <- read_excel("E:/gdrive/MFECourse/FE8828/2019/FE8828-Yuan Yuxuan/Assignment4/GoogleOptionData.xlsx", 
      sheet = "Call", col_types = c("skip", 
          "skip", "numeric", "skip", "numeric", 
          "numeric", "skip", "skip", "skip", 
@@ -15,7 +15,7 @@ CallOptions <- mutate(CallOptions, `Call/Put` = "c",
                       `Underlying` = 1212.07, 
                       `Expiry Date` = as.Date("2019-12-20"))
 
-PutOptions <- read_excel("Dropbox/FE8828-Yuan Yuxuan/Assignment4/GoogleOptionData.xlsx", 
+PutOptions <- read_excel("E:/gdrive/MFECourse/FE8828/2019/FE8828-Yuan Yuxuan/Assignment4/GoogleOptionData.xlsx", 
                           sheet = "Put", col_types = c("skip", 
                                                         "skip", "numeric", "skip", "numeric", 
                                                         "numeric", "skip", "skip", "skip", 
@@ -29,13 +29,15 @@ Options <- bind_rows(CallOptions, PutOptions)
 Valuation_Inidividual <-
   group_by(Options, `Call/Put`) %>%
   summarise(`Total Valuation` = sum(`Open Interest` * (Bid+Ask)/2)) 
+Valuation_Inidividual
 
 Valuation_Both <- Options %>% 
   summarise(`Total Valuation` = sum(`Open Interest` * (Bid+Ask)/2)) %>% 
   mutate(`Call/Put` = "c&p")
+Valuation_Both
 
 Total_Valulation <- bind_rows(Valuation_Inidividual, Valuation_Both)
-
+Total_Valulation
 
 #1.3 Find those in the money and get their total Open Interest
 Options <- mutate(Options, 

@@ -1,0 +1,24 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569060696529.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "F480E375",
+    "lastKnownWriteTime" : 1569072817,
+    "last_content_update" : 1569072817352,
+    "path" : "C:/Users/Alan_/Desktop/R/assignment_3/bank_assignment.Rmd",
+    "project_path" : "bank_assignment.Rmd",
+    "properties" : {
+        "cursorPosition" : "123,21",
+        "last_setup_crc32" : "D2AF4B94e5ddce8e",
+        "scrollLine" : "121",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

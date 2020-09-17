@@ -1,0 +1,195 @@
+---
+title: "Assignment 3"
+output: html_document
+---
+
+## Exploratory Data Work on Bank Dataset
+
+In this markdown document, I am going to analyze the Bank dataset and get insights about the data
+
+
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+<br>
+
+#### 1. Distribution across Marital Status
+
+Listed below is the distribution of people by their marital status 
+
+<div class = "one">
+```{r one}
+b1<-bank %>%
+  group_by(`marital`) %>%
+  summarize(count = n())
+for(i in 1:nrow(b1))
+{
+  cat(paste0("There are ",b1$count[i]," ",b1$marital[i],"\n"))
+}
+```
+</div>
+
+</br>
+
+#### 2. Average Balance of Students
+
+Listed below is the average balance of people whose job is listed as student 
+
+<div class = "two">
+```{r two}
+bank %>%
+  filter(job == "student") %>%
+  summarize(Student_mean_balance = mean(balance))
+
+```
+</div>
+
+</br>
+
+#### 3. Housing and Loan Relation
+
+Here I have summarised the distribution between possible subsets of housing and loan.
+
+<div class = "three">
+```{r three}
+bank %>%
+  group_by(housing,loan) %>%
+  summarise(Percent=n()*100 / nrow(bank))
+```
+</div>
+
+
+</br>
+
+#### 4. Summary of balances
+
+Here I have summarised the data of Balances column.
+
+<div class = "four">
+```{r four}
+summary(bank$balance)
+```
+</div>
+
+</br>
+
+#### 5. Data across various Age Groups
+
+Here we are finding distribution of data across age groups.
+
+<div class = "five">
+```{r five}
+bank %>%
+ group_by(age_group = (age %/% 25) * 25) %>%
+ summarise(count = n()) %>%
+ arrange(age_group) -> res
+for (i in 1:nrow(res))
+{
+  cat(paste0("There are ",res$count[i]," customers between ",res$age_group[i]," to ",(res$age_group[i]+25)," \n"))
+}
+```
+</div>
+
+</br>
+
+#### 6. Ratio of Customers with unknown contact
+
+Here I am finding percent of customers who have unknown contact.
+
+<div class = "six">
+```{r six}
+bank %>%
+  filter(contact=="unknown") %>%
+  group_by(contact) %>%
+  summarise(percent = n()*100 / nrow(bank)) -> res
+cat(paste0(round(res$percent[1],2),"% of customers have unknown contact.\n"))
+```
+</div>
+
+</br>
+
+#### 7. Distribution of poutcome
+
+Here I am finding distribution of poutcome column.
+
+<div class = "seven">
+```{r seven}
+bank %>%
+  group_by(poutcome) %>%
+  summarise(Percent=n()*100 / nrow(bank))
+```
+</div>
+
+</br>
+
+#### 8. Summarize balance of customers with loan=yes
+
+Here I am finding the summary of balances of those customers whose loan=yes.
+
+<div class = "eight">
+```{r eight}
+bank1<-bank %>%
+  filter(loan=="yes")
+summary(bank1$balance)
+```
+</div>
+
+</br>
+
+#### 9. Ratio of people with housing across different Education
+
+Here I am finding distribution of people who have housing across different education background.
+
+<div class = "nine">
+```{r nine}
+count_h<-nrow(bank %>%filter(housing=="yes"))
+bank %>%
+  filter(housing=="yes") %>%
+  group_by(education) %>%
+  summarise(percent= n()*100 / count_h)
+```
+</div>
+
+</br>
+
+#### 10. Possible states when binding columns loan and poutcome
+
+Here I was finding possible pairs when binding columns loan and poutcome.
+
+<div class = "ten">
+```{r ten}
+bank %>%
+  select(loan,poutcome) %>%
+  group_by(loan,poutcome) %>%
+  summarise(percent = n()*100 / nrow(bank))
+```
+</div>
+
+</br>
+</br>
+<style>
+div.one pre { background-color:white; }
+div.one pre.r { background-color:lightblue; }
+div.two pre { background-color:white; }
+div.two pre.r { background-color:lightblue; }
+div.three pre { background-color:white; }
+div.three pre.r { background-color:lightblue; }
+div.four pre { background-color:white; }
+div.four pre.r { background-color:lightblue; }
+div.five pre { background-color:white; }
+div.five pre.r { background-color:lightblue; }
+div.six pre { background-color:white; }
+div.six pre.r { background-color:lightblue; }
+div.seven pre { background-color:white; }
+div.seven pre.r { background-color:lightblue; }
+div.eight pre { background-color:white; }
+div.eight pre.r { background-color:lightblue; }
+div.nine pre { background-color:white; }
+div.nine pre.r { background-color:lightblue; }
+div.ten pre { background-color:white; }
+div.ten pre.r { background-color:lightblue; }
+
+</style>

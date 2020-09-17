@@ -1,0 +1,121 @@
+---
+title: "FE8828 Assignment Week 2"
+author: "Gaurav Singh"
+date: "November 18, 2018"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,warning=FALSE)
+```
+
+# Problem 1 : How long to make a choice
+
+```{r definition}
+make_choice <- function(N, split_number)
+{
+  input_list<-sample(c(1:N))
+  evaluation<-c(input_list[0:split_number])
+  selection<-c(input_list[(split_number+1):N])
+  selected_n<-N
+  current_best<-N
+  
+  if(split_number==0)
+  {
+    current_best<-selection[1]
+  } else    {
+    current_best<-min(evaluation)
+  }
+  
+  for(i in 1:(N-split_number))
+  {
+    selected_n<-selection[i]
+    if(selected_n < current_best)
+    {
+      current_best<-selected_n
+      break
+    }	
+  }
+  return(selected_n)
+}
+
+main_fn<-function(N)
+{
+  optimum_split<-0
+  iterations<-100
+  iterations2<-100
+  probvec<-c(rep(0,N))
+  for(ii in 1:iterations2)
+  {
+    prob_vec_temp<-c(rep(0,N))
+    expected_val<-c(rep(0,N))
+    for(i in 0:(N-1))
+    {
+      for(j in 1:iterations)
+      {
+        current_choice<-make_choice(N,i)
+        expected_val[i+1]<-expected_val[i+1]+current_choice
+        if(current_choice==1)
+        {
+          probvec[i+1]<-probvec[i+1]+1
+          prob_vec_temp[i+1]<-prob_vec_temp[i+1]+1
+        }
+      }
+    }
+    optimum_split<-optimum_split+which.max(prob_vec_temp)
+  }
+  probvec<-(100*probvec)/(iterations*iterations2)
+  expected_val<-expected_val/iterations2
+  optimum_split<-optimum_split/iterations2
+  
+  cat(paste("Optimum Split for N= ",N," is ",optimum_split,"\n"))
+  cat(paste("Simulation ran ",iterations*iterations2," times ","\n"))
+  
+  plot(expected_val,type="l",xlab="Split Number",ylab="Expected Value of Rank selected",lwd=2)
+  lines(c(1:N),loess(expected_val~c(1:N))$fitted,col="red")
+  
+  plot(probvec,type="l",xlab="Split Number",ylab="Probability of Finding Best Rank(%)", lwd=2)
+  lines(c(1:N),loess(probvec~c(1:N))$fitted,col="red")
+  
+  optimum_split
+}
+```
+## Summary
+```{r summary_result,results='hide',fig.keep='none'}
+slnum<-c(3,10,100)
+results<-c(rep(0,length(slnum)))
+for(i in 1:length(slnum))
+{
+  results[i]<-main_fn(slnum[i])
+}
+
+```
+```{r table1}
+table1<-cbind(slnum,results)
+colnames(table1)<-c("Size (N)", "Optimal Split")
+knitr::kable(
+table1,
+align='c',
+caption = "Result Summary"
+)
+cat(paste("By the Optimal Stopping Theorem/Odds Theorry, the optimal split is close to 1/e = ",round(exp(-1)*100,digits=2),"%","\n"))
+cat(paste("For a longer simulation at N = 1000, optimal split was obtained to be  = 367.88","\n"))
+```
+## Detailed Results ::
+##
+## For N=3
+```{r N=3}
+main_fn(3)
+```
+
+## For N=10
+```{r N=10}
+main_fn(10)
+```
+
+## For N=100
+```{r N=100}
+main_fn(100)
+```

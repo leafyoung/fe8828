@@ -1,0 +1,21 @@
+Hi, Jia Yuan
+
+Below is your assignment feedback. You did well in the course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 80
+A bit rough.
+
+Assignment 2 = 80 * 0.3 + 100 * 0.7
+Part 1: 100
+Part 2: 100
+
+Assignment 3 = 100 * 0.05 + 100 * 0.25 + 80 * 0.7
+Part 1: 100
+Part 2: 100
+Part 3: 90
+
+Assignment 4 = 80
+Both exploratory data analysis have some repetition. Some ideas are not fresh.

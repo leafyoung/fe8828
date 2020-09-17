@@ -1,0 +1,7 @@
+"0","group_by(bank , age_group = ntile(age, 4)) %>%"
+"0","  mutate(., employment_group = !(job %in% c(""unemployed"", ""student"", ""retired"", ""unknown""))) %>%"
+"0","  select(., age_group, employment_group, balance) %>%"
+"0","  ggplot(., aes(x=factor(age_group), y = balance, fill = employment_group))+"
+"0","  geom_boxplot()+"
+"0","  scale_y_continuous(name = ""Balance"","
+"0","                     limits=c(0, 1000))"

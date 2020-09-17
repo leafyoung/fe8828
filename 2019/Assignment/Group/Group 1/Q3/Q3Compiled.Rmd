@@ -1,0 +1,303 @@
+---
+title: "Q3DeltaSingleTrade"
+author: "Tan Wang Quan, Low Wei-Ning Raelyn, Leong Shu Hui Felicia, Kwan Wei Kuang, Sabina Sun Chao"
+date: "10/17/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyquant)
+library(tidyverse)
+library(timetk)
+library(fOptions)
+library(lubridate)
+library(quantmod)
+library(ggplot2)
+library(plotly)
+library(kableExtra)
+```
+
+```{r prep data define analysis function, warning = FALSE, message = FALSE}
+#Prepare the data table
+AZN <- read.csv("AMAZON.csv", header = TRUE,stringsAsFactors=FALSE)
+AZN <- mutate(AZN,Date = as.Date(Date, format = "%d/%m/%Y"))
+AZNxts <- tk_xts(AZN)
+
+#Define function for analysis of hedging
+analysis <- function(azn30xts,start_date,Isdelta25) {
+
+#Get start price and volatility
+start_price <- as.numeric(azn30xts[start_date, "Close"])
+start_volatility <- as.numeric(azn30xts[start_date, "IV30"])
+
+dates <- index(azn30xts)
+df <- tibble(Date = dates)
+df$Close <- as.numeric(coredata(azn30xts[, "Close"]))
+df$IV30 <- as.numeric(coredata(azn30xts[, "IV30"]))
+
+#Set X depending on Isdelta25
+X <- ifelse(Isdelta25==0, start_price, start_price/(exp(qnorm(0.25)*start_volatility/100*sqrt(30/365) - (r+0.5*(start_volatility/100)^2)*30/365)))
+sigma = start_volatility
+
+df_opt <- rowwise(df) %>%
+#Calculate premium for one unit of call option  
+mutate(premium = GBSOption(TypeFlag = "c",
+                           S = Close,
+                           X = X,
+                           Time = as.numeric((end_date - Date) / 365),
+                           r = r, # interest rate
+                           b = 0, 
+                           sigma = as.numeric(start_volatility/100))@price,
+
+        #Calculate delta of call option (before negation)
+        delta_hedge = GBSGreeks("delta", TypeFlag = "c", 
+                        S = Close, 
+                        X = X, 
+                        Time =as.numeric((end_date - Date) / 365), 
+                        r = r, 
+                        b = 0, #no dividend
+                        sigma = as.numeric(start_volatility/100))) %>%
+ungroup() %>%
+  
+#Delta hedging strategy selected: SHORT CALL, LONG STOCK (from Black Scholes formula, such strategy should approximate a long position in risk free)
+  
+#On the first day, sell option and receive the call option premium 
+#Subsequently, if call option premium increases(decreases) there is a loss(gain)
+mutate(Option_DoD_PnL = ifelse(Date == start_date, numOptions*premium, 
+-numOptions*(premium - Lag(premium))), 
+
+#Calculate hedging PnL from day 2 to second last day
+Hedging_DoD_Pnl = ifelse(Date == start_date, 0, 
+                         ifelse(Date == end_date, numOptions * Lag(delta_hedge) * (Close - Lag(Close)), 
+                                numOptions * delta_hedge * (Close - Lag(Close)))), 
+
+DoD_PnL = Option_DoD_PnL + Hedging_DoD_Pnl) %>%
+mutate(PnL_to_date = cumsum(DoD_PnL),
+       HPnL_to_date = cumsum(Hedging_DoD_Pnl), 
+       OPnL_to_date = cumsum(Option_DoD_PnL))
+
+#Calculate maxDrawDown
+maxDrawDown <- max(cummax(df_opt$PnL_to_date) - cummin(df_opt$PnL_to_date))
+
+df_opt<-mutate(df_opt, TTM = end_date- Date)
+
+return_list <- list(tail(df_opt%>%select(OPnL_to_date),1),maxDrawDown,df_opt)
+return(return_list)
+}
+
+```
+
+# Single trade analysis 
+
+``` {r single trade}
+#Set start date of the single trade using earliest date 
+start_date <- min(index(AZNxts))
+
+#Set end date of the single trade to be after 30 calendar days
+end_date <- start_date+30
+
+#Adjust the end date backwards if end date is not a trading day
+while(!end_date %in% index(AZNxts))
+  end_date <- end_date-1
+
+#Retrieve data for 1 trade
+azn30xts <- AZNxts[paste(c(start_date,end_date),collapse = "/")]
+numOptions = 100
+r <- 0.8 / 100
+
+#Run analysis on one trade
+return_list <- analysis(azn30xts,start_date,0)
+OPnL_to_date <- return_list[[1]]
+maxDrawDown <- return_list[[2]]
+df_opt <- return_list[[3]]
+
+ggplotly(p=ggplot(df_opt) + aes(TTM,Option_DoD_PnL) + geom_line(color = "blue") + geom_point()+ ggtitle("Option Profit Vs TTM"))
+ggplotly(p=ggplot(df_opt) + aes(TTM,Hedging_DoD_Pnl) + geom_line(color = "green") + geom_point()+ ggtitle("Stock Profit Vs TTM"))
+
+ggplotly(p=ggplot(df_opt) + aes(x=TTM,y=OPnL_to_date) + geom_line(color = "Red") + geom_point()+ ggtitle("Acc Option Profit Vs TTM"))
+ggplotly(ggplot(df_opt) + aes(x=TTM,y=HPnL_to_date) + geom_line(color = "Brown") + geom_point()+ ggtitle("Acc Stock Profit Vs TTM"))
+
+kable(tail(df_opt%>%select(PnL_to_date,HPnL_to_date, OPnL_to_date)%>%rename( `Final PnL`=PnL_to_date,`Hedging PnL`=HPnL_to_date  , `Option PnL` = OPnL_to_date),1)) %>% kable_styling()
+
+# The initial outflow of funds is the cost to buy stocks minus option premium received 
+InitialInvt = (df_opt[[1,"delta_hedge"]]*df_opt[[1,"Close"]] - df_opt[[1,"premium"]])*numOptions 
+
+df_opt<-mutate(df_opt, PortValue = InitialInvt + PnL_to_date, PortReturn = DoD_PnL/Lag(PortValue), TTM = end_date- Date)
+
+#Calculate Sharpe
+portfolioReturn = df_opt[df_opt$Date==end_date,"PnL_to_date"]/InitialInvt
+sharpeRatio <- as.numeric(((portfolioReturn - r/12)/30)/stdev(df_opt$PortReturn, na.rm = TRUE))
+```
+
+The Sharpe Ratio is **`r round(sharpeRatio,4)`**
+
+The maximum drawdown is **`r round(maxDrawDown,4)`**
+
+```{r single trade showdata}
+kable(df_opt%>%select(Date, Close, Option_DoD_PnL, Hedging_DoD_Pnl, DoD_PnL, PnL_to_date, HPnL_to_date, OPnL_to_date, TTM),align='c', digits = 0)
+```
+
+# Backtest
+```{r backtest}
+start_date <- min(index(AZNxts))
+start_date_list <- seq(as.Date(start_date), by = "month", length.out = 12)
+OptionExpiry_vector <- vector()
+FinalPnL_vector <- vector()
+maxDrawDown_vector <- vector()
+
+for (run in 1:12) {
+  start_date <- start_date_list[[run]]
+  #Ensure that start_date and end_dates are trading days
+  while(!start_date %in% index(AZNxts))
+    start_date <- start_date+1
+  end_date <- start_date+30
+  while(!end_date %in% index(AZNxts))
+    end_date <- end_date-1
+  
+  OptionExpiry_vector <- c(OptionExpiry_vector,end_date)
+  
+  #Retrieve data for selected month
+  azn30xts <- AZNxts[paste(c(start_date,end_date),collapse = "/")]
+  
+  return_list <- analysis(azn30xts,start_date,0)
+  OPnL_to_date <- return_list[[1]]
+  FinalPnL_vector <- c(FinalPnL_vector,as.numeric(OPnL_to_date[1]))
+  maxDrawDown <- return_list[[2]]
+  maxDrawDown_vector <- c(maxDrawDown_vector,maxDrawDown)
+  df_opt <- return_list[[3]]
+}
+
+#Distribution of Final PnL
+hist(FinalPnL_vector, main = "Distribution of Final PnL")
+```
+
+The profits are equally spread within the range between -5,000 and 20,000.
+
+``` {r backtest 02}
+#Distribution of Max Drawdown
+hist(maxDrawDown_vector, main = "Distribution of Max Drawdown")
+```
+
+The highest frequency of max drawdown was between the range 2,000 to 4,000.
+
+``` {r backtest 03}
+#Final PnL vs Option Expiry Date
+dfresult <- data.frame(as.Date(OptionExpiry_vector),FinalPnL_vector)
+ggplotly(p=ggplot(dfresult) + 
+           aes(as.Date(OptionExpiry_vector),FinalPnL_vector) + 
+           geom_line(color = "steelblue") + 
+           geom_point()+ 
+           xlab("Option Expiry Date") + ylab("Final PnL") +
+           ggtitle("Final PnL v.s. Option Expiry Date"))
+```
+
+The strategy is generally profitable except in the 5th and 6th months.
+
+# Single trade analysis with delta of 25%
+
+``` {r single trade with delta 25}
+#Set start date of the single trade using earliest date 
+start_date <- min(index(AZNxts))
+
+#Set end date of the single trade to be after 30 calendar days
+end_date <- start_date+30
+
+#Adjust the end date backwards if end date is not a trading day
+while(!end_date %in% index(AZNxts))
+  end_date <- end_date-1
+
+#Retrieve data for 1 trade
+azn30xts <- AZNxts[paste(c(start_date,end_date),collapse = "/")]
+numOptions = 100
+r <- 0.8 / 100
+
+#Run analysis on one trade
+return_list <- analysis(azn30xts,start_date,1)
+OPnL_to_date <- return_list[[1]]
+maxDrawDown <- return_list[[2]]
+df_opt <- return_list[[3]]
+
+ggplotly(p=ggplot(df_opt) + aes(TTM,Option_DoD_PnL) + geom_line(color = "blue") + geom_point()+ ggtitle("Option Profit Vs TTM"))
+ggplotly(p=ggplot(df_opt) + aes(TTM,Hedging_DoD_Pnl) + geom_line(color = "green") + geom_point()+ ggtitle("Stock Profit Vs TTM"))
+
+ggplotly(p=ggplot(df_opt) + aes(x=TTM,y=OPnL_to_date) + geom_line(color = "Red") + geom_point()+ ggtitle("Acc Option Profit Vs TTM"))
+ggplotly(ggplot(df_opt) + aes(x=TTM,y=HPnL_to_date) + geom_line(color = "Brown") + geom_point()+ ggtitle("Acc Stock Profit Vs TTM"))
+
+kable(tail(df_opt%>%select(PnL_to_date,HPnL_to_date, OPnL_to_date)%>%rename( `Final PnL`=PnL_to_date,`Hedging PnL`=HPnL_to_date  , `Option PnL` = OPnL_to_date),1)) %>% kable_styling()
+
+# The initial outflow of funds is the cost to buy stocks minus option premium received 
+InitialInvt = (df_opt[[1,"delta_hedge"]]*df_opt[[1,"Close"]] - df_opt[[1,"premium"]])*numOptions 
+
+df_opt<-mutate(df_opt, PortValue = InitialInvt + PnL_to_date, PortReturn = DoD_PnL/Lag(PortValue), TTM = end_date- Date)
+
+#Calculate Sharpe
+portfolioReturn = df_opt[df_opt$Date==end_date,"PnL_to_date"]/InitialInvt
+sharpeRatio <- as.numeric(((portfolioReturn - r/12)/30)/stdev(df_opt$PortReturn, na.rm = TRUE))
+
+```
+
+The Sharpe Ratio is **`r round(sharpeRatio,4)`**
+  
+The maximum drawdown is **`r round(maxDrawDown,4)`**
+  
+```{r single trade showdata delta 25}
+kable(df_opt%>%select(Date, Close, Option_DoD_PnL, Hedging_DoD_Pnl, DoD_PnL, PnL_to_date, HPnL_to_date, OPnL_to_date, TTM), align='c',digits=0)
+```
+
+# Backtest with delta 25%
+
+``` {r backtest delta 25}
+start_date <- min(index(AZNxts))
+start_date_list <- seq(as.Date(start_date), by = "month", length.out = 12)
+OptionExpiry_vector <- vector()
+FinalPnL_vector <- vector()
+maxDrawDown_vector <- vector()
+
+for (run in 1:12) {
+  start_date <- start_date_list[[run]]
+  #Ensure that start_date and end_dates are trading days
+  while(!start_date %in% index(AZNxts))
+    start_date <- start_date+1
+  end_date <- start_date+30
+  while(!end_date %in% index(AZNxts))
+    end_date <- end_date-1
+  
+  OptionExpiry_vector <- c(OptionExpiry_vector,end_date)
+  
+  #Retrieve data for selected month
+  azn30xts <- AZNxts[paste(c(start_date,end_date),collapse = "/")]
+  
+  return_list <- analysis(azn30xts,start_date,1)
+  OPnL_to_date <- return_list[[1]]
+  FinalPnL_vector <- c(FinalPnL_vector,as.numeric(OPnL_to_date[1]))
+  maxDrawDown <- return_list[[2]]
+  maxDrawDown_vector <- c(maxDrawDown_vector,maxDrawDown)
+  df_opt <- return_list[[3]]
+}
+
+#Distribution of Final PnL
+hist(FinalPnL_vector, main = "Distribution of Final PnL")
+```
+
+When delta is 25%, the profits are generally in the range between 2,000 and 8,000 with one exception.
+
+``` {r backtest delta 25 02}
+#Distribution of Max Drawdown
+hist(maxDrawDown_vector, main = "Distribution of Max Drawdown")
+```
+
+When delta is 25%, the highest frequency of max drawdown was between the range 4,000 to 6,000.
+
+``` {r backtest delta 25 03}
+#Final PnL vs Option Expiry Date
+dfresult <- data.frame(as.Date(OptionExpiry_vector),FinalPnL_vector)
+ggplotly(p=ggplot(dfresult) + 
+           aes(as.Date(OptionExpiry_vector),FinalPnL_vector) + 
+           geom_line(color = "steelblue") + 
+           geom_point()+ 
+           xlab("Option Expiry Date") + ylab("Final PnL") +
+           ggtitle("Final PnL v.s. Option Expiry Date"))
+```
+
+When delta is 25%, the strategy is generally profitable except in the 6th month.

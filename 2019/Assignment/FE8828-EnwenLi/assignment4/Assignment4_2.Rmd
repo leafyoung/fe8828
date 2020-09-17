@@ -1,0 +1,95 @@
+---
+title: "Assignment4 for Exploratory Data Analysis"
+author: "Li Enwen <sub><Email:lien0004@e.ntu.edu.sg></sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Data interpretation:
+This data contains `r nrow(bank)` rows.
+
+# Finding #1
+- Most tertiary-educated people secure employments like management, technician.
+- More than half of the employed teritary-educated people has house.
+```{r finding_1}
+finding_1<-dplyr::filter(bank,education =="tertiary") 
+ggplot(finding_1)+geom_bar(mapping = aes(x = job,fill=housing))+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Finding #2
+- Managers, technicians, the retired and entrepreneurs tend to have high balance.
+- There are significant differences in the balance of people form different educational levels in various industries.
+- For high-income customers, high educated people are more likely to have higher balance; while for relatively low-income customers, low educated people are more likely to have higher balance.
+```{r finding_2}
+ggplot(bank, aes(education, balance, color = job)) +
+    geom_point() + geom_smooth(method='loess') +
+    facet_grid(. ~ job)+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Finding #3
+- Younger people are more likely to be higher educated than the elder people.
+```{r finding_3}
+ggplot(bank, aes(age, color = education, fill = education, alpha = 0.3)) +
+          geom_density()
+```
+
+# Finding #4
+- Most customers are in their 30s, 40s and 50s.
+- Most customers have secondary education background.
+- People who are in their 40s and 50s are likely to have relatively higher balance, among which the tertiary educated people would hold even higher balance.
+```{r finding_4}
+ggplot(bank, aes(age, color = education, fill = education, alpha = 0.3)) +geom_point(aes(age, balance, group = contact))
+```
+
+# Finding #5
+- Managers and the blue-collar tend to have long duration.
+- Students has the highest single rate followed by technicians.
+- Customers in Service and admin have high divorced rate.
+```{r finding_5}
+ggplot(data = bank) + geom_point(mapping = aes(x = age, y = duration,color=marital,alpha=0.01)) + facet_wrap(.~job, nrow = 2)
+```
+
+# Finding #6
+- People in their 30s, 40s and 50s tend to have long duration.
+```{r finding_6}
+ggplot(bank, aes(age, duration)) +
+          geom_point() +
+geom_smooth(method = "loess", se = FALSE)
+```
+
+# Finding #7
+- Most people eleder than 60 do not have house.
+- People are likely to have house between 30 to 40.
+```{r finding_7}
+ggplot(bank)+geom_bar(mapping = aes(x = age,fill=housing))+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Finding #8
+- students are tend to hold lowest balance and have the highest single rate.
+- Most divorced people are likely to have low balance.
+```{r finding_8}
+ggplot(bank, aes(x = job, y = balance, color = marital,alpha=0.1)) + geom_point() +
+theme(legend.position="left") +
+coord_flip()
+```
+
+# Finding #9
+- Elder people and technicians tend to use telephone.
+- Most blue-collar and self-employed customers do not have contact.
+```{r finding_9}
+ggplot(bank) +geom_point(aes(age, job, color = contact,alpha=0.1))+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Finding #10
+- Compared with other age groups, people in their 50s are likely to have loan.
+- People who have loan tend to have less balance.
+```{r finding_10}
+ggplot(bank) +geom_point(aes(age, balance, color = loan,alpha=0.1))+theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```

@@ -1,0 +1,4 @@
+"0","knitr::opts_chunk$set(echo = TRUE)"
+"0","library(tidyverse)"
+"0","bank <- read.csv(""https://goo.gl/PBQnBt"", sep="";"")"
+"0","knitr::opts_chunk$set(echo = FALSE, fig.align=""center"", collapse=TRUE, cache=T)"

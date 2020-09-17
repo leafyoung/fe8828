@@ -1,0 +1,229 @@
+---
+title: "FE8828 Assignment for Delta Hedging"
+author: "Zhang Yiwen, Liu Zhe, Zheng Chen, Wu Kaibin"
+date: "Dec 17, 2017"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(xts)
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(fOptions)
+library(timeSeries)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+rawData <- read.csv("https://dl.dropboxusercontent.com/s/g06cprxvijzezrd/AS2.csv", sep = ",")
+```
+<br />
+
+####Selection of period: 
+####2017/01/03 to 2017/11/29 from the provided database
+<br />
+<br />
+
+```{r xtsConstruction, include = FALSE}
+#we initialize the xts object by importing the date, Close price & IV30
+rawDataXTS <- xts(x = rawData[, -1, drop = F], 
+                  order.by = as.Date(rawData$Date, format = "%d/%m/%Y"))
+Core_Data = data.frame(coredata(rawDataXTS))
+Trading_Date = index(rawDataXTS)
+```
+
+```{r initialSetup, include = FALSE}
+#we construct the dataframe of date, Close price & IV30, by extracting from xts object
+Quantity = 100
+RF = 0.8/100
+df <- tibble(date = Trading_Date)
+df$Close <- coredata(rawDataXTS[, "Close"])
+df$IV30 <- coredata(rawDataXTS[, "IV30"])
+dfOutput <- df[1:sum(Trading_Date <= (max(Trading_Date)-29)),] %>%
+  mutate(Total_PnL = 0, Option_PnL = 0, Stock_PnL = 0, MaxDrawdown = 0, Sharpe = 0)
+dfOutput
+```
+
+```{r functionToCalculate, include = FALSE}
+for (i in 1:210){
+  #to initialize the dates af a 30-day trading period
+  start_date <- as.numeric(df[i,1])
+  end_date <- start_date + 29
+  start_price <- as.numeric(df[i,2])
+  start_volat <- as.numeric(df[i,3])
+  
+  #this "tempDF" dataframe stores original data from XTS file
+  tempDF <- tibble(date = Trading_Date[Trading_Date<=end_date & Trading_Date>=start_date]) %>% 
+    rowwise() %>%
+    mutate(Close = as.numeric(rawDataXTS[date,"Close"])) %>% 
+    ungroup()
+  
+  #this "df_opt" dataframe is used to calculate premium, delta, investment cost, and to record the PnL
+  df_opt <- rowwise(tempDF) %>% 
+    #1. calculate option premium
+    mutate(premium = Quantity*GBSOption(TypeFlag = "c",
+                               S = Close,
+                               X = start_price,
+                               Time = (end_date - as.numeric(date))/365,
+                               r = RF,
+                               b = 0,
+                               sigma = start_volat/100)@price) %>%
+    ungroup() %>%
+    #2. calculate option DoD PnL
+    mutate(Option_DoD_PnL = ifelse(as.numeric(date) == start_date, 
+                                   0,
+                                   premium - lag(premium))) %>%
+    rowwise() %>%
+    #3. calculate stocks from Delta hedging
+    mutate(delta_hedge = GBSGreeks("delta", TypeFlag = "c", 
+                                   S = Close, 
+                                   X = start_price, 
+                                   Time = (end_date - as.numeric(date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_volat/100)*Quantity*(-1)) %>%
+    ungroup() %>% 
+    #4. calculate stock/hedging DoD PnL
+    mutate(Hedging_DoD_PnL = ifelse(as.numeric(date) == start_date | as.numeric(date) == end_date,
+                                    0,
+                                    lag(delta_hedge)*(Close - lag(Close)))) %>%
+    rowwise() %>%
+    #5. calculate total DoD PnL, Time to expiry (for later plotting), and cost of hedging
+    mutate(DoD_PnL = Option_DoD_PnL + Hedging_DoD_PnL,
+           Time_to_Expiry = end_date - as.numeric(date),
+           Cost_of_Hedging = Close*delta_hedge) %>% 
+    ungroup() %>%
+    #6. calculate cumulative PnL, partitioned by option and stock for later plotting
+    mutate(Cum_PnL = cumsum(DoD_PnL), 
+           Option_Cum_PnL = cumsum(Option_DoD_PnL),
+           Stock_Cum_PnL = cumsum(Hedging_DoD_PnL))
+  
+  #in dataframe "dfOutput", we summarize each trade's data by changing the start day in this "for" loop
+  Final_PnL <- df_opt$Cum_PnL[nrow(df_opt)]
+  dfOutput[i,4] <- Final_PnL
+  
+  Option_PnL <- df_opt$Option_Cum_PnL[nrow(df_opt)]
+  dfOutput[i,5] <- Option_PnL
+  
+  Stock_PnL <- df_opt$Stock_Cum_PnL[nrow(df_opt)]
+  dfOutput[i,6] <- Stock_PnL
+  
+  MaxDrawdown <- max(max(df_opt$Cum_PnL) - min(df_opt$Cum_PnL))
+  dfOutput[i,7] <- MaxDrawdown
+  
+  Sharpe <- (mean(df_opt$DoD_PnL)-RF*(df_opt$premium[1]+max(df_opt$Cost_of_Hedging)))/stdev(df_opt$DoD_PnL)
+  dfOutput[i,8] <- Sharpe
+  
+  #when we complete this "for" loop, the recorded variables are for last trade, 2017/10/31 - 2017/11/29
+}
+```
+
+###Part 1: One Trade:
+###Let's use the Latest 30-day Trading Period: 2017/10/31 - 2017/11/29
+###1. Final PnL/Option Final PnL/Stock Final PnL
+```{r PnL}
+cat(paste0("Final PnL: $", sprintf("%.2f",Final_PnL), ".\n",
+           "Option PnL: $", sprintf("%.2f",Option_PnL), ".\n",
+           "Stock PnL: $", sprintf("%.2f",Stock_PnL), ".\n" ))
+
+```
+### 2. Max Drawdown:
+```{r MaxDrawdown}
+cat(paste0("MaxDrawdown: $", sprintf("%.2f",MaxDrawdown), ".\n" ))
+```
+### 3. Sharpe Ratio:
+```{r SR}
+cat(paste0("Sharpe Ratio: ", sprintf("%.3f",Sharpe), ".\n" ))
+```
+### 4. Daily PnL/Cumulative PnL vs. Time to Expiry (2017/10/31 - 2017/11/29)
+```{r PnLPlot}
+ggplot(df_opt) + 
+  geom_line(aes(Time_to_Expiry,DoD_PnL, color = "DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Hedging_DoD_PnL, color = "Stock_DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Option_DoD_PnL, color = "Option_DoD_PnL")) +
+  ggtitle("Daily PnL vs. Time to Expiry (2017/10/31 - 2017/11/29)") +
+  scale_x_reverse()
+
+ggplot(df_opt) + 
+  geom_line(aes(Time_to_Expiry,Cum_PnL, color = "Cum_PnL")) +
+  geom_line(aes(Time_to_Expiry,Stock_Cum_PnL, color = "Stock_Cum_PnL")) +
+  geom_line(aes(Time_to_Expiry,Option_Cum_PnL, color = "Option_Cum_PnL")) +
+  ggtitle("Cum PnL vs. Time to Expiry (2017/10/31 - 2017/11/29)")+
+  scale_x_reverse()
+```
+<br />
+<br />
+
+###Part 2: Backtest: 
+### Every day from 2017/01/03 to 2017/10/31 used as start date
+### 1. Distribution of Final PnL
+#### dotted line: Mean value
+```{r FinalPnLDistr}
+ggplot(dfOutput, aes(x = Total_PnL)) + 
+  geom_histogram(aes(y=..density..), 
+                 binwidth = 100,
+                 color = "black", fill = "white") +
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(dfOutput$Total_PnL)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Final PnL, from 2017/01/03 to 2017/10/31")
+
+ggplot(dfOutput, aes(x = Total_PnL)) +
+  geom_histogram(aes(y=..density..), 
+                 binwidth = 100,
+                 color = "black", fill = "white") +
+  stat_function(fun = dnorm, 
+                args = list(mean = mean(dfOutput$Total_PnL), sd = stdev(dfOutput$Total_PnL)),
+                color = "red",
+                size = 2) +
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(dfOutput$Total_PnL)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Fitted Normal Distribution of Final PnL, from 2017/01/03 to 2017/10/31")
+
+ggplot(dfOutput) + 
+  geom_density(aes(Total_PnL, fill = "Total_PnL"), alpha = 0.3) + 
+  geom_density(aes(Option_PnL, fill = "Option_PnL"), alpha = 0.3) +
+  geom_density(aes(Stock_PnL, fill = "Stock_PnL"), alpha = 0.3) + 
+  ggtitle("Distribution of Final PnL, from 2017/01/03 to 2017/10/31")
+```
+
+### 2. Distribution of Max Drawdown
+#### dotted line: Mean value
+```{r MaxDrawdownPlot}
+ggplot(dfOutput, aes(x = MaxDrawdown)) + 
+  geom_histogram(aes(y=..density..), 
+                 binwidth = 100,
+                 color = "black", fill = "white") +
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(dfOutput$MaxDrawdown)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Max Drawdoown, from 2017/01/03 to 2017/10/31")
+```
+
+### 3. Distribution of Sharpe Ratio
+#### dotted line: Mean value
+```{r Sharpe}
+ggplot(dfOutput, aes(x = Sharpe)) + 
+  geom_histogram(aes(y=..density..), 
+                 binwidth = 0.5,
+                 color = "black", fill = "white") +
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(dfOutput$Sharpe)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Sharpe, from 2017/01/03 to 2017/10/31")
+```
+
+
+### 4. Final PnL vs. Option Expiry Date
+#### dotted line: Mean value
+```{r PnLPlotvsT}
+ggplot(dfOutput) + 
+  geom_point(aes(y = Total_PnL, x = date+29)) +
+  geom_hline(aes(yintercept=mean(dfOutput$Sharpe)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Scatter - Final PnL vs. Option Expiry Date") +
+  xlab("Expiry Date")
+
+ggplot(dfOutput) + 
+  geom_point(aes(y = Total_PnL, x = date+29)) +
+  geom_hline(aes(yintercept=mean(dfOutput$Sharpe)), color = "navy", linetype = "dashed", size = 1) +
+  geom_line(aes(y = Total_PnL, x = date+29)) +
+  ggtitle("Line - Final PnL vs. Option Expiry Date") +
+  xlab("Expiry Date")
+
+```

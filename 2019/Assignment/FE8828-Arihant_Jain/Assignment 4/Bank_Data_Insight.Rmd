@@ -1,0 +1,183 @@
+---
+title: "Bank Data insights - Week 4 Assignment"
+author: "Arihant Jain"
+date: "October 8, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(kableExtra)
+library(ggthemes)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+## since I can't read from office system i downloaded the file and reading the data
+## bank <- read.csv("C:\\Users\\arihant.jain\\Documents\\Assignment_4\\bank.csv", sep = ";")
+```
+
+# Problem: Bank Data insights
+
+## Insight #1 - Education qualification against Jobs
+
+```{r run1, echo=FALSE, message=FALSE}
+
+  bank %>%
+  group_by(job,education) %>%
+  summarise(count=n()) %>%
+  ggplot(aes(fill=education, y=count, x=job)) + 
+  geom_bar( stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  xlab("Jobs") +
+  ylab("Count")
+
+  bank %>%
+  group_by(job,education) %>%
+  summarise(count=n()) %>%
+  ggplot(aes(fill=education, y=count, x=job)) + 
+  geom_bar( stat="identity",position="fill",color="grey") +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  xlab("Jobs") +
+  ylab("Count Intensity")
+
+```
+
+#### 1. From first graph we see that blue-collar and related services people are more educated, with management having highest tertiary qualified people.
+#### 2. From second graph we observed that the lowest percentage count for primary level education is for niche field like technician where you would need to gain more degree to land up a job in such field.
+#### 3.  Jobs with maximum education level in percentage terms:
+#### a. Primary - Housemaid
+#### b. Secondary - Services
+#### c. Tertiary - Management
+
+## Insight #2 - Housing Loan against Job
+
+```{r run2, echo=FALSE, message=FALSE}
+
+  bank %>%
+  group_by(job,housing) %>%
+  ggplot() + 
+  geom_bar(mapping = aes(fill=housing, x=job), position = "fill", colour="grey") +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  xlab("Job") +
+  ylab("Housing Loan Intensity")
+  
+```
+
+#### 1. More loans were taken by people having secure jobs.
+#### 2. Students, retirees and housemaids are the categories of job where people are least interested in taking house loan.
+
+## Insight #3 - Bank Balance against age
+
+```{r run3, echo=FALSE, message=FALSE}
+  ggplot(bank, aes(age, balance)) +
+  geom_point(aes(color = job)) +
+  geom_smooth()  + 
+  facet_wrap(loan  ~ housing, nrow = 2)
+  
+```
+
+#### 1. We see an upward trend in bank balance with age for people taken housing loan.
+#### 2. In case when people haven't taken any loan, bank balance is almost same for all ages for all kinds of jobs. With outliers present across age across job: no relations can be made/assumed.
+
+
+## Insight #4 - Age Distribution Job Wise
+```{r run4, echo=FALSE, message=FALSE}
+  ggplot(bank, aes(x = reorder(job, age, FUN = median), y = age)) +
+  geom_boxplot() +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  xlab("Jobs") +
+  ylab("Age")
+
+  ggplot(bank) +
+  geom_bar(mapping = aes(x = age, fill = job), position = "fill", colour="grey")
+```
+
+#### 1. The Student group has lowest median and the retired group has the largest as expected.
+#### 2. Below 30 and above 60 have two groups of people, student and retiree respectively. Between 30 to 60, we see mix of people doing various jobs.
+
+## Insight #5 - Marital Status intensity across age
+```{r run5, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(marital,age) %>%
+  ggplot() + 
+  geom_bar(mapping = aes(fill=marital, x=age), position = "fill", colour="grey") +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  xlab("Age") +
+  ylab("Marital")
+```
+
+#### 1. Intensity of being single dies out with age where as intensity of being married increases with age.
+#### 2. The divorce rate for the sample increases with age which shows that couple were married for long before taking the decision of getting separated. Overall, one can say that sample happiness index looks decent.
+
+## Insight #6 - Duration vs existing loan
+```{r run6, echo=FALSE, message=FALSE}
+  ggplot(data = bank, aes(age, duration)) +
+  geom_point(aes(color=job)) +
+  facet_wrap(loan ~education ~housing, nrow = 3)
+```
+
+#### 1. We observe that more calls were made to people who didn't have any personal loans irrespective of jobs but more inclined to people who had secondary and tertiary education.
+#### 2. Also, we see that if someone has personal loans, targeted audience were more who didn't have housing loans. This make sense as any campaign is run to get more clients and clearly, their focus was targeting those who didn't have any loans.
+
+```{r definition, echo=FALSE, message=FALSE}
+bank<- bank %>%
+  mutate("Age Group" = case_when(
+           age < 25 ~ "Youth",
+           age < 45 ~ "Middle-age",
+           age < 60 ~ "Senior",
+           TRUE ~ "Retired"
+           )
+         )
+```
+
+## Insight #7 - Duration of calls made based on age group
+```{r run7, echo=FALSE, message=FALSE}
+  ggplot(data = bank, mapping =aes(x = duration, fill = `Age Group`)) +
+  geom_histogram(binwidth =100)
+```
+
+#### 1. The short and medium call duration were made mostly to senior and middle-age people where the target would be to convince them to open deposit account.
+#### 2. We see that retired people had call duration which were slightly lengthier, which suggest that they were more interested in this campaign.
+
+
+## Insight #8 - Contacts made during this campaign
+```{r run8, echo=FALSE, message=FALSE}
+  ggplot(bank, aes(`Age Group`, campaign)) +
+  geom_point(aes(color = job)) +
+  geom_smooth() + 
+  theme(axis.text.x=element_text(angle=90, hjust=1)) + 
+  facet_wrap(.~job, nrow = 3)
+```
+
+#### 1. Clearly middle-age group across all jobs format were contacted the most, followed by senior age group.
+#### 2. Contact made to retired age group were less but from previous insight we notice that the calls duration to them were lengthier which suggest that, percentage conversion for this age group could land up being highest.
+
+## Insight #9 - Successful  term deposit conversion
+```{r run9, echo=FALSE, message=FALSE}
+  bank %>%
+  group_by(`Age Group`) %>% 
+  summarize(
+    Yes=round(100*sum(ifelse(y=="yes",1,0))/n(),2),
+    No=round(100*sum(ifelse(y=="no",1,0))/n(),2)
+    ) %>%
+  ggplot(aes(fill=Yes, y=Yes, x=`Age Group`)) + 
+  geom_bar( stat="identity") +
+  theme(axis.text.x=element_text(angle=90, hjust=1)) +
+  xlab("Age Group") +
+  ylab("% Successful Term Deposit conversion")
+```
+
+#### As one observes from Insight 7 and 8, one would want to conclude that highest % successful  term conversion would have happened for retired age group, the above graph is justification to one's conclusion.
+
+## Insight #10 - Balance distribution based on (age, job)
+```{r run10, echo=FALSE, message=FALSE}
+  ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
+  geom_smooth() + 
+  facet_wrap(.~job, nrow = 3)
+```
+
+#### 1. Balance increases  in stable jobs like blue-collared and management with age, where as it decreases in jobs where age plays a critical role like housemaids.
+#### 2. Outliers were observed in most of the jobs.
+#### 3. Clearly, one can observe that average balance for regular income jobs were high as opposed to students or unemployed or unknown.

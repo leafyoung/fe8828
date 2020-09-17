@@ -1,0 +1,160 @@
+---
+title: "Commodity Econ Flexdb"
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+  #vertical_layout: scroll
+  orientation: rows
+  source_code: embed
+---
+  
+```{r setup, include=FALSE}
+library(tidyverse)
+library(Quandl)
+library(xts)
+library(dygraphs)
+```
+
+Inputs{.sidebar}
+--------------------------------
+  
+```{r}
+# We are choosing a few commodities and a few economic indicators. There are others, like 
+# unemployment, consumer confidence, home building, retail spending. 
+# Remember this is a commodities flexdashboard. 
+
+commodityChoices <- c(
+  "Copper" = "CHRIS/CME_HG1.1", #daily 2017-5-2
+  "WTI oil" = "FRED/DCOILWTICO.1", # daily 2017-4-24
+  "Iron Ore" = "ODA/PIORECR_USD", # monthly, 2017-3-31
+  "Platinum" = "LPPM/PLAT.1", #daily, 2017-5-2
+  "Palladium" = "LPPM/PALL.1",
+  "Silver" = "LBMA/SILVER.1") # daily 2017-5
+
+selectInput("commodity",
+            "Commodity",
+            choices = commodityChoices, 
+            selected = "Copper")
+
+econIndicatorChoices <- c(
+  "10-Yr Yield" = "FRED/DGS10", # daily 2017-5
+  "US CPI" = "RATEINF/INFLATION_USA",# monthly 2017-3
+  "Japan CPI" = "RATEINF/INFLATION_JPN",
+  "EU CPI" = "RATEINF/INFLATION_EUR") 
+
+selectInput("econIndicator",
+            "Economic Indicator",
+            choices = econIndicatorChoices, 
+            selected = "10-yr Yield")
+
+dateRangeInput("dateRange",
+               "Date range",
+               start = "1990-01-01",
+               end   = "2017-03-30")
+
+ratio_indicator <- reactive({
+  
+  Quandl.api_key("JyeshGuNBGDbbaYoNURG")
+  
+  start_date <- format(input$dateRange[1])
+  end_date <- format(input$dateRange[2])
+  
+  # Create a vector of 3 data set codes
+  # 1) commodity chosen by user
+  # 2) gold quandl code
+  # 3) economic indicator chosen by user
+  
+  gold_code <- "CHRIS/CME_GC1.1"
+  data_set_codes <- c(input$commodity, gold_code, input$econIndicator)
+  
+  # Pipe the data_set_codes vector to Quandl via the map() function
+  # Note we can still set the start and end date and object type
+  # as we always can with Quandl.
+  
+  quandlData <- data_set_codes %>% 
+    # Pipe the datasets vector to Quandl via the map() function.
+    map(Quandl,
+        start_date = start_date,
+        end_date = end_date,
+        collapse = "monthly",
+        type = "xts") %>%
+    # Replace all NAs using map() and na.locf().
+    map(na.locf, formLast = TRUE) %>%
+    # Merge to one xts object using map() and merge().
+    reduce(merge) %>% 
+    # Add nicer column names.
+    `colnames<-`(c(names(commodityChoices[commodityChoices == input$commodity]), 
+                   "Gold",
+                   names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]))) 
+  
+  # Create a column and add the price ratio.
+  quandlData$ratio <- quandlData[,1]/quandlData[,2]
+  
+  # Save just the ratio and the economic indicator data.
+  ratio_indicator  <- merge(quandlData$ratio, quandlData[,3])
+  
+  # Add more general names.
+  colnames(ratio_indicator) <- c("ratio","indicator")       
+  
+  return(ratio_indicator)
+})
+```
+
+Row
+-------------------------------------
+  
+### Chart 1
+  
+```{r}
+dygraphOutput("ratio_indicator")
+
+output$ratio_indicator <- renderDygraph({
+  dygraph(ratio_indicator()) %>% 
+    # Add the rollPeriod for smoothing.
+    dyRoller(rollPeriod = 3) %>% 
+    # Create two independent axes.
+    dyAxis("y", label = "USD") %>%
+    dyAxis("y2", label = "Percent (%)", independentTicks = TRUE) %>%
+    # Assign each time series to an axis.
+    dySeries("ratio", axis = 'y', 
+             label = paste(names(commodityChoices[commodityChoices == input$commodity]), 
+                           "/Gold (LHS)", sep = ""), color = "blue") %>% 
+    dySeries("indicator", axis = 'y2', 
+             label = paste(names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 
+                           "(RHS)", sep = ""), color = "red")
+})
+
+```
+
+Row
+-------------------------
+  
+### Chart 2
+  
+```{r}
+dygraphOutput("rollingCorrelation")
+
+output$rollingCorrelation <- renderDygraph({
+  rolling_cor <- rollapply(ratio_indicator(), 24,
+                           function(x) cor(x[, 1], x[, 2], use = "pairwise.complete.obs"),
+                           by.column = FALSE)
+
+  names(rolling_cor) <- paste(names(commodityChoices[commodityChoices == input$commodity]),
+                              "/Gold ",
+                              names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 
+                              " Correlation", sep = "")
+  
+  avg <- round(mean(rolling_cor,  na.rm = TRUE), 2)
+  mini <- round(min(rolling_cor,  na.rm = TRUE), 2)
+  maxi <- round(max(rolling_cor,  na.rm = TRUE), 2)
+  
+  dygraph(rolling_cor, main = paste(names(commodityChoices[commodityChoices == input$commodity]),
+                                    "/Gold ",
+                                    names(econIndicatorChoices[econIndicatorChoices == input$econIndicator]), 
+                                    " Correlation", sep = "")) %>% 
+    dyRangeSelector(dateWindow = c("2015-01-01", "2016-12-31"))  %>% 
+    dyLimit(avg, color = 'purple') %>% 
+    dyLimit(mini, color = 'red') %>% 
+    dyLimit(maxi, color = 'blue') %>% 
+    dyEvent("2016-11-08", "Trump!", labelLoc = "bottom")
+})

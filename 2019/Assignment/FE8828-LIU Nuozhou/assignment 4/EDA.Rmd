@@ -1,0 +1,148 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis 2" 
+author: "Liu Nuozhou <sub> <Email:liun0008@e.ntu.edu.sg> </sub>" 
+date: "Oct 2019" 
+output: html_document 
+---
+
+```{r setup, include=FALSE} 
+library(dplyr)
+library(tidyr) 
+library(ggplot2)
+library(gridExtra)
+library(tidyquant)
+library(xts)
+library(dplyr)
+library(tibble)
+library(Quandl)
+library(tidyverse)
+library(caret)
+library(plotly)
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+
+# Finding 1
+```{r}
+# Find distribution of different contact methods among different groups
+ggplot(bank)+
+  geom_density(aes(age,fill=contact,alpha=0.3))
+```
+Telephones are mostly used by the elders.
+
+# Finding 2
+```{r}
+# Distribution of balance among different job groups
+group_by(bank,balance,job)%>%
+  summarise(count=n())%>%
+  ungroup()%>%
+  {
+  ggplot(.)+
+      geom_point(aes(balance,job,size=count))+
+      scale_y_discrete(limit = rev(levels(bank$job)))
+}
+```
+
+# Finding 3
+```{r}
+# Find distribution of balance level and age among clients in different education background
+ bank1<-mutate(bank,balance_group=as.character(ntile(balance,5)))
+  ggplot(data = bank1, mapping = aes(x = reorder(education, age, FUN = median), fill = balance_group)) + 
+   geom_bar() + 
+   scale_x_discrete(limit = rev(levels(reorder(bank$education, bank$age, FUN = median)))) + 
+ geom_line(aes(x = bank$education, y = bank$age)) +
+   geom_point(data = group_by(bank, education) %>% 
+                summarize(age = median(age)) %>%
+                ungroup, 
+              aes(x = education, y = age), inherit.aes = FALSE) +
+   xlab("Job sorted according to\nMedian age\n(Old to Young)") +
+   coord_flip()
+```
+Clients received advanced education are younger than those who received secondary education, who are further younger compared with those with only primary education.Confusing. Nearly half of clients received secondary education and they are likely to have the highest average balance.
+
+# Finding 4
+```{r}
+# Find distribution of clients in different age and education backgroud
+ggplot(bank)+
+  geom_histogram(aes(age,fill=education))
+
+```
+The elders are less likely to have received tertiary education.
+
+# Finding 5
+```{r}
+ggplot(bank) +
+  geom_bar(mapping = aes(x = age, fill = marital), position = "fill") + 
+  coord_polar()
+
+```
+Most clients under 30 are single, and elder clients are more likely to be divorced. 
+
+
+# Finding 6
+```{r}
+housemaids<-filter(bank,job=="housemaid")
+housemaids<-mutate(housemaids,)
+
+ggplot(data = bank) + 
+  geom_point(mapping = aes(x = age, y = balance)) + 
+  facet_wrap(job ~ education, nrow = 2)
+```
+Clients with tertiary education are more likely to be entrepreneur, management, self-employ and technician. Education counts a lot. 
+
+# Finding 7
+```{r}
+ggplot(housemaids, aes(balance, color = marital)) +
+  geom_density()
+
+```
+Single housemaids are likely to have more account balance while divorced housemaids are likely to have less balance.
+
+
+# Finding 8
+```{r}
+#Find joint distribution of housemaids' ages and balances
+df <- tibble(age = housemaids$age, balance = housemaids$balance)
+hist_top <- ggplot(df, aes(x = age)) + 
+  geom_density()
+
+empty <-ggplot()+
+  geom_point(aes(1,1), colour="white")+ 
+  theme(axis.ticks=element_blank(), 
+        panel.background=element_blank(),
+        axis.text.x=element_blank(),
+        axis.text.y=element_blank(),
+        axis.title.x=element_blank(), 
+        axis.title.y=element_blank())
+
+
+scatter <- ggplot(df, aes(x = age, y = balance)) + geom_point()+geom_smooth(aes(x=age,y=balance))
+
+hist_right <- ggplot(df, aes(x = balance)) + geom_density() + coord_flip()
+
+grid.arrange(hist_top, empty, scatter, hist_right, ncol=2, nrow=2, widths=c(3.5, 0.7), heights=c(1, 4))
+
+
+```
+Young housemaids are likely to have more balances.
+
+# Finding 9
+```{r}
+ggplot(housemaids,aes(education,balance))+
+  geom_violin()
+```
+Housemaids with better education seem to have more balance in general.
+
+# Finding 10
+```{r}
+blue_collar<-filter(bank,job=="blue-collar")
+scatter <- ggplot(blue_collar, aes(x = age, y = balance)) + 
+  geom_point(aes(x = age, y = balance, color=education))+
+  geom_smooth(aes(x=age,y=balance))
+#ggiris <- qplot(age, balance, data = blue_collar, color = education)
+ggplotly(scatter)
+
+```
+Very few blue-collar workers have received tertiary education.They are likely to have more balance as age goes up.

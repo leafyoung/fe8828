@@ -1,0 +1,106 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "FANG, YUAN"
+date: "10/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(psych)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+This data contains `r ncol(bank)` features and `r nrow(bank)` observations.
+
+# Finding #2 
+```{r kable}
+ knitr::kable(
+   describe(bank$balance),
+   caption = "Descriptive Statistics of Balance",
+   align = "c"
+ )
+```
+
+# Finding #3
+The education status of people who are not students, arranged in descending order
+```{r}
+bank %>% 
+  select(job, education) %>% 
+  filter(job != "student") %>% 
+  arrange(job, match(education, c("tertiary","secondary","primary")),desc(education)) %>% 
+  head(50)
+```
+
+# Finding #4
+The average balance of each employment condition
+```{r}
+bank %>%
+  group_by(job) %>%
+  summarise(`average balance` = mean(balance)) %>%
+  arrange(desc(`average balance`))
+```
+
+# Finding #5
+The marital status of each employment condition
+```{r}
+lfmt <- bank %>% 
+  group_by(job, marital) %>% 
+  summarise(nn = n(),)
+spread(lfmt, marital, nn)
+```
+
+# Finding #6
+The employment conditions of people who have taken a housing loan
+```{r}
+lfmt <- bank %>%
+  filter(housing == "yes") %>%
+  group_by(job) %>% 
+  summarise(nn = n())
+spread(lfmt, job, nn)
+```
+
+# Finding #7
+Whether or not students are receiveing their higher education
+```{r}
+bank %>%
+  filter(job == "student") %>% 
+  mutate(education = ifelse(education == "tertiary", "yes", "no")) %>% 
+  rename(`higher education` = education)
+```
+
+# Finding #8
+The number of people in each age group whose communication type is cellular
+```{r}
+bank %>%
+  filter(contact=="cellular") %>%
+  mutate(age = case_when(
+age < 30 ~ "youngster (age < 30)",
+age < 50 ~ "middle-aged (30 <= age < 50)",
+age < 65 ~ "quinquagenarian (50 <= age < 65)",
+TRUE ~ "senior (age > 65)"
+)) %>% 
+  group_by(age) %>%
+  summarise(`number of people using cellphones` = n())
+```
+
+# Finding #9
+Whether or not a person is working (treat "unknown" as not working)
+```{r}
+bank %>%
+  mutate(working = case_when(str_detect(job, ("retired|student|unemployed|unknown"))~"no", TRUE~"yes")) %>% 
+  select(working, job) %>% 
+  head(50)
+```
+
+# Finding #10
+The 3 people with the highest balance and the 3 people with the lowest
+```{r}
+bank %>% 
+  arrange(balance) %>%
+  {bind_rows(head(.,3), tail(.,3))}
+```
+

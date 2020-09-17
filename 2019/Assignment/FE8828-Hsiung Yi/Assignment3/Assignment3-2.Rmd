@@ -1,0 +1,158 @@
+---
+title: "Assignment3-2"
+author: "HsiungYi"
+date: "4 October 2019"
+output: html_document
+---
+
+---
+title: "Assignment_3_Question_2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding1
+```{R finding1}
+df1 <- group_by(bank, job) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df2 <- group_by(bank, job) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+left_join(df1,df2, by = "job")
+```
+*The average balance and max balance both are the highest when people retired.
+*As for students, we can observe they have a good average balance but its max balance is just above   people who are unemployed and unknown.
+*There is one thing quite interesting is that mean balance of the blue-color is even lower than the unemployed!
+*I think maybe they have too much pressure so after receving money they just want to spend.
+
+# Finding2
+```{R finding2}
+bank <- mutate(bank, age_group = case_when(
+  age < 20 ~ "0-20",
+  age < 30 ~ "20-30",
+  age < 40 ~ "30-40",
+  age < 50 ~ "40-50",
+  age < 60 ~ "50-60",
+  age >= 60 ~ "60-100"
+))
+df1 <- group_by(bank, age_group) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df2 <- group_by(bank, age_group) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+left_join(df1,df2, by = "age_group")
+```
+*We can observe that people's average balance has a significant increase as the age goes up.
+*It also make sense because that means you have worked longer and made more money than others.
+# Finding3
+```{R finding3}
+lfmt <- bank %>%
+  group_by(education, marital) %>%
+  summarize(nn= n())
+df1 <- spread(lfmt, marital, nn)
+mutate(df1, Total = sum(divorced+married+single))
+
+```
+*Umm...from this table we can observe that the higher education you have been taken, the more likely you will be single. That's intriguing.
+# Finding4
+```{R finding4}
+df1 <- group_by(bank, education) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df2 <- group_by(bank, education) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+left_join(df1,df2, by = "education")
+```
+*First, although you have more chance to be single, you will have more balance if you take to the highest education!
+*Second, there is something hard to explain. If you only have a primary education, you will have more average balance than a person who have taken the secondary education.
+# Finding5
+```{R finding5}
+df1 <-group_by(bank, housing) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df2 <- group_by(bank, housing) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+left_join(df1,df2, by = "housing")
+```
+*From this table we can understand that people who own a house have less balance is possibly because they do not have to pay the mortgage.
+# Finding6
+```{R finding6}
+df1 <-group_by(bank, marital) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df2 <- group_by(bank, marital) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+left_join(df1,df2, by = "marital")
+```
+*From my opinion, it is reasonable to have this outcome.
+*First, for divorced prople, they might have to pay the alimony for their original family.
+*Second, for single people, it is easier to understand that, they only have to pay everything per person. However, they might have dates sometimes, so they will have to spend some money.
+*Last, for the people who are married, I think it is high possible that the couple will have a mutual account, so the balance will be higher than the others.
+# Finding7
+```{R finding7}
+df1 <- group_by(bank, default) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(default)
+df2 <- group_by(bank, default) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+left_join(df1,df2, by = "default")
+```
+*It is obvious that people who have default history will have much less balance than people who do not. 
+# Finding8
+```{R finding8}
+lfmt <- bank %>%
+  group_by(job, housing) %>%
+  summarize(nn= n())
+df1 <- spread(lfmt, housing, nn)
+arrange(df1, desc(yes))
+
+```
+*If you are a blue-color, you will most likelt to have a house. 
+*Combined with finding 1, we can understand that why the blue-colors have the least mean of all jobs.
+*It is very likely that they have to pay for the mortgage.
+# Finding9
+```{R finding9}
+bank <- mutate(bank, age_group = case_when(
+  age < 20 ~ "0-20",
+  age < 30 ~ "20-30",
+  age < 40 ~ "30-40",
+  age < 50 ~ "40-50",
+  age < 60 ~ "50-60",
+  age >= 60 ~ "60-100"
+))
+lfmt <- bank %>%
+  group_by(age_group, housing) %>%
+  summarize(nn= n())
+df1 <- spread(lfmt, housing, nn)
+arrange(df1, age_group)
+```
+*We can see that people start buying their house when they are at 30s to 50s.
+*Combined with finding 2, it is a suitable and reasonable age for people to have a house and a nice career.
+*Unfortunatly, there is no person who owns a house under 20s.
+# Finding10
+```{R finding10}
+lfmt <- bank %>%
+  group_by(education, contact) %>%
+  summarize(nn= n())
+df1 <- spread(lfmt, contact, nn)
+arrange(df1, education)
+```
+*We can observe that people will most likely prefer cellphone to telephone when they have a higher education.
+*Combined with finding 4, we can understand that maybe it is because they have more average balance in their account, they could buy cellphones which are more expensive than telephones.

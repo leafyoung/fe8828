@@ -1,0 +1,106 @@
+---
+title: "Q2 Exploratory Data Work on the bank dataset"
+author: "Leong Shu Hui Felicia"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1
+#### This data contains `r nrow(bank)` rows.
+
+# Finding 2
+#### The distribution of people by age is as follows:
+``` {r, echo = FALSE}
+bank %>% group_by(age) %>% summarize(count = n()) %>% plot
+```
+
+
+# Finding 3
+#### The average balance in the bank is $`r mean(bank$balance)`.
+
+# Finding 4
+``` {r, echo = FALSE}
+d6 <- bank %>% 
+  group_by(age) %>% 
+  summarize(balance_mean = mean(balance)) %>%
+  arrange(-balance_mean)
+```
+#### The age at which the bank customers have the highest average balance is `r d6[[1]][1]` with a balance of $`r d6[[2]][1]`
+
+#### The distribution of the average balance by age is as follows:
+``` {r, echo = FALSE}
+plot(d6)
+```
+
+
+# Finding 5
+``` {r, echo = FALSE}
+edu <- bank %>% group_by(education) %>% summarize(count = n()) %>% arrange(-count)
+edu
+
+mari <- bank %>% group_by(marital) %>% summarize(count = n()) %>% arrange(-count)
+mari
+```
+#### The average bank customer is one who has `r edu[[1]][1]` education and is `r mari[[1]][1]`.
+
+# Finding 6
+``` {r, echo = FALSE}
+d3 <-bank %>% group_by(marital) %>% summarize(Total=n()) 
+
+d4 <-bank %>% group_by(marital,default) %>% summarize(Count=n())
+
+df2 <- left_join(d4, d3, by = "marital") %>% mutate(Percentage=(Count/Total)*100) %>% filter(default == "yes")
+df2
+```
+#### Those that are divorced have an approximately 3x higher chance of defaulting (`r df2[[5]][1]`%) than those who are married (`r df2[[5]][2]`%)
+
+
+# Finding 7
+``` {r, echo = FALSE}
+d7 <- bank %>% 
+  group_by(contact) %>% 
+  summarize(count = n())
+d7
+```
+#### A large proportion of customers are contacted by `r d7[[1]][1]`.
+
+# Finding 8
+``` {r, echo = FALSE}
+d81 <-bank %>% group_by(housing) %>% summarize(Total=n()) 
+
+d82 <-bank %>% group_by(housing,loan) %>% summarize(Count=n())
+
+df8 <- left_join(d81, d82, by = "housing") %>% mutate(Percentage=(Count/Total)*100) %>% filter (loan == "yes")
+df8
+```
+#### Those that have housing are more likely (`r df8[[5]][2]`%) to have a loan than those without (`r df8[[5]][1]`%).
+
+# Finding 9
+``` {r, echo = FALSE}
+d91 <-bank %>% group_by(education) %>% summarize(Total=n()) 
+
+d92 <-bank %>% group_by(education,default) %>% summarize(Count=n())
+
+df9 <-left_join(d92, d91, by = "education") %>% 
+  mutate(Percentage=(Count/Total)*100) %>% 
+  filter(default == "yes") %>%
+  arrange (-Percentage)
+df9
+```
+#### People with `r df9[[1]][1]` education have the highest chance of defaulting (`r df9[[5]][1]`%), followed by those with `r df9[[1]][2]` education. Those with `r df9[[1]][4]` education have the lowest chance of defaulting (`r df9[[5]][4]`%).
+
+# Finding 10
+``` {r, echo = FALSE}
+df10 <- bank %>% group_by(month) %>% summarize(count = n()) %>% arrange(-count)
+df10
+```
+#### The largest amount of contacts made is in `r df10[[1]][1]`.
+
+### Hope you enjoyed my 10 findings!

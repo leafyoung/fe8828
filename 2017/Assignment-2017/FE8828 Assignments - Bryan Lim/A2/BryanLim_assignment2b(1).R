@@ -64,8 +64,6 @@ server <- function(input, output, session) {
                  values$df <- (1/(1+(input$ytm/coupfreq(input$freq))/100))^seq(0, input$tenor*coupfreq(input$freq), by =1) # create a sequence of discount factors for each period
                  values$dcf <- values$df * values$cf # create a sequence of discounted cash flows
                  values$NPV <- sum(values$dcf) # sum the discounted cash flows to obtain NPV
-                 
-               
                }
   )
   output$bs <- renderTable(cbind(Date=as.character(values$date),Cash_Flows = values$cf, Cash_Flows_discounted = values$dcf))

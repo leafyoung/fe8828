@@ -1,0 +1,7 @@
+---
+title: "Chart"
+output: html_document
+---
+
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)

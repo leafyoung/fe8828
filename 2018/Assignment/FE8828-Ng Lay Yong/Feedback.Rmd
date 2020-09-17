@@ -1,0 +1,54 @@
+# Assignemnt 2:
+Good. Well-documented.
+I just this core logic of make_choice() misses something and also could be clearer.
+
+    if(max_obs == N){max_select<-0}
+    for(i in select_list){
+      if(max_obs !=N){
+        if(i < max_obs){
+          next
+        }else{
+          if(i>max_obs){
+            max_select<-i
+            break
+          }else{
+            max_select<-0
+            break
+          }
+        }
+      }}
+    if(max_select==N & max_select %in% select_list){
+      count<-count+1
+    }else{
+      count<-count+0
+    }
+    
+My version:
+
+  max_obs<-max(obs_list)
+  
+  
+  if (split_number == 0) {
+    # add code to handle split_number == 0 case
+    # set max_select to first element in list
+    max_select <- list[1]
+  } else if (max_obs == N) {
+    # set max_select to last element in list
+    max_select <- list[N]
+  } else {
+      for(i in select_list) {
+        if (i < max_obs) {
+          next
+        } else { # if(i>max_obs) {
+          max_select<-i
+          break
+        }
+      }
+    }
+  }
+  
+  if(max_select==N) {
+    count<-count+1
+  } else {
+    count<-count+0
+  }

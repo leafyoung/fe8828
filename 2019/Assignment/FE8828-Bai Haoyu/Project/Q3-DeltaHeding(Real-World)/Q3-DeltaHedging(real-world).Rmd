@@ -1,0 +1,354 @@
+---
+title: "Q3-DeltaHedging(Real-World)"
+author: "Bai Haoyu G1900411H, Fang Yuan G1900299H, Hsiung Yi G1900278D, Kevin Chen G1900380F, Liu Nuozhou G1800068F"
+date: "27/10/2019"
+output: html_document
+---
+##### We select Amazon (AMZN) to be our target stock. In the past, Amazon has never paid dividends, so q is 0 throughout the project
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(fOptions)
+library(lubridate)
+library(bizdays)
+library(readxl)
+library(xts)
+library(timeSeries)
+library(tseries)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+AMZN <- read_excel("~/Desktop/AMZN.xlsx", col_types = c("date", 
+     "numeric", "numeric"))
+```
+
+### Construct the xts object
+```{r xts, include = TRUE}
+AMZNXTS <- xts(x = AMZN[, -1, drop = F], 
+                  order.by = as.Date(AMZN$Date, format = "%d/%m/%Y"))
+```
+
+### Initial Setup
+##### The operation dates(first day of each 30-day trading period) are stored in a list with length 12: 
+##### "2018-08-31" "2018-10-01" "2018-10-31" "2018-11-30" "2018-12-31" "2019-01-30" "2019-03-01" "2019-04-01" "2019-05-01" "2019-05-31" "2019-07-01" "2019-07-31". The last 30-day period is from "2019-07-31 to 2019-08-30". 
+##### Some of the durations are not extactly 30 days because the last day of the 30-day holding period may not be a trading day. In such case, we hold one/multiple days more until the next trading day
+```{r initialSetup, include = TRUE}
+# quantity to hold
+Quantity <- 100
+
+# risk free rates
+RF <- 0.8/100
+
+# create a list of trading dates
+Trading_Date <- index(AMZNXTS)
+checking_dates <- as.numeric(Trading_Date)
+startdate <- as.numeric(as.Date("2018-08-31"))
+operationdates <- c(startdate)
+for (i in 1:12)
+{
+  newdate <- startdate + 30
+  while (!(newdate %in% checking_dates))
+  {
+    newdate <- newdate+1 
+  }
+  operationdates <- c(operationdates, newdate)
+  startdate <- newdate
+}
+operationdates <- as.Date(operationdates)
+trade_dates <- which(checking_dates %in% operationdates[-length(operationdates)])
+trade_dates2 <- which(checking_dates %in% operationdates)
+
+# create a dataframe for later calculation
+AMZNDF <- tibble(date = Trading_Date)
+AMZNDF$Close <- coredata(AMZNXTS[, "Close"])
+AMZNDF$IV30 <- coredata(AMZNXTS[, "VXAZNCLS"])
+
+# create a dataframe for result storage
+AMZNDFOutput <- AMZNDF[trade_dates, ] %>%
+  mutate(Total_PnL = 0, Option_PnL = 0, Stock_PnL = 0, MaxDrawdown = 0, SharpeRatio = 0)
+```
+
+### Calculation for each period
+```{r calculation, include = TRUE}
+# Round 2 analysis for Guessing Strike level
+Strikes <- c(0)
+deltas <- c(0)
+
+# Realized volatility and Implied volatility
+RealizedVol <- c(0)
+ImpliedVol <- c(0)
+Dates <- c(0)
+
+for (i in 1:12){
+  # initialize the dates af a 30-day trading period
+  start_date <- as.numeric(AMZNDF[trade_dates2[i],1])
+  end_date <- as.numeric(AMZNDF[trade_dates2[i+1],1])
+  start_price <- as.numeric(AMZNDF[trade_dates2[i],2])
+  start_vol <- as.numeric(AMZNDF[trade_dates2[i],3])
+  
+  # data for calculation of this period
+  tempDF <- tibble(date = Trading_Date[as.numeric(Trading_Date)<end_date & as.numeric(Trading_Date)>=start_date]) %>% 
+    rowwise() %>%
+    mutate(Close = as.numeric(AMZNXTS[date,"Close"])) %>% 
+    ungroup()
+  
+  # record volatilitis
+  Dates <- c(Dates, as.Date(start_date))
+  ImpliedVol <- c(ImpliedVol, start_vol)
+  price <- log(tempDF$Close)
+  ret <- log(dplyr::lag(price)) - log(price)
+  p <- price[-length(price)]
+  p2 <- price[-1]
+  ret <- p2-p
+  vol <- sd(ret) * sqrt(250) * 100
+  RealizedVol <- c(RealizedVol, vol)
+
+  # Round 2 analysis - guess the 25% delta strike price
+  initialguess <- start_price * 5
+  goal <- GBSGreeks("delta", TypeFlag = "c",
+                                   S = start_price,
+                                   X = initialguess,
+                                   Time = (end_date - as.numeric(start_date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_vol/100)
+  
+  if(goal < 0.25)
+  {
+    while(goal < 0.245)
+   {
+    initialguess <- initialguess - 1
+    goal <- GBSGreeks("delta", TypeFlag = "c",
+                                   S = start_price,
+                                   X = initialguess,
+                                   Time = (end_date - as.numeric(start_date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_vol/100)
+   }
+  }
+  else
+  {
+    while(goal > 0.255)
+   {
+    initialguess <- initialguess + 1
+    goal <- GBSGreeks("delta", TypeFlag = "c",
+                                   S = start_price,
+                                   X = initialguess,
+                                   Time = (end_date - as.numeric(start_date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_vol/100)
+   }
+  }
+  
+  d1 <- GBSGreeks("delta", TypeFlag = "c",
+                                   S = start_price,
+                                   X = initialguess - 1,
+                                   Time = (end_date - as.numeric(start_date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_vol/100)
+  d2 <- GBSGreeks("delta", TypeFlag = "c",
+                                   S = start_price,
+                                   X = initialguess + 1,
+                                   Time = (end_date - as.numeric(start_date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_vol/100)
+  
+  if(abs(d1-0.25) < abs(goal-0.25))
+  {
+    if(abs(d1-0.25) < abs(d2-0.25))
+    {
+      add <- initialguess - 1
+      objective <- d1
+    }
+    if(abs(d1-0.25) > abs(d2-0.25))
+    {
+      add <- initialguess + 1
+      objective <- d2
+    }
+  }
+  if(abs(d1-0.25) > abs(goal-0.25))
+  {
+    if(abs(goal-0.25) < abs(d2-0.25))
+    {
+      add <- initialguess
+      objective <- goal
+    }
+    if(abs(goal-0.25) > abs(d2-0.25))
+    {
+      add <- initialguess + 1
+      objective <- d2
+    }
+  }
+
+  Strikes <- c(Strikes, add)
+  deltas <- c(deltas, objective)
+  
+  # calculation
+  AMZNDF2 <- rowwise(tempDF) %>% 
+    #1
+    mutate(premium = Quantity*GBSOption(TypeFlag = "c",
+                               S = Close,
+                               X = start_price,
+                               Time = (end_date - as.numeric(date))/365,
+                               r = RF,
+                               b = 0,
+                               sigma = start_vol/100)@price) %>%
+    ungroup() %>%
+    #2
+    mutate(Option_DoD_PnL = ifelse(as.numeric(date) == start_date, 
+                                   0,
+                                   premium - dplyr::lag(premium))) %>%
+    rowwise() %>%
+    #3
+    mutate(delta_hedge = Quantity*(-1)*GBSGreeks("delta", TypeFlag = "c", 
+                                   S = Close, 
+                                   X = start_price, 
+                                   Time = (end_date - as.numeric(date))/365,
+                                   r = RF,
+                                   b = 0,
+                                   sigma = start_vol/100)) %>%
+    ungroup() %>% 
+    #4
+    mutate(Hedging_DoD_PnL = ifelse(as.numeric(date) == start_date,
+                                    0,
+                                    dplyr::lag(delta_hedge)*(Close - dplyr::lag(Close)))) %>% 
+    rowwise() %>%
+    #5
+    mutate(DoD_PnL = Option_DoD_PnL + Hedging_DoD_PnL,
+           Time_to_Expiry = end_date - as.numeric(date),
+           Cost_of_Hedging = Close*delta_hedge) %>%
+    
+    ungroup() %>%
+    #6
+    mutate(Cum_PnL = cumsum(DoD_PnL), 
+           Option_Cum_PnL = cumsum(Option_DoD_PnL),
+           Stock_Cum_PnL = cumsum(Hedging_DoD_PnL))
+  
+  # store in the AMZNDFOutput dataframe for back-testing
+  AMZNDFOutput[i,4] <- tail(AMZNDF2$Cum_PnL, n = 1)
+  
+  AMZNDFOutput[i,5] <- tail(AMZNDF2$Option_Cum_PnL, n = 1)
+
+  AMZNDFOutput[i,6] <- AMZNDF2$Stock_Cum_PnL[nrow(AMZNDF2)]
+
+  AMZNDFOutput[i,7] <- max(max(AMZNDF2$Cum_PnL) - min(AMZNDF2$Cum_PnL))
+
+  AMZNDFOutput[i,8] <- (mean(AMZNDF2$DoD_PnL)-RF*(AMZNDF2$premium[1]+max(AMZNDF2$Cost_of_Hedging)))/stdev(AMZNDF2$DoD_PnL)
+}
+```
+### Round 2 Analysis - Guessing K
+```{r Strikes}
+Strikes <- Strikes[-1]
+deltas <- deltas[-1]
+cat("The Strike prices for ~25% Delta are:")
+cat(Strikes)
+cat("The corresponding deltas are:")
+cat(deltas)
+```
+
+### One-trade analysis
+##### The analyzed period is the last 30-day trading period, from "2019-07-31 to 2019-08-30"
+###1. Final PnL/Option Final PnL/Stock Final PnL
+```{r PnL}
+cat(paste0("Final PnL: $", sprintf("%.2f",AMZNDF2$Cum_PnL[nrow(AMZNDF2)]), ".\n",
+           "Option PnL: $", sprintf("%.2f",AMZNDF2$Option_Cum_PnL[nrow(AMZNDF2)]), ".\n",
+           "Stock PnL: $", sprintf("%.2f",AMZNDF2$Stock_Cum_PnL[nrow(AMZNDF2)]), ".\n" ))
+
+```
+### 2. Max Drawdown:
+```{r MaxDrawdown}
+cat(paste0("MaxDrawdown: $", sprintf("%.2f",max(max(AMZNDF2$Cum_PnL) - min(AMZNDF2$Cum_PnL))), ".\n" ))
+```
+### 3. Sharpe Ratio:
+```{r SharpeRatio2}
+cat(paste0("Sharpe Ratio: ", sprintf("%.3f",(mean(AMZNDF2$DoD_PnL)-RF*(AMZNDF2$premium[1]+max(AMZNDF2$Cost_of_Hedging)))/stdev(AMZNDF2$DoD_PnL)), ".\n" ))
+```
+### 4. Daily PnL/Cumulative PnL vs. Time to Expiry
+```{r PnLPlot}
+ggplot(AMZNDF2) + 
+  geom_line(aes(Time_to_Expiry,DoD_PnL, color = "DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Hedging_DoD_PnL, color = "Stock_DoD_PnL")) +
+  geom_line(aes(Time_to_Expiry,Option_DoD_PnL, color = "Option_DoD_PnL")) +
+  ggtitle("Daily PnL vs. Time to Expiry") +
+  scale_x_reverse()
+
+ggplot(AMZNDF2) + 
+  geom_line(aes(Time_to_Expiry,Cum_PnL, color = "Cum_PnL")) +
+  geom_line(aes(Time_to_Expiry,Stock_Cum_PnL, color = "Stock_Cum_PnL")) +
+  geom_line(aes(Time_to_Expiry,Option_Cum_PnL, color = "Option_Cum_PnL")) +
+  ggtitle("Cum PnL vs. Time to Expiry")+
+  scale_x_reverse()
+```
+
+### Back-Test
+### 1. Distribution of Final PnL
+```{r FinalPnLDistr}
+ggplot(AMZNDFOutput, aes(x = Total_PnL)) + 
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(AMZNDFOutput$Total_PnL)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Final PnL")
+
+ggplot(AMZNDFOutput, aes(x = Total_PnL)) +
+  stat_function(fun = dnorm, 
+                args = list(mean = mean(AMZNDFOutput$Total_PnL), sd = stdev(AMZNDFOutput$Total_PnL)),
+                color = "red",
+                size = 2) +
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(AMZNDFOutput$Total_PnL)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Fitted Normal Distribution of Final PnL")
+
+ggplot(AMZNDFOutput) + 
+  geom_density(aes(Total_PnL, fill = "Total_PnL"), alpha = 0.3) + 
+  geom_density(aes(Option_PnL, fill = "Option_PnL"), alpha = 0.3) +
+  geom_density(aes(Stock_PnL, fill = "Stock_PnL"), alpha = 0.3) + 
+  ggtitle("Distribution of Final PnL")
+```
+
+### 2. Distribution of Max Drawdown
+```{r MaxDrawdownPlot}
+ggplot(AMZNDFOutput, aes(x = MaxDrawdown)) + 
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(AMZNDFOutput$MaxDrawdown)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of Max Drawdoown")
+```
+
+### 3. Final PnL vs. Date
+```{r PnLPlotvsT}
+ggplot(AMZNDFOutput) + 
+  geom_point(aes(y = Total_PnL, x = date+29)) +
+  geom_hline(aes(yintercept=mean(AMZNDFOutput$SharpeRatio)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Final PnL vs. Date") +
+  xlab("Date")
+
+ggplot(AMZNDFOutput) + 
+  geom_point(aes(y = Total_PnL, x = date+29)) +
+  geom_hline(aes(yintercept=mean(AMZNDFOutput$SharpeRatio)), color = "navy", linetype = "dashed", size = 1) +
+  geom_line(aes(y = Total_PnL, x = date+29)) +
+  ggtitle("Final PnL vs. Date") +
+  xlab("Date")
+```
+
+### 4. Distribution of Sharpe Ratio
+```{r SharpeRatio}
+ggplot(AMZNDFOutput, aes(x = SharpeRatio)) + 
+  geom_density(color = "blue") +
+  geom_vline(aes(xintercept=mean(AMZNDFOutput$SharpeRatio)), color = "navy", linetype = "dashed", size = 1) +
+  ggtitle("Distribution of SharpeRatio")
+```
+
+### 5. Implied Volatility vs Realized Volatility
+```{r volComparison}
+RealizedVol <- RealizedVol[-1]
+ImpliedVol <- ImpliedVol[-1]
+Dates <- as.Date(Dates[-1])
+PNL <- AMZNDFOutput$Total_PnL
+VolDF <- tibble(date = Dates) %>%
+    mutate(Realized = RealizedVol) %>%
+    mutate(Implied = ImpliedVol) %>%
+    mutate(PnL = PNL) %>%
+    mutate(RealizedminusImplied = Realized-Implied)
+VolDF
+```
+From the table above, we can see that the P&L of each period generally have the same sign as (Realzied Volatility-Implied Volatility), which means when realized volatility is higher than implied volatility, P&L is positive. This finding is consistent with Q2.

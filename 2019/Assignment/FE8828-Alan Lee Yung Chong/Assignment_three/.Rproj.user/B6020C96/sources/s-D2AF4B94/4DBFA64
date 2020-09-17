@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1569057747157.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "4DBFA64",
+    "lastKnownWriteTime" : 1569057754,
+    "last_content_update" : 1569057754298,
+    "path" : "C:/Users/Alan_/Desktop/R/assignment_3/reference.R",
+    "project_path" : "reference.R",
+    "properties" : {
+        "cursorPosition" : "43,68",
+        "scrollLine" : "28",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

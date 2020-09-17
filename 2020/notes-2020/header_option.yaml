@@ -1,0 +1,25 @@
+# https://gist.github.com/mbjoseph/42b76cab60645c2038150c41ee54ea3a
+# https://mikedewar.wordpress.com/2009/02/25/latex-beamer-python-beauty/
+
+header-includes:
+- \usetheme{default}
+- \beamertemplatenavigationsymbolsempty
+- \usepackage{xcolor}
+- \definecolor{foreground}{RGB}{249,242,215}
+- \definecolor{background}{RGB}{51,51,51}
+# - \definecolor{title}{RGB}{255,0,90}
+- \definecolor{title}{RGB}{255,255,255}
+# - \definecolor{subtitle}{RGB}{204,0,0}
+- \definecolor{subtitle}{RGB}{255,255,255}
+- \definecolor{hilight}{RGB}{102,255,204}
+- \definecolor{vhilight}{RGB}{255,111,207}
+
+# - \setmonofont[Scale=MatchLowercase]{Courier}
+# - \setmonofont[Scale=0.8]{Courier}
+# romanfont
+- \setbeamercolor{titlelike}{fg=title}
+- \setbeamercolor{subtitle}{fg=subtitle}
+- \setbeamercolor{institute}{fg=gray}
+- \setbeamercolor{normal text}{fg=foreground,bg=background}
+- \setbeamercolor{local structure}{fg=title}
+- \setbeamertemplate{frametitle}{\begin{centering} \insertframetitle \par \end{centering}}

@@ -1,0 +1,95 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Low Wei-Ning, Raelynn"
+date: "9/20/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+
+    r sum(is.na(bank))
+
+## There is ```r sum(is.na(bank))`` missing data in the data set.
+
+# Finding #2
+
+    df1 <- bank %>% group_by(job) %>%
+    filter(job!="student") %>%
+    summarise(marriedpercentage=sum(ifelse(marital=="married",1,0))/n())%>%
+    arrange(marriedpercentage)
+
+## Other than students, people who are technicians are the least likely to be married.
+
+# Finding #3
+
+    df2 <- bank %>% filter(y=="no" & default == "no" & balance >0 &
+    campaign<=quantile(campaign,0.4)) %>% arrange(desc(balance)) %>% View
+    
+## Based on certain criteria, there are 2,185 customers who sare potential customers for this campaign.
+
+# Finding #4
+
+    df3 <- bank %>% 
+    mutate(Month=paste(toupper(substr(month,1,1)),substr(month,2,3),sep="")) %>% 
+    group_by(Month) %>% summarise(count=n()) %>% arrange(match(Month,month.abb))
+    ggplot(df3, aes(Month, count)) + geom_point()
+    
+## Fewest contacts for current campaign were made in December while the most contacts were made in May.
+
+# Finding #5
+
+    bank %>% summarise(avgcurrentcontactprop=mean(campaign/(campaign+previous)))
+
+## Among all customers, 89.8% of all contacts were performed for the current campaign.
+
+# Finding #6
+
+    df4 <- bank %>% filter(poutcome=="success") %>% group_by(education) %>%
+    summarise(housingyes=sum(ifelse(housing=="yes",1,0)))
+    df5 <- bank %>% filter(poutcome=="success") %>% group_by(education) %>%
+    summarise(housingno=sum(ifelse(housing=="yes",0,1)))
+    df6 <- distinct(bank,education) %>% arrange(education)
+    df6 <- left_join(df6,df4, by = "education")
+    df6 <- left_join(df6,df5, by = "education") 
+    View(df6)
+
+## Previous campaign was most popular with customers with secondary education and without housing loan.
+
+# Finding #7
+
+    df7 <- bank %>% filter(y=="yes") %>% group_by(education) %>%
+    summarise(housingyes=sum(ifelse(housing=="yes",1,0)))
+    df8 <- bank %>% filter(y=="yes") %>% group_by(education) %>%
+    summarise(housingno=sum(ifelse(housing=="yes",0,1)))
+    df9 <- distinct(bank,education) %>% arrange(education)
+    df9 <- left_join(df9,df7, by = "education")
+    df9 <- left_join(df9,df8, by = "education")
+    View(df9)
+
+## Current campaign is most popular with customers with secondary education and without housing loan.
+
+# Finding #8
+
+    df10 <- bank %>% group_by(y) %>%
+    summarise(mean=mean(duration)) %>%
+    View
+    
+## Customers which have subscribed for term deposit have an longer mean duration of the last contact by 326 seconds.
+
+# Finding #9
+
+    bank %>% mutate(loans=ifelse(housing=="yes" & loan =="yes",1,0)) %>%
+    summarise(sum(loans)/n()) 
+
+## 8.98% of all customers have both a housing loan and a personal loan.
+
+# Finding #10
+
+    df12 <- bank %>% filter(default== "yes" & y=="yes")
+
+## There are 9 customers who has credit in default yet have subscribed to the term deposit.

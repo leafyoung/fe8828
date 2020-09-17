@@ -1,0 +1,58 @@
+---
+title: "Book Option Trades"
+output: html_notebook
+---
+
+```{r, include = FALSE}
+#Load libraries
+library(dplyr)
+library(tidyr)
+library(fOptions)
+```
+
+```{r, echo = FALSE}
+#Extract call and put data from csv files
+putData = read.csv("PutData.csv", na.strings = c("-"), stringsAsFactors = FALSE)
+callData = read.csv("CallData.csv", na.strings = c("-"), stringsAsFactors = FALSE)
+```
+
+#Modify Data into desired form
+```{r, echo = FALSE}
+putData$`Call/Put` = "p"
+callData$`Call/Put` = "c"
+OptData = bind_rows(callData,putData)
+OptData$`Long/Short` = 1
+OptData$Underlying = "AMZN"
+OptData$Date = as.Date("26/11/2017","%d/%m/%Y")
+OptData$ExpDate = as.Date("19/1/2018","%d/%m/%Y")
+rename(OptData, Quantity = Open.Int) %>%
+  select(Date, ExpDate,Strike, Price, Change, Bid, Ask, Volume, Quantity, Underlying, `Long/Short`, `Call/Put`) -> OptData
+
+OptData
+```
+
+#Calculation of valuation
+```{r, echo = FALSE}
+OptData %>%
+  group_by(`Call/Put`) %>%
+  summarize(Valuation = sum(Price*Quantity)) -> P_C_Valn
+P_C_Valn
+
+OptData %>%
+  summarize(TotalValuation = sum(Price*Quantity)) -> Total_Valn
+Total_Valn
+```
+
+#Find those in the money
+```{r, echo = FALSE}
+Px = 1186
+dplyr::filter(OptData, (`Call/Put` == "c" & Strike < Px) | (`Call/Put` == "p" & Strike > Px))
+```
+
+#Plot Volatility curve
+```{r, echo = FALSE}
+rowwise(OptData) %>% mutate(b = 0, r = 0.01, underlyingPx = Px) %>%
+ dplyr::filter((`Call/Put` == "c" & Strike > Px) | (`Call/Put` == "p" & Strike < Px)) %>%
+  mutate(IV = GBSVolatility(price = Price, TypeFlag = `Call/Put`, S = underlyingPx, X = as.numeric(Strike), Time = as.numeric(ExpDate - Date), r =r, b = b)) %>% select(Strike, IV) %>% plot(type = "l")
+  
+```

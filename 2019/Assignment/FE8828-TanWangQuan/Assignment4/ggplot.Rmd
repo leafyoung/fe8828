@@ -1,0 +1,91 @@
+---
+title: "session4_ggplot"
+author: "Tan Wang Quan"
+date: "9/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(ggthemes)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+g<-ggplot(bank)
+```
+
+# Plot 1: Count by Employment using geom_col and coord flip for axis with long names. Sorted using reorder 
+```{r employment}
+bank%>%group_by(job)%>% summarise(Total=n())%>%arrange(-Total)-> sortedJob
+
+ggplot(sortedJob,aes(x=reorder(job,Total),y=Total))+geom_col(fill="lightblue",color="black") +xlab("Job Type") +coord_flip()
+
+```
+
+# Plot 2: Marital Status using geom_point and facet_grid
+```{r maritalstatus }
+bank%>%group_by(marital)%>%summarise(Total=n())%>%mutate(Percentage=round(Total/sum(Total),digits=2))%>%arrange(-Total)->status
+
+g+geom_point(aes(education,balance,color=balance)) + facet_grid(.~marital)
+
+#
+
+```
+
+# Plot 3: Mean Balance by Age. Using geom_col and Geom_smooth
+```{r balancebyage}
+bank_summary4 <- function(df) {
+  df %>%
+    group_by(age) %>%
+      summarise(balance_mean = mean(balance))
+}
+
+df4<- bank%>% bank_summary4()
+
+ggplot(df4,aes(x=age,y=balance_mean,fill=age))+geom_col()+geom_smooth(method='loess')
+```
+
+# Plot 4: Histogram of Job by Age. Using geom_histogram
+```{r statusbyage}
+g + aes(age,fill=job)+geom_histogram(binwidth = 1)
+```
+
+# Plot 5: Histogram of Education by Age. Using geom_freqpoly
+```{r EducationByAge}
+
+g+ aes(age,color=education)+geom_freqpoly(binwidth=1)
+```
+
+# Plot 6: Balance By Age. Using aes in different scope
+```{r Balance By Age}
+g + geom_point( aes_string("age", "balance", color = "job")) +geom_smooth(aes_string("age", "balance"),method='loess')
+
+```
+
+# Plot 7 Count by Education and Job using dodge
+```{r Plot7}
+g + geom_bar(aes(education,fill=job),position="dodge") 
+
+```
+
+# Plot 8 Job Polar Coordinate
+```{r Plot8}
+
+g + geom_bar(aes(job,fill=job)) +coord_polar()
+```
+
+# Plot 9 Facet Wrap by Loan and housing
+```{r Plot9}
+g + geom_point(aes(education,balance,color=job))+facet_wrap(~loan~housing,nrow=2)
+
+```
+
+# Plot 10 Count by Education Using themes
+```{r Plot10}
+
+g+geom_bar(aes(education))+theme_economist()
+
+```

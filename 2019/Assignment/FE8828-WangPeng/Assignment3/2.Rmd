@@ -1,0 +1,114 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Wang Peng <sub> <Email:pwang012@e.ntu.edu.sg> </sub>"
+date: "2019/10/3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(tidyr) 
+library(ggplot2)
+library(gridExtra)
+library(tidyquant)
+library(xts)
+library(dplyr)
+library(tibble)
+library(Quandl)
+library(caret)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r}
+#Those who has been contacted during perious campaign and has given positive feedback of bank's services has spent on average longer duration on last call of contract.
+fun_mean <- function(x){
+  mean(x) %>%
+  data.frame(y=.,label=mean(x,na.rm=T))}
+ggplot(bank, aes(poutcome, duration)) + geom_boxplot() + geom_point()+
+   stat_summary(fun.y = mean,geom = "point", colour="blue", size=3) + 
+  stat_summary(fun.data=fun_mean, geom="text", vjust= -0.5)
+```
+
+# Finding #2
+```{r}
+#The average duration of each age group and we find that the age group of 60s, 70s and 80s have higher call duration compared with younger people.
+bank %>%mutate(age_group = (age %/% 10) * 10)%>%
+group_by(age_group) %>%
+summarise(average_duration = mean(duration))%>%
+arrange(age_group) -> res2
+res2
+ggplot(res2,aes(age_group,average_duration))+geom_point()+geom_smooth()
+```
+
+# Finding #3
+```{r}
+#We find that the age group of 60s, 70s, 80s has larger average balance than younger generations.
+bank %>%mutate(age_group = (age %/% 10) * 10)%>%
+group_by(age_group) %>%
+summarise(average_balance = mean(balance))%>%
+arrange(age_group) -> res3
+ggplot(res3,aes(age_group,average_balance))+geom_point()+geom_smooth()
+```
+# Finding #4
+```{r}
+#Find which age group has clients who experienced default situation
+bank%>%mutate(age_group = (age %/% 10) * 10) %>%
+  ggplot(.) + geom_bar(mapping = aes(x=age_group, fill=default))+coord_flip()
+```
+# Finding#5
+```{r}
+#Senior group will be more likely to subscribe a term deposit because they have generally more balance.
+bank%>%mutate(Senior = ifelse(age >= 60, "Senior", "Not Senior Yet")) %>% 
+  ggplot(.) + geom_bar(mapping = aes(x=Senior, fill=y),position = "fill")
+```
+# Finding#6
+```{r}
+#We find that entrepreneurs has the largest ratio of having personal loans,
+ggplot(bank) + geom_bar(aes(x= job, fill = loan)) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(bank) + geom_bar(aes(x= job, fill = loan), position = "fill") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+coord_flip()
+```
+# Finding#7
+```{r}
+#Find the education levels for each job title
+ggplot(bank) + geom_bar(aes(x= job, fill =education )) + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(bank) + geom_bar(aes(x= job, fill = education), position = "fill") + 
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+coord_flip()
+
+```
+# Finding#8
+```{r}
+#We find that in general, people who engaged in management roles have more balnce than other occupations across all the age groups.
+bank8<- bank%>%mutate( employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "Not Employed"))
+
+res8 <- dplyr::filter(bank8, employment == "Employed")
+ggplot(res8) +
+  geom_point(aes(x = age, y = balance))+
+  geom_smooth(data = dplyr::filter(res8, job == "management"),
+              aes(x = age, y = balance), color = "yellow", method = "loess") +  
+  geom_smooth(data = dplyr::filter(res8, job != "management"), 
+              aes(x = age, y = balance), color = "green", method = "loess") +
+  ylim(-1000, 10000)
+```
+# Finding#9
+```{r}
+#Clients that are unemployed have a larger bank account balance on average than that of clients who are emloyed.
+bank9<- mutate(bank, employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "Not Employed"))
+ggplot(bank9, aes(x = employment, y = balance)) + geom_boxplot() +
+  stat_summary(fun.y = mean,geom = "point", colour="blue", size=3) + 
+  stat_summary(fun.data=fun_mean, geom="text", vjust= -0.5)
+```
+# Finding#10
+```{r}
+#Whether clients are employed or not does not have a major impact on whether they will have a positive balance account or not.
+bank10<- bank%>%mutate(employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "Not Employed"))
+res10 <- mutate(bank10, positive_balance = ifelse(balance >0, "positive_balance", "negative_balance"))
+ggplot(res10) + geom_bar(aes(x = employment, fill = positive_balance), position = "fill") 
+```

@@ -1,0 +1,179 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis" 
+author: "Liu Nuozhou <sub> <Email:liun0008@e.ntu.edu.sg> </sub>" 
+date: "Oct 2019" 
+output: html_document 
+---
+
+```{r setup, include=FALSE} 
+library(dplyr)
+library(tidyr) 
+library(ggplot2)
+library(gridExtra)
+library(tidyquant)
+library(xts)
+library(dplyr)
+library(tibble)
+library(Quandl)
+library(tidyverse)
+library(caret)
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r}
+# Find the big balance group
+bank %>%   group_by(balance_decile = ntile(balance,10)) %>% 
+  summarise(average_balance=mean(balance)) %>% 
+  arrange(balance_decile) -> decile_balancemean
+# Average balance of 10 groups
+decile_balancemean
+ggplot(decile_balancemean,aes(x=decile_balancemean$balance_decile,y = decile_balancemean$average_balance))+
+  geom_point()+
+  geom_smooth()
+```
+The table and graph demonstrate serious uneven distribution of balance. The total balance of the top decile group is even larger than the sum of other 9 groups' balances.
+
+# Findings about term-deposits
+```{r}
+#Think about possible relations between deposits and other features
+bank_fit <- bank %>% select(y, loan, default, housing, poutcome, job, marital,education) %>% mutate_if(is.factor, as.character) %>% mutate(y = ifelse(y == "yes", "y", "n"))
+dummies <- dummyVars("y ~ loan + default + housing + poutcome + job + marital + education", data = bank_fit, fullRank = TRUE) 
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["y"], bank_new) %>% mutate(y = factor(y))
+featurePlot(x = bank_new[-1], y = bank_new$y, plot = "box", strip=strip.custom(par.strip.text=list(cex=.7)), scales = list(x = list(relation="free"), y = list(relation="free")))
+```
+
+# Finding #2
+From box plots above, we find that: 
+(1)Customers with secondary education are more likely to have no term deposits than others.
+(2)Customers with housing loans are less likely to possess term deposits, which is quite intuitive.
+
+# Findings about default
+```{r}
+#Think about possible relations between default and other features
+bank_fit <- bank %>% select(default, loan, y, housing, poutcome, job, marital,education) %>% mutate_if(is.factor, as.character) %>% mutate(default = ifelse(default == "yes", "y", "n"))
+dummies <- dummyVars("default ~ loan + y + housing + poutcome + job + marital + education", data = bank_fit, fullRank = TRUE) 
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["default"], bank_new) %>% mutate(default = factor(default))
+featurePlot(x = bank_new[-1], y = bank_new$default, plot = "box", strip=strip.custom(par.strip.text=list(cex=.7)), scales = list(x = list(relation="free"), y = list(relation="free")))
+```
+
+# Finding #3
+It seems that married customers are less likely to default compared with others. Interesting but reasonable. 
+
+# Findings regarding housing loans
+```{r}
+#Think about possible relations between housing loan and other features
+bank_fit <- bank %>% select(housing, default, loan, y, poutcome, job, marital,education) %>% mutate_if(is.factor, as.character) %>% mutate(housing = ifelse(housing == "yes", "y", "n"))
+dummies <- dummyVars("housing ~ loan + y + default + poutcome + job + marital + education", data = bank_fit, fullRank = TRUE) 
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["housing"], bank_new) %>% mutate(housing = factor(housing))
+featurePlot(x = bank_new[-1], y = bank_new$housing, plot = "box", strip=strip.custom(par.strip.text=list(cex=.7)), scales = list(x = list(relation="free"), y = list(relation="free")))
+```
+# Finding #4
+Customers with secondary education are more likely to have housing loans than others.
+
+# Findings regarding personal loans
+```{r}
+#Think about possible relations between personal loan and other features
+bank_fit <- bank %>% select(loan, housing, default, y, poutcome, job, marital,education) %>% mutate_if(is.factor, as.character) %>% mutate(loan = ifelse(loan == "yes", "y", "n"))
+dummies <- dummyVars("loan ~ housing + y + default + poutcome + job + marital + education", data = bank_fit, fullRank = TRUE) 
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["loan"], bank_new) %>% mutate(loan = factor(loan))
+featurePlot(x = bank_new[-1], y = bank_new$loan, plot = "box", strip=strip.custom(par.strip.text=list(cex=.7)), scales = list(x = list(relation="free"), y = list(relation="free")))
+```
+
+# Finding #5
+Again, customers with secondary education are more inclined to possess personal loans than those in other education backgrouds.
+
+# Findings regarding education level
+```{r}
+#Try to find out relations among education level and other features
+bank_fit <- bank %>% select(education, loan, default, housing, poutcome, job, marital,y) %>% mutate_if(is.factor, as.character) %>% mutate(education=case_when(
+   education=="primary" ~ "P",
+   education=="secondary" ~ "S",
+   education=="tertiary" ~ "T",
+   education=="unknown" ~ "U"
+   )
+ )
+dummies <- dummyVars("education ~ loan + default + housing + poutcome + job + marital + y", data = bank_fit, fullRank = TRUE) 
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["education"], bank_new) %>% mutate(education = factor(education))
+featurePlot(x = bank_new[-1], y = bank_new$education, plot = "box", strip=strip.custom(par.strip.text=list(cex=.7)), scales = list(x = list(relation="free"), y = list(relation="free")))
+```
+There are in total `r nrow(bank[which(bank$education=="unknown"),])` customers whose education levels are unknown, which is quite a small part and hence we can just ignore it. From those graphs, we can see some interesting phenomenons.
+
+# Finding #6
+(1) Customers with primary education are more likely to do blue collar jobs. 
+(2) Customers with tertiary education are more likely to be managements. 
+(3) Meanwhile, those with tertiary education are also less likely to have housing loans, maybe most of them are able to buy their houses with their earnings. 
+All those phenomenons are intuitive and illuminating: education counts a lot.
+
+# Finding #7
+```{r}
+bank %>% group_by(education) %>%
+   summarise(average_balance=mean(balance)) -> ed_ba
+ed_ba
+ggplot(bank,aes(x=education,y=balance)) +
+  geom_boxplot()
+```
+
+Customers with tertiary education have the highest average balance, but customers with only primary education have higher average balance than those with secondary education, which is pretty counterintuitive. From the boxplot, I reckon that maybe some outliers in the primary group significantly affect the group average.
+
+
+# Finding #8
+```{r}
+#fathom out relation between job and balance
+bank %>% group_by(job) %>%
+  summarise(average_balance=mean(balance)) -> job_ba
+arrange(job_ba,average_balance)
+ggplot(job_ba,aes(x=job,y=average_balance))+
+  geom_point()
+ggplot(bank,aes(x=job,y=balance)) +
+  geom_boxplot() 
+```
+Customers who are retired have the highest average balance, but the second highest group is housemaid, even higher than management and entrepreneur, which is a bit surprising. Another interesting fact is that the unemployed seem to have higher balance than blue-collar workers. Maybe unemployment benefits are quite high in this country.  
+
+# Finding #9
+Further fathom out how come housemaids have so much bank balances. There are in total `r nrow(filter(bank,job=="housemaid"))` housemaid customers.
+```{r}
+housemaids<-filter(bank,job=="housemaid")
+bank_summary <- function(df) {
+  df %>%
+    group_by(education, marital) %>%
+    summarise(age_mean = mean(age), balance_mean = mean(balance)) %>%
+    ungroup() %>% # after ungroup, job and education are "unlocked" to be converted to character
+    mutate_if(is.factor, as.character)
+}
+df_1 <- housemaids %>%
+  bank_summary()
+df_2 <- housemaids %>%
+  mutate(marital = "+") %>% 
+  bank_summary()
+df_3 <- housemaids %>%
+  mutate(education = "+") %>%
+  bank_summary()
+bind_rows(df_1, df_2, df_3)
+```
+From the table above, it seems that single housemaids with better education are likely to have more balances. However, those who remain single but only got primary education have an amazing average balance of about 11000 euros. Interesting. 
+
+# Finding #10
+At last, let's figure out which features have significant impacts on balance. Here, to take into account balance and age, balances and ages are equally divided into 5 groups from low to high and marked with "1-5" as per their values. The higher the value, the larger the number.
+```{r}
+bank1<-mutate(bank,balance_group=as.character(ntile(balance,5)),age_group=as.character(ntile(age,5)))
+bank_fit <- bank1 %>% select(balance_group, marital, education, loan, default, housing, poutcome, job, y, age_group) %>% mutate_if(is.factor, as.character) 
+dummies <- dummyVars("balance_group ~ marital + loan + default + housing + poutcome + job + education + y + age_group", data = bank_fit, fullRank = TRUE) 
+bank_new <- data.frame(predict(dummies, newdata = bank_fit))
+bank_new <- bind_cols(bank_fit["balance_group"], bank_new)%>% mutate(balance_group = factor(balance_group))
+featurePlot(x = bank_new[-1], y = bank_new$balance_group, plot = "box", strip=strip.custom(par.strip.text=list(cex=.7)), scales = list(x = list(relation="free"), y = list(relation="free")))
+```
+From the graph, the only feature matters is education. Customers with secondary education are not really likely to be those who have the most balances. But why it is remains a puzzle.
+
+
+
+
+
+

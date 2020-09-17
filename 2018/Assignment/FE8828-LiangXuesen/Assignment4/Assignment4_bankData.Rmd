@@ -1,0 +1,161 @@
+---
+title: "Assignment4"
+author: "JL"
+date: "2 December 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+library(readr)
+library(dplyr)
+library(lubridate)
+library(gridExtra)
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## Plot #1
+### Plot relationship of age and durations, and color by job.
+```{r}
+ggplot(bank, aes(x = age, y = duration, color = job)) +
+  geom_point() +
+  theme(legend.position="left") +
+  coord_flip()
+```
+
+
+## Plot #2
+### Plot the different jobs in different color at different age.
+```{r}
+ggplot(bank) +
+  geom_bar(mapping = aes(x = age, fill = job), position = "fill") +
+  coord_flip() +
+  scale_x_reverse()
+```
+
+
+## Plot #3
+### Plot distribution of the duration by different education groups seperately.
+```{r}
+ggplot(data = bank) +
+  geom_point(mapping = aes(x = age, y = duration)) +
+  facet_grid( ~ education)
+```
+
+
+## Plot #4
+### Sort job according to median age, and color by education category.
+```{r}
+ggplot(data = bank, mapping = aes(x = reorder(job, age, FUN = median), fill = education)) +
+  geom_bar() +
+  scale_x_discrete(limit =
+                     rev(levels(reorder(bank$job, bank$age, FUN = median)))) +
+  geom_line(aes(x = job, y = age)) +
+  geom_point(data = group_by(bank, job) %>%
+               summarize(age = median(age)) %>% ungroup,
+             aes(x = job, y = age), inherit.aes = FALSE) +
+  xlab("Job sorted according to\nMedian age\n(Top - younger)") + coord_flip()
+```
+
+
+## Plot #5
+### Plot distribution of the bank account balance by age for different job categories with trend line added.
+```{r}
+ggplot(bank, aes(age, balance, color = job)) +
+  geom_point() + 
+  geom_smooth(method = 'loess', formula ='y ~ x',colour="black") +
+  facet_grid(. ~ job)
+```
+
+
+## Plot #6
+### balnce trend by age for each education level. Red line is for primary, blue line is for secondary, and green line is for tertiary.
+```{r}
+ggplot(bank) +
+  geom_point(data=dplyr::filter(bank, education %in% c("primary","secondary","tertiary")), aes(age,balance,color=education)) +
+  geom_smooth(data=dplyr::filter(bank, education=="primary"), aes(age,balance),color="red")+
+  geom_smooth(data=dplyr::filter(bank, education=="secondary"), aes(age,balance),color="Blue")+
+  geom_smooth(data=dplyr::filter(bank, education=="tertiary"), aes(age,balance),color="green")
+```
+
+
+## Plot #7
+### plot the default versus no-default by jobs. plot 4 graphs for comparison based on whether the client has housing mortgage and loan. 
+### Left to right then up to down are plot of with both housing & loan, with only housing, with only loan, and without either housing or loan.
+```{r}
+housing_Loan <- ggplot(bank) + geom_bar(data=dplyr::filter(bank,housing=="yes" & loan=="yes"),aes(x=job,fill=default)) + coord_flip()
+housing_only <- ggplot(bank) + geom_bar(data=dplyr::filter(bank,housing=="yes" & loan=="no"),aes(x=job,fill=default)) + coord_flip()
+loan_only <- ggplot(bank) + geom_bar(data=dplyr::filter(bank,housing=="no" & loan=="yes"),aes(x=job,fill=default)) + coord_flip()
+noHousing_noLoan <- ggplot(bank) + geom_bar(data=dplyr::filter(bank,housing=="no" & loan=="no"),aes(x=job,fill=default)) + coord_flip()
+
+grid.arrange(housing_Loan, housing_only, loan_only, noHousing_noLoan, ncol=2, nrow=2)
+```
+
+
+## Plot #8
+### Plot duration of the calls by month and their respective trending line.
+```{r}
+duration_month <- bank %>% 
+  group_by(., month, contact) %>% 
+  summarise(., average_duration=mean(duration)) 
+
+duration_month <- mutate(duration_month, month_order=0)
+duration_month$month_order[duration_month$month=="jan"] <- 1
+duration_month$month_order[duration_month$month=="feb"] <- 2
+duration_month$month_order[duration_month$month=="mar"] <- 3
+duration_month$month_order[duration_month$month=="apr"] <- 4
+duration_month$month_order[duration_month$month=="may"] <- 5
+duration_month$month_order[duration_month$month=="jun"] <- 6
+duration_month$month_order[duration_month$month=="jul"] <- 7
+duration_month$month_order[duration_month$month=="aug"] <- 8
+duration_month$month_order[duration_month$month=="sep"] <- 9
+duration_month$month_order[duration_month$month=="oct"] <- 10
+duration_month$month_order[duration_month$month=="nov"] <- 11
+duration_month$month_order[duration_month$month=="dec"] <- 12
+    
+ggplot(duration_month, aes(reorder(month,month_order),average_duration)) +
+  geom_point(aes(reorder(month,month_order), average_duration, color=contact)) +
+  geom_smooth(data=dplyr::filter(duration_month, contact=="cellular") %>% arrange(.,month_order), 
+              aes(month_order,average_duration), method = 'loess', formula ='y ~ x',colour="orange") +
+  geom_smooth(data=dplyr::filter(duration_month, contact=="telephone") %>% arrange(.,month_order), 
+            aes(month_order,average_duration), method = 'loess', formula ='y ~ x',colour="green") 
+```
+
+
+## Plot #9
+### Plot the default versus non-default for each job category, and average bank balance (scale down by 10 for clearer graph view).
+```{r}
+ggplot(bank, aes(x = job, fill = default)) +
+  geom_bar() +
+  scale_x_discrete(limit = rev(levels(bank$job))) +
+  geom_point(data = group_by(bank, job) %>%
+    summarize(Average_Balance = mean(balance)/10) %>% ungroup,
+    aes(x = job, y = Average_Balance), inherit.aes = FALSE) +
+  coord_flip()
+```
+
+
+## Plot #10
+### Plot default rate by marital status for each education category. 
+### At all known education categories, people are less possible to default if they have got married. 
+```{r}
+married_group <- filter(bank, marital=="married") %>% group_by(education) %>% 
+  summarise(average_balance=mean(balance),default_rate=round(sum(ifelse(default=="yes",1,0))/n(),3))
+single_group <- filter(bank, marital=="single") %>% group_by(education) %>% 
+  summarize(average_balance=round(mean(balance),0), default_rate=round(sum(ifelse(default=="yes",1,0))/n(),3))
+
+married_group <- mutate(married_group, marital="married")
+single_group <- mutate(single_group, marital="single")
+marital_df <- bind_rows(married_group,single_group) %>% arrange(default_rate)
+
+ggplot(marital_df) +
+  geom_point(aes(marital, default_rate, color = education)) +
+  facet_grid(. ~ education)
+```
+
+

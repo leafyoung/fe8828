@@ -1,0 +1,3 @@
+For qns 1, just to highlight that our team has made the assumption that deposit is only referring to deposit, and not net of deposit and withdrawals.
+
+Hence, in "Client View", the column "Deposit Balance" is referring only to deposit while in "Bank View", since there is no mentioned of withdraw, that was not shown as part of the pnl table and in the risk table. 

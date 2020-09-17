@@ -1,0 +1,23 @@
+Hi, Kanawut
+
+Below is your assignment feedback. You did well in the course.
+
+Regards,
+Yang Ye
+
+Assignment 1 = 90
+a bit rough
+
+Assignment 2 = 100 * 0.3 + 100 * 0.7
+Part 1: 100
+
+Part 2: 100
+
+Assignment 3 = 100 * 0.05 + 80 * 0.25 + 90 * 0.7
+Part 1: 100
+Part 2: 80
+PayOff shall depend on option type.
+
+Part 3: 90
+
+Assignment 4 = 80

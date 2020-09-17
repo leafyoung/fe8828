@@ -1,0 +1,327 @@
+---
+title: "Assignment3"
+author: "Matthew Chan"
+date: "24 September 2019"
+output: html_document
+---
+
+Q1. Exercise 3 - on page 51 of session 3 slides
+
+I will create a new column that computes the value of option for each row. I will create a column that simulates the number of options held, for each row. Then I will compute both the total portfolio value if 1 of each option were held, and the total portfolio value given the simulated number of options held.  
+
+```{r}
+library(fOptions)
+GBSOption(TypeFlag = "p", S = 3500, X = 3765, Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
+
+set.seed(100)
+df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
+df$Value <- sapply(1:nrow(df), 
+                   function(e){
+                     return(GBSOption(TypeFlag = df$type[e],
+                                      S = df$underlying[e],
+                                      X = df$strike[e],
+                                      Time = df$Time[e],
+                                      r = df$r[e],
+                                      b = df$b[e],
+                                      sigma = df$sigma[e])@price)
+                   })
+df$NumOptionsHeld <- round(runif(100)*100)
+print(paste("Total Portfolio Value if 1 of each option were held:", sum(df$Value)))
+print(paste("Total Portfolio Value given simulated number of options held:", sum(df$Value * df$NumOptionsHeld)))
+```
+
+Q2. EDA for bank data set. page 70-71
+
+I will first load libraries and bank data.  
+
+```{r}
+library(dplyr)
+library(tidyr)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+(For reference) Interpretation of columns, from Kaggle:  
+  1 - age (numeric)  
+  2 - job : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student",   
+                          "blue-collar","self-employed","retired","technician","services")   
+  3 - marital : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)  
+  4 - education (categorical: "unknown","secondary","primary","tertiary")  
+  5 - default: has credit in default? (binary: "yes","no")  
+  6 - balance: average yearly balance, in euros (numeric)   
+  7 - housing: has housing loan? (binary: "yes","no")  
+  8 - loan: has personal loan? (binary: "yes","no")   
+  # related with the last contact of the current campaign:  
+  9 - contact: contact communication type (categorical: "unknown","telephone","cellular")   
+  10 - day: last contact day of the month (numeric)  
+  11 - month: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")  
+  12 - duration: last contact duration, in seconds (numeric)  
+  # other attributes:  
+  13 - campaign: number of contacts performed during this campaign and for this client (numeric, includes last contact)  
+  14 - pdays: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously   contacted)
+  15 - previous: number of contacts performed before this campaign and for this client (numeric)  
+  16 - poutcome: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")  
+  17 - y - has the client subscribed a term deposit? (binary: "yes","no")  
+
+# Finding #1:
+
+Let's see how types of jobs held varies according to education level. Education levels that simply has more observations will be more clustered naturally. Hence, I will also generate a corresponding dataframe containing the proportion (in %) of each job type, for each education level, to make a more informed judgement.
+
+```{r}
+df <- bank %>%
+  dplyr::select(education, job) %>%
+  dplyr::group_by(education, job) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(job, n, fill=0)
+
+col <- df$education
+df$education <- NULL
+df <- as.data.frame(t(df))
+colnames(df) <- col
+
+for (i in 1:ncol(df)){
+  df[i] <- df[i] / colSums(df)[i] * 100
+}
+
+df  
+```
+
+People with primary education are most likely to be blue-collar workers, people with tertiary education are most likely to be in management, while people with secondary education are generally in the blue-collar, admin, services, and technician jobs.
+
+# Finding #2:
+
+Let's see how balance (average yearly balance) varies with age, using a linear regression We should expect a positive linear relationship since older workers would probably have more money than younger ones.
+
+```{r}
+model <- lm(balance~age, bank)
+summary(model)
+plot(model$residuals)
+```
+
+The beta coefficient of "age" is strongly significant and positive (23.9), hence implying a strong positive relationship between balance and age. However, looking at the residual plot, it is obvious that the model underpredicts. I will try to use log(balance) instead. I will also add a constant to balance, before taking log, so that I do not get NA's or Infs
+
+```{r}
+bank2 <- bank
+bank2$balance <- log(bank2$balance - (min(bank2$balance)-1))
+bank2$balance[!is.finite(bank2$balance)] <- NA
+bank2 <- na.omit(bank2)
+model2 <- lm(balance~age, bank2)
+summary(model2)
+plot(model2$residuals)
+```
+
+The model still underpredicts, with one outlier that was extremely overpredicted. The beta coefficient of "age" is still strongly significant and positive.
+
+# Finding #3:
+
+Let's see how default probability varies with type of job.
+
+```{r}
+df <- bank %>%
+  dplyr::select(job, default) %>%
+  dplyr::group_by(job, default) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(job, n, fill=0)
+  
+col <- df$default
+df$default <- NULL
+df <- as.data.frame(t(df))
+colnames(df) <- col
+
+df$Pct_Default <- df$yes / (df$yes + df$no) * 100
+df <- df[order(df$Pct_Default, decreasing = T),]
+df
+```
+
+Entrepreneurs have significantly higher rate of default. This is intuitive since they are likely making risky ventures. In general, people with unpredictable future cash flows, like entrepreneurs, unemployed and self-employed, are more likely to default.
+
+# Finding #4:
+
+Let's see the relationship between default and type of loan (housing/personal). I will construct contingency tables between "default" and "housing", and between "default" and "personal". I will also create a table to summarize the percentage of default associated with housing/personal loan.
+
+```{r}
+df_1 <- bank %>%
+  dplyr::select(default, housing) %>%
+  dplyr::group_by(housing, default) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(housing, n, fill=0)
+colnames(df_1) <- c("Default_With_HousingLoan", "No_Credit_In_Default", "Has_Credit_In_Default")
+
+df_2 <- bank %>%
+  dplyr::select(default, loan) %>%
+  dplyr::group_by(loan, default) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(loan, n, fill=0)
+colnames(df_2) <- c("Default_With_PersonalLoan", "No_Credit_In_Default", "Has_Credit_In_Default")
+
+df <- data.frame(Pct_Default_withHousingLoan = as.numeric(df_1[2,3] / sum(df_1[, 3])), 
+                 Pct_Default_withPersonalLoan = as.numeric(df_2[2,3] / sum(df_2[, 3])))
+
+df_1
+df_2
+df
+```
+
+As we can see from the last table (which summarizes the percentage of default associated with housing/personal loan), we see that 1.8% of housing loans are associated with people who have credit in default while 3.6% of personal loans are associated with people who have credit in default. Due to lack of information, we cannot say that personal loans are more likely to be defaulted, since there could be other relevant loans (like car loans) not presented in the data. Also, for a person who has both housing and personal loan, as well as credit in default, we do not know which of loan(s) were defaulted. 
+
+# Finding #5:
+
+Let's see how outcome of previous marketing campaign affects decision to take up term deposit. 
+
+```{r}
+df <- bank %>%
+  dplyr::select(poutcome, y) %>%
+  dplyr::group_by(y, poutcome) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(y, n, fill=0)
+
+df$Pct_Yes <- df$yes / (df$yes + df$no)
+df <- df[order(df$Pct_Yes, decreasing = T),]
+df
+```
+
+As we can see from the dataframe, for a given individual, if previous marketing campaign was successful, there is a significantly higher chance (64.3%) for that individual to agree to the term deposit. These are probably loyal customers that the bank would want to focus their efforts on.
+
+# Finding #6:
+
+Let's see which group of individuals (segregated by type of job) is likely to agree to the term deposit.
+
+```{r}
+df <- bank %>%
+  dplyr::select(job, y) %>%
+  dplyr::group_by(y, job) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(y, n, fill=0)
+
+df$Pct_Yes <- df$yes / (df$yes + df$no)
+df <- df[order(df$Pct_Yes, decreasing = T),]
+df
+```
+
+We see that students and retiree are most likely to agree to term deposit. This is likely because they are in need of certain/guaranteed future cash flows, since they are not working and do not have predictable income.  
+
+# Finding #7:
+
+Let's find out more about people who have credit in default. It might be reasonable to hypothesize that people who have credit in default will receive very little contact compared to those who does not have credit in default.
+
+```{r}
+df <- bank %>%
+  dplyr::group_by(default) %>%
+  dplyr::summarise(mean_contact=mean(campaign))
+df
+```
+
+Interestingly, people who have credit in default do not receive significantly less contact. Perhaps people who have credit in default are not very less likely to take up term deposit, compared to those with credit in default?
+
+```{r}
+df <- bank %>%
+  dplyr::select(default, y) %>%
+  dplyr::group_by(default, y) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(y, n, fill=0)
+df$Pct_Yes <- df$yes / (df$yes + df$no)
+colnames(df) <- c("CreditInDefault", "Agree_TermDeposit", "Disagree_TermDeposit")
+df
+```
+
+It seems like my guess was right, even though I am not too sure why people who have credit in default are marginally more likely to take up term deposit, as I would think that they are probably more in need of cash. 
+
+```{r}
+df <- bank %>%
+  dplyr::group_by(default) %>%
+  dplyr::summarise(mean_balance=mean(balance))
+df
+```
+
+Indeed, those who have credit in default have, on average, negative balance of -209, compared to those without credit in default, whose average balance is 1451. 
+
+# Finding #8:
+
+Let's see how the number of contacts in the current campaign relates to the outcome in previous campaign.   
+
+```{r}
+df <- bank %>% 
+  dplyr::select(poutcome, campaign) %>%
+  dplyr::group_by(poutcome) %>%
+  dplyr::summarise(mean=mean(campaign))
+df
+```
+
+We might expect that people whom the bank had success with, for previous marketing campaign, will receive more contacts for the current campaign, since they might wish to focus their efforts on these customers. Interestingly, the average number of contacts is lowest for people that the bank had success with in the previous marketing campaign. A possible explanation is that such people probably takes much less convincing from the bank before they agree to the term deposit (64% of such people agrees to the term deposit, as found earlier), since they have already agreed to the previous campaign/product and are more open to products by the bank. 
+
+Or maybe the number of contacts do not tell the full story. The duration of the phone calls matter too. Unfortunately, we only have the last contact duration, but it can provide some indication or insights still.
+
+```{r}
+df <- bank %>% 
+  dplyr::select(poutcome, campaign, duration) %>%
+  dplyr::group_by(poutcome) %>%
+  dplyr::summarise(mean_numContact=mean(campaign), mean_duration=mean(duration)) 
+df
+```
+
+Indeed, the people whom the bank had success with previously had longer average last contact duration. So, even though such people were contact less number of times, they were perhaps spoken to for longer durations -  I used "perhaps", as we do not know the duration of all phone calls.
+
+# Finding #9:
+
+Let's see how the last contact duration and number of contacts made in the current campaign, differs between those who agreed to the term deposit and those who did not. 
+
+```{r}
+df <- bank %>%
+  dplyr::select(duration, y, campaign) %>%
+  dplyr::group_by(y) %>%
+  dplyr::summarise(mean_NumContact = mean(campaign), mean_Duration = mean(duration))
+df
+```
+
+People who agreed to the term deposit were contacted less number of times on average, and had longer average last contact duration. Based on our findings earlier, we know two things: 1) 64% of those who agreed previously, have agreed to current campaign, 2) Those who have agreed previously have higher average last contact duration and lower average number of contacts. As such, the people who agreed previously can be a confounder in the relationship we observe here. So, let's break it down further.
+
+```{r}
+df <- bank %>%
+  dplyr::select(duration, y, campaign, poutcome) %>%
+  dplyr::group_by(y, poutcome) %>%
+  dplyr::summarise(mean_NumContact = mean(campaign), mean_Duration = mean(duration), count = n())
+df
+```
+
+It seems like the people who agreed previously is not a strong confounder in the relationship we observed earlier, since the proportion of people who agreed to both previous campaign and current campaign is small, at 15.9% (83/(63+38+83+337)). Interestingly, we see that the group of people who had "unknown" as previous outcome has significantly longer last contact duration if they agreed to current campaign, and significantly higher number of contacts made if they did not agree to current campaign. This group of people heavily influences the results we saw in the previous table since they make up the largest proportion for both groups (those who agreed to current campaign, and those who did not)
+
+# Finding #10:
+
+Let's find out more about people with "unknown" as previous outcome. 
+
+```{r}
+bank$NotContactedBefore <- ifelse(bank$pdays==-1, 1, 0)
+df <- bank %>%
+  dplyr::select(NotContactedBefore, poutcome) %>%
+  dplyr::group_by(poutcome, NotContactedBefore) %>%
+  dplyr::summarise(n=n()) %>%
+  dplyr::ungroup() %>%
+  spread(NotContactedBefore, n, fill=0)
+colnames(df) <- c("PreviousOutcome", "NotContactedBefore", "ContactedBefore")
+df
+```
+
+People with "unknown" as previous outcome were never contacted before, hence they are classified as "unknown" for previous outcome. 
+
+```{r}
+bank$poutcome_notunknown <- as.factor(ifelse(bank$poutcome != "unknown", "Not_Unknown", "Unknown"))
+
+df <- bank %>%
+  dplyr::group_by(poutcome_notunknown) %>%
+  dplyr::summarise(mean_balance = mean(balance), mean_age=mean(age), count=n())
+df
+```
+
+We see that those with "unknown" as previous outcome has lower average balance but similar average age, compared to those without "unknown" as previous outcome.

@@ -1,0 +1,154 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "QU Mengyuan <sub> <Email:QUME0001@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding 1
+This data contains `r nrow(bank)` rows and `r ncol(bank)` columns.
+
+# Finding 2
+Most people are between 30 ans 39 years old.
+```{r}
+# Find the big age group
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+summarise(count = n()) %>%
+arrange(age_group) -> res
+res
+plot(res$age_group, res$count)
+```
+
+# Finding 3
+The average yearly balance varies among jobs.
+
+The **retired** owns the *most* average yearly balance, with median equaling to *£672*.
+
+People engaged in **services** owns the *least* average yearly balance, with median equaling to *£288*.
+```{r}
+# Find the relationship between job and balance
+bank %>%
+group_by(job) %>%
+summarise(max = max(balance),min = min(balance),median = median(balance)) %>%
+arrange(job) -> res
+res
+ggplot(res, aes(job, median)) + geom_col()
+```
+
+# Finding 4
+The marriage rate varies among jobs(excluding students and unknown).
+
+The **entrepreneurs** has the *highest* marriage rate, equaling to *78.57%*.
+
+The **technicians** has the *lowest* marriage rate, equaling to *53.52%*.
+```{r}
+# Find the relationship between job and marital
+bank %>% 
+  dplyr::filter(marital=="married")  %>%
+  group_by(job) %>%
+  summarise(num = n()) -> res1
+bank %>%
+group_by(job) %>%
+summarise(total = n()) -> res2
+res <- full_join(res1,res2,by = "job")
+res <- mutate(res, `marriage rate` = num/total)
+res
+ggplot() +
+  geom_bar(data = bank, mapping = aes(x = job, fill = marital))
+```
+
+# Finding 5
+The education level varies among age groups(excluding students).
+
+Excluding people under 20 years old, the **younger** a person is, the **more** likelihood that he has a high education level.
+
+```{r}
+# Find the relationship between age and education
+bank %>% 
+  dplyr::filter(education !="student")  %>%
+  group_by(age_group = (age %/% 10) * 10, education) %>%
+  summarise(num = n()) -> res
+res
+bank <- bank %>% mutate(age_group = (age %/% 10) * 10)
+ggplot() +
+  geom_bar(data = dplyr::filter(bank, education !="student"), mapping = aes(x = age_group, fill = education), position = "fill")
+```
+# Finding 6
+The education level varies among jobs(excluding students and unknown).
+
+The **managers** has the *highest* education leve, more than 75% of which has tertiary education.
+
+The **housemaids** has the **lowest** education leve, nearly half of whom only get primary education.
+```{r}
+# Find the relationship between job and education
+bank %>%
+group_by(job,education) %>%
+summarise(num = n()) %>%
+  spread(education, num) -> res
+res
+ggplot() +
+  geom_bar(data = bank, mapping = aes(x = job, fill = education),position = "fill")
+```
+# Finding 7
+People who have personal loan have only around 55% of balance than those who don't have personal loan.
+Housing loan has slight bad effects on people's balance condition.
+```{r}
+# Find the relationship between balance and loans
+bank %>%
+group_by(housing,loan) %>%
+  summarise(average = mean(balance), median = median(balance)) -> res
+res
+library(scatterplot3d)
+with(bank,{scatterplot3d(x = loan, y = housing, z = balance)})
+
+```
+
+# Finding 8
+People who don't have credit in default are in a **much better** balance condition compared with those who have credit in default, but have huge variation.
+```{r}
+# Find the relationship between default and balance
+bank %>%
+group_by(default) %>%
+summarise(average = mean(balance), max = max(balance), min = min(balance), median = median(balance)) -> res
+res
+ggplot(bank, aes(default, balance)) + geom_boxplot()
+```
+
+# Finding 9
+The most common type of contact communication is by cellular.
+
+The last contact durations of all three types concentrates around 175 seconds.
+
+Generally, the last durations by *cellular* is the **longest** while that by *telephone* is the **shortest**.
+```{r}
+# Find the relationship between contact type and duration
+bank %>%
+group_by(contact) %>%
+summarise(num = n(),average = mean(duration), max = max(duration), min = min(duration), median = median(duration)) -> res
+res
+ggplot(bank, aes(duration)) + geom_density(aes(fill = contact), alpha = 0.7) 
+```
+
+# Finding 10
+In the previous marketing campaign，most of people gets secondory and tertiary education.
+
+Generally, the **higher** educaion one gets, the **higher** possibility to win and **lower** possibility to fail, though *not significantly*.
+```{r}
+# outcome of the previous marketing campaign
+bank %>%
+  group_by(education, poutcome) %>%
+  summarise(num = n()) %>%
+  spread(poutcome, num)-> res
+res
+ggplot() +
+  geom_bar(data = dplyr::filter(bank, poutcome !="unknown"), mapping = aes(x = education, fill = poutcome),position = "fill")
+```

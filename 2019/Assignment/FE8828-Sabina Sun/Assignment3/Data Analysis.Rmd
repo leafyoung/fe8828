@@ -1,0 +1,107 @@
+---
+title: "Data Analysis"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+Summary of data
+```{r}
+summary(bank)
+```
+# Finding #2  
+Plot count of people with a loan against age  
+**Insight:** *Majority of loan holders are in 30-40 age group. However, this can be due to the age distribution of sample*
+```{r}
+bank %>%
+  filter(loan == "yes" | housing == "yes")%>%
+  group_by(age)%>%
+  summarise(count = n())%>%
+  plot()
+```
+# Finding #3  
+Count of defaults by age group  
+**Insight:** *default occurs at every age group*
+```{r}
+bank %>%
+  filter(default == "yes")%>%
+  group_by(age)%>%
+  summarise(count = n())%>%
+  plot()
+```
+# Finding #4  
+Table of count of defaults by job
+```{r}
+bank %>%
+  filter(default == "yes")%>%
+  group_by(job)%>%
+  summarise(count = n()) -> result
+  result <- arrange(result,count)
+  result
+```
+# Finding #5  
+Table of count of people with a loan by job  
+```{r}
+bank %>%
+  filter(loan == "yes" | housing == "yes")%>%
+  group_by(job)%>%
+  summarise(count1 = n()) -> result1
+  result1 <- arrange(result1,count1)
+  result1
+```
+# Finding #6 
+  Table of probability of defaults by job   
+**Insight:** *entrepreneurs have a higher rate of default than unemployed*
+```{r}
+result2 <-left_join(result,result1,by = "job")
+result2 %>%
+  mutate(prob=count/count1)%>%
+  select(job,prob) ->result2
+result2 <- arrange(result2,prob)
+result2
+```
+# Finding #7  
+  Plot of range of balance for each job  
+  **Insight:** *retired people have the highest average bank balance*
+```{r}
+bank %>%
+  group_by(job) %>%
+  summarise(average=mean(balance))-> result
+plot(result)
+```
+# Finding #8  
+  Plot of range of age for each job  
+  **Insight:** *retired people can be as young as 20s*
+```{r}
+bank %>%
+  group_by(job) %>%
+  filter(min_rank(age) == 1 | min_rank(desc(age)) == 1) %>%
+  select(job,age) -> result
+plot(result)
+```
+# Finding #9  
+  Plot of bank balnace for each individual with no loans by job  
+  **Insight:** *profile of new potential customers*
+```{r}
+bank %>%
+  filter(loan == "no" & housing == "no")%>%
+  group_by(job)%>%
+  select(job,balance)%>%
+  plot()
+```
+# Finding #10  
+Boxplot of duration of contact (in mins) given client has subscribed a term deposit  
+**Insight:** *it takes on average 9mins to secure a client, with successful phone call as short as 30sec*
+```{r}
+bank %>%
+  filter(y == "yes")%>%
+  select(duration)/60 -> result
+boxplot(result)
+summary(result)
+```

@@ -1,0 +1,110 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "XU Han <sub> <Email:xuha0011@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(readr)
+library(knitr)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r}
+#compare the average balance among education group
+df <- group_by(bank,education) %>% summarise(balance_mean = mean(balance))
+kable(df)
+```
+
+Among all the education type, the average balance of **tertiary** is highest and the average balance of **secondary** is lowest.
+
+# Finding #2
+```{r}
+#compare the the percentage of balance>500 between marital group
+df2 <- group_by(bank, marital) %>%
+  summarise(`balance > 500` = sum(balance > 500),all_count = n(),percentage=`balance > 500`/all_count)
+kable(df2)
+```
+
+For three marital group, the percentage of balance greater than 500 do not vary a lot.
+
+# Finding #3
+```{r}
+#Find the job type with highest percentage of housing loan
+df3 <- group_by(bank, job) %>%
+  summarise(housing_count = sum(ifelse(housing == "no", 0, 1)),count =n(),
+            percentage=housing_count/count)%>%filter(percentage==max(percentage)) %>% .$job
+df3
+```
+**Blue-collar** have highest percentage of housing loan among all the job type.
+
+# Finding #4
+```{r}
+#compare the average duration among different kinds of contact ways
+d1 <- filter(bank, contact == "cellular") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Average Duration of Cellular` = duration)
+d2 <- filter(bank, contact == "unknown") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Average Duration of Unknown` = duration)
+d3 <- filter(bank, contact == "telephone") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Average Duration of Telephone` = duration)
+df4 <- bind_cols(d1, d2, d3)
+kable(df4)
+```
+
+The **unknown and cellular** have almost **same** average duration, and the duration of **telephone** is **lower** than other two.
+
+# Finding #5
+```{r}
+#Show the number of people with loan among all the job type
+df5 <- group_by(bank, job) %>% 
+  summarize(loan_y = sum(ifelse(loan =="yes", 1, 0)))
+kable(df5)
+```
+
+
+# Finding #6
+```{r}
+#The number of people over the age of 30 who are still single among all age group
+df6=group_by(bank,age) %>% filter(age>30) %>%
+  summarise('the number of single'=sum(marital=="single"))
+plot(df6$age,df6$`the number of single`,main="the number of single(age>30)",xlab="age(>30)",ylab="number")
+```
+
+# Finding #7
+```{r}
+#The average duration for different age group
+df7=group_by(bank,age) %>% summarise(mean_duration=mean(duration))
+plot(df7$age,df7$mean_duration,xlab="age",ylab="mean_duration",main="The average duration for different age group")
+```
+
+# Finding #8
+```{r}
+#The number of clients who has a loan while doesn’t have a housing for different education group
+df8=group_by(bank,education) %>% filter(loan=="yes",housing=="no") %>% summarise(count=n())
+kable(df8)
+```
+
+# Finding #9
+```{r}
+#The number of people whose age is between 20 and 40 for every job type
+df9=group_by(bank,job) %>% filter((age>20)|(age<40)) %>% summarise(count=n())
+kable(df8)
+```
+
+# Finding #10
+```{r}
+#Compare the average duration for different month
+df10=group_by(bank,month) %>% summarise(mean_duration=mean(duration))
+plot(df10$month,df10$mean_duration,xlab="month",ylab="mean of duration",main="Average Duration for Different Month")
+```

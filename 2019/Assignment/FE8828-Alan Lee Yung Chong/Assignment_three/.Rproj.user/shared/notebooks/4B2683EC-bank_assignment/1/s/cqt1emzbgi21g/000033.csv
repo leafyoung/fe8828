@@ -1,0 +1,3 @@
+"0","df_1 <- bank %>% group_by(., job) %>% summarise(avg_balance = mean(balance), max_balance=max(balance), "
+"0","                                        min_balance = min(balance), var_balance=(sd(balance)), count = n()) %>% arrange( desc(avg_balance))"
+"0","barplot(df_1$avg_balance, main=""Distribution of average balance in bank by jobs"", xlab=""Jobs"", ylab=""Balance"", names.arg=df_1$job, col=""gold"", border=FALSE)"

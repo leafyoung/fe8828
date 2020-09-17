@@ -1,0 +1,141 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "XIAO LIJIAN"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1 
+```{r}
+df1 <- mutate(bank, age_group = case_when(
+  age < 20 ~ "youth",
+  age < 40 ~ "middle-age",
+  age < 50 ~ "senior",
+  TRUE ~ "happy"
+))
+
+df2 <- group_by(df1, age_group) %>%
+  summarise(n = n())
+df2
+```
+*We can see that most of the clients are middle-aged. Why does this happen?
+*For youth, they don't have a large enough amount of deposit to care about. For middle-aged, they have the money and the knowledge to take care of their wealth. For senior and happy men, it's possible that their deposits are invested in insurance and other cash fund to gurantee their life quality after retirement.
+
+# Finding 2
+```{r}
+df3 <- arrange(bank, age) %>%
+  group_by(., age) %>%
+  summarise(balance_mean = mean(balance)) %>%
+  arrange(., desc(balance_mean))
+df3
+
+df4 <- arrange(bank, age) %>%
+  group_by(., age) %>%
+  summarise(balance_mean = mean(balance)) %>%
+  arrange(., balance_mean)
+df4
+```
+*The ages with top 10 mean balance are above 60, while the ages with bottom 10 mean balance are with 7 above 60 and 3 below 20.
+*This case indicates that we not only need to know how to create wealth, but also need to learn how to manage it and make it work for us. Otherwise, even though people can make money when they are young, they may be not able to keep their living after they have no job.
+
+# Finding 3
+```{r}
+df5 <- group_by(bank, education) %>%
+  summarise('balance > 600' = sum(balance > 600))
+df6 <- group_by(bank, education) %>%
+  summarise('balance <= 600' = sum(balance <= 600))
+
+df7 <- distinct(bank, education) %>% arrange(education) %>%
+  left_join(., df5, by = "education") %>%
+  left_join(., df6, by = "education") %>%
+  mutate(., total = `balance > 600` + `balance <= 600`)
+df7
+```
+*Among the bank clients, most are with secondary school education. And in the view of the ratio between "balance > 600" and "balance <= 600".
+*It seems that a higher education level does gurantee a higher payment. Because we can see that the rate of people with tertiary education having more than 600 balance is higher than other known education level ones.
+
+# Finding 4
+```{r}
+df8 <- group_by(bank, age) %>% 
+  filter(balance == max(balance)) %>%
+  arrange(desc(balance))
+df8
+```
+*Among the top 10 richest ones of each age, only 60% of them are married.
+*It may indicate that money is not a guarantee of love as good as most people believe. There may be many other factors that impact relationship.
+
+# Finding 5
+```{r}
+df9 <- group_by(bank, age) %>%
+  summarise(with_housing = sum(housing == "yes")) %>%
+  filter(with_housing > 100)
+df9
+```
+*It seems that most house owners are between age of 31~38.
+*This may be resulted by their increasing wealth and the consensus of the society that people should own at least a house.
+
+# Finding 6
+```{r}
+df10 <- group_by(bank, education, marital) %>%
+  summarize(num= n())
+df10 <- spread(df10, marital, num) %>%
+  mutate(., Single_ratio = 1 - (sum(married)/sum(divorced+married+single)))
+df10
+```
+*Ther higher the education level, ther higher single rate.
+*If you are a bachelor, you are more likely to be a bachelor. Sad.
+
+# Finding 7
+```{r}
+df11 <- group_by(bank, education) %>%
+  summarize(default = "yes") 
+df11
+df12 <- group_by(bank, age) %>%
+  summarize(default = "yes") 
+df12
+df13 <- group_by(bank, job) %>%
+  summarize(default = "yes") 
+df13
+```
+*Whatever the client's education level, age and job title, he has the possibility to be default.
+*In other words, people can be default as long as he's alive.
+
+# Finding 8
+```{r}
+df14 <- filter(bank, age >= 20 & age < 30 & marital == "single") %>%
+  group_by(., job) %>%
+  summarise(job_num = n())
+df14
+```
+*Among those single of age between 20~30, their jobs range from student to entrepreneur.
+*An indicator that marital status has not much to do with job.
+
+# Finding 9
+```{r}
+df15 <- filter(bank, housing == "yes") %>% 
+  summarise(., owner = n())
+df15
+  
+df16 <- filter(bank, housing == "yes") %>%
+  filter(., loan == "yes") %>%
+  summarise(., loan_guy = n())
+df16
+```
+*The house owners are mostly not borrowers. It's a little bit weird because in reality, most people buy a house through morrgage.
+
+#Last Finding (yeah!)
+```{r}
+df17 <-group_by(bank, marital) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df17
+```
+*For three different marital status, balance_mean of each is not very distinct.
+*Another fact that relationship is not always about wealth.

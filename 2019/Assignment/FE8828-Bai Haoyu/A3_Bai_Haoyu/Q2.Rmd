@@ -1,0 +1,140 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Bai Haoyu G1900411H"
+date: " 30 Sep 2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+This data contains `r nrow(bank)` rows and `r ncol(bank)` columns.
+
+# Finding #2
+The number of customers in each job group
+<p>
+Managment and blue-collar are the two biggest groups
+```{r Finding 2, echo = TRUE}
+jobgroup <- group_by(bank, job)
+summary <- summarise(jobgroup, num = n())
+summary
+```
+
+# Finding #3
+The average ages of the customers in each job group
+<p>
+Surprisingly, people on average loose their jobs in early 40's (so sad)
+```{r Finding 3, echo = TRUE}
+jobgroup <- group_by(bank, job)
+summarise(jobgroup, avg_age = mean(age))
+```
+
+# Finding #4
+The number of customers in each age group?
+<p>
+30's and 40's are the two biggest groups
+```{r Finding 4, echo = TRUE}
+bank_f4 <- mutate(bank, age_group = (age %/% 10) * 10)
+agegroup <- group_by(bank_f4, age_group)
+summarise(agegroup, num = n())
+```
+
+# Finding #5
+Plot the number of unemployeed customer in each age group and print the unemployment rate:
+<p>
+Besides 20's (students), 40's have the highest unemployed rate, which is consistent with finding #3
+```{r Finding 5, echo = TRUE}
+bank_f4 <- mutate(bank, age_group = (age %/% 10) * 10)
+agegroup <- group_by(bank_f4, age_group)
+agegroup_num <- summarise(agegroup, total = n())
+
+unemployed_age_group <- dplyr::filter(agegroup, job == "unemployed")
+grouped_unemployed_age_group <- group_by(unemployed_age_group, age_group)
+unemployed_num <- summarise(grouped_unemployed_age_group, unemployed=n())
+
+unemployed_age <- left_join(unemployed_num, agegroup_num, by = "age_group")
+unemployed_rate <- mutate(unemployed_age, rate = unemployed/total)
+
+plot(unemployed_num)
+unemployed_rate
+```
+
+# Finding #6
+The number of customer and their avergae balance in each education group?
+<p>
+Looks like the highest education group (tertiary) has the highes balance, but primary group has higher balance than secondary group.
+One possible explanation is people with only primary education started work ealier and have accumulated more money
+```{r Finding 6, echo = TRUE}
+educationgroup <- group_by(bank, education)
+education_num <- summarise(educationgroup, num = n())
+education_balance <- summarise(educationgroup, avg_balance = mean(balance))
+education_summary <- left_join(education_num, education_balance, by = "education")
+
+education_summary
+```
+
+# Finding #7
+Which education group has the most number of married customer?
+<p>
+Secondary education has the most number of married customers.
+```{r Finding 7, echo = TRUE}
+educationgroup <- group_by(bank, education)
+married_education <- dplyr::filter(educationgroup, marital == "married")
+married_num <- summarize(married_education, married=n()) 
+married_num <- arrange(married_num, desc(married))
+married_num
+```
+
+# Finding #8
+Which job group has the most number of married customer?
+<p>
+Surprisingly, there are 10 married students...
+```{r Finding 8, echo = TRUE}
+jobgroup <- group_by(bank, job)
+married_job <- dplyr::filter(jobgroup, marital == "married")
+married_num <- summarize(married_job, married=n()) 
+married_num <- arrange(married_num, desc(married))
+married_num
+```
+
+# Finding #9
+Interesting Fact 1: having a house or a higher balance does not significantly increase the chance of getting married
+```{r Finding 9, echo = TRUE}
+maritalgroup <- group_by(bank, marital)
+marital_num <- summarise(maritalgroup, total = n())
+marital_housing <- dplyr::filter(maritalgroup, housing == "yes")
+housing_num <- summarise(marital_housing, with_housing = n())
+marital_balance <- summarize(maritalgroup, avg_balance=mean(balance)) 
+marital_summary <- left_join(marital_num, housing_num, by = "marital")
+marital_summary <- left_join(marital_summary, marital_balance, by = "marital")
+
+marital_summary
+```
+
+# Finding #10
+Interesting Fact 2: customers in Age group 40 has the highest ratio of negative balance, which is consistent with ealier findings (midlife crisis?)
+```{r Finding 10, echo = TRUE}
+bank_f4 <- mutate(bank, age_group = (age %/% 10) * 10)
+agegroup <- group_by(bank_f4, age_group)
+agegroup_num <- summarise(agegroup, total = n())
+
+negative_age_group <- dplyr::filter(agegroup, balance < 0)
+grouped_negative_age_group <- group_by(negative_age_group, age_group)
+negative_num <- summarise(grouped_negative_age_group, negative_total=n())
+
+negative_age <- left_join(negative_num, agegroup_num, by = "age_group")
+negative_rate <- mutate(negative_age, ratio = negative_total/total)
+negative_rate <- arrange(negative_rate, desc(ratio))
+
+negative_rate
+```
+
+
+
+

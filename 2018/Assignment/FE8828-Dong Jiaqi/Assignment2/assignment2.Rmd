@@ -1,0 +1,92 @@
+---
+title: "Assignment2"
+author: "Dong Jiaqi"
+date: "9 November 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Step1: Generating the make_choice function
+```{r First_Step}
+make_choice <- function(N,split_number)
+{
+  input_list <- sample(1:N,N) #generate a input list
+  input_list_e <- input_list[1:split_number]
+  input_list_s <- input_list[(split_number+1):N] #split the list
+  benchmark <- max(input_list_e)  #the benchmark is the maximum number in the evaluation group
+  # result <- 0 #inital the result
+
+  # Yang: this is logic is missing.
+  result <- input_list[N] #inital the result with last element  
+  
+  for(i in (split_number+1):(N-1)) #selecting from the first member in the selection group
+  {
+    if(input_list[i] > benchmark)
+    {
+      result <- input_list[i]
+      break
+    }
+  }
+
+  return(result)
+}
+```
+
+
+## Step 2: Find the optimal value for the split of N
+```{r}
+N <- 100
+M <- 10000 #Times of Monte Carlo
+
+# Yang: initialize with pre-allocated length for vector.
+p <- vector(mode = "numeric", length = N - 1)
+average <- vector(mode = "numeric", length = N - 1)
+
+for(split_time in 1:(N-1))  #for each split time from 1 to N-1 #
+{
+  successful_choice <- 0
+  candidate <- vector(mode = "numeric", length = M)
+  for(j in 1:M) # Simulate M times. At this time, M = 10000
+  {
+    candidate[j] <- make_choice(N,split_time)
+    # Yang: moving this code below.
+    # if(candidate[j] == N)
+    # {
+    #   successful_choice <- successful_choice+1
+    # }
+  }
+  successful_choice <- sum(candidate == N)
+  p[split_time] <- successful_choice/M
+  average[split_time] <- mean(candidate)
+}
+
+optimal_choice <- which.max(p)
+cat(optimal_choice)
+
+```
+
+
+## Plots_1_Average
+The following is average number of the selection in each split
+```{r validtion1, echo =FALSE}
+
+cat(average) #Avergae number of each split
+
+plot(1:(N-1), average, xlab = "Number Skipped",
+     ylab = "Average Result of Each Monte Carlo",
+     main = "The Princess Problem")
+```
+
+
+## Plots_2_Probability
+```{r validation2, echo=FALSE}
+plot(1:(N-1), p, type = "l", xlab = "Number Skipped",
+     ylab = "Probability of selecting Best One",
+     main = "The Princess Problem")
+```
+
+From the above analysis, we could see that the probability of selecting the best candidate (Highest Score) reaches the peak when the split number is around 36. Meanwhile, the average score of each selection shows a decending trend, which indicates the distribution of the selecting candidates is not normal and the dataset is heterogeneous.

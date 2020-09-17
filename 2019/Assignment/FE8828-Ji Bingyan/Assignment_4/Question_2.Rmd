@@ -1,0 +1,154 @@
+---
+title: "Question_2"
+author: "Jay"
+date: "7 October 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(gridExtra)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+bank <- mutate(bank, age_group = floor(age/10)*10) 
+bank %>%
+    ggplot(aes(x = age_group, fill = job)) + geom_bar(position = "dodge") +
+    theme(legend.position = "bottom")
+```
+
+Most of the people in this dataset is in their 30s and almost for every job the age group of the workers culminate at 30s. For people from 30 to 50, most of them make living as managers, blue-collar workers, and technicians. 
+
+# Finding 2
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+g1 <- ggplot(bank, aes(balance, fill = job)) + 
+    geom_histogram() +
+    xlim(min(bank$balance), 1000) +
+    guides(fill = "none")
+g2 <- ggplot(bank, aes(balance, fill = job)) + 
+    geom_histogram() +
+    xlim(1000, 5000) +
+    guides(fill = "none")
+g3 <- ggplot(bank, aes(balance, fill = job)) +
+    geom_histogram() +
+    xlim(5000, 20000) +
+    guides(fill = "none")
+g4 <- ggplot(bank, aes(balance, fill = job)) +
+    geom_histogram() +
+    xlim(20000, max(bank$balance)) +
+    guides(fill = "none")
+grid.arrange(g1, g2, g3, g4, ncol = 2)
+```
+
+This plot demestrate the account balance and different colors represents different jobs. Do note that the y axis has different scales in these four plots.
+
+- People with balance smaller than 1000 account the biggest proportion in the dataset. 
+- It seems people with the same jobs, like managers, blue-collar workers, services and technicians do have different account balances ranging from 0 to about 15000. 
+- Peopel with account balance larger than 15000 are very few and their jobs do differ.  
+- The wealthiest guy is an entrepreneur
+
+# Finding 3
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+ggplot(data = full_join(bank, bank %>% group_by(age_group, balance) %>% summarise(count = n())), 
+       aes(age_group, balance, size = count)) + 
+    geom_point(alpha = 0.5) +
+    coord_flip() +
+    ylim(min(bank$balance), 20000) +
+    geom_point(data = group_by(bank, age_group) %>% summarise(ave_balance = mean(balance)),
+               aes(x = age_group, y = ave_balance), inherit.aes = F, col = rainbow(8), size = 3.5, shape = 18)
+```
+
+The colored dots are the average balance for different age group. 
+For almost every age group, a lot of people have balance around 0. As age becomes greater, the average balance also increases and people after their 60s have the highest balance.
+
+# Finding 4
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+ggplot(bank, aes(balance, fill = education)) +
+    geom_histogram(position = "fill") +
+    xlim(min(bank$balance), 30000)+
+    labs(y = "Proportion")
+```
+
+For people with lower balance, especially around 0, most of them have received secondary education. As the balance becomes larger, the proportion of people with tertiary education also becomes greater, which may indicate that obtaining tertiary education could potentially increase your wealth.
+
+# Finding 5
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+ggplot(bank, aes(as.character(education), fill = marital)) +
+    geom_bar(position = "fill") +
+    labs(x = "education", y = "Proportion") 
+```
+
+As the education level becomes higher, from primary to tertiary, the proportion of single people becomes higher, whereas the proportion of divorced people remains constant. This could indicate that people obtained higher education are less likely to get married and more likely to get divorced if they are married. 
+
+# Finding 6
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+ggplot(filter(bank, marital != "single"), aes(as.character(job), fill = marital)) +
+    geom_bar(position = "fill") +
+    labs(x = "education")  +
+    coord_flip() +
+    scale_x_discrete(limit = rev(levels(bank$job))) +
+    geom_hline(aes(yintercept = 1 - sum(bank$marital == "divorced")/sum(bank$marital != "single"))) +
+    labs(y = "Proportion")
+```
+
+The vertial line is the average divorce rate.
+- It is natural that the divorce rate of unemployed people is higher but to my surprise, the divorce rate for retired people is also quite high.  
+- Except for people with unkonwn jobs, self-employed people have lowest divorce rate, which due to the fact that self-employed people have more free time to look after the famliy. 
+
+# Finding 7
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+ggplot(bank, aes(housing, fill = default)) + geom_bar(position = "fill") + facet_grid(.~ loan)
+```
+
+Left hand stands for people with loans and the right hand stands for people without loans. 
+It is clear that people with loans have higher default probability, especially for those with loans and without housing. 
+
+# Finding 8
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+ggplot(filter(bank, education !=  "unknown"), aes(education)) +
+    geom_bar() +
+    facet_wrap(.~ job, nrow = 3) +
+    coord_flip()
+```
+
+- Most of the managers have tertiary education background and the proportion of people with higher education is far more higher than other jobs
+- Except for management, technician is another job that favors higher education
+- Most of the blue-collar workers have lower education background and the proportion of people with primary education is quite high in this field.
+- There are slightly more people with tertiary education choose to be entrepreneur than people with lower education background but there do exist some entrepreneurs with only primary education
+
+# Finding 9
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+cutpoints <- c(0, 30, 50, max(bank$age))
+bank$age_group2 <- cut(bank$age, cutpoints)
+g5 <- ggplot(filter(bank, job != "student" & job != "unknown"), aes(job)) +
+    geom_bar() +
+    facet_wrap(.~ age_group2) +
+    coord_flip()
+g6 <- ggplot(filter(bank, job != "student" & job != "unknown"), aes(job, fill = age_group2)) + 
+    geom_bar(position = "fill") + 
+    coord_flip()
+grid.arrange(g5, g6, nrow = 2)
+```
+
+- Housemaid has the highest proportion of workers over their 50s
+- Services has the highest proportion of workers under their 30s
+- To my surprise, there is actually one person who retires before 30 year old. I think this observation should be wrong and it needs more discretion when analyzing the profile of retired people
+- There are few housemaid and entrepreneur under 30, which may be due to the nature of these jobs
+
+# Finding 10
+```{r, cache=TRUE, warning=FALSE, message=FALSE}
+g7 <- ggplot(filter(bank, education != "unknown"), aes(age_group, fill = housing)) + 
+    geom_bar(position = "dodge") + 
+    facet_grid(.~education) 
+g8 <- ggplot(filter(bank, education != "unknown" & age < 60 & age > 20), aes(age_group, fill = housing)) + 
+    geom_bar(position = "fill") + 
+    facet_grid(.~education) 
+grid.arrange(g7, g8, nrow = 2)
+```
+
+- For people in their 30s and 40s, there are more people with housing than those without housing
+- For people from 20s to 50s, within which the dataset is concentrated, people with primary and secondary education backgroud tend to have higher probability to own a house than those with tertiary education backgroud

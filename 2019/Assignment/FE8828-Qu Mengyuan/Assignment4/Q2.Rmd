@@ -1,0 +1,159 @@
+---
+title: "EDA with ggplot2"
+author: "Qu Mengyuan"
+date: "10/6/2019"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding 1
+Telemarketing is in highly active state during May and August and extremely active in May while in March, September, Octorber and December it is reletively dormant.
+```{r}
+# Find the distribution of last contact month
+bank %>% 
+  mutate(month_n = month(parse_date_time(month, "b"))) %>% 
+  group_by(month_n) %>%
+  summarise(count = n()) -> res
+res
+ggplot(res, aes(month_n, count)) + geom_col()
+  
+```
+
+# Finding 2
+Client's average yearly balance doen't has direct relationship with their age. 
+
+At the begining of their career, they tend to have a relatively lower balance.
+```{r}
+# Find the relationship between age and balance.
+ggplot(data = bank) +
+  geom_point(mapping = aes(x = age, y = balance, color = job),alpha = 0.5) +
+  facet_wrap( ~ job,nrow = 4)
+```
+
+# Finding 3
+Generally, the higher education a client gets, the stronger willing he has to keep single. 
+
+In other words, less education one gets, higher probability he/she is married.
+```{r}
+# Find the relationship between marital and education.
+ggplot() +
+  geom_bar(data = bank, mapping = aes(x = education, fill = marital))
+```
+
+# Finding 4
+Generally, the higher **education** a client gets, the higher average yearly **balance** he has.
+
+The average yearly balance among clients who have primary education _polarizes_.
+```{r}
+# Find the relationship between balance and education
+ggplot(bank) +
+  geom_boxplot(mapping = aes(x = education, y = balance))
+```
+
+# Finding 5
+The number of people divorced in 30s,40s and 50s are similar but the single number of the single decreases with age increasing.
+
+Most of people in 20s are single but while almost all clients over 60 years old are married.
+
+```{r}
+# Find the relationship between age and marital
+bank <- mutate(bank,age_group = (age %/% 10) * 10)
+bank %>% 
+  dplyr::filter(marital=="married")  %>%
+  group_by(age_group) %>%
+  summarise(num = n()) -> res1
+bank %>%
+group_by(age_group) %>%
+summarise(total = n()) -> res2
+res <- full_join(res1,res2,by = "age_group")
+res <- mutate(res, `marriage rate` = num/total)
+res
+ggplot() +
+  geom_bar(data = bank, mapping = aes(x = age_group, fill = marital))
+```
+
+# Finding 6
+The education level varies among jobs(excluding students and unknown).
+
+The **managers** has the *highest* education leve, more than 75% of which has tertiary education.
+
+The **housemaids** has the **lowest** education leve, nearly half of whom only get primary education.
+```{r}
+# Find the relationship between job and education
+bank %>%
+group_by(job,education) %>%
+summarise(num = n()) %>%
+  spread(education, num) -> res
+res
+ggplot() +
+  geom_bar(data = bank, mapping = aes(x = job, fill = education),position = "fill") +
+  scale_x_discrete(limit = rev(levels(bank$job))) + 
+  coord_flip() 
+```
+
+# Finding 7
+People who have personal loan have only around 55% of balance than those who don't have personal loan.
+Housing loan has slight bad effects on people's balance condition.
+People prefer not owning liabilities
+```{r}
+# Find the relationship between balance and loans
+bank %>%
+group_by(housing,loan) %>%
+  summarise(average = mean(balance), median = median(balance)) -> res
+res
+library(scatterplot3d)
+with(bank,{scatterplot3d(x = loan, y = housing, z = balance)})
+
+ggplot(data = bank) +
+  geom_point(mapping = aes(x = age, y = balance)) +
+  facet_wrap(loan ~ housing, nrow = 2)
+```
+
+# Finding 8
+People who don't have credit in default are in a **much better** balance condition compared with those who have credit in default, but have huge variation.
+```{r}
+# Find the relationship between default and balance
+bank %>%
+group_by(default) %>%
+summarise(average = mean(balance), max = max(balance), min = min(balance), median = median(balance)) -> res
+res
+ggplot(bank, aes(default, balance)) + 
+  geom_boxplot()
+```
+
+# Finding 9
+The most common type of contact communication is by cellular.
+
+The last contact durations of all three types concentrates around 175 seconds.
+
+Generally, the last durations by *cellular* is the **longest** while that by *telephone* is the **shortest**.
+```{r}
+# Find the relationship between contact type and duration
+bank %>%
+group_by(contact) %>%
+summarise(num = n(),average = mean(duration), max = max(duration), min = min(duration), median = median(duration)) -> res
+res
+ggplot(bank, aes(duration)) + geom_density(aes(fill = contact), alpha = 0.7) 
+```
+
+# Finding 10
+In the previous marketing campaign，most of people gets secondory and tertiary education.
+
+Generally, the **higher** educaion one gets, telemarketing has the **higher** possibility to success and **lower** possibility to fail, though *not significantly*.
+```{r}
+# outcome of the previous marketing campaign
+bank %>%
+  group_by(education, poutcome) %>%
+  summarise(num = n()) %>%
+  spread(poutcome, num)-> res
+res
+ggplot() +
+  geom_bar(data = dplyr::filter(bank, poutcome !="unknown"), mapping = aes(x = education, fill = poutcome),position = "fill")
+```

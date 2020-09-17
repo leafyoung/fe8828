@@ -1,0 +1,129 @@
+library(shiny)
+library(shinythemes)
+library(shinyWidgets)
+library(gtrendsR)
+library(quantmod)
+
+ui <- fluidPage(
+    title = "Crypto Analytics",
+    titlePanel(title=div(img(src="logo.png"))),
+    theme = shinytheme("cosmo"),
+    setBackgroundImage(
+        src = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ56RxFwBPIwJUkuCAznf_2F_3q5w3ecsAGtVZ_H91FqyVbISiL"
+            ),
+    navbarPage("",
+        tabPanel("About Us",
+                 fluidPage(
+                     div(class = "About",  
+                         includeMarkdown("./About.md")
+                     )
+                     )        
+        ),
+        navbarMenu("Products",
+                   tabPanel("Chart Maker",
+                            fluidPage(
+                                sidebarLayout(
+                                    sidebarPanel(
+                                        "Here, I have made use of Quandmod library to plot chartSeries for BTCUSD and it s corresponding MACD"
+                                    ),
+                                    mainPanel(
+                                    div(class = "chart",  
+                                    includeMarkdown(knitr::knit("./Chart.md"))
+                                ))
+                            )
+                        )
+                   ),
+                   tabPanel("Google Trends",
+                            fluidPage(
+                                sidebarLayout(
+                                    sidebarPanel(
+                                        "Here, I have made use of GTrendsR Library to show google trends for some of the famous altcoins."
+                                    ),
+                                    mainPanel(
+                                        div(class = "gtrend",  
+                                            includeMarkdown(knitr::knit("./GTrend.Rmd"))
+                                        ))
+                                )
+                            )
+                            
+                            )
+                   ),
+        navbarMenu("Clients",
+                   tabPanel("Binance",
+                            fluidPage(
+                                sidebarLayout(
+                                    sidebarPanel(
+                                        div(img(src="https://themerkle.com/wp-content/uploads/binance-logo.png",width="100%"))    
+                                    ),
+                                mainPanel
+                                (
+                                    div(class = "card",  
+                                        includeMarkdown("./Binance.md")
+                                    )
+                                )
+                                )
+                            )
+        ),
+        tabPanel("Coinbase",
+                 fluidPage(
+                     sidebarLayout(
+                         sidebarPanel(
+                             div(img(src="https://static.coindesk.com/wp-content/uploads/2014/03/logocoinbase-860x430.png",width="100%"))    
+                         ),
+                         mainPanel
+                         (
+                             div(class = "coinbase",  
+                                 includeMarkdown("./Coinbase.md")
+                             )
+                         )
+                     )
+                 )
+        ),
+                   tabPanel("Circle",
+                            fluidPage(
+                                sidebarLayout(
+                                    sidebarPanel(
+                                        div(img(src="https://pbs.twimg.com/profile_images/995985538556530690/7q_RKG2e_400x400.jpg",width="100%"))    
+                                    ),
+                                    mainPanel
+                                    (
+                                        div(class = "circle",  
+                                            includeMarkdown("./Circle.md")
+                                        )
+                                    )
+                                )
+                            )
+                            
+        )
+        ),
+        
+        tabPanel("Contact Us",
+                 fluidPage(
+                     div(class = "contact_us",  
+                         includeMarkdown("./Contact.md"),
+                         textInput("name","Name"),
+                         textInput("email","Email Address"),
+                         textAreaInput("query","Query",width="400px",height="150px"),
+                         actionButton("do", "Submit"),
+                         hr()
+                     )
+                 )
+                 )
+        )
+    
+    
+
+)
+
+server <- function(input, output,session) {
+    observeEvent(input$do, {
+        showNotification("Thank you for your Response. An official will get back to you")
+        updateTextInput(session,"name", value = "")
+        updateTextInput(session,"email", value = "")
+        updateTextInput(session,"query", value = "")
+        })
+    
+    
+}
+
+shinyApp(ui = ui, server = server)

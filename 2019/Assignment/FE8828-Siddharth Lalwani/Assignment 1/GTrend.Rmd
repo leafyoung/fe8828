@@ -1,0 +1,10 @@
+---
+title: "GTrend"
+output: html_document
+---
+
+```{r,echo=FALSE}
+library(gtrendsR)
+res <- gtrends(c("bnb", "eth","xrp","ltc"))
+plot(res)
+```

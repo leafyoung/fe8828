@@ -1,0 +1,124 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Zhou Xueming"
+date: "November 27, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse=TRUE, cache=TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Markdown
+
+#Finding 1
+the minimum, maximum and mean balance in each jobs
+```{r finding1, echo=TRUE}
+group_by(bank, job) %>%
+  summarise(count = n(),
+            min_balance=min(balance),
+            max_balance = max(balance),
+            mean_balance = mean(balance)
+            )
+```
+
+#Finding 2
+The number and proportion of people in different jobs
+```{r finding2, echo=TRUE}
+group_by(bank, job) %>% 
+  summarise(n = n(),
+            percent=n()/nrow(bank)*100)
+```
+
+
+#Finding 3
+relationship between marital status and default
+
+```{r finding3,echo=TRUE}
+group_by(bank, default, marital) %>%
+  summarise(count = n()) %>%
+  filter (., default=="yes")
+```
+
+#Finding 4
+minimum, maximum and mean balance in each education
+
+```{r finding4, echo=TRUE}
+group_by(bank, education) %>%
+  summarise(count = n(),
+            min_balance=min(balance),
+            max_balance = max(balance),
+            mean_balance = mean(balance)
+            )
+```
+
+#Finding 5
+relationship between educational status and unemployment
+
+```{r finding5,echo=TRUE}
+group_by(bank, job, education) %>%
+  summarise(count = n(),
+            percent = n()/nrow(bank)*100) %>%
+  filter (., job=="unemployed")
+```
+
+#Finding 6
+number and proportion of people with balance less than 5000 at different ages 
+
+```{r finding6, echo=TRUE}
+group_by(bank,age)%>%
+  filter(.,balance<5000)%>%
+  summarise(count=n(),percent = n()/nrow(bank)*100)->p1
+p1
+plot(p1$age,p1$count)
+
+```
+
+
+#Finding 7
+relationship between educational status and default
+
+```{r finding7,echo=TRUE}
+group_by(bank, default, education) %>%
+  summarise(count = n(),
+            percent = n()/nrow(bank)*100) %>%
+  filter (., default=="yes")
+
+```
+
+#Finding 8
+relationship between education level and housing stastus
+
+```{r finding8, echo=TRUE}
+group_by(bank, housing, education) %>%
+  summarise(count = n(),
+            percent = n()/nrow(bank)*100) %>%
+  filter (., housing=="yes")
+```
+
+
+
+#Finding 9
+relationship between marital status and housing stastus
+
+```{r finding9, echo=TRUE}
+group_by(bank, housing, marital) %>%
+  summarise(count = n(),
+            percent = n()/nrow(bank)*100) %>%
+  filter (., housing=="yes")
+```
+
+#Finding 10
+marital status according to ages
+
+```{r finding10, echo=TRUE}
+group_by(bank, marital, age) %>%
+  summarise(count = n(),
+            percent = n()/nrow(bank)*100) %>%
+  filter (., marital=="married")
+```

@@ -1,0 +1,286 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Wei Kuang <sub> <Email:kwan0067@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Information
+In this study, we examine the dataset: bank to derive insights. Below provides descriptions for each variable.
+
+#### Personal profile:
+1. **age** (numeric)
+2. **job** : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student", "blue-collar","self-employed","retired","technician","services")
+3. **marital** : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
+4. **education** (categorical: "unknown","secondary","primary","tertiary")
+5. **default**: has credit in default? (binary: "yes","no")
+6. **balance**: average yearly balance, in euros (numeric)
+7. **housing**: has housing loan? (binary: "yes","no")
+8. **loan**: has personal loan? (binary: "yes","no")
+
+#### Related with the last contact of the current campaign:
+9. **contact**: contact communication type (categorical: "unknown","telephone","cellular")
+10. **day**: last contact day of the month (numeric)
+11. **month**: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
+12. **duration**: last contact duration, in seconds (numeric)
+
+#### Other attributes:
+13. **campaign**: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+14. **pdays**: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
+15. **previous**: number of contacts performed before this campaign and for this client (numeric)
+16. **poutcome**: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
+
+#### Output variable (desired target):
+17. **y** - has the client subscribed a term deposit? (binary: "yes","no")
+
+Also, for below analysis, derived variable: **age_group** refers to
+
+| age_group | Age range |
+|:---------:|:---------:|
+| 10        | 10,19     |
+| 20        | 20,29     |
+| 30        | 30,39     |
+| 40        | 40,49     |
+| 50        | 50,59     |
+| 60        | 60,69     |
+| 70        | 70,79     |
+| 80        | 80,89     |
+
+# Finding #1
+
+#### Some summary of our given data.
+
+This data contains **`r nrow(bank)` rows** and **`r ncol(bank)` variables**.
+
+# Finding #2
+
+#### What is the number of clients in each age group?
+```{r}
+# Find the big age group
+bank %>%
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+
+res
+
+plot(res$age_group, res$count, main = "no. of clients in each age group", ylab = "Frequency", xlab = "age_group")
+```
+The largest age group is **age range from 30 to 39** with **`r res$count[res$age_group==30]` clients**.
+
+# Discover insights of data frame: bank
+- Employment
+- Social attributes.
+- Count for sub-total / total, plot graph
+
+# Finding #3
+
+#### What is the proportion of non-working clients in each age group?
+```{r}
+# Find the number and % of non-working clients
+# Non-working is defined as job = "unknown", "unemployed", "housemaid", "student" and "retired"
+# Assumption is made for job = "unknown" as non-working
+df <- mutate(bank, `non-working` = ifelse(job %in% c("unknown", "unemployed", "housemaid", "student", "retired"), T, F), age_group = (age %/% 10) * 10)
+
+df2 <- group_by(df, age_group) %>%
+  summarise(`no. of non-working` = sum(`non-working`), `% of non-working` = sum(`non-working`)/n()*100)
+
+# Find the overall number and % of non-working clients 
+df3 <- summarise(df, `no. of non-working` = sum(`non-working`), `% of non-working` = sum(`non-working`)/n()*100)
+
+bind_rows(df2, df3) 
+
+plot(df2$age_group, df2$`% of non-working`, type = "p", main = "% of non-working clients in each age group", ylab = "% percentage", xlab = "age_group")
+abline(h=df3$`% of non-working`, col="blue")
+```
+As compared to an **overall 13.1%** of non-working clients, **all age groups except age range from 30 to 49 have higher % of non-working clients**.
+
+# Finding #4
+
+#### How different is the balance in each age group?
+```{r}
+# Find the clients with the minimum and maximum balance in each age group, re-arrange columns to show the age_group and balance first 
+# Also, find the mean balance and range of balance (i.e. max-min) in each age group
+df4 <- group_by(df, age_group) %>%
+  dplyr::filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+  select(age_group, balance, everything()) %>%
+  arrange(age_group, balance)
+
+df4
+
+df5 <- group_by(df, age_group) %>%
+  summarise(balance1 = mean(balance)) %>% 
+  rename(`Mean balance` = balance1)
+
+group_by(df4, age_group) %>%
+  summarise(balance2 = max(balance)-min(balance)) %>%
+  rename(`Range balance` = balance2) %>%
+  inner_join(., df5, by = "age_group")
+
+```
+**Age range from 60 to 69 has the largest range in terms of balance (i.e. max-min)**, while **age range from 70 to 79 has the higehst mean balance**.
+*Also, an interesting note for the age group of 80 is that there are some clients who have same min/max balance. Hence, more than 2 records are shown in df4 for age group of 80.*
+
+# Finding 5
+
+### Does education affects the subscription of term deposit?
+```{r}
+# Find the number of clients by education and subscription to term deposit
+df6 <- group_by(df, y, education) %>%
+  summarise(count = n())
+
+df7<- group_by(df6, y) %>%
+  summarise(value1 = sum(count)) %>%
+  rename(count = value1) %>%
+  mutate(education = "overall") %>%
+  spread(key = education, value = count) %>%
+  inner_join(spread(df6, key= education, value=count), ., by = "y")
+
+col_total <- gather(df7, key, value, -y) %>%
+  group_by(key) %>%
+  summarise(value2 = sum(value)) %>%
+  rename(count = value2) %>%
+  spread(key=key, value=count)
+
+df8 <- bind_rows(df7, col_total)
+
+df8
+
+#Plot pie chart to see the proportion
+par(mfrow=c(2,3))
+for (i in 2:6){
+  x <- c(as.numeric(df8[1,i]), as.numeric(df8[2,i]))
+  labels <- c("no", "yes")
+  pct <- round(x/sum(x)*100)
+  lbls <- paste(labels, pct) # add percents to labels
+  lbls <- paste(lbls,"%",sep="") # add % to labels
+  pie(x, labels = lbls, col=(c(2,3)),main=names(df8[i]))
+}
+```
+From the pie chart, **tertiary education has the highest percentage (14%) of subscription to term deposit**. Also, **it is higher than the overall average of 12%**.
+
+# Finding 6
+
+### Of those that have credit in default, how many of them have either housing loan or personal loan or both?
+```{r}
+# Filter for those that have credit in default and make a table on have loans vs no loans
+df9 <- dplyr::filter(bank, default == "yes") %>%
+  mutate(have_loan = case_when(
+    housing == "yes" | loan == "yes" ~ "yes",
+    TRUE ~ "no"
+    )) %>%
+  group_by(have_loan) %>%
+  summarise(count = n()) %>%
+  mutate(percentage = count/sum(.$count)*100)
+
+bind_rows(df9, data.frame(count=sum(df9$count), percentage = 100))
+
+#Plot bar graph
+barplot(df9$count, main = "no. of clients that have loans given that they have credit in default ", ylab = "Frequency", xlab = "loans", names.arg = df9$have_loan, ylim = c(0,70), col=c(2,3))
+```
+A **large proportion = 78%** of those that have credit in default have either housing loan or personal loan or both.
+
+# Finding 7
+
+### Of the top 10 clients with the highest balance, what is their profiles in terms of marital, education, default and subscription of term deposit?
+```{r}
+# Filter for top 10 clients with highest balance first and then examine their profiles
+df10 <- dplyr::filter(bank, min_rank(desc(balance)) %in% c(1:10)) %>%
+  arrange(desc(balance))
+df10
+
+top10_marital <- group_by(df10, marital) %>%
+  summarise(count=n()) %>%
+  mutate(percentage = count/sum(.$count)*100) %>%
+  bind_rows(., data.frame(count=sum(.$count), percentage = 100))
+
+top10_educ <- group_by(df10, education) %>%
+  summarise(count=n()) %>%
+  mutate(percentage = count/sum(.$count)*100) %>%
+  bind_rows(., data.frame(count=sum(.$count), percentage = 100))
+
+top10_default <- group_by(df10, default) %>%
+  summarise(count=n()) %>%
+  mutate(percentage = count/sum(.$count)*100) %>%
+  bind_rows(., data.frame(count=sum(.$count), percentage = 100))
+
+top10_y <- group_by(df10, y) %>%
+  summarise(count=n()) %>%
+  mutate(percentage = count/sum(.$count)*100) %>%
+  bind_rows(., data.frame(count=sum(.$count), percentage = 100))
+
+top10_marital
+top10_educ
+top10_default
+top10_y
+```
+Examing the top 10 clients with the highest balance, **60% are married**, **50% have tertiary education**, **none has credit in default** and only **10% subscribed to term deposit**.
+
+# Finding 8
+
+### More days between campaigns help/do not help in the subscription of term deposit?
+```{r}
+#Find the number of clients that was previously contacted
+transmute(bank, prev_contacted = ifelse(pdays == -1, FALSE, TRUE)) %>%
+  summarise(`Previously contacted` = sum(prev_contacted)) %>%
+  mutate(Total = length(bank$age)) %>%
+  mutate(`Not Previously contacted` = Total - `Previously contacted`) %>%
+  select(`Previously contacted`, `Not Previously contacted`, Total)
+
+#Filter for those previously contacted (816 clients in this case)
+#Find number of clients who subscribed out of these 816 clients
+dplyr::filter(bank,pdays != -1 & y=="yes") %>%
+  summarise(success = n())
+
+df11 <- dplyr::filter(bank,pdays != -1 & y == "yes") %>%
+  select(pdays)
+hist(df11$pdays, main = "Histogram of those who previously contacted and subscribed",
+     xlab = "pdays", ylab = "Frequency")
+```
+Of 4521 clients, there are **816 clients that are previously contacted**. **Only 184 of the 816 subscribed term deposit**. From the histogram, it seems like it is best to have **less than 200 days** between campaigns.
+
+# Finding 9
+
+### With relate to the last contact of the current campaign, which month was the most active?
+```{r}
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}
+mutate(bank, month_name = factor(firstup(as.character(month)), levels = month.abb)) %>%
+  group_by(month_name) %>%
+  summarise(count=n()) %>%
+  mutate(percentage = round(count/sum(.$count)*100,1)) %>%
+  bind_rows(., data.frame(count=sum(.$count), percentage = 100))
+```
+From the table, **May is the month that is most active**.
+
+# Finding 10
+
+### Is there any combination between marital and education that the data has not consider?
+```{r}
+#Consider all possible combination between marital and education
+df12 <- full_join(distinct(bank, marital) %>% mutate(dummy = 1),
+               distinct(bank, education) %>% mutate(dummy = 1),
+               by = "dummy") %>%
+  select(-dummy)
+df13 <- distinct(bank, marital, education)
+
+nrow(df12)
+nrow(df13)
+
+anti_join(df12, df13, by = c("marital", "education"))
+anti_join(df13, df12, by = c("marital", "education"))
+```
+There is **no combination between marital and education** that the data has not consider.
+
+

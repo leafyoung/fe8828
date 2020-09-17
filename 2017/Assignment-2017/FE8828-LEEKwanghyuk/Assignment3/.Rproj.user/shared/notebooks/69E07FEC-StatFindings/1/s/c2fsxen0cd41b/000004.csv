@@ -1,0 +1,1 @@
+"0","group_by(bank, job) %>% summarise(n = n())"

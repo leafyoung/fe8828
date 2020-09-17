@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "#\n# This is a Shiny web application. You can run the application by clicking\n# the 'Run App' button above.\n#\n# Author: Liu Zhe\n# Matric Number: G1700201C\n# Date: 12/11/2017\n#\n# Introduction:\n# This webpage is coded R Shiny, for a virtual \"NTU Online Match Making\" company\n# \n# The overall website is designed in \"navBar\" layout\n# 1st tab: \"Our Service\", \"sideBar\" layout\n# 2nd tab: \"Give Me Your Info\", 2-column layout\n# 3rd tab: \"Meet the Developers\", \"Navlist\" layout\n#\n# Define server logic required to draw a histogram\n\nserver <- function(input, output) {\n}\n",
+    "created" : 1510473645606.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "10335919",
+    "id" : "A6FDEDFD",
+    "lastKnownWriteTime" : 1510473764,
+    "last_content_update" : 1510473764460,
+    "path" : "D:/1liuzhe/liuzhe/server.R",
+    "project_path" : "server.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

@@ -1,0 +1,1 @@
+"0","bank %>% group_by(loan, housing, default)%>% summarise(avg_balance = mean(balance), var_balance=(sd(balance)), count=n()) %>% arrange(desc(avg_balance)) "

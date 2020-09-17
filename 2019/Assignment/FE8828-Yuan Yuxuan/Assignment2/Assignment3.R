@@ -20,7 +20,7 @@ simulation <- function(total_family){
   }
   #Girl Ratio is defiled as "the number of girl per boy"
   #Not using the official "sex ratio" concept which defined as "number of boy per girl" because number of girl may be 0, which will cause Infinity value
-  girl_ratio = total_girl/total_boy
+  girl_ratio = total_girl/(total_boy + total_girl)
   return(girl_ratio)
 }
 

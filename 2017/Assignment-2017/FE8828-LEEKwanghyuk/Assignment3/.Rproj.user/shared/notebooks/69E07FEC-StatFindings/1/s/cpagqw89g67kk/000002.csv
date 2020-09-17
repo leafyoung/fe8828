@@ -1,0 +1,5 @@
+"0","nrow(filter(bank, loan == ""yes"" & housing %in% ""no""))"
+"1","[1]"
+"1"," 285"
+"1","
+"

@@ -1,0 +1,4 @@
+"0","df = bank"
+"0","levels(df$month) <- levels(df$month)[c(5,4,8,1,9,7,6,2,12,11,10,3)]"
+"0","ggplot(df, aes(x=month)) +"
+"0","  geom_bar()"

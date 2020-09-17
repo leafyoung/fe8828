@@ -4,6 +4,8 @@
 
 library(fOptions)
 library(dplyr)
+
+set.seed(100)
 df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE),
                  strike = round(runif(100) * 100, 0),
                  underlying = round(runif(100) * 100, 0),
@@ -12,14 +14,19 @@ df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE),
                  b = 0,
                  sigma = 0.3)
 
-df <- mutate(df, 
-             price = GBSOption(
+df <- df %>%
+  rowwise() %>%
+  # YY: S is for underlying, X is for strike
+  mutate(price = GBSOption(
                TypeFlag = type, 
                S = strike, 
                X = underlying,
                Time = Time, 
                r = r, 
                b = b, 
-               sigma = sigma)@price)
+               sigma = sigma)@price) %>%
+  ungroup()
 
-summarise(df, total = sum(price*strike))
+# No need to multiply strike
+# summarise(df, total = sum(price*strike))
+summarise(df, total = sum(price))

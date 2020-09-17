@@ -1,0 +1,209 @@
+---
+title: "Part 3: 2nd_test"
+author: "WangPeng, Qu Mengyuan"
+date: "2019/10/27"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(tidyverse)
+library(fOptions)
+library(xts)
+library(matrixStats)
+knitr::opts_chunk$set(echo = TRUE)
+vol <- read_excel("../VXAZNCLS.xlsx", 
+                 col_types = c("date", "numeric"))
+close <- read_excel("../VXAZNCLS.xlsx", 
+                    sheet = "Sheet2", col_types = c("date", "numeric"))
+```
+
+# 1 Output of 2nd test on one-year data
+```{r}
+df <- left_join(close,vol,by = c("Date"="observation_date"))
+df <- mutate(df, month = as.numeric(substring(df$Date,6,7)))
+max_drawdown <- rep(0,12)
+sharpe_ratio <- rep(0,12)
+final_Pnl <- rep(0,12)
+implied_strike <- rep(0,12)
+S0 <- rep(0,12)
+maturity_date <- c()
+# If you want to use type with a data frame. 
+type <- c("c","c","p","c","c","p","c","c","c","p","p","p")
+df1 <- dplyr::filter(df, month == 0)
+realized_vol <- rep(0,12)
+implied_vol <-rep(0,12)
+
+cal <- function(Type, Sp, maturity, sig){
+  Str <- Sp
+  for(jj in round(Sp-100):round(Sp+100)){
+    if( (GBSGreeks("delta", TypeFlag = Type, S=Sp, X = jj , 
+                 Time = maturity, r = 0.8/100, b = 0, sigma = sig ) >= 0.245)&(
+                   GBSGreeks("delta", TypeFlag = Type, S=Sp, X = jj , 
+                             Time = maturity, r = 0.8/100, b = 0, sigma = sig ) <= 0.255))
+                   {
+      Str <- jj
+    }
+  }
+  return(Str)
+}
+
+for(ii in 1:12){
+  df_sub <- dplyr::filter(df, month == ii)
+  start_date <- min(df_sub$Date)
+  end_date <- max(df_sub$Date)
+  maturity_date <- c(maturity_date, as.Date(end_date))
+  start_price <- df_sub$Close[1]
+  S0[ii] <- start_price
+  df_sub <- mutate(df_sub,volatility = VXAZNCLS/100)
+  start_volatility <- df_sub$volatility[1]
+  implied_vol[ii] <- start_volatility
+  df_sub <- mutate(df_sub,time_to_M = as.numeric(difftime(as.POSIXct(end_date), as.POSIXct(df_sub$Date, tz="UTC"), 
+                                                          units="days")/365))
+  
+  implied_strike[ii] <- cal(type[ii],start_price,df_sub$time_to_M[1],start_volatility)
+  
+  df_sub <- df_sub %>%
+    mutate(premium = 100 * GBSOption(TypeFlag = type[ii],
+                                                     S = Close,
+                                                     X = implied_strike[ii], # missing
+                                                     Time = time_to_M,
+                                                     r = 0.8/100, # interest rate
+                                                     b = 0,
+                                                     sigma = start_volatility)@price)%>%
+    mutate(Option_DoD_PnL = ifelse(Date == start_date,
+                                   # On the 1st date, we count the cost of buying the option
+                                   # premium * (-1),
+                                   0,
+                                   premium - dplyr::lag(premium)))
+  
+  df_sub <- df_sub %>%
+    rowwise() %>%
+    mutate(delta_hedge = 100 * GBSGreeks("delta", TypeFlag = type[ii], S=Close, X = implied_strike[ii], Time = time_to_M, 
+                                         r = 0.8/100, b = 0, sigma = start_volatility )  * (-1)) %>%
+    ungroup()%>%
+    mutate(Hedging_DoD_Pnl = ifelse(Date == start_date,
+                                    0,
+                                    dplyr::lag(delta_hedge) * (Close - dplyr::lag(Close))))
+  
+  df_sub <- df_sub%>%
+    mutate(daily_PnL = Option_DoD_PnL + Hedging_DoD_Pnl,
+           Option_Final_PnL = cumsum(Option_DoD_PnL),
+           Hedging_Final_PnL = cumsum(Hedging_DoD_Pnl),
+           
+           Final_PnL = Option_Final_PnL + Hedging_Final_PnL,
+           max_d = cummax(Final_PnL) - cummin(Final_PnL),
+           portfolio_value = Close * delta_hedge + premium,
+           return = ifelse(Date == start_date,
+                           0,
+                           daily_PnL/dplyr::lag(portfolio_value)))
+  
+    ln_price <- log(df_sub$Close)/sqrt(1/252)
+  
+   realized_vol[ii] <- sdDiff(ln_price)
+   
+  df1 <- bind_rows(df1,df_sub)
+  
+  final_Pnl[ii] <- df_sub$Final_PnL[nrow(df_sub)]
+  max_drawdown[ii] <- 
+    {
+      xs <- df_sub$Final_PnL
+      max(cummax(xs) - cummin(xs))
+    }
+  
+  sharpe_ratio[ii] <- (mean(df_sub$return[2:length(df_sub$return)])-0.008/250)/stdev(df_sub$return[2:length(df_sub$return)])
+  }
+backtest <- tibble(Option_Expiry_Date = c(1:12), Sharpe_ratio = sharpe_ratio,
+                   Final_PnL = final_Pnl, Max_Drawdown = max_drawdown, 
+                   Implied_strike = implied_strike, S0 = S0,
+                   Realized_vol = realized_vol, Implied_vol = implied_vol)
+backtest
+```
+
+# 2 Analysis
+## 2.1 Final Pnl
+### 2.1.1 One trade
+Using an option of 25% delta, the final profit and loss on Option side are positive at a high level almost all the time while that on Hedge side change violently and are always negative.
+
+In total, the final profit of Delta Hedge Strategy is almost stable at at a high level.
+```{r}
+res1 <-dplyr::filter(df1, month == 4)
+ggplot(res1,aes(Date,Option_Final_PnL))+geom_col()
+ggplot(res1,aes(Date,Hedging_Final_PnL))+geom_col()
+ggplot(res1,aes(Date,Final_PnL))+geom_col()
+```
+
+### 2.1.2 Distribution
+The Final PnL is right skewed, centered around `r median(final_Pnl)`, which shows that delta hedge strategy can earn a stable and desirable profit.
+```{r}
+ggplot(backtest,aes(final_Pnl))+geom_density()
+```
+
+## 2.2 Max Drawdown
+### 2.2.1 One Trade
+For one trade, the max drawdown of Delta Hedge Strategy is controled under $150000 and keeps at a stable level as time gets close to maturity.
+```{r}
+res2 <-dplyr::filter(df1, month == 4)
+ggplot(res2,aes(Date,max_d))+geom_col()
+```
+
+### 2.2.2 Distribution
+The max drawdown is right skewed, controled under $200000.
+```{r}
+ggplot(backtest,aes(max_drawdown))+geom_density()
+```
+
+## 2.3 Final Pnl vs Time to maturity
+As time to maturity extends, final profit on **Option** side *decreases* while that on **Hedge** side *increases*.
+
+As whole, final loss of delta hedge strategy increases stably as time to maturity reduces and converges to a certain number.
+```{r}
+res3 <-dplyr::filter(df1, month == 4) 
+ggplot(res3, aes(time_to_M,Option_Final_PnL ))+geom_point()+geom_smooth()
+ggplot(res3, aes(time_to_M,Hedging_Final_PnL ))+geom_point()+geom_smooth()
+ggplot(res3, aes(time_to_M,Final_PnL ))+geom_point()+geom_smooth()
+```
+
+## 2.4 Daily Pnl vs Stock Price
+Generally, Daily Profit on Option side oscillates mildly with Stock Close Price changing while there is no obvious relationship between stock close price and Daily Profit and loss on Hedge side.
+
+As a whole, however, daily profit and loss of delta hedge strategy keeps almost the **same**, which means the strategy can control loss in a reasonable range effectively.
+```{r}
+res4 <-dplyr::filter(df1, month == 4)
+ggplot(res4, aes(Close,Option_DoD_PnL))+geom_point()+geom_smooth()
+ggplot(res4, aes(Close,Hedging_DoD_Pnl))+geom_point()+geom_smooth()
+ggplot(res4, aes(Close,daily_PnL))+geom_point()+geom_smooth()
+```
+
+## 2.5 Sharpe ratio vs Maturity date
+There is no direct evidence which indicates a certain relationship between strategy's Sharpe Ratio and time to maturity.
+```{r}
+plot(as.Date(maturity_date), sharpe_ratio)
+```
+
+## 2.6 Sharpe ratio vs difference between implied volatility and realized volatility
+Generally speaking, ignoring outliers, sharpe ratio is a **linear** function of the square of difference between implied volatility and realized volatility.
+```{r}
+backtest <- mutate(backtest, diff_vol=(Implied_vol - Realized_vol)**2)
+lm.sol <- lm(backtest$Sharpe_ratio~backtest$diff_vol)
+summary(lm.sol)
+formula <- sprintf("italic(Sharpe)==%.3f+%.3f*italic(diff_vol)^2",
+                   round(lm.sol$coefficients[1][1],3),round(lm.sol$coefficients[2],3))
+ggplot(backtest,aes(Sharpe_ratio,diff_vol)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_text(x=-0.2,aes(label=formula,y=0.04),parse=TRUE,hjust=0,size=6)
+```
+
+## 2.7 implied Strike Price vs Stock Price
+Implied Strike Price is a **linear** function of Stock Price, **positive** related.
+```{r}
+lm.sol <- lm(backtest$Implied_strike~backtest$S0)
+summary(lm.sol)
+formula <- sprintf("italic(K)==%.3f+%.3f*italic(S0)",
+                   round(lm.sol$coefficients[1][1],3),round(lm.sol$coefficients[2],3))
+ggplot(backtest,aes(S0,Implied_strike)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  geom_text(x=1200,aes(label=formula,y=1800),parse=TRUE,hjust=0,size=6)
+```

@@ -1,0 +1,139 @@
+---
+title: "Assignment4-2"
+author: "HsiungYi"
+date: "13 October 2019"
+output: html_document
+---
+
+---
+title: "Assignment_4_Question_2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding1
+```{R finding1}
+ggplot(bank, aes(job, age, fill = job)) +
+  geom_boxplot()+
+  coord_flip()+
+  scale_x_discrete(limit = rev(levels(bank$job)))
+```
+*From this boxplot, we can observe that people who are already retired are most between 50s to 70s.
+*It make sense unless you are "the second generation of the rich", then you are retired when you were born, or most of the people have to work.
+
+
+# Finding2
+```{R finding2}
+bank <- mutate(bank, age_group = case_when(
+  age < 20 ~ "0-20",
+  age < 30 ~ "20-30",
+  age < 40 ~ "30-40",
+  age < 50 ~ "40-50",
+  age < 60 ~ "50-60",
+  age >= 60 ~ "60-100"
+))
+ggplot(bank,aes(age_group))+
+  geom_bar(aes(fill=housing))+
+  coord_flip()
+
+
+```
+*We can observe that people tend to have their own house when they are at their working ages.
+*However, it is hard to know why people above 60s have the least proportion of housing. 
+*Maybe it is because they have already retired, they sold their houses for some reason such as traveling.
+
+# Finding3
+```{R finding3}
+ggplot(bank, aes(balance, job))+ 
+  geom_point(aes(color = education))+
+  facet_grid(. ~ education)
+
+
+```
+*Most of the jobs tend to have a higher pay if you have a higher education.
+
+# Finding4
+```{R finding4}
+ggplot(bank)+
+  geom_point(aes(x=age, y=balance, color = education))+
+  facet_wrap(~ marital, nrow =1)
+```
+*First, people who are married or single have a higher balance than people who are divorced. I think it is maybe divorced people have some extra payments to thier original family or some law suits to pay. 
+*Second, compared to divorced and married people, there is very few single people when they are above 70s.
+
+# Finding5
+```{R finding5}
+ggplot(bank,aes(marital))+
+  geom_bar(aes(fill=education))+
+  coord_flip()
+```
+*We can see from these bars that the total married people are 2 times more than the total single people. 
+*However, look at the proportion of the higher education. 
+*If you have a higher education, you will more likely to be single.
+*That is intriguing...
+
+# Finding6
+```{R finding6}
+ggplot(bank,aes(age_group))+
+  geom_bar(aes(fill=loan))+
+  coord_flip()+
+  facet_wrap(~ marital, nrow =1)
+```
+*From these three tables, we can obesrve 3 things.
+*1st, single people who are below 30s have a proportion to have loans. Maybe it is because of the student loan.
+*2nd, most people will have loans if they are married. Because they have to buy houses, cars, or many expensive things in order to have a good family.
+*3rd, it is weird that there are some divorced people who are above 60s still have loans. I am not sure why people at this age have to borrow money from the bank. Maybe for investing? or traveling?
+# Finding7
+```{R finding7}
+ggplot(bank) +
+geom_point(aes(age, duration, color = marital, group = marital))
+```
+*Most of the plots with a higher duration which is above 1000 are from married and single people.
+
+# Finding8
+```{R finding8}
+ggplot(bank,aes(job))+
+  geom_bar(aes(fill = default))+
+  coord_flip()+
+  facet_wrap(~ education, nrow =1)
+
+```
+*From these 4 bars, we can observe 2 phenomenona.
+*1st, if you have a higher education, you will probably to have a management position or to be an entrepreneur in your job. That means it is worth having a higher education.
+*2nd, similarly, people have a higher education, they tend to have a less possibility to default.
+
+# Finding9
+```{R finding9}
+df1 <- group_by(bank, job) %>% 
+  summarise(balance_mean = mean(balance))%>%
+  arrange(balance_mean)
+df2 <- group_by(bank, job) %>% 
+  summarise(balance_max = max(balance))%>%
+  arrange(balance_max)
+
+df3 <- left_join(df1,df2, by = "job")
+
+ggplot(df3, aes(x=job, y=balance_mean))+
+  geom_bar(stat = "identity", fill = "blue")+
+  coord_flip()
+  
+```
+*We can observe that if we don't consider the retired people, people with the management positions or the entrepreneur positions, they will have a higher balance than other jobs.
+*Therefore,combined with finding 8, to have a higher education is great!!
+*In this situation, I am not really sure why the housemaid has a second place balance among these 12 jobs.
+
+# Finding10
+```{R finding10}
+ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
+geom_smooth() 
+```
+*This graph combines most of the things we found before.
+*On the right hand side(age >60) of the graph, people are most retired. 
+*People tend to have a higher balance is they are management positions or entreperneur positions.
+*Obviously, plots on the left hand side are most students.

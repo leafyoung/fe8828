@@ -1,0 +1,34 @@
+Hi, Harry Lee
+
+Below is your assignment feedback. You did well in the course.
+
+Regards,
+Yang Ye
+
+P.S.: Mr. Lee Kwan Yew's English name is also Harry Lee.
+ 
+Assignment 1 = 90
+a bit rough
+
+Assignment 2 = 100 * 0.3 + 70 * 0.7
+Part 1: 100
+
+Part 2: 70
+NPV function needs some fix. You are using the cash flow discounting.
+Because bond's yield to maturity is fixed, there is a fixed formula from bond's valuation to YTM.
+
+# isolate(values$r <- exp(input$YTM*0.01*values$d/12))
+# isolate(values$NPV[1] <- sum(values$CF/values$r))
+
+YY> isolate(values$x<- 1/(1+input$YTM*.01*input$coupon_freq/12)^(values$n))
+YY> isolate(values$NPV[1]<-input$coupon_rate*0.01*input$coupon_freq/12*input$FV*(1-values$x)/(input$YTM*.01*input$coupon_freq/12)+input$FV*values$x)
+
+Assignment 3 = 100 * 0.05 + 100 * 0.25 + 90 * 0.7
+Part 1: 100
+Part 2: 100
+Part 3: 90
+My best: #8 Relationship between revisiting customer and default rate, and #9.histogram of months
+
+Assignment 4 = 80
+My best: #9. Age group and contact methods
+

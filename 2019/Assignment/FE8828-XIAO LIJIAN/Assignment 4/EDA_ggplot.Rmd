@@ -1,0 +1,110 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis with ggplot"
+author: "XIAO LIJIAN"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1 
+```{r}
+ggplot(data = bank, mapping = aes(age, balance)) +
+  geom_smooth()
+```
+
+*A very straightforward insight: in general, as people grow older, they accumulate larger amount of wealth.<br />
+*But we also notice that after 70 years old, the balance is decreasing. One possible explanation is that after that age, people don't worry about future much as they can expect their life span. They deposit and invest less and consume more.
+
+# Finding 2
+```{r}
+ggplot(data = bank) +
+  geom_bar(mapping = aes(x = age, fill = job), position = "fill")
+```
+
+*When people are more than 65 years old, most people have already retired.<br />
+*However, except technicians who are still working after getting 65, only people who are blue-collar and housemaid  are continue working. This can be resulted by the comparably lower salaries the two positions provide in general.
+
+# Finding 3
+```{r}
+ggplot(data = bank) +
+  geom_smooth(data = filter(bank, marital == "married"),
+              aes(x = age, y = balance), color = "blue") +
+  geom_smooth(data = filter(bank, marital == "single"),
+              aes(x = age, y = balance), color = "red")
+```
+
+*Before age of 61 year old, single people seem to have more balance than married ones. But after that, generally married ones have more balance than the former.<br />
+*Is this because when people are young, married people need to spend more on children's education, raising and housing thus having less balance? If so, as they get to 61, when their children can live on their own and those parents don't have to buy large commodities, they have more balance.
+
+# Finding 4
+```{r}
+ggplot(data = bank) +
+  geom_bar(date = bank, aes(x = contact, fill = job))
+```
+
+*When look at those using cell phone, we find most of them are technicians, managers, administrators and blue-collars.<br /> 
+*Why are these people with these jobs? One possible reason is that because the population base of blue-collars is large, so this job takes a large fraction. As for the other three positions, the population base of them is generally small, so this can only be explained by the higher salaries to afford a cell phone, which is more expensive than a telephone. And they also have necessesity to own a cell phone for more frequent communication according to their job types.
+
+# Finding 5
+```{r}
+ggplot(data = bank) +
+  geom_point(aes(age, balance)) + 
+  geom_smooth(aes(age, balance), method = "lm") + 
+  facet_grid(.~ job)
+```
+
+*For most jobs (except student and unknown) which generate money, as people get older, they get richer.<br />
+*But this is not true of housemaid. Why? Is this because as they get older, their payment decrease? This doesn't make sense because more proficient housemaid should be more welcomed. Or this is because as they reach a certain age, they have to decrease their workload, thus having a lower income.
+
+# Finding 6
+```{r}
+ggplot(bank, aes(default, age)) + 
+  geom_boxplot()
+```
+
+*Most people who default are of age between 30 and 50.<br />
+*Are middle aged people more bold to take risk of ruining their credit record?
+
+# Finding 7
+```{r}
+ggplot(bank, aes(age, color = marital, alpha = 0.5)) + 
+  geom_density() +
+  theme(legend.position="bottom")
+```
+
+*Most single people are younger than married or divorced ones.<br />
+*But the group size of marrid and divored people are much similar, which means that nowadays peopel are not afraid of getting divored like people in early era.<br />
+*And unfortunately, some guys keep single even after 60.
+
+# Finding 8
+```{r}
+ggplot(bank, aes(age)) + 
+  geom_histogram(aes(fill = job)) + 
+  facet_grid(. ~ job)
+```
+
+*Most clients are in blue-collar, management, technician and admin. position.
+
+# Finding 9
+```{r}
+ggplot(data = bank, mapping = aes(x = job, fill = education)) + 
+  geom_bar() + 
+  coord_flip()
+```
+
+*People who have a tertiary education are more likely to become technician, manager, entrepreneur, administrator or start up their own firms.<br />
+*Meanwhile, to the level of management, most of them are of tertiary education.
+
+#Last Finding (yeah!)
+```{r}
+ggplot(bank) + 
+  geom_bar(mapping = aes(x = age, fill = housing), position = "fill") +
+  coord_polar()
+```
+
+*Between so-called middle age, almost half people have house, which make senses.<br />
+*What is weird is that after age of 50, the fraction of housing people are smaller and smaller. Is this because they sell their houses for their enjoyment? Or is this because they transfer their houses to their children? Or is this because they lived in a poor age when they were young, thus having no enough money to buy one?

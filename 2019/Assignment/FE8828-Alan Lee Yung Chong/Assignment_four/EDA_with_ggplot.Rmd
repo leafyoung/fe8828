@@ -1,0 +1,233 @@
+---
+title: "Bank Data Visualisation"
+author: "Alan Lee (G1900405J)"
+date: "October 3, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(purrr)
+library(ggplot2)
+library(grid)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Visualisation using ggplot2
+
+This is an extension of assignment 3 which uses visualisation packages like ggplot2 to explore interesting insights from the dataset.
+
+### Does the month of joining as the member correlates with the balance in the bank?
+
+Finding 1: We see that customer joining in the month of december tends to have highest median balance in the bank and those who joined in July tends to have the lowest median balance after at least a year of being a customer with the bank. Interestingly, the results do not change when the average balance is ranked in descending order, this means that on average and median, customers who join in the month of december have higher bank balance.
+
+```{r, echo=FALSE}
+df1 <- bank %>% dplyr::filter(duration>365) %>% group_by(month) %>% summarize(`median balance`=median(balance), `average balance` = mean(balance), count=n()) %>% arrange(desc(`median balance`))
+
+barplot(df1$`median balance`, main="Month of joining the bank and median balance", xlab="Month of joining the bank", ylab="Median balance", names.arg=df1$month, col="sky blue", border=FALSE)
+
+```
+
+
+### How does the distribution of balance for different members who join in different months look like in comparison to each other?
+
+Finding 2: In addition to having the descriptive statistics, we also want to see the distribution of bank balance. We see that the month of December and September have instances of very large bank balances while months like July and January, the balance distribution predominantly is lower than that in the month of December and September.
+
+```{r, echo=FALSE}
+# do log balance after filtering to make distibution tighter.
+df2 <- bank %>% dplyr::filter(duration>365) %>% mutate(log_balance = log(balance))
+# We want to 1) plot out the distribution for each customers's hued by months of joining the bank 2) present it in the form of distribution.
+ggplot(df2, aes(log_balance, fill=month))+ 
+  geom_density(alpha=0.8) + 
+  facet_wrap(~month) + 
+  xlab("log(balance)") + 
+  ylab("Density") + 
+  ggtitle("Distribution of balance aggregated by month") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+
+### Does age plays a role in deciding which jobs individual is currently holding? In other words, can we determine a person's job to their age.
+
+Finding 3: We see from the analysis below, people tend to stop pursuing higher degree at the age before about 45 years old. The pursue of education have a higher probability of happening before 30. Mangement positions tend to peak at the early 30s when individuals have gained sufficient experience to rise to the management positions. Housemaids tends to be a "lifelong" with some individuals still working at that role after 70 years old. Blue collar jobs, technicians and admin jobs all tend to have retirement age before 70 years old. We can also see that general population tend to retire at age between 55 - 60 years old.
+
+```{r, echo=FALSE}
+ggplot(bank, aes(age, fill=job))+ 
+  geom_density(alpha=0.5) + 
+  facet_wrap(~job) + 
+  xlab("age of individual") + 
+  ylab("Density") + 
+  ggtitle("Distribution of age by jobs") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black"))
+```
+
+### Who are the people with no housing despite having no loans, do their jobs affect their income and guide their decision to not having a house?
+
+Finding 4: From the analysis, we see that unemployed individual has higher peak than the rest of the population who have a job. This means that despite not having any loans and having the same amount of money as the rest of the population, they will not purchase house as they are saving for the rainy days. We see that the balance distribution is roughly similar in a sense that the peak happens at the same location, this means that the population has the mentality of not incurring more debt through taking up loans and hence choose not to buy a house.
+
+```{r, echo=FALSE}
+# do log balance after filtering to make distibution tighter.
+df4 <- bank %>% dplyr::filter(housing=='no' & loan=='no'& job!="unknown") %>% mutate(log_balance = log(balance))
+# We want to 1) plot out the distribution for each customers's hued by jobs 2) present it in the form of distribution.
+ggplot(df4, aes(log_balance, fill=job))+ 
+  geom_density(alpha=0.8) + 
+  facet_wrap(~job) + 
+  xlab("log(balance)") + 
+  ylab("Density") + 
+  ggtitle("Distribution of balance aggregated by jobs") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+
+### Do people who have long-relationship with the bank tends to save more money across different jobs?
+
+Finding 5: Based on the visualisation below, we see that log(duration) and log(balance) plays observable relationship in deciding the amount of money saved in the bank. We may only deduce based on the high concentration in points for profession such as blue collar, management, services, admin and technicians, we see that these are the group of people with very regular saving behaviors.
+
+```{r, echo=FALSE}
+df5 <- bank %>% dplyr::filter(balance>=0) %>% mutate(log_balance=log(balance), log_duration = log(duration))
+# We want to 1) plot out the distribution for each customers's hued by jobs 2) present it in the form of distribution.
+
+ggplot(df5)+ geom_point(aes(log_duration, log_balance), size=.05) +
+  geom_point(aes(log_duration, log_balance, color=job), alpha=0.3) + 
+  facet_wrap(~job) + 
+  xlab("log(duration)") + 
+  ylab("log(balance)") + 
+  ggtitle("Scatterplot to deduce relationship between duration and balance") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+
+### For manangement positions, do marital status and education affect balance in bank?
+
+Finding 6: From the analysis below, we see that the primary school education holder, if divorced, have higher probability of having lower than `$500` in bank balance. Being primary school educated and holding a management job, being married tends to result in higher bank balance. Secondary school and Tertiary education both have the lowest discrepancy across marital status, probably meaning that individual have the ability to preserve wealth. On the other hand, if education level is unknown, being single will imply higher probability of having lower than `$1000` in bank balance.
+
+```{r, echo=FALSE}
+df6 <- bank %>% dplyr::filter(job%in%c("management"))
+# We want to 1) plot out the distribution for each customers's hued by jobs 2) present it in the form of distribution.
+
+ggplot(df6, aes(balance, fill=marital)) + coord_cartesian(xlim=c(-500, 4000)) +
+  geom_density(alpha=0.8) +
+  facet_wrap(~education) +
+  xlab("balance") +
+  ylab("density") +
+  ggtitle("Distribution of balance of management") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+# df6 <- bank %>% group_by(job) %>% summarise(count=n()) %>% arrange(desc(count)) %>% ungroup() %>% mutate(composition = count/sum(count))
+# 
+# df6
+
+# ggplot(df4, aes(log_balance, fill=job))+ 
+#   geom_density(alpha=0.8) + 
+#   facet_wrap(~job) + 
+#   xlab("log(balance)") + 
+#   ylab("Density") + 
+#   ggtitle("Distribution of balance aggregated by jobs") +
+#   theme(plot.title = element_text(hjust = 0.5)) +
+#   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+#   panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+```
+
+### Finding the top 90th percentile of the balance in bank, find out the distribution of jobs.
+
+Finding 7: From the analysis below, the top 90 percentile in balance are plotted in stacked bar chart. We observe that the management with tertiary education takes up a large proportion of category. The next largest category are technicians with secondary education. Overall, we see that primary school graduate and individual with unknown education status makes up a smaller proportion of people having bank balance in the 90th percentile. 
+
+```{r, echo=FALSE}
+df7 <- bank %>% dplyr::filter(balance > quantile(bank$balance, c(.9))) %>% group_by(job, education) %>% summarise(count=n()) %>% arrange(desc(count)) 
+ggplot(df7, aes(fill=education, y=count, x=job)) + geom_bar(position="stack", stat="identity") + theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "white")) + ggtitle("Stacked Barchart of individuals with bank balance in the 90th percentile.")
+```
+
+### Among those who defaulted in the bank, who has negative balance in bank and how does their job and education profile looks like in relative proportion?
+
+Finding 8: For individual who have default record and less than 0 balance in their bank account, we see that secondary school education holder makes up the largest proportion followed by tertiary education holder. 
+```{r, echo=FALSE}
+df8 <- bank %>% dplyr::filter(balance < 0 & default=="yes") %>% group_by(job, education) %>% summarise(count=n()) %>% arrange(desc(count)) 
+ggplot(df8, aes(fill=education, y=count, x=job)) + geom_bar(position="stack", stat="identity") + theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "white")) + ggtitle("Stacked Barchart of individual who default and has negative balance")
+```
+
+
+### What is proportion of individuals grouped by jobs whether the bank managed to get the individual to get the loan?
+
+Finding 9: We see that a large proportion of the 
+
+```{r, fig.width=12, fig.height=12, echo=FALSE}
+
+library(gridExtra)
+df_f9 <- bank %>% group_by(job, y) %>% summarise(count=n())
+
+p1 <- ggplot(df_f9, aes(fill=y, y=count, x=job)) + geom_bar(position="stack", stat="identity") + theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "white")) + ggtitle("Stacked Barchart of client by jobs who subscribed a term deposit.")
+
+p2 <- ggplot(df_f9, aes(fill=y, y=count, x=job)) + geom_bar(position="fill", stat="identity") + theme(axis.text.x=element_text(angle=45, vjust=1, hjust=1))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "white")) + ggtitle("Proportion of client by jobs who subscribed a term deposit.")
+
+grid.arrange(p1, p2, nrow = 2)
+
+```
+
+### Measuring the income disparity in the population between the top and bottom 50th percentile taking bank balance as a "proxy" for income.
+
+Finding 10: Based on the analysis below, by visualising the distribution of balance in the bank, we see that the entrepneur, housemaids and retired are the widest as the distribution plots do not show peaks prominent peaks. In direct comparision, jobs like students, blue-collar and admin staff have more prominent peaks close to the bottom 50th percentile. By calculating the difference in balance for the top 50th percentile and the bottom 50th percentile, we see that the balance difference is the largest for housemaid at `$5176.38`, followed by retired at `$4581.12`.
+
+```{r, fig.width=12, fig.height=12, echo=FALSE}
+
+bank2 <- bank %>% dplyr::filter(default=="no") %>% mutate(.,age_group=case_when(age<30 ~ "early career",
+                                   age>=30 & age < 45 ~ "mid career",
+                                   age>=45 & age < 60 ~ "late career",
+                                   age>=60 ~ "senior citizen"))
+
+df_poor <- bank2 %>% dplyr::filter(housing=="yes" & loan=="no" & balance<quantile(balance, c(.5)) ) %>% mutate(income_class = "poor")
+
+df_rich <- bank2 %>% dplyr::filter(housing=="yes" & loan=="no" & balance>=quantile(balance, c(.5)) ) %>% mutate(income_class = "rich")
+
+if (length(unique(df_poor$job)) <= length(unique(df_rich$job))){
+  df_rich <- df_rich %>% filter(job %in% unique(df_poor$job))
+}
+
+total_df <- rbind(df_rich, df_poor)
+# Join 2 dataframe 
+p1 <- ggplot(total_df)+ 
+  geom_density(aes(balance, fill=income_class), alpha=0.5) +
+  facet_wrap(~job) +
+   coord_cartesian(xlim=c(0, 10000)) +
+  xlab("Balance (proxy for income)") + 
+  ylab("Density") + 
+  ggtitle("Wealth disparity between the top 50th percentile and the bottom 50th percentile by jobs") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+  panel.background = element_blank(), axis.line = element_line(colour = "black"))
+
+# Calculate the exact income disparity
+
+df_poor_summ <- df_poor %>% group_by(job) %>% summarise(avg_balance=mean(balance))
+
+df_rich_summ <- df_rich %>% group_by(job) %>% summarise(avg_balance=mean(balance))
+
+df_diff <- df_rich_summ %>% merge(df_poor_summ, by="job") %>% mutate(`income disparity` = avg_balance.x - avg_balance.y) %>% arrange(desc(`income disparity`))
+
+p2 <- ggplot(df_diff, aes(y=`income disparity`, x=job, fill=job)) + geom_bar(position="dodge", stat="identity") + theme(axis.text.x=element_text(angle=45, vjust=.8, hjust=1))+
+  theme(plot.title = element_text(hjust = 0.5))+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_blank(), axis.line = element_line(colour = "white")) + ggtitle("barchart of income disparity across all jobs (top 50th and bottom 50th percentile.)")
+
+grid.arrange(p1, p2, nrow = 2)
+
+```
+

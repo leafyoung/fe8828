@@ -1,0 +1,155 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "FANG, YUAN"
+date: "10/13/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(psych)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+The relationship between age and balance
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  ggplot(aes(age, balance))+
+  geom_point(aes(color = job))+
+  geom_smooth(method = "lm", color = "black")+
+  xlab("Age")+
+  ylab("Balance")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #2
+The average balance of each job shown in ascending order
+```{r fig.width=12, fig.height=8}
+bank %>%
+  group_by(job) %>%
+  summarise(`average balance` = mean(balance)) %>%
+  ggplot(aes(reorder(job, `average balance`), `average balance`), width = 2000) + 
+  geom_col(aes(fill = job))+
+  xlab("Job")+
+  ylab("Average Balance")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #3
+The marital status of each job
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  group_by(job, marital) %>% 
+  summarise(number = n()) %>% 
+  ggplot(aes(job, number, fill = marital)) + 
+  geom_col()+
+  xlab("Job")+
+  ylab("Number of People")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #4
+The average age and the number of graduates in each occupation
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  dplyr::filter(education == "tertiary") %>% 
+  group_by(job) %>% 
+  summarise(`number of graduates` = n(), age = mean(age)) %>% 
+  ggplot(aes(job, age)) +
+  geom_point(aes(color = job, size = `number of graduates`))+
+  xlab("Job")+
+  ylab("Age")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #5
+The duration of last contact of different employment conditions shown in boxplot
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  ggplot(aes(job, duration, color = job))+
+  geom_boxplot()+
+  xlab("Job")+
+  ylab("Duration of Last Contact")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #6
+The employment conditions of people who have taken a housing loan
+```{r fig.width=12, fig.height=8}
+bank %>%
+  dplyr::filter(housing == "yes") %>%
+  group_by(job) %>% 
+  summarise(prop = n()/nrow(bank)) %>% 
+  ggplot(aes("", y = prop, fill = job)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +
+  coord_polar("y", start = 0)+
+  xlab("")+
+  ylab("")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #7
+The distribution of balance in each age group
+```{r fig.width=12, fig.height=8}
+bank %>%
+  mutate(age = case_when(
+age < 30 ~ "youngster (age < 30)",
+age < 50 ~ "middle-aged (30 <= age < 50)",
+age < 65 ~ "quinquagenarian (50 <= age < 65)",
+TRUE ~ "senior (age > 65)"
+)) %>% 
+  ggplot(aes(balance, color = age)) +
+  geom_density()+
+  xlab("Balance")+
+  ylab("Density")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #8
+Age and balances of different employment conditions
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  ggplot(aes(age, balance))+
+  geom_point(aes(color = job), alpha = 0.5) +
+  facet_grid(. ~ job)+
+  xlab("Age")+
+  ylab("Balance")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #9
+The distribution of balance of people with different education background and different jobs (excluding students)
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  dplyr::filter(job != "student") %>% 
+  ggplot(aes(age, balance)) +
+  geom_point(aes(color = job),alpha = 0.5) +
+  facet_grid(education ~ job)+
+  xlab("Age")+
+  ylab("Balance")+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+# Finding #10
+Whether or not a person is working (treat "unknown" as not working)
+```{r fig.width=12, fig.height=8}
+bank %>% 
+  ggplot(aes(x = reorder(job, age, FUN = median), fill = contact)) +
+  geom_bar() +
+  scale_x_discrete(limit = rev(levels(reorder(bank$job, bank$age, FUN = median)))) +
+  geom_line(aes(job, age)) +
+  geom_point(data = group_by(bank, job) %>%
+  summarize(age = mean(age)) %>% ungroup,
+  aes(job, age), inherit.aes = FALSE) +
+  xlab("Job sorted according to average age") +
+  ylab("Number of People") +
+  coord_flip()+
+  theme(axis.title = element_text(size = 12), legend.title = element_text(size = 12), legend.text = element_text(size = 12))
+```
+
+
+

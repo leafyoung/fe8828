@@ -1,0 +1,105 @@
+---
+title: "Book Option trade"
+author: "Zhang Yiwen"
+date: "2017-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(fOptions)
+library(lubridate)
+library(bizdays)
+library(knitr)
+option <- read.csv("https://dl.dropboxusercontent.com/s/tjdqficcpothzeq/datazeven.csv?dl=0", header = TRUE, sep=",")
+```
+
+#RawData
+```{r displayRawTable, echo = TRUE }
+knitr::kable(select(option,-1) %>% head(n = 10), caption = "Raw Option Data")
+```
+
+#Data Process
+### Adding information such as underlying, position, expireation date etc.
+
+```{r dataProcess, echo=FALSE}
+numTotal <-nrow(option)
+IDSeq<- seq(1,numTotal)
+DateGenerateSeq<- rep(as.Date("2017-11-24"),numTotal)
+underlyingSeq<-rep("AMZN",numTotal)
+optionPriceSeq <-select(option,Price)
+positionSeq<-rep("Long",numTotal)
+Callseq<-rep("temp",numTotal)
+Callseq[1:87]<-"call"
+Callseq[88:174]<-"put"
+#Callseq
+ExpdateSeq<- rep(as.Date("2018-01-18"),numTotal)
+StockPriceSeq<- rep(1186,numTotal)
+StrikePriceSeq<- select(option,Strike)
+VolumeSeq<- select(option,OpenInt)
+DataTable<-data.frame(
+  No =IDSeq,
+  ExtractionDate = DateGenerateSeq,
+  Underlying =underlyingSeq,
+  StockPrice =StockPriceSeq,
+  OptionPrice = optionPriceSeq,
+  StrikePrice = StrikePriceSeq,
+  Position = positionSeq,
+  Quantity = VolumeSeq,
+  CallorPut = Callseq
+)
+names(DataTable)[8] <- c("Quantity") #change header
+#head(DataTable)
+```
+
+##Display New Data Table
+```{r displayNewTable, echo = TRUE }
+knitr::kable(select(DataTable,-1) %>% head(n = 10), caption = "Data Table after process")
+```
+
+#Summarize information from Data
+##The first table displays call and put number
+##The second table displays total number of underlying
+```{r summary, echo = TRUE, warning = FALSE}
+callPut <- ungroup((dplyr::filter(DataTable, !is.na(Price)) %>%
+rowwise() %>% 
+mutate(Value = Price*Quantity)))
+
+group_by(callPut, CallorPut) %>% summarize(TotalOpitonValue = sum(Value))
+group_by(callPut, Underlying) %>% summarize(TotalOptionValue= sum(Value))
+```
+
+# Table of options that in the money
+```{r InTheMoney, echo = TRUE}
+InMTable <- 
+  dplyr::filter(DataTable, 
+                ((CallorPut=="call")&(as.numeric(Strike)<as.numeric(StockPrice))) |
+                  ((CallorPut=="put")&(as.numeric(Strike)>as.numeric(StockPrice))))
+knitr::kable(InMTable %>% head(n = 10), caption = "Options that in the money")
+
+```
+
+
+
+## Part 4: Volatility Curve
+### This volatility Curve only includes puts that in the money
+```{r VolatilityCurve, echo = TRUE}
+bufferTable = (dplyr::filter(DataTable, (CallorPut == "put"))) 
+ExpDay<-as.Date("2018-01-18")
+CurrentDay<-as.Date("2017-11-24")
+days = ExpDay-CurrentDay
+
+days
+
+as.numeric(days) / 365
+
+VolitalityCurve <- 
+rowwise(bufferTable) %>%
+mutate(Volat = GBSVolatility(Price, tolower(substring(CallorPut,1,1)),as.numeric(StockPrice), as.numeric(Strike),as.numeric(days) / 365, 0.01, 0)) 
+
+knitr::kable(head(VolitalityCurve), caption = "Volatility curve")
+
+g<-ggplot(VolitalityCurve,aes(Strike,Volat))
+g+geom_point()+geom_smooth()
+```

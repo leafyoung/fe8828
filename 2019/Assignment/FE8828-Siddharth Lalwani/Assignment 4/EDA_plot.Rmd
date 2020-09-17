@@ -1,0 +1,191 @@
+---
+title: "Assignment 4"
+output: html_document
+---
+## Exploratory Data Work on Bank Dataset
+
+In this markdown document, I am going to analyze the Bank dataset and get insights about the data. The purpose of this task is to represent the data graphically.
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+<br>
+
+#### 1. Distribution across Marital Status
+
+Listed below is the distribution of people by their marital status. We can see that most of data is of married people.
+
+<div class = "one">
+```{r one}
+b1<-bank %>%
+  group_by(`marital`) %>%
+  summarize(Count = n())
+ggplot(b1, aes(marital,Count)) +
+  geom_bar(stat='identity')
+```
+</div>
+
+</br>
+
+#### 2. Balance Distribution of Students grouped by Housing as a factor
+
+Listed below is the balance distribution of people whose job is listed as student. They are grouped together by whether they have housing or not.We can see that among students, those without housing generally have higher balance.
+
+<div class = "two">
+```{r two}
+#View(bank)
+b2 <- bank %>%
+  filter(job == "student")
+ggplot(b2,aes(age,balance,color=housing)) +
+  geom_point() + 
+  geom_smooth()
+
+```
+</div>
+
+</br>
+
+#### 3. Education level of Different jobs across Age
+
+Below we can see the distribution of education level of different jobs across their age.Major inference is that most of Management has tertiary level of education and admin have secondary level.
+
+<div class = "three">
+```{r three}
+ggplot(bank) +
+geom_point(aes(job, age, color = education)) +
+coord_flip()
+```
+</div>
+
+
+</br>
+
+#### 4. Age Distribution across poutcomes.
+
+Below is the density distribution of Age for different poutcomes.We can infer that there is no special pattern of poutcomes across age and their density plots are similar. 
+
+<div class = "four">
+```{r four}
+summary(bank$balance)
+ggplot(bank,aes(age,fill=poutcome)) +
+geom_density() +
+facet_wrap(~poutcome)
+```
+</div>
+
+</br>
+
+#### 5. Education distribution across Marital Status
+
+Below is the number of data points of education of different marital status across various education levels. We can infer that most of data is of married people having secondary level of education.
+
+<div class = "five">
+```{r five}
+ggplot(data = bank, mapping = aes(x = marital, fill = education)) +
+  geom_bar()
+```
+</div>
+
+</br>
+
+#### 6. Count of Customers with unknown contact
+
+Below is the count of customers across various jobs who have an unknown contact. We can see that blue collar are in majority for dataset where contact is unknown.
+
+<div class = "six">
+```{r six}
+bank %>%
+  filter(contact=="unknown") %>%
+  ggplot(mapping = aes(x = job,fill=job))+
+  geom_bar()+
+  coord_flip()
+```
+</div>
+
+</br>
+
+#### 7. Distribution of poutcome
+
+Here I am finding distribution of poutcome column across different months. Here we can infer that for months from June to August, data of poutcome is mostly unknown.
+
+<div class = "seven">
+```{r seven}
+ggplot(bank) + geom_bar(mapping = aes(x = month, fill = poutcome),
+position = "fill") + coord_polar()
+```
+</div>
+
+</br>
+
+#### 8. Summarize balance of customers with loan=yes
+
+Here I am finding the summary of balances of those customers whose loan=yes. Most of the balance outliers are around age 50.
+
+<div class = "eight">
+```{r eight}
+bank %>%
+  filter(loan=="yes")%>%
+  ggplot() +
+  geom_point(mapping=aes(x = age, y = balance,color=marital))
+```
+</div>
+
+</br>
+
+#### 9. Distribution of duration across contact
+
+Here I am finding distribution of duration across contact.We can see that for senior people, contact number is generally known.
+
+<div class = "nine">
+```{r nine}
+ggplot(bank, aes(duration, age,color=contact)) + 
+  geom_point() + 
+  facet_wrap(. ~ contact)
+
+```
+</div>
+
+</br>
+
+#### 10. Distribution of marital across day
+
+Below is the distribution of marital across different days.We can see that distribution of marital is similar across all days.
+
+<div class = "ten">
+```{r ten}
+ggplot(bank) +
+geom_bar(mapping = aes(x = day, fill = marital), position = "fill") +
+coord_flip() +
+scale_x_reverse()
+```
+</div>
+
+</br>
+</br>
+<style>
+div.one pre { background-color:white; }
+div.one pre.r { background-color:lightgreen; }
+div.two pre { background-color:white; }
+div.two pre.r { background-color:lightgreen; }
+div.three pre { background-color:white; }
+div.three pre.r { background-color:lightgreen; }
+div.four pre { background-color:white; }
+div.four pre.r { background-color:lightgreen; }
+div.five pre { background-color:white; }
+div.five pre.r { background-color:lightgreen; }
+div.six pre { background-color:white; }
+div.six pre.r { background-color:lightgreen; }
+div.seven pre { background-color:white; }
+div.seven pre.r { background-color:lightgreen; }
+div.eight pre { background-color:white; }
+div.eight pre.r { background-color:lightgreen; }
+div.nine pre { background-color:white; }
+div.nine pre.r { background-color:lightgreen; }
+div.ten pre { background-color:white; }
+div.ten pre.r { background-color:lightgreen; }
+
+</style>

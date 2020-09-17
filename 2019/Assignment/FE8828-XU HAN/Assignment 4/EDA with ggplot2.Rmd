@@ -1,0 +1,128 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis(qq plot)"
+author: "XU Han <sub> <Email:xuha0011@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(readr)
+library(knitr)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+Compare the average balance among age.
+
+```{r}
+balance = group_by(bank, age) %>% summarise(balance_mean=mean(balance))
+ggplot(balance, aes(age, balance_mean)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE)
+```
+
+# Finding #2
+1.Show the relationship between age and duration.
+
+2.Color is different between different marital group.
+
+```{r}
+ggplot(bank, aes(age, duration, color = marital)) + 
+  geom_point() +
+  geom_smooth() +
+  theme(legend.position="bottom")
+```
+
+
+# Finding #3
+1.Show the relationship between age and duration.
+
+2.The smoothed lines are different color for three contact groups.
+
+```{r}
+ggplot(bank) +
+geom_point(aes(x = age, y = duration)) +
+geom_smooth(data = dplyr::filter(bank, contact == "cellular"),
+              aes(x = age, y = duration), color="green") +
+  geom_smooth(data = dplyr::filter(bank, contact == "unknown"),
+              aes(x = age, y = duration), color="orange") +
+  geom_smooth(data = dplyr::filter(bank,contact == "telephone"),
+              aes(x=age,y=duration),color="orange")
+```
+
+
+# Finding #4
+1.Show the relationship between age and pdays.
+
+2.Shape is different between different marital group.
+
+```{r}
+ ggplot(bank) +
+    geom_point(aes(age, pdays, shape = marital))
+```
+
+
+# Finding #5
+1.Sort job by mean balance.
+
+2.Divide each bar into different education component.
+
+```{r}
+ggplot(data = bank, mapping = aes(x = reorder(job, balance, FUN = mean),fill = education)) +
+  geom_bar() + 
+  coord_flip()
+```
+
+
+# Finding #6
+The number of people over the age of 30 who are still single among all age group.
+
+```{r}
+df6=group_by(bank,age) %>% filter(age>30) %>%
+  summarise('count'=sum(marital=="single"))
+ggplot(df6)+
+  geom_point(aes(age,count),color="green",size=1)
+```
+
+# Finding #7
+Show the relationship between age and balance in 12 job type.
+
+```{r}
+ ggplot(data = bank) +
+    geom_point(aes(x = age, y = balance)) +
+    facet_wrap( ~ job,nrow=4)
+```
+
+# Finding #8
+The count of pdays for each education group
+
+```{r}
+ggplot(bank, aes(pdays)) + geom_histogram(aes(fill = education)) +
+    facet_grid(. ~ education)
+```
+
+# Finding #9
+The number of people whose age is between 20 and 40 for every job type.
+
+```{r}
+df9=group_by(bank,job) %>% filter((age>20)|(age<40)) %>% summarise(count=n())
+ggplot(df9)+
+  geom_point(aes(job,count),color="blue",size=2)+
+  coord_flip()
+```
+
+# Finding #10
+1.Show the count of age.
+
+2.Divide each bar into different marital component.
+
+```{r}
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = marital))
+```

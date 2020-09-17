@@ -1,0 +1,165 @@
+---
+title: "Final Project_Delta Hedging"
+author: "Steve"
+output: html_document
+---
+
+1. Import the library
+```{r setup, include=FALSE}
+library(quantmod)
+library(fOptions)
+library(timeSeries)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+```
+
+2. Getting the data from excel "Option_Price.csv", clean the data and do the preminary data operations.
+```{r}
+data = read.csv("Option_Price.csv", sep=",", stringsAsFactors = FALSE)
+data.xts = xts(x = data[,-1, drop = F],order.by = as.Date(data[,1], "%d-%B-%y")) #Create xts object
+dates = index(data.xts) #pick a date range using xts object
+last_test_date = max(dates) - 29 #Hedge over 29 days for a 30day option
+last_date_index = sum(dates <= last_test_date)
+
+```
+
+3. Set each detail for black scholes equation from excel, and import the data into different variables to calculate.
+```{r}
+#set details of option
+start_date = dates[1]
+end_date = start_date + 29 #hedging period is 29 days for a 30day option
+start_price = as.numeric(data.xts[start_date,"Close"]) #current stock price
+start_volatility = data.xts[start_date,"IV30"] #volatility
+Strike = as.numeric(start_price) #strike price
+vol = as.numeric(start_volatility)/100 #volatility
+rf = 0.8/100 #risk-free rate
+Q = 100 #number of options
+
+```
+
+4. Produce function for the PNL.
+```{r}
+#define max drawdown function
+maxD = function(DailyPnL){
+  PnL = cumsum(DailyPnL)
+  mD = 0
+  mD <- max(cummax(PnL) - cummin(PnL))
+  mD
+}
+```
+
+5. Change the data type of date to numeric format. 
+
+```{r}
+#To change data type to numeric
+df = tibble(dates[dates<=end_date & dates>=start_date]) 
+names(df) = "Date"
+df$Close = as.numeric(data.xts[paste0(start_date,"/",end_date), "Close"])
+df
+```
+
+6. Add a column to dataframe "df"."
+```{r}
+
+df %>% #mutate to add columns to dataframe df
+  mutate(Time = as.numeric(end_date-Date)/365, #Time to expiry for option price calculation
+         premium = GBSOption(TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol)@price, #Calculating call option price
+         delta = GBSGreeks("delta", TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol)) -> df #Calculating option delta
+lag <- dplyr::lag
+df
+  df %>% mutate(Option_DoD_PnL = if_else(Date == start_date, 0, Q*(premium - lag(premium))), #daily option PnL
+         Option_DoD_Ret = if_else(Date == start_date, 0, (premium - lag(premium))/lag(premium)), #daily option PnL expressed as returns
+         Hedging_DoD_PnL = if_else(Date == start_date | Date == end_date, 0, Q*lag(delta)*(lag(Close)-Close)), #daily hedging PnL
+         Hedging_DoD_Ret = if_else(Date == start_date | Date == end_date, 0, (lag(Close)-Close)/Close), #daily hedging PnL expressed as returns
+         Daily_PnL = Option_DoD_PnL + Hedging_DoD_PnL, #total daily PnL
+         Daily_Ret = if_else(Date == start_date,0 ,Daily_PnL/(Close + lag(premium))) #total daily PnL expressed as returns
+  ) -> df 
+df
+```
+
+7. Create a summary for PNL and Max Drawdown.
+```{r}
+#summarize table of PnL and max drawdown
+df %>% summarize(Stock_PnL = sum(Hedging_DoD_PnL), Stock_maxD = maxD(Hedging_DoD_PnL), Option_PnL = sum(Option_DoD_PnL), Option_maxD = maxD(Option_DoD_PnL), PnL = sum(Daily_PnL), maxDrawdown = maxD(Daily_PnL)) 
+
+```
+
+8. Create a sharpe ratio for option, stock and total, and show its summary table.
+```{r}
+#calculate sharpe ratio
+Sharpe_option = (mean(df$Option_DoD_Ret)-exp(rf/365)+1)/sd(df$Option_DoD_Ret)
+Sharpe_stock = (mean(df$Hedging_DoD_Ret) - exp(rf/365)+1)/sd(df$Hedging_DoD_Ret)
+Sharpe_total = (mean(df$Daily_Ret) - exp(rf/365)+1)/sd(df$Daily_Ret)
+Sharpe_table = cbind(Sharpe_option,Sharpe_stock,Sharpe_total)
+Sharpe_table
+```
+
+9. Create a ggplot for Option, Stock and Daily PNL.
+```{r}
+#Plot of Daily PnL
+ggplot(df) + geom_line(aes(Date, Daily_PnL, color = "Daily PnL")) + geom_line(aes(Date, Hedging_DoD_PnL, color = "Stock PnL")) + geom_line(aes(Date, Option_DoD_PnL, color = "Option PnL")) + ggtitle("Plot of Daily PnL") +   scale_color_manual(name = "Daily PnL", values = c("Daily PnL" = "black", "Stock PnL"="green", "Option PnL"="blue"))
+
+
+```
+
+10.create a ggplot for cumulative PNL for each Option, Stock and total PNL.
+```{r}
+#Plot of Cumulative PnL
+df %>% transmute(Date, cum_Option_PnL = cumsum(Option_DoD_PnL), cum_Stock_PnL = cumsum(Hedging_DoD_PnL), cum_PnL = cumsum(Daily_PnL)) -> df_cumsum
+ggplot(df_cumsum) +geom_line(aes(Date,cum_PnL, color = "Total PnL")) + geom_line(aes(Date, cum_Stock_PnL, color = "Stock PnL")) + geom_line(aes(Date, cum_Option_PnL, color = "Option PnL")) + ggtitle("Plot of Cumulative PnL") +   scale_color_manual(name = "Cumulative Daily PnL", values = c("Total PnL" = "black", "Stock PnL"="green", "Option PnL"="blue")) + ylab("Cumulative PnL")
+```
+
+11. Create a function for backtesting and summary of the backtesting result.
+```{r}
+#Bakctesting
+#Using a for loop to backtest the remaining days of the data 
+BackTest = data.frame(StartDate = character(0),TotalPnL = numeric(0), StockPnL = numeric(0), OptionPnL = numeric(0),maxDrawdown = numeric(0),Sharpe_stock = numeric(0), Sharpe_option = numeric(0), Sharpe_total = numeric(0), stringsAsFactors = FALSE) #generate
+for(i in 1:last_date_index){
+  #Set details of Option
+  start_date = dates[i]
+  end_date = start_date + 29
+  start_price = as.numeric(data.xts[start_date,"Close"])
+  start_volatility = data.xts[start_date,"IV30"]
+  Strike = as.numeric(start_price)
+  vol = as.numeric(start_volatility)/100
+  rf = 0.8/100
+  Q = 100
+  
+  df2 = tibble(dates[dates<=end_date & dates>=start_date]) #for nicer representation of dataframe
+  names(df2) = "Date"
+  df2$Close = as.numeric(data.xts[paste0(start_date,"/",end_date), "Close"])
+  
+  #Calculate Option price, option delta, and PnL
+  df2 %>%
+    mutate(Time = as.numeric(end_date - Date)/365, 
+           premium = GBSOption(TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol)@price, 
+           delta = GBSGreeks("delta", TypeFlag = "c", S = Close, X = Strike, Time = Time, r = rf, b = 0, sigma = vol), 
+           Option_DoD_PnL = ifelse(Date == start_date, 0, Q*(premium - lag(premium))),
+           Option_DoD_Ret = ifelse(Date == start_date, 0, (premium - lag(premium))/lag(premium)),
+           Hedging_DoD_PnL = ifelse(Date == start_date | Date == end_date, 0, Q*lag(delta)*(lag(Close)-Close)),
+           Hedging_DoD_Ret = ifelse(Date == start_date | Date == end_date, 0, (lag(Close)-Close)/Close),
+           Daily_PnL = Option_DoD_PnL + Hedging_DoD_PnL,
+           Daily_Ret = ifelse(Date == start_date,0 ,Daily_PnL/(Close + lag(premium)))
+    ) -> df2
+  
+ #Max drawdown
+  df2 %>% summarize(Option_PnL = sum(Option_DoD_PnL), Option_maxD = maxD(Option_DoD_PnL), Stock_PnL = sum(Hedging_DoD_PnL), Stock_maxD = maxD(Hedging_DoD_PnL), PnL = sum(Daily_PnL), maxDrawdown = maxD(Daily_PnL)) -> bt_maxD
+  
+  #Sharpe Ratio
+  df2 %>% summarize(Sharpe_stock = (mean(Hedging_DoD_Ret) - exp(rf/365)+1)/sd(Hedging_DoD_Ret), Sharpe_option = (mean(Option_DoD_Ret)-exp(rf/365)+1)/sd(Option_DoD_Ret), Sharpe_total = (mean(Daily_Ret) - exp(rf/365)+1)/sd(Daily_Ret)) -> bt_Sharpe
+  
+  #Cumulative PnL
+  df2 %>% mutate(cum_Option_PnL = cumsum(Option_DoD_PnL), cum_Stock_PnL = cumsum(Hedging_DoD_PnL), cum_PnL = cumsum(Daily_PnL)) %>% filter(row_number() == n()) -> bt_PnL
+  
+  BackTest = add_row(BackTest, StartDate = as.character(start_date), TotalPnL = bt_PnL$cum_PnL[1], StockPnL = bt_PnL$cum_Stock_PnL[1], OptionPnL = bt_PnL$cum_Option_PnL[1], maxDrawdown = bt_maxD$maxDrawdown[1], Sharpe_stock = bt_Sharpe$Sharpe_stock, Sharpe_option = bt_Sharpe$Sharpe_option, Sharpe_total = bt_Sharpe$Sharpe_total)
+}
+BackTest  
+
+str(BackTest)
+
+plot(as.Date(BackTest$StartDate), BackTest$TotalPnL)
+plot(as.Date(BackTest$StartDate), BackTest$Sharpe_option)
+plot(as.Date(BackTest$StartDate), BackTest$maxDrawdown)
+```

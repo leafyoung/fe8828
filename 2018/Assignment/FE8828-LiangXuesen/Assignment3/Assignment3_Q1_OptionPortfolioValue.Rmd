@@ -1,0 +1,51 @@
+---
+title: "Assignment3_Q1"
+author: "Jason Liang"
+date: "24 November 2018"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+library(tidyverse)
+library(fOptions)
+library(knitr)
+```
+
+## Generate random list of 100 Options in a portfolio
+
+```{r}
+df <- data.frame(type = sample(c("c", "p"), 100, replace = TRUE), strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0), Time = 1, r = 0.01, b = 0, sigma = 0.3)
+```
+
+## Calculate each option's value in the portfolio
+
+```{r}
+df2 <- data.frame()
+for(i in (1:nrow(df))){
+  optionRow = df[i,]
+  optionVaule = round(GBSOption(TypeFlag = optionRow[1,]$type, S = optionRow[1,]$underlying, 
+                          X = optionRow[1,]$strike, Time = optionRow[1,]$Time, r = optionRow[1,]$r, 
+                          b = optionRow[1,]$b, sigma = optionRow[1,]$sigma)@price,4)
+  optionRow <- mutate(optionRow, value = optionVaule)
+  df2 <- bind_rows(df2, optionRow)
+  next()
+}
+```
+
+### Following is the list of options with values
+```{r}
+kable(df2, caption="Option Portfolio")
+```
+
+## Total portfolio value is
+```{r}
+cat(paste0(summarise(df2,totalValue=(sum(value)))))
+```
+
+

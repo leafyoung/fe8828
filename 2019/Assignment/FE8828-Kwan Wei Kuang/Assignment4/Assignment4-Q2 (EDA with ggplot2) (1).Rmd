@@ -1,0 +1,254 @@
+---
+title: "FE8828 Assignment 4 for Exploratory Data Analysis with ggplot2"
+author: "Wei Kuang <sub> <Email:kwan0067@e.ntu.edu.sg> </sub>"
+date: "Oct 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Information
+In this study, we examine the dataset: bank to derive 10 data insights. Below provides descriptions for each variable.
+
+#### Personal profile:
+1. **age** (numeric)
+2. **job** : type of job (categorical: "admin.","unknown","unemployed","management","housemaid","entrepreneur","student", "blue-collar","self-employed","retired","technician","services")
+3. **marital** : marital status (categorical: "married","divorced","single"; note: "divorced" means divorced or widowed)
+4. **education** (categorical: "unknown","secondary","primary","tertiary")
+5. **default**: has credit in default? (binary: "yes","no")
+6. **balance**: average yearly balance, in euros (numeric)
+7. **housing**: has housing loan? (binary: "yes","no")
+8. **loan**: has personal loan? (binary: "yes","no")
+
+#### Related with the last contact of the current campaign:
+9. **contact**: contact communication type (categorical: "unknown","telephone","cellular")
+10. **day**: last contact day of the month (numeric)
+11. **month**: last contact month of year (categorical: "jan", "feb", "mar", ..., "nov", "dec")
+12. **duration**: last contact duration, in seconds (numeric)
+
+#### Other attributes:
+13. **campaign**: number of contacts performed during this campaign and for this client (numeric, includes last contact)
+14. **pdays**: number of days that passed by after the client was last contacted from a previous campaign (numeric, -1 means client was not previously contacted)
+15. **previous**: number of contacts performed before this campaign and for this client (numeric)
+16. **poutcome**: outcome of the previous marketing campaign (categorical: "unknown","other","failure","success")
+
+#### Output variable (desired target):
+17. **y** - has the client subscribed a term deposit? (binary: "yes","no")
+
+Also, for below analysis, derived variable: **age_group** refers to
+
+| age_group | Age range |
+|:---------:|:---------:|
+| 10        | 10,19     |
+| 20        | 20,29     |
+| 30        | 30,39     |
+| 40        | 40,49     |
+| 50        | 50,59     |
+| 60        | 60,69     |
+| 70        | 70,79     |
+| 80        | 80,89     |
+
+also, derived variable: **working** refers to
+
+| working | job           |
+|:-------:|:-------------:|
+| no      | unknown       |
+| no      | unemployed    |
+| no      | housemaid     |
+| no      | student       |
+| no      | retired       |
+| yes     | admin         |
+| yes     | management    |
+| yes     | entrepreneur  |
+| yes     | blue-collar   |
+| yes     | self-employed |
+| yes     | technician    |
+| yes     | services      |
+
+# Finding #1
+
+#### How balance trends with age for working/non-working clients.
+```{r}
+df <- mutate(bank, working = ifelse(job %in% c("unknown", "unemployed", "housemaid", "student", "retired"), "no", "yes"), age_group = (age %/% 10) * 10)
+
+ggplot(df, aes(age, balance)) + 
+  geom_point(aes(color = working)) +
+  geom_smooth() +
+  theme_bw() +
+  facet_grid(. ~ working) + 
+  theme(legend.position = "bottom") +
+  labs(title = "Balance vs Age (working/non-working clients)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+For working client, the **average yearly balance increases as age increases, while for non-working clients, average yearly balance remains rather muted as age increases**.
+
+# Finding #2
+
+#### Study of age profile of those default/no default, breakdown by working/non-working.
+```{r}
+ggplot(df, aes(default, age)) +
+  geom_boxplot(aes(color = working)) +
+  theme_bw() +
+  facet_grid(. ~ working) + 
+  theme(legend.position = "bottom") +
+  labs(title = "Age profile of default/no default (working/non-working clients)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+Regardless of working/non-working, those that has credit in default generally is a more "compressed" group, above age of 25 but not above 60 (as shown by the shorter tails of the boxplots).
+
+**For non-working clients, the median age is higher for those not having credit in default than those having credit in default**.
+
+On the other hand, **for working clients, the median age is slightly lower for those not having credit in default than those having credit in default**.
+
+# Finding #3
+
+#### Study of age group with respect to the proportion of default.
+```{r}
+df2 <- df %>% group_by(age_group, default) %>% summarise(count = n())
+df3 <- df %>% group_by(age_group) %>% summarise(tot = n())
+df2 <- left_join(df2, df3, by = "age_group") %>% mutate(pct = count/tot*100)
+
+ggplot(df2, mapping = aes(age_group, pct, fill = default)) +
+  geom_bar(position = "fill", stat = "identity") +
+  geom_text(aes(label = paste(round(pct,2), "%")),
+        position = position_fill(vjust = 0.5),
+        color = "white") +
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Age group by default/no default") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+It is again shown that only age range from 20 to 60 has credit in default. Of which, **age range from 20 to 30 has the highest proportion of default at `r round(df2[which(df2$age_group == 20 & df2$default == "yes"), "pct"], 1)`%**.
+
+# Finding #4
+
+#### Study of job breakdown by marital status (sorted in descending order of mean balance).
+```{r}
+df4 <- df %>% group_by(job, marital) %>% summarise(count = n())
+df5 <- df %>% group_by(job) %>% summarise(meanBal = mean(balance))
+df4 <- left_join(df4, df5, by = "job")
+  
+ggplot(df4, mapping = aes(x = reorder(job, meanBal, FUN = mean), y = count, fill = marital, label = count)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+  coord_flip()+
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Job by marital status") +
+  labs(x = "job") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+df5 %>% arrange(desc(meanBal))
+```
+**Retired clients**, made up of `r df4[df4$job == "retired" & df4$marital == "single",]$count` singles, `r df4[df4$job == "retired" & df4$marital == "married",]$count` married and `r df4[df4$job == "retired" & df4$marital == "divorced",]$count` divorced  **has the highest mean balance of `r round(df5[df5$meanBal == max(df5$meanBal),2])`**. 
+
+The highest number of clients are in the management role (total count = `r sum(df4[df4$job == "management",]$count)`) and has a mean balance of `r round(df5[df5$job == "management",2])`.
+
+# Finding #5
+
+### Study of number of days passed since last contact, breakdown by working/non-working (for clients who have been previously contacted).
+```{r}
+ggplot(dplyr::filter(df, pdays != -1), aes(pdays, color = working, fill = working, alpha = 0.3)) +
+  geom_density()+
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Pdays density (working/non-working clients)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+There are **two peak pdays observed for both working and non-working clients**. Pdays for working clients are generally longer than that of non-working clients.
+
+# Finding #6
+
+### Study of age profile of those clients who subscribed term deposits, breakdown by working/non-working and education.
+```{r}
+ggplot(dplyr::filter(df, y == "yes"), aes(age, fill = working)) +
+  geom_histogram(binwidth=10) +
+  facet_wrap(working ~ education, nrow = 2) +
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Age profile of subscribers by education (working/non-working clients)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+Most of those subscribed are working clients. **Working clients with education = "secondary" and "tertiary" are the two highest count groups**, with **majority of them in age range from around 25 to around 50**. 
+
+# Finding #7
+
+### How different are the loan profiles of clients in management role vs clients who retired? 
+
+Note that having loan means having either housing loan or personal loan or both.
+```{r}
+df6 <- dplyr::filter(df, job %in% c("management","retired")) %>%
+  mutate(have_loan = case_when(
+    housing == "yes" | loan == "yes" ~ "yes",
+    TRUE ~ "no"
+    )) %>%
+  group_by(job, marital, have_loan) %>%
+  summarise(count = n())
+
+ggplot(df6, mapping = aes(x = have_loan, y = count, fill = marital, label = count)) +
+  geom_bar(stat = "identity") +
+  geom_text(size = 3, position = position_stack(vjust = 0.5)) +
+  facet_wrap(job ~ marital, nrow = 2) + 
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Loan profiles of management and retired, by marital status") +
+  labs(x = "have loan?") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+**Majority of the clients in management role have loans, but not clients who retired**. In both management and retired, married clients are the largest groups.
+
+# Finding #8
+
+### Study of duration density by contact communication type (telephone, cellular)
+```{r}
+ggplot(dplyr::filter(df, contact %in% c("telephone","cellular")), mapping = aes(duration, color = contact, fill = contact, alpha = 0.3)) +
+  geom_density() +
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Duration density of telephone and cellular") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+The density graphs show that **both types of contact communication are similar in duration**.
+
+# Finding #9
+
+### Related with the last contact of the current campaign, which day and month was the most active?
+```{r}
+firstup <- function(x) {
+  substr(x, 1, 1) <- toupper(substr(x, 1, 1))
+  x
+}
+
+ggplot(mutate(df, month_name = factor(firstup(as.character(month)), levels = month.abb)), mapping = aes(day, fill = month_name)) +
+  geom_bar() +
+  facet_grid(. ~ month_name) +
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Active days and months") +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+df %>% group_by(month, day) %>% summarise(count = n()) %>% arrange(desc(count)) %>% head
+```
+From the graph, **May was the most active month** with **`r df %>% group_by(month, day) %>% summarise(count = n()) %>% arrange(desc(count)) %>% .[1,"day"]` `r df %>% group_by(month, day) %>% summarise(count = n()) %>% arrange(desc(count)) %>% .[1,"month"]` being the most active date**.
+
+
+# Finding #10
+
+### Is there any relationship between number of contacts performed during this campaign (campaign) and before this campaign (previous) for a particular client?
+```{r}
+ggplot(df, mapping = aes(previous, campaign, shape = working)) +
+  geom_point() +
+  geom_smooth(aes(color = working), se = FALSE) +
+  theme_bw() + 
+  theme(legend.position = "bottom") +
+  labs(title = "Campaign vs Previous") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+**No clear relationship can be drawn from this scatter plot**. However, one can see that **for non-working clients, it seems that as the number of previous contacts performed increases, the number of contacts performed during this campaign decreases**. 

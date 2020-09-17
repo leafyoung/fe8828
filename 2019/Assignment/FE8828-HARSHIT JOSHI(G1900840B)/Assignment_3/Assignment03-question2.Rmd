@@ -1,0 +1,167 @@
+---
+title: "EDA 1"
+author: "HARSHIT JOSHI"
+date: "10/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Q1-profession with highest number of accounts#####
+
+```{r}
+accounts<-bank%>%
+  group_by(job)%>%
+  summarise(number_of_accounts=n())%>%
+  arrange(desc(number_of_accounts))%>%
+  top_n(1)
+
+cat(paste("Profession with highest number of bank accounts: ", accounts$job, "\n", "number of bank accounts: ", accounts$number_of_accounts))
+```
+
+# q2-profession with highest number of loans####
+
+```{r}
+loan_taken<-bank%>%
+  group_by(job, loan)%>%
+  summarise(loan_count=n())%>%
+  filter(loan=="yes")%>%
+  arrange(desc(loan_count))%>%
+  head(1)
+
+cat(paste("Profession with highest number of loans: ", loan_taken$job, "\n", "number ofloans: ", loan_taken$loan_count))
+```
+
+# q3-profession with highest percent of loans####
+
+```{r}
+loan_percentage<-merge(x=bank%>%
+                         group_by(job)%>%
+                         summarise(number_of_accounts=n()), 
+                       y=bank%>%
+                         group_by(job, loan)%>%
+                         summarise(loan_count=n()), by="job", all=TRUE)%>%
+  mutate(percent_loan=(loan_count/number_of_accounts))%>%
+  filter(loan=="yes")%>%
+  arrange(desc(percent_loan))%>%
+  head(1)
+
+loan_percentage
+cat(paste("profession with highest percent of loans: ", loan_percentage$job, "\n", "percent of loans taken: ", loan_percentage$percent_loan))
+```
+
+# q4-profession with highest per capita bank balance####
+
+```{r}
+max_balance<-bank%>%
+  group_by(job)%>%
+  summarise(tot_accounts=n(), tot_balance=sum(balance), duration=median(duration))%>%
+  mutate(per_Capita_balance_by_profession=(tot_balance/tot_accounts))%>%
+  arrange(desc(per_Capita_balance_by_profession, duration))%>%
+  head(5)
+
+cat(paste("Profession with highest bank balance for an individual: ", max_balance$job[1], "\n", "per_Capita_balance_by_professions: ", max_balance$per_Capita_balance_by_profession[1]))
+cat(paste("Profession with 2nd highest bank balance for an individual: ", max_balance$job[2], "\n", "per_Capita_balance_by_professions: ", max_balance$per_Capita_balance_by_profession[2]))
+cat(paste("per_Capita_balance is 2nd highest for housemaid STRANGE"))
+```
+
+# q5-highest default rates by profession-TOP 5####
+
+```{r}
+default_rate<-merge(
+  x=(bank%>%
+       group_by(job, default)%>%
+       summarise(default_count=n())) , 
+  y=bank%>%
+    group_by(job)%>%
+    summarise(number_of_accounts=n()), 
+  by="job", all=TRUE)%>%
+  mutate(percent_default=(default_count/number_of_accounts)*100)%>%
+  filter(default=="yes")%>%
+  arrange(desc(percent_default))%>%
+  head(5)
+
+default_rate
+cat(paste("Profession with highest default rate on loans: ", default_rate$job[1], "\n", "default rate: ", default_rate$percent_default[1]))
+```
+
+# q6-age and job relationship####
+
+```{r}
+job_age<-bank%>%
+  group_by(job)%>%
+  summarise(mean_age=mean(age))%>%
+  arrange(desc(mean_age))%>%
+  head(5)
+
+cat(paste("Top 5 professions with highest mean age:- "))
+job_age 
+cat(paste("INFERENCE-  generally older people tend to have the most savings in the bank","\n",
+          " this table might explain a bit why house maids have the 2nd highest bank balance as they are the third highest age group"))
+``` 
+
+# q7-Relationship between number of days campaigned, previous outcome and current outcome####
+
+```{r}
+previous_n_current<-bank%>%
+  group_by(poutcome, y)%>%
+  summarise(days_campaign=mean(campaign))%>%
+  select(poutcome, days_campaign, y)
+
+previous_n_current
+cat(paste("INFERENCE- more number of days campaigned didnt have any materialistic effect in changing the result of previous outcome",
+          "\n",
+          "this clearly shows that increasing the number of days spent campaigning didnt have any positive affect for any of the catgories"))
+```
+
+# q8-days between campaigning and effect on the final decision####
+
+```{r}
+days_between<-bank%>%
+  group_by(poutcome, y)%>%
+  filter(pdays>0)%>%
+  summarise(days_between=mean(pdays))
+days_between
+
+cat(paste("INFERENCE- in cases where previous outcome was 'other' current outcome become 'yes' when the days between campaigning where less"))
+```
+
+# q9-contact and duration relation###
+
+```{r}
+mode_of_contact<-bank%>%
+  group_by(contact)%>%
+  summarise(avg_duration=mean(duration), num_of_contacts=mean(campaign))
+
+mode_of_contact
+cat(paste("INFERENCE- last contact duration for the cellular was highest while the number of contacts made during this campaign was highest for the telephone"))
+```
+
+
+# q10-job/marital####
+
+```{r}
+accounts<-bank%>%
+  group_by(job)%>%
+  summarise(number_of_accounts=n())
+
+marital_count<-bank%>%
+  group_by(job, marital)%>%
+  summarise(marital_status_count=n())
+
+marital_status_rate<-merge(x=marital_count, y=accounts, by="job", all=TRUE)%>%
+  mutate(marital_status_summary=(marital_status_count/number_of_accounts))%>%
+  filter(marital=="married")%>%
+  arrange(desc(marital_status_summary))%>%
+  filter(marital_status_summary==max(marital_status_summary))
+
+# summarise(highest_percent_married=max(marital_status_summary))
+
+cat(paste("Profession with the highest percent of married people: ",marital_status_rate$job, "\n", "percent married: ", marital_status_rate$marital_status_summary))
+```
