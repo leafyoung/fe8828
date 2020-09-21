@@ -295,7 +295,7 @@ Reactive values work together with reactive functions.
 Reactivity is enabled by placing input `inputXXX` inside `renderXXX` function. (shiny-21.R)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-21.R"))
+cat(htmltools::includeText("example/week2/shiny-21.R"))
 ```
 
 ## Reactivity - 2
@@ -305,7 +305,7 @@ cat(htmltools::includeText("example/shiny-21.R"))
 - If we remove `isolate`? (shiny-22.R)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-22.R"))
+cat(htmltools::includeText("example/week2/shiny-22.R"))
 ```
 
 ## Reactivity - 3
@@ -313,7 +313,7 @@ cat(htmltools::includeText("example/shiny-22.R"))
 We can add a reactiveValue with `eventReactive`. (shiny-23.R)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-23.R"))
+cat(htmltools::includeText("example/week2/shiny-23.R"))
 ```
 
 ## Output
@@ -354,7 +354,7 @@ output$t4 <- renderPrint({
 ## Example: (Shiny-24.R)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-24.R"))
+cat(htmltools::includeText("example/week2/shiny-24.R"))
 ```
 
 ## Debug Shiny
@@ -394,7 +394,7 @@ $Bond Price = Coupon * \frac{1 - (\frac{1}{(1 + yield)^n})}{yield} + \Big[Maturi
 install.packages("tidyverse")
 
 ```{r, echo = FALSE, out.width = "55%"}
-knitr::include_graphics("imgs/tidyverse.png")
+knitr::include_graphics("imgs/2017/tidyverse.png")
 ```
 
 ## SQL
@@ -403,7 +403,7 @@ knitr::include_graphics("imgs/tidyverse.png")
 - It first appeared in 1974, which is `r lubridate::year(Sys.time()) - 1974` years ago.
 
 ```{r, echo = FALSE, out.width = "60%"}
-knitr::include_graphics("imgs/edgar-codd.png")
+knitr::include_graphics("imgs/2017/edgar-codd.png")
 ```
 
 ## CRUD: Create | Read | Update | Delete
@@ -411,7 +411,7 @@ knitr::include_graphics("imgs/edgar-codd.png")
 Data engineering was born around 70s with SQL.
 
 ```{r, echo = FALSE, out.width = "45%"}
-knitr::include_graphics("imgs/CRUD.png")
+knitr::include_graphics("imgs/2017/CRUD.png")
 ```
 
 ## SQL does CRUD
@@ -516,7 +516,7 @@ I chose this data set of a Portuguese retail bank clients profile.
 - Real data collected from a Portuguese retailbank, from May 2008 to June 2013, in a total of 52,944 phone contacts.
 
 ```{r, echo = FALSE, out.width = "45%"}
-knitr::include_graphics("imgs/sample-bank-data.png")
+knitr::include_graphics("imgs/2017/sample-bank-data.png")
 ```
 
 
@@ -622,7 +622,7 @@ just_young2 <- dplyr::filter(bank, age >= 20 & age < 30 & marital == "single")
 ## `filter` - logic operators
 
 ```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("imgs/transform-logical.png")
+knitr::include_graphics("imgs/2017/transform-logical.png")
 ```
 
 ## `filter` - string operations

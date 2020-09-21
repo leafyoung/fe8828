@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.7) (preloaded format=pdflatex 2020.9.14)  17 SEP 2020 01:47
+This is pdfTeX, Version 3.14159265-2.6-1.40.21 (MiKTeX 20.7) (preloaded format=pdflatex 2020.9.14)  21 SEP 2020 13:59
 entering extended mode
 **./lec01.tex
 (lec01.tex
@@ -1432,11 +1432,11 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [6
 
 ]
-<imgs/data-science-explore.png, id=78, 389.20406pt x 143.03438pt>
-File: imgs/data-science-explore.png Graphic file (type png)
-<use imgs/data-science-explore.png>
-Package pdftex.def Info: imgs/data-science-explore.png  used on input line 260.
-
+<imgs/2017/data-science-explore.png, id=78, 389.20406pt x 143.03438pt>
+File: imgs/2017/data-science-explore.png Graphic file (type png)
+<use imgs/2017/data-science-explore.png>
+Package pdftex.def Info: imgs/2017/data-science-explore.png  used on input line
+ 260.
 (pdftex.def)             Requested size: 206.5266pt x 75.8995pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1445,11 +1445,11 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [7
 
- <./imgs/data-science-explore.png>]
-<new/tidyverse.png, id=88, 1204.5pt x 485.815pt>
-File: new/tidyverse.png Graphic file (type png)
-<use new/tidyverse.png>
-Package pdftex.def Info: new/tidyverse.png  used on input line 275.
+ <./imgs/2017/data-science-explore.png>]
+<imgs/2018/tidyverse.png, id=88, 1204.5pt x 485.815pt>
+File: imgs/2018/tidyverse.png Graphic file (type png)
+<use imgs/2018/tidyverse.png>
+Package pdftex.def Info: imgs/2018/tidyverse.png  used on input line 275.
 (pdftex.def)             Requested size: 309.78085pt x 124.94493pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1458,7 +1458,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [8
 
- <./new/tidyverse.png>]
+ <./imgs/2018/tidyverse.png>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1487,10 +1487,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [12
 
 ]
-<new/tidy2.png, id=145, 606.01407pt x 525.46312pt>
-File: new/tidy2.png Graphic file (type png)
-<use new/tidy2.png>
-Package pdftex.def Info: new/tidy2.png  used on input line 383.
+<imgs/2018/tidy2.png, id=145, 606.01407pt x 525.46312pt>
+File: imgs/2018/tidy2.png Graphic file (type png)
+<use imgs/2018/tidy2.png>
+Package pdftex.def Info: imgs/2018/tidy2.png  used on input line 383.
 (pdftex.def)             Requested size: 240.9403pt x 208.91469pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1499,7 +1499,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [13
 
- <./new/tidy2.png>]
+ <./imgs/2018/tidy2.png>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1521,10 +1521,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [16
 
 ]
-<new/assignment-org.png, id=181, 701.62125pt x 191.21437pt>
-File: new/assignment-org.png Graphic file (type png)
-<use new/assignment-org.png>
-Package pdftex.def Info: new/assignment-org.png  used on input line 513.
+<imgs/2018/assignment-org.png, id=181, 701.62125pt x 191.21437pt>
+File: imgs/2018/assignment-org.png Graphic file (type png)
+<use imgs/2018/assignment-org.png>
+Package pdftex.def Info: imgs/2018/assignment-org.png  used on input line 513.
 (pdftex.def)             Requested size: 240.93547pt x 65.66266pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1533,11 +1533,12 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [17
 
- <./new/assignment-org.png>]
-<new2020/share_one_drive.png, id=193, 927.465pt x 423.08063pt>
-File: new2020/share_one_drive.png Graphic file (type png)
-<use new2020/share_one_drive.png>
-Package pdftex.def Info: new2020/share_one_drive.png  used on input line 528.
+ <./imgs/2018/assignment-org.png>]
+<imgs/2020/share_one_drive.png, id=193, 927.465pt x 423.08063pt>
+File: imgs/2020/share_one_drive.png Graphic file (type png)
+<use imgs/2020/share_one_drive.png>
+Package pdftex.def Info: imgs/2020/share_one_drive.png  used on input line 528.
+
 (pdftex.def)             Requested size: 240.93709pt x 109.90799pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1546,11 +1547,12 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [18
 
- <./new2020/share_one_drive.png>]
-<imgs/keep-calm-code-on.jpg, id=202, 602.25pt x 702.625pt>
-File: imgs/keep-calm-code-on.jpg Graphic file (type jpg)
-<use imgs/keep-calm-code-on.jpg>
-Package pdftex.def Info: imgs/keep-calm-code-on.jpg  used on input line 537.
+ <./imgs/2020/share_one_drive.png>]
+<imgs/2017/keep-calm-code-on.jpg, id=202, 602.25pt x 702.625pt>
+File: imgs/2017/keep-calm-code-on.jpg Graphic file (type jpg)
+<use imgs/2017/keep-calm-code-on.jpg>
+Package pdftex.def Info: imgs/2017/keep-calm-code-on.jpg  used on input line 53
+7.
 (pdftex.def)             Requested size: 103.25415pt x 120.46318pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1559,7 +1561,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [19
 
- <./imgs/keep-calm-code-on.jpg>]
+ <./imgs/2017/keep-calm-code-on.jpg>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1567,10 +1569,11 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [20
 
 ]
-<imgs/Internet_map_1024.jpg, id=221, 1284.8pt x 1284.8pt>
-File: imgs/Internet_map_1024.jpg Graphic file (type jpg)
-<use imgs/Internet_map_1024.jpg>
-Package pdftex.def Info: imgs/Internet_map_1024.jpg  used on input line 557.
+<imgs/2017/Internet_map_1024.jpg, id=221, 1284.8pt x 1284.8pt>
+File: imgs/2017/Internet_map_1024.jpg Graphic file (type jpg)
+<use imgs/2017/Internet_map_1024.jpg>
+Package pdftex.def Info: imgs/2017/Internet_map_1024.jpg  used on input line 55
+7.
 (pdftex.def)             Requested size: 137.6624pt x 137.6624pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1579,18 +1582,18 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [21
 
- <./imgs/Internet_map_1024.jpg>]
-<imgs/dot-to-dot-connect-the-dots.jpg, id=229, 578.16pt x 794.97pt>
-File: imgs/dot-to-dot-connect-the-dots.jpg Graphic file (type jpg)
-<use imgs/dot-to-dot-connect-the-dots.jpg>
-Package pdftex.def Info: imgs/dot-to-dot-connect-the-dots.jpg  used on input li
-ne 562.
+ <./imgs/2017/Internet_map_1024.jpg>]
+<imgs/2017/dot-to-dot-connect-the-dots.jpg, id=229, 578.16pt x 794.97pt>
+File: imgs/2017/dot-to-dot-connect-the-dots.jpg Graphic file (type jpg)
+<use imgs/2017/dot-to-dot-connect-the-dots.jpg>
+Package pdftex.def Info: imgs/2017/dot-to-dot-connect-the-dots.jpg  used on inp
+ut line 562.
 (pdftex.def)             Requested size: 137.67612pt x 189.30467pt.
-<imgs/network_connect_dots.jpg, id=230, 1027.84pt x 1027.84pt>
-File: imgs/network_connect_dots.jpg Graphic file (type jpg)
-<use imgs/network_connect_dots.jpg>
-Package pdftex.def Info: imgs/network_connect_dots.jpg  used on input line 562.
-
+<imgs/2017/network_connect_dots.jpg, id=230, 1027.84pt x 1027.84pt>
+File: imgs/2017/network_connect_dots.jpg Graphic file (type jpg)
+<use imgs/2017/network_connect_dots.jpg>
+Package pdftex.def Info: imgs/2017/network_connect_dots.jpg  used on input line
+ 562.
 (pdftex.def)             Requested size: 137.67024pt x 137.67024pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1599,12 +1602,13 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [22
 
- <./imgs/dot-to-dot-connect-the-dots.jpg> <./imgs/network_connect_dots.jpg>]
-<imgs/Common-network-topologies.png, id=239, 1060.96375pt x 798.985pt>
-File: imgs/Common-network-topologies.png Graphic file (type png)
-<use imgs/Common-network-topologies.png>
-Package pdftex.def Info: imgs/Common-network-topologies.png  used on input line
- 582.
+ <./imgs/2017/dot-to-dot-connect-the-dots.jpg> <./imgs/2017/network_connect_dot
+s.jpg>]
+<imgs/2017/Common-network-topologies.png, id=239, 1060.96375pt x 798.985pt>
+File: imgs/2017/Common-network-topologies.png Graphic file (type png)
+<use imgs/2017/Common-network-topologies.png>
+Package pdftex.def Info: imgs/2017/Common-network-topologies.png  used on input
+ line 582.
 (pdftex.def)             Requested size: 137.6711pt x 103.67662pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1613,11 +1617,11 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [23
 
- <./imgs/Common-network-topologies.png>]
-<imgs/cables.jpg, id=249, 1027.84pt x 809.0225pt>
-File: imgs/cables.jpg Graphic file (type jpg)
-<use imgs/cables.jpg>
-Package pdftex.def Info: imgs/cables.jpg  used on input line 587.
+ <./imgs/2017/Common-network-topologies.png>]
+<imgs/2017/cables.jpg, id=249, 1027.84pt x 809.0225pt>
+File: imgs/2017/cables.jpg Graphic file (type jpg)
+<use imgs/2017/cables.jpg>
+Package pdftex.def Info: imgs/2017/cables.jpg  used on input line 587.
 (pdftex.def)             Requested size: 213.39044pt x 167.96162pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1626,7 +1630,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [24
 
- <./imgs/cables.jpg>]
+ <./imgs/2017/cables.jpg>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1634,10 +1638,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [25
 
 ]
-<imgs/tcp_header.png, id=267, 501.875pt x 290.08376pt>
-File: imgs/tcp_header.png Graphic file (type png)
-<use imgs/tcp_header.png>
-Package pdftex.def Info: imgs/tcp_header.png  used on input line 614.
+<imgs/2017/tcp_header.png, id=267, 501.875pt x 290.08376pt>
+File: imgs/2017/tcp_header.png Graphic file (type png)
+<use imgs/2017/tcp_header.png>
+Package pdftex.def Info: imgs/2017/tcp_header.png  used on input line 614.
 (pdftex.def)             Requested size: 206.52055pt x 119.36888pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1646,16 +1650,18 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [26
 
- <./imgs/tcp_header.png>]
-<imgs/375px-TCP_CLOSE.svg.png, id=277, 376.40625pt x 301.125pt>
-File: imgs/375px-TCP_CLOSE.svg.png Graphic file (type png)
-<use imgs/375px-TCP_CLOSE.svg.png>
-Package pdftex.def Info: imgs/375px-TCP_CLOSE.svg.png  used on input line 632.
+ <./imgs/2017/tcp_header.png>]
+<imgs/2017/375px-TCP_CLOSE.svg.png, id=277, 376.40625pt x 301.125pt>
+File: imgs/2017/375px-TCP_CLOSE.svg.png Graphic file (type png)
+<use imgs/2017/375px-TCP_CLOSE.svg.png>
+Package pdftex.def Info: imgs/2017/375px-TCP_CLOSE.svg.png  used on input line 
+632.
 (pdftex.def)             Requested size: 86.04895pt x 68.83916pt.
-<imgs/DHCP_session.svg.png, id=278, 260.975pt x 369.38pt>
-File: imgs/DHCP_session.svg.png Graphic file (type png)
-<use imgs/DHCP_session.svg.png>
-Package pdftex.def Info: imgs/DHCP_session.svg.png  used on input line 632.
+<imgs/2017/DHCP_session.svg.png, id=278, 260.975pt x 369.38pt>
+File: imgs/2017/DHCP_session.svg.png Graphic file (type png)
+<use imgs/2017/DHCP_session.svg.png>
+Package pdftex.def Info: imgs/2017/DHCP_session.svg.png  used on input line 632
+.
 (pdftex.def)             Requested size: 75.72461pt x 107.17944pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1664,11 +1670,12 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [27
 
- <./imgs/375px-TCP_CLOSE.svg.png> <./imgs/DHCP_session.svg.png>]
-<imgs/wireshark-packets.jpg, id=289, 782.925pt x 431.6125pt>
-File: imgs/wireshark-packets.jpg Graphic file (type jpg)
-<use imgs/wireshark-packets.jpg>
-Package pdftex.def Info: imgs/wireshark-packets.jpg  used on input line 644.
+ <./imgs/2017/375px-TCP_CLOSE.svg.png> <./imgs/2017/DHCP_session.svg.png>]
+<imgs/2017/wireshark-packets.jpg, id=289, 782.925pt x 431.6125pt>
+File: imgs/2017/wireshark-packets.jpg Graphic file (type jpg)
+<use imgs/2017/wireshark-packets.jpg>
+Package pdftex.def Info: imgs/2017/wireshark-packets.jpg  used on input line 64
+4.
 (pdftex.def)             Requested size: 240.92422pt x 132.81718pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1677,7 +1684,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [28
 
- <./imgs/wireshark-packets.jpg>]
+ <./imgs/2017/wireshark-packets.jpg>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1700,16 +1707,16 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [30
 
 ]
-<imgs/640px-UDP_encapsulation.svg.png, id=315, 642.4pt x 401.5pt>
-File: imgs/640px-UDP_encapsulation.svg.png Graphic file (type png)
-<use imgs/640px-UDP_encapsulation.svg.png>
-Package pdftex.def Info: imgs/640px-UDP_encapsulation.svg.png  used on input li
-ne 701.
+<imgs/2017/640px-UDP_encapsulation.svg.png, id=315, 642.4pt x 401.5pt>
+File: imgs/2017/640px-UDP_encapsulation.svg.png Graphic file (type png)
+<use imgs/2017/640px-UDP_encapsulation.svg.png>
+Package pdftex.def Info: imgs/2017/640px-UDP_encapsulation.svg.png  used on inp
+ut line 701.
 (pdftex.def)             Requested size: 127.35046pt x 79.59404pt.
-<imgs/tcp-ip.png, id=316, 325.215pt x 369.63094pt>
-File: imgs/tcp-ip.png Graphic file (type png)
-<use imgs/tcp-ip.png>
-Package pdftex.def Info: imgs/tcp-ip.png  used on input line 701.
+<imgs/2017/tcp-ip.png, id=316, 325.215pt x 369.63094pt>
+File: imgs/2017/tcp-ip.png Graphic file (type png)
+<use imgs/2017/tcp-ip.png>
+Package pdftex.def Info: imgs/2017/tcp-ip.png  used on input line 701.
 (pdftex.def)             Requested size: 120.47157pt x 136.92485pt.
 
 Overfull \vbox (25.5162pt too high) detected at line 701
@@ -1722,16 +1729,17 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [31
 
- <./imgs/640px-UDP_encapsulation.svg.png> <./imgs/tcp-ip.png>]
-<imgs/internet-host-count.png, id=328, 1013.28563pt x 382.42876pt>
-File: imgs/internet-host-count.png Graphic file (type png)
-<use imgs/internet-host-count.png>
-Package pdftex.def Info: imgs/internet-host-count.png  used on input line 722.
+ <./imgs/2017/640px-UDP_encapsulation.svg.png> <./imgs/2017/tcp-ip.png>]
+<imgs/2017/internet-host-count.png, id=328, 1013.28563pt x 382.42876pt>
+File: imgs/2017/internet-host-count.png Graphic file (type png)
+<use imgs/2017/internet-host-count.png>
+Package pdftex.def Info: imgs/2017/internet-host-count.png  used on input line 
+722.
 (pdftex.def)             Requested size: 185.86238pt x 70.14716pt.
-<new/ietf-card.png, id=329, 481.8pt x 240.9pt>
-File: new/ietf-card.png Graphic file (type png)
-<use new/ietf-card.png>
-Package pdftex.def Info: new/ietf-card.png  used on input line 722.
+<imgs/2018/ietf-card.png, id=329, 481.8pt x 240.9pt>
+File: imgs/2018/ietf-card.png Graphic file (type png)
+<use imgs/2018/ietf-card.png>
+Package pdftex.def Info: imgs/2018/ietf-card.png  used on input line 722.
 (pdftex.def)             Requested size: 86.0439pt x 43.02194pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1740,7 +1748,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [32
 
- <./imgs/internet-host-count.png> <./new/ietf-card.png>]
+ <./imgs/2017/internet-host-count.png> <./imgs/2018/ietf-card.png>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1748,10 +1756,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [33
 
 ]
-<imgs/jediocto.jpg, id=347, 224.84pt x 224.84pt>
-File: imgs/jediocto.jpg Graphic file (type jpg)
-<use imgs/jediocto.jpg>
-Package pdftex.def Info: imgs/jediocto.jpg  used on input line 763.
+<imgs/2017/jediocto.jpg, id=347, 224.84pt x 224.84pt>
+File: imgs/2017/jediocto.jpg Graphic file (type jpg)
+<use imgs/2017/jediocto.jpg>
+Package pdftex.def Info: imgs/2017/jediocto.jpg  used on input line 763.
 (pdftex.def)             Requested size: 48.18527pt x 48.18527pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1760,7 +1768,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [34
 
- <./imgs/jediocto.jpg>]
+ <./imgs/2017/jediocto.jpg>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1778,14 +1786,14 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [36
 
 ]
-<imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firefox.p
-ng, id=373, 451.6875pt x 301.125pt>
-File: imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_fire
-fox.png Graphic file (type png)
-<use imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firef
-ox.png>
-Package pdftex.def Info: imgs/Wikimedia_donation_page_with_extended_validation_
-certificate_in_firefox.png  used on input line 850.
+<imgs/2017/Wikimedia_donation_page_with_extended_validation_certificate_in_fire
+fox.png, id=373, 451.6875pt x 301.125pt>
+File: imgs/2017/Wikimedia_donation_page_with_extended_validation_certificate_in
+_firefox.png Graphic file (type png)
+<use imgs/2017/Wikimedia_donation_page_with_extended_validation_certificate_in_
+firefox.png>
+Package pdftex.def Info: imgs/2017/Wikimedia_donation_page_with_extended_valida
+tion_certificate_in_firefox.png  used on input line 850.
 (pdftex.def)             Requested size: 172.09792pt x 114.73193pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1794,8 +1802,8 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [37
 
- <./imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firefo
-x.png>]
+ <./imgs/2017/Wikimedia_donation_page_with_extended_validation_certificate_in_f
+irefox.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
@@ -1817,10 +1825,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [38
 
 ]
-<imgs/mosaic-browser.jpg, id=394, 506.6428pt x 310.15875pt>
-File: imgs/mosaic-browser.jpg Graphic file (type jpg)
-<use imgs/mosaic-browser.jpg>
-Package pdftex.def Info: imgs/mosaic-browser.jpg  used on input line 892.
+<imgs/2017/mosaic-browser.jpg, id=394, 506.6428pt x 310.15875pt>
+File: imgs/2017/mosaic-browser.jpg Graphic file (type jpg)
+<use imgs/2017/mosaic-browser.jpg>
+Package pdftex.def Info: imgs/2017/mosaic-browser.jpg  used on input line 892.
 (pdftex.def)             Requested size: 258.15248pt x 158.03688pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1829,12 +1837,12 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [39
 
- <./imgs/mosaic-browser.jpg>]
-<imgs/HTML5_CSS_JavaScript.png, id=403, 1027.84pt x 602.25pt>
-File: imgs/HTML5_CSS_JavaScript.png Graphic file (type png)
-<use imgs/HTML5_CSS_JavaScript.png>
-Package pdftex.def Info: imgs/HTML5_CSS_JavaScript.png  used on input line 909.
-
+ <./imgs/2017/mosaic-browser.jpg>]
+<imgs/2017/HTML5_CSS_JavaScript.png, id=403, 1027.84pt x 602.25pt>
+File: imgs/2017/HTML5_CSS_JavaScript.png Graphic file (type png)
+<use imgs/2017/HTML5_CSS_JavaScript.png>
+Package pdftex.def Info: imgs/2017/HTML5_CSS_JavaScript.png  used on input line
+ 909.
 (pdftex.def)             Requested size: 189.3005pt x 110.91826pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1843,11 +1851,11 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [40
 
- <./imgs/HTML5_CSS_JavaScript.png>]
-<imgs/heisencat.png, id=413, 899.36pt x 899.36pt>
-File: imgs/heisencat.png Graphic file (type png)
-<use imgs/heisencat.png>
-Package pdftex.def Info: imgs/heisencat.png  used on input line 930.
+ <./imgs/2017/HTML5_CSS_JavaScript.png>]
+<imgs/2017/heisencat.png, id=413, 899.36pt x 899.36pt>
+File: imgs/2017/heisencat.png Graphic file (type png)
+<use imgs/2017/heisencat.png>
+Package pdftex.def Info: imgs/2017/heisencat.png  used on input line 930.
 (pdftex.def)             Requested size: 86.0439pt x 86.0439pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1856,7 +1864,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [41
 
- <./imgs/heisencat.png>]
+ <./imgs/2017/heisencat.png>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -1917,10 +1925,11 @@ LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line
 ("C:\Program Files\MiKTeX 2.9\tex/latex/lm\ts1lmtt.fd"
 File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-<imgs/Markdown-mark.svg.png, id=485, 208.78pt x 128.48pt>
-File: imgs/Markdown-mark.svg.png Graphic file (type png)
-<use imgs/Markdown-mark.svg.png>
-Package pdftex.def Info: imgs/Markdown-mark.svg.png  used on input line 25.
+<imgs/2017/Markdown-mark.svg.png, id=485, 208.78pt x 128.48pt>
+File: imgs/2017/Markdown-mark.svg.png Graphic file (type png)
+<use imgs/2017/Markdown-mark.svg.png>
+Package pdftex.def Info: imgs/2017/Markdown-mark.svg.png  used on input line 25
+.
 (pdftex.def)             Requested size: 51.62462pt x 31.769pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1929,7 +1938,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [49
 
- <./imgs/Markdown-mark.svg.png>]
+ <./imgs/2017/Markdown-mark.svg.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb)
@@ -1940,11 +1949,11 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [50
 
 ]
-<imgs/markdown-doc-preview.png, id=507, 570.63188pt x 603.75563pt>
-File: imgs/markdown-doc-preview.png Graphic file (type png)
-<use imgs/markdown-doc-preview.png>
-Package pdftex.def Info: imgs/markdown-doc-preview.png  used on input line 1135
-.
+<imgs/2017/markdown-doc-preview.png, id=507, 570.63188pt x 603.75563pt>
+File: imgs/2017/markdown-doc-preview.png Graphic file (type png)
+<use imgs/2017/markdown-doc-preview.png>
+Package pdftex.def Info: imgs/2017/markdown-doc-preview.png  used on input line
+ 1135.
 (pdftex.def)             Requested size: 161.76976pt x 171.1601pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1953,7 +1962,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [51
 
- <./imgs/markdown-doc-preview.png>]
+ <./imgs/2017/markdown-doc-preview.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb)
@@ -1967,10 +1976,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
-<imgs/professortocat.png, id=527, 465.74pt x 417.56pt>
-File: imgs/professortocat.png Graphic file (type png)
-<use imgs/professortocat.png>
-Package pdftex.def Info: imgs/professortocat.png  used on input line 13.
+<imgs/2017/professortocat.png, id=527, 465.74pt x 417.56pt>
+File: imgs/2017/professortocat.png Graphic file (type png)
+<use imgs/2017/professortocat.png>
+Package pdftex.def Info: imgs/2017/professortocat.png  used on input line 13.
 (pdftex.def)             Requested size: 30.9706pt x 27.76674pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -1979,7 +1988,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [53
 
- <./imgs/professortocat.png>]
+ <./imgs/2017/professortocat.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb)
@@ -1993,10 +2002,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
-<imgs/gangnamtocat.png, id=546, 899.36pt x 899.36pt>
-File: imgs/gangnamtocat.png Graphic file (type png)
-<use imgs/gangnamtocat.png>
-Package pdftex.def Info: imgs/gangnamtocat.png  used on input line 13.
+<imgs/2017/gangnamtocat.png, id=546, 899.36pt x 899.36pt>
+File: imgs/2017/gangnamtocat.png Graphic file (type png)
+<use imgs/2017/gangnamtocat.png>
+Package pdftex.def Info: imgs/2017/gangnamtocat.png  used on input line 13.
 (pdftex.def)             Requested size: 30.97305pt x 30.97305pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2005,14 +2014,14 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [55
 
- <./imgs/gangnamtocat.png>]
+ <./imgs/2017/gangnamtocat.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
-<imgs/ironocto.png, id=557, 224.84pt x 224.84pt>
-File: imgs/ironocto.png Graphic file (type png)
-<use imgs/ironocto.png>
-Package pdftex.def Info: imgs/ironocto.png  used on input line 11.
+<imgs/2017/ironocto.png, id=557, 224.84pt x 224.84pt>
+File: imgs/2017/ironocto.png Graphic file (type png)
+<use imgs/2017/ironocto.png>
+Package pdftex.def Info: imgs/2017/ironocto.png  used on input line 11.
 (pdftex.def)             Requested size: 41.2997pt x 41.2997pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2021,14 +2030,14 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [56
 
- <./imgs/ironocto.png>]
+ <./imgs/2017/ironocto.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
-<imgs/megacat-2.png, id=567, 899.36pt x 899.36pt>
-File: imgs/megacat-2.png Graphic file (type png)
-<use imgs/megacat-2.png>
-Package pdftex.def Info: imgs/megacat-2.png  used on input line 15.
+<imgs/2017/megacat-2.png, id=567, 899.36pt x 899.36pt>
+File: imgs/2017/megacat-2.png Graphic file (type png)
+<use imgs/2017/megacat-2.png>
+Package pdftex.def Info: imgs/2017/megacat-2.png  used on input line 15.
 (pdftex.def)             Requested size: 24.08405pt x 24.08405pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2037,14 +2046,14 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [57
 
- <./imgs/megacat-2.png>]
+ <./imgs/2017/megacat-2.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
-<imgs/ninjacat.jpg, id=579, 225.84375pt x 225.84375pt>
-File: imgs/ninjacat.jpg Graphic file (type jpg)
-<use imgs/ninjacat.jpg>
-Package pdftex.def Info: imgs/ninjacat.jpg  used on input line 36.
+<imgs/2017/ninjacat.jpg, id=579, 225.84375pt x 225.84375pt>
+File: imgs/2017/ninjacat.jpg Graphic file (type jpg)
+<use imgs/2017/ninjacat.jpg>
+Package pdftex.def Info: imgs/2017/ninjacat.jpg  used on input line 36.
 (pdftex.def)             Requested size: 30.97348pt x 30.97348pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2053,19 +2062,19 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [58
 
- <./imgs/ninjacat.jpg>]
+ <./imgs/2017/ninjacat.jpg>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
-<imgs/ski-octo.png, id=592, 899.36pt x 899.36pt>
-File: imgs/ski-octo.png Graphic file (type png)
-<use imgs/ski-octo.png>
-Package pdftex.def Info: imgs/ski-octo.png  used on input line 10.
+<imgs/2017/ski-octo.png, id=592, 899.36pt x 899.36pt>
+File: imgs/2017/ski-octo.png Graphic file (type png)
+<use imgs/2017/ski-octo.png>
+Package pdftex.def Info: imgs/2017/ski-octo.png  used on input line 10.
 (pdftex.def)             Requested size: 30.97305pt x 30.97305pt.
-<imgs/bitcoin-pizza.png, id=593, 1256.695pt x 545.03625pt>
-File: imgs/bitcoin-pizza.png Graphic file (type png)
-<use imgs/bitcoin-pizza.png>
-Package pdftex.def Info: imgs/bitcoin-pizza.png  used on input line 14.
+<imgs/2017/bitcoin-pizza.png, id=593, 1256.695pt x 545.03625pt>
+File: imgs/2017/bitcoin-pizza.png Graphic file (type png)
+<use imgs/2017/bitcoin-pizza.png>
+Package pdftex.def Info: imgs/2017/bitcoin-pizza.png  used on input line 14.
 (pdftex.def)             Requested size: 137.6616pt x 59.70467pt.
 )
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2074,7 +2083,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [59
 
- <./imgs/ski-octo.png> <./imgs/bitcoin-pizza.png>]
+ <./imgs/2017/ski-octo.png> <./imgs/2017/bitcoin-pizza.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
@@ -2261,7 +2270,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb)
-Overfull \vbox (12.02289pt too high) detected at line 1843
+Overfull \vbox (12.02289pt too high) detected at line 1842
  []
 
 
@@ -2275,6 +2284,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb)
+Overfull \vbox (74.02289pt too high) detected at line 1889
+ []
+
+
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -2315,7 +2328,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb)
-Overfull \vbox (43.57845pt too high) detected at line 2041
+Overfull \vbox (43.57845pt too high) detected at line 2051
  []
 
 
@@ -2350,10 +2363,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [84
 
 ]
-<imgs/runchee.png, id=823, 703.12688pt x 577.40718pt>
-File: imgs/runchee.png Graphic file (type png)
-<use imgs/runchee.png>
-Package pdftex.def Info: imgs/runchee.png  used on input line 2117.
+<imgs/2017/runchee.png, id=823, 703.12688pt x 577.40718pt>
+File: imgs/2017/runchee.png Graphic file (type png)
+<use imgs/2017/runchee.png>
+Package pdftex.def Info: imgs/2017/runchee.png  used on input line 2127.
 (pdftex.def)             Requested size: 258.13585pt x 211.98093pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2362,7 +2375,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [85
 
- <./imgs/runchee.png>]
+ <./imgs/2017/runchee.png>]
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
  [][]  \T1/futs/m/n/5 ([])  
  []
@@ -2370,10 +2383,10 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 [86
 
 ]
-<imgs/Rlogo.png, id=842, 200.75pt x 155.58125pt>
-File: imgs/Rlogo.png Graphic file (type png)
-<use imgs/Rlogo.png>
-Package pdftex.def Info: imgs/Rlogo.png  used on input line 2142.
+<imgs/2017/Rlogo.png, id=842, 200.75pt x 155.58125pt>
+File: imgs/2017/Rlogo.png Graphic file (type png)
+<use imgs/2017/Rlogo.png>
+Package pdftex.def Info: imgs/2017/Rlogo.png  used on input line 2152.
 (pdftex.def)             Requested size: 41.30104pt x 32.0083pt.
 
 Overfull \hbox (11.09798pt too wide) has occurred while \output is active
@@ -2382,7 +2395,7 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 
 [87
 
- <./imgs/Rlogo.png>]
+ <./imgs/2017/Rlogo.png>]
 \openout4 = `lec01.vrb'.
 
 (lec01.vrb
@@ -2732,18 +2745,18 @@ Overfull \hbox (11.09798pt too wide) has occurred while \output is active
 \tf@snm=\write8
 \openout8 = `lec01.snm'.
 
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 3085.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 3085.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 3095.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 3095.
 (lec01.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 3085.
-Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 3085.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 3095.
+Package atveryend Info: Empty hook `AtEndAfterFileList' on input line 3095.
  ) 
 Here is how much of TeX's memory you used:
- 26817 strings out of 481252
- 487508 string characters out of 2913508
- 738458 words of memory out of 3000000
- 41061 multiletter control sequences out of 15000+200000
- 626307 words of font info for 198 fonts, out of 3000000 for 9000
+ 26819 strings out of 481252
+ 488825 string characters out of 2913508
+ 738459 words of memory out of 3000000
+ 41063 multiletter control sequences out of 15000+200000
+ 626613 words of font info for 199 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  59i,18n,74p,795b,770s stack positions out of 5000i,500n,10000p,200000b,50000s
 {C:/Program Files/MiKTeX 2.9/fonts/enc/dvips/lm/lm-ts1.enc}{C:/Program Files/
@@ -2760,7 +2773,7 @@ lm/lmtti10.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/public/amsfonts/symbols
 /msam7.pfb><C:/Program Files/MiKTeX 2.9/fonts/type1/adobe/utopia/putb8a.pfb><C:
 /Program Files/MiKTeX 2.9/fonts/type1/adobe/utopia/putr8a.pfb><C:/Program Files
 /MiKTeX 2.9/fonts/type1/adobe/utopia/putri8a.pfb>
-Output written on lec01.pdf (121 pages, 7119156 bytes).
+Output written on lec01.pdf (121 pages, 7119270 bytes).
 PDF statistics:
  1277 PDF objects out of 1440 (max. 8388607)
  376 named destinations out of 1000 (max. 500000)

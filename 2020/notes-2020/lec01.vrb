@@ -9,8 +9,8 @@
 \CommentTok{\# rnorm(n, mean = 0, sd = 1). Where does the input go to?}
 \NormalTok{res \textless{}{-}}\StringTok{ }\NormalTok{purrr}\OperatorTok{::}\KeywordTok{map}\NormalTok{(}\DecValTok{1}\OperatorTok{:}\DecValTok{10}\NormalTok{, rnorm, }\DataTypeTok{n =} \DecValTok{1000}\NormalTok{)}
 \KeywordTok{map\_dbl}\NormalTok{(res, mean)}
-\CommentTok{\#\#  [1]  1.019905  2.048421  3.012500  3.967535  5.031277  5.985041  6.986432}
-\CommentTok{\#\#  [8]  7.981051  8.990855 10.091227}
+\CommentTok{\#\#  [1]  1.003101  2.009355  2.988714  3.946200  5.040029  5.979427  7.034673}
+\CommentTok{\#\#  [8]  8.022109  9.015469 10.014477}
 
 \CommentTok{\# sapply() achieves the same as purrr::map(), a bit slower.}
 \CommentTok{\# Package purrr succeeds original R base.}

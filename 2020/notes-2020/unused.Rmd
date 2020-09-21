@@ -16,7 +16,7 @@
 * Router and gateway will relay the packets to the receiver.
 
 ```{r, echo = FALSE, out.width = "50%"}
-knitr::include_graphics("imgs/India_Post_Letter_Box.jpg")
+knitr::include_graphics("imgs/2017/India_Post_Letter_Box.jpg")
 ```
 
 

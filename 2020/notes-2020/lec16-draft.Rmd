@@ -7,23 +7,23 @@ Bitcoin mining is the process by which transactions are verified and added to th
 
 ## Block hash
 Block contains all transactions. Now this block includes the hash value in its header for all transactions inside it.
-<center>![](imgs/block-hash.png "Block hash"){width=45%}</center>
+<center>![](imgs/2017/block-hash.png "Block hash"){width=45%}</center>
 
 
 ## Block chain
 The next block contains the previous block's hash
-<center>![](imgs/block-chain.png "blockchain"){width=45%}</center>
+<center>![](imgs/2017/block-chain.png "blockchain"){width=45%}</center>
 In blockchain, once a block is made, the hash header of this block is passed on to the next block as an input. Linked blocks
  Since this hash is an input to the next block, the hash of the next block also changes and so on. Thus all the blocks, subsequent to the changed block will be corrupted and this is easily verifiable by others.
 There is still a possibility of all future block hashes also reconstructed by a bad element.
 
 # Merkle tree
 
-<center>![](imgs/block-head.jpg "Block head"){width=45%}</center>
+<center>![](imgs/2017/block-head.jpg "Block head"){width=45%}</center>
 The transactions are at the leaf level. Hash of two transactions (Tx0 and Tx1) are again hashed and a non-leaf node of Hash01 is formed. Similarly Hash23, Hash45 etc are formed. A tree is formed and at the top of the tree is the Top Hash or the Root Hash.
 In bitcoin the Block header contains this Root as Merkle Root.
 
-<center>![](imgs/block-head-chain.jpg "Block head chain"){width=45%}</center>
+<center>![](imgs/2017/block-head-chain.jpg "Block head chain"){width=45%}</center>
 With this design, they have greatly reduced the size of the blocks that are required for a transaction user.
 
 # Merkle tree storage
@@ -36,27 +36,27 @@ To verify that Tx0 is in the block, one needs the details of
 - Tx0
 - Hash1 and
 - Hash23
-<center>![](imgs/merkle-tree-veri.png "merkle tree verification"){width=45%}</center>
+<center>![](imgs/2017/merkle-tree-veri.png "merkle tree verification"){width=45%}</center>
 
 More illustrative example.
 https://media.consensys.net/ever-wonder-how-merkle-trees-work-c2f8b7100ed3
-<center>![](imgs/merkle-banana.png "Merkle tree in banana"){width=45%}</center>
+<center>![](imgs/2017/merkle-banana.png "Merkle tree in banana"){width=45%}</center>
 
-<center>![](imgs/merkle-tree-aa.jpg "Merkle tree AA"){width=45%}</center>
+<center>![](imgs/2017/merkle-tree-aa.jpg "Merkle tree AA"){width=45%}</center>
 The Merkle root of block #482819 is e045b18e7a3d708d686717b4f44db2099aabcad9bebf968de5f7271b458f71c8. The root is combined with other information (the software version, the previous block's hash, the timestamp, the difficulty target and the nonce) and then run through a hash function to produce the block's unique hash: 000000000000000000bfc767ef8bf28c42cbd4bdbafd9aa1b5c3c33c2b089594 in the case of block #482819. This hash is not actually included in the relevant block, but the next one; it is distinct from the Merkle root. (See also, How Bitcoin Works.)
 
-<center>![](imgs/merkle-tree-ab.jpg "Merkle tree AB"){width=45%}</center>
+<center>![](imgs/2017/merkle-tree-ab.jpg "Merkle tree AB"){width=45%}</center>
 For example, say that you wanted to verify that transaction TD is included in the block in the diagram above. If you have the root hash (HABCDEFGH), the process is like a game of sudoku: you query the network about HD, and it returns HC, HAB and HEFGH. The Merkle tree allows you to verify that everything is accounted for with three hashes: given HAB, HC, HEFGH and the root HABCDEFGH, HD (the only missing hash) has to be present in the data.
 
 # Byzantine Generals Problem
 
-<center>![](imgs/bft-paper-front.png "bft-paper-front"){width=45%}</center>
+<center>![](imgs/2017/bft-paper-front.png "bft-paper-front"){width=45%}</center>
 
 “The Byzantine Generals Problem is with a group of generals, each commanding a portion of the Byzantine army, encircle a city. These generals wish to formulate a plan for attacking the city. In its simplest form, the generals must only decide whether to attack or retreat. Some generals may prefer to attack, while others prefer to retreat. The important thing is that every general agrees on a common decision, for a halfhearted attack by a few generals would become a rout and be worse than a coordinated attack or a coordinated retreat.”
-<center>![](imgs/bft-general.png "bft-general"){width=45%}</center>
+<center>![](imgs/2017/bft-general.png "bft-general"){width=45%}</center>
 
 The problem is complicated by the presence of traitorous generals who may not only cast a vote for a suboptimal strategy, they may do so selectively. For instance, if nine generals are voting, four of whom support attacking while four others are in favor of retreat, the ninth general may send a vote of retreat to those generals in favor of retreat, and a vote of attack to the rest. Those who received a retreat vote from the ninth general will retreat, while the rest will attack (which may not go well for the attackers). The problem is complicated further by the generals being physically separated and having to send their votes via messengers who may fail to deliver votes or may forge false votes.”
-<center>![](imgs/general-message.png "general-message"){width=45%}</center>
+<center>![](imgs/2017/general-message.png "general-message"){width=45%}</center>
 
 The typical mapping of this story onto blockchain is that the network nodes are the generals and their digital communication system links are the messengers.
 
@@ -90,8 +90,8 @@ Assuming Proof-of-work needs that the resultant hash must start with 0000. We no
 This process of finding the nonce value is “mining” and the first miner gets rewarded with bitcoins.
 However, this process consumes enormous power for just finding a random number!
 
-<center>![](imgs/confirmation-time.png "confirmation-time"){width=45%}</center>
-<center>![](imgs/bitcoin-difficulty.png "bitcoin-difficulty"){width=45%}</center>
+<center>![](imgs/2017/confirmation-time.png "confirmation-time"){width=45%}</center>
+<center>![](imgs/2017/bitcoin-difficulty.png "bitcoin-difficulty"){width=45%}</center>
 
 # 51% Attack
 

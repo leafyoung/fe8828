@@ -88,7 +88,7 @@ biorhythm <- function(dob, target = Sys.Date()) {
 ## Starter - Result
 
 ```{r, echo = FALSE, fig.width=10}
-source("example/biorhythm.R")
+source("example/week5/biorhythm.R")
 ```
 
 ```{r, echo = TRUE, fig.width=10}
@@ -230,7 +230,7 @@ ggplot(meltdf, aes(x = Date, y = Rate, colour = CCY, group = CCY)) +
 ## Quandl and forecast
 
 ```{r, echo = TRUE, eval = FALSE}
-cat(htmltools::includeText("example/52-quandl-forecast.R"))
+cat(htmltools::includeText("example/week5/52-quandl-forecast.R"))
 ```
 
 # dygraph
@@ -252,7 +252,7 @@ dygraph(oil_combined_xts, main = "Oil Prices: Historical and Forecast") %>%
 
 ```{r, echo = TRUE, eval = FALSE}
 # shiny-51-quandl.R
-cat(htmltools::includeText("example/51-quandl.R"))
+cat(htmltools::includeText("example/week5/51-quandl.R"))
 ```
 
 # Lecture 11: Building Predictive Model
@@ -260,13 +260,13 @@ cat(htmltools::includeText("example/51-quandl.R"))
 ## Machine Learning
 
 ```{r, echo = FALSE, out.width = "80%"}
-knitr::include_graphics("new2019/ml_algo.png")
+knitr::include_graphics("imgs/2019/ml_algo.png")
 ```
 
 ## Statistics and Machine Learning
 
 ```{r, echo = FALSE, out.width = "40%"}
-knitr::include_graphics("new2019/comic-stat-vs-ml.jpg")
+knitr::include_graphics("imgs/2019/comic-stat-vs-ml.jpg")
 ```
 
 ## Statistics and Machine Learning
@@ -308,7 +308,7 @@ knitr::include_graphics("new2019/comic-stat-vs-ml.jpg")
 Regression and classification are two main categories of machine learning algorithms under supervised learning.
 
 ```{r, echo = FALSE, out.width = "60%"}
-knitr::include_graphics("new2019/class_reg.png")
+knitr::include_graphics("imgs/2019/class_reg.png")
 ```
 
 ## Regression
@@ -414,7 +414,7 @@ Confusion matrix, AUC/ROC, model-specific output...
 Caret is short for _C_lassification _A_nd _RE_gression _T_raining.
 
 ```{r, echo = FALSE, out.width = "50%"}
-knitr::include_graphics("new2019/Caret-package-in-R.png")
+knitr::include_graphics("imgs/2019/Caret-package-in-R.png")
 ```
 
 Main author is Max Kuhn. He has a book "Applied Predictive Modeling", By Max Kuhn and Kjell Johnson.
@@ -422,7 +422,7 @@ Main author is Max Kuhn. He has a book "Applied Predictive Modeling", By Max Kuh
 Max is now in RStudio, working on _parsnip_ in tidymodel.
 
 ```{r, echo = FALSE, out.width = "30%"}
-knitr::include_graphics("new2019/applied-predictive-modeling-book-cover.png")
+knitr::include_graphics("imgs/2019/applied-predictive-modeling-book-cover.png")
 ```
 
 ## `Caret` Package

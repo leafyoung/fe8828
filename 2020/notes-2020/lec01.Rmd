@@ -87,7 +87,7 @@ Data -> ( Model <-> Appplication ) -> Result
 Data -> Model -> Application
 
 ```{r, echo = FALSE, out.width = "60%"}
-knitr::include_graphics("imgs/data-science-explore.png")
+knitr::include_graphics("imgs/2017/data-science-explore.png")
 ```
 
 - It resembles with the "Data Science" (DS) flow. Quants and DS share commonalities of working on data and model.
@@ -100,7 +100,7 @@ knitr::include_graphics("imgs/data-science-explore.png")
 - With Internet/Web, data and computing power is also available at our fingers.
 
 ```{r, echo = FALSE, out.width = "90%"}
-knitr::include_graphics("new/tidyverse.png")
+knitr::include_graphics("imgs/2018/tidyverse.png")
 ```
 
 
@@ -154,7 +154,7 @@ SMB stands for "Small [market capitalization] Minus Big" and HML for "High [book
 ## Our course: Tidyverse with a finance flavor
 
 ```{r, echo = FALSE, out.width = "70%"}
-knitr::include_graphics("new/tidy2.png")
+knitr::include_graphics("imgs/2018/tidy2.png")
 ```
 
 ## What does it take?
@@ -212,7 +212,7 @@ knitr::include_graphics("new/tidy2.png")
     - Organize your assignments into directories, e.g. Assignment 1, Assignment 2, ...
 
 ```{r, echo = FALSE, out.width = "70%"}
-knitr::include_graphics("new/assignment-org.png")
+knitr::include_graphics("imgs/2018/assignment-org.png")
 ```
 
 
@@ -221,13 +221,13 @@ knitr::include_graphics("new/assignment-org.png")
   - Share the directory with *yy@runchee.com* on Google drive, or *yangye@ntu.edu.sg* with NTU One Drive.
     
 ```{r, echo = FALSE, out.width = "70%"}
-knitr::include_graphics("new2020/share_one_drive.png")
+knitr::include_graphics("imgs/2020/share_one_drive.png")
 ```
 
 ## Keep calm and code on
 
 ```{r, echo = FALSE, out.width = "30%"}
-knitr::include_graphics("imgs/keep-calm-code-on.jpg")
+knitr::include_graphics("imgs/2017/keep-calm-code-on.jpg")
 ```
 
 ### Questions?
@@ -241,13 +241,13 @@ Let's pick up the jargons!
 - HTTP/HTML/Web
 
 ```{r, echo = FALSE, out.width = "40%"}
-knitr::include_graphics("imgs/Internet_map_1024.jpg")
+knitr::include_graphics("imgs/2017/Internet_map_1024.jpg")
 ```
 
 ## Network is to connect the dots/devices
 
 ```{r, echo = FALSE, out.width = "40%", fig.show='hold', fig.align='center'}
-knitr::include_graphics(c("imgs/dot-to-dot-connect-the-dots.jpg", "imgs/network_connect_dots.jpg"))
+knitr::include_graphics(c("imgs/2017/dot-to-dot-connect-the-dots.jpg", "imgs/2017/network_connect_dots.jpg"))
 ```
 
 ## Building network
@@ -257,7 +257,7 @@ knitr::include_graphics(c("imgs/dot-to-dot-connect-the-dots.jpg", "imgs/network_
 * Fully-connected network is the most costly and robust. Ring is the cheapest but vulnerable.
 
 ```{r, echo = FALSE, out.width = "40%"}
-knitr::include_graphics("imgs/Common-network-topologies.png")
+knitr::include_graphics("imgs/2017/Common-network-topologies.png")
 ```
 
 ### Which network topology is our home Wi-Fi?
@@ -265,7 +265,7 @@ knitr::include_graphics("imgs/Common-network-topologies.png")
 ## What runs inside the cables?
   
 ```{r, echo = FALSE, out.width = "62%"}
-knitr::include_graphics("imgs/cables.jpg")
+knitr::include_graphics("imgs/2017/cables.jpg")
 ```
 
 ## Network talks with Network Protocol
@@ -279,7 +279,7 @@ knitr::include_graphics("imgs/cables.jpg")
 1. Information turns to packet
 
 ```{r, echo = FALSE, out.width = "60%"}
-knitr::include_graphics("imgs/tcp_header.png")
+knitr::include_graphics("imgs/2017/tcp_header.png")
 ```
 
 ## Protocol
@@ -289,13 +289,13 @@ knitr::include_graphics("imgs/tcp_header.png")
 TCP Session
 
 ```{r, echo = FALSE, out.width = "25%"}
-knitr::include_graphics("imgs/375px-TCP_CLOSE.svg.png")
+knitr::include_graphics("imgs/2017/375px-TCP_CLOSE.svg.png")
 ```
 
 DHCP Session
 
 ```{r, echo = FALSE, out.width = "22%"}
-knitr::include_graphics("imgs/DHCP_session.svg.png")
+knitr::include_graphics("imgs/2017/DHCP_session.svg.png")
 ```
 
 ## Routing/Gateway
@@ -303,7 +303,7 @@ knitr::include_graphics("imgs/DHCP_session.svg.png")
 3. Infrastructure helps to *route* the packets to the destination.
 
 ```{r, echo = FALSE, out.width = "70%"}
-knitr::include_graphics("imgs/wireshark-packets.jpg")
+knitr::include_graphics("imgs/2017/wireshark-packets.jpg")
 ```
 
 ## TCP/IP and Internet
@@ -328,13 +328,13 @@ A family of protocols but what's most famous/"fundamental" is IP and TCP.
 3. Four Layers
 
 ```{r, echo = FALSE, out.width = "37%"}
-knitr::include_graphics("imgs/640px-UDP_encapsulation.svg.png")
+knitr::include_graphics("imgs/2017/640px-UDP_encapsulation.svg.png")
 ```
 
 4. Application layer runs many protocols
 
 ```{r, echo = FALSE, out.width = "35%"}
-knitr::include_graphics("imgs/tcp-ip.png")
+knitr::include_graphics("imgs/2017/tcp-ip.png")
 ```
 
 ## Why Internet growed in size?
@@ -342,13 +342,13 @@ knitr::include_graphics("imgs/tcp-ip.png")
 - A family of expandable network protocols: easy join, allows failure. That's also what we want to learn to do.
 
 ```{r, echo = FALSE, out.width = "54%"}
-knitr::include_graphics("imgs/internet-host-count.png")
+knitr::include_graphics("imgs/2017/internet-host-count.png")
 ```
 
 - IETF (Internet Engineering Task Force) maintains and still gets new protocol approved.
 
 ```{r, echo = FALSE, out.width = "25%"}
-knitr::include_graphics("new/ietf-card.png")
+knitr::include_graphics("imgs/2018/ietf-card.png")
 ```
 
 ## What happens after plugging cable, or turning on Wi-Fi, turn on the 5G phone?
@@ -366,7 +366,7 @@ knitr::include_graphics("new/ietf-card.png")
   - (Demo with nslookup.)
 
 ```{r, echo = FALSE, out.width = "14%"}
-knitr::include_graphics("imgs/jediocto.jpg")
+knitr::include_graphics("imgs/2017/jediocto.jpg")
 ```
 
 ## When it wants to visit someone on the network? HTTP/HTML
@@ -418,7 +418,7 @@ knitr::include_graphics("imgs/jediocto.jpg")
 
 
 ```{r, echo = FALSE, out.width = "50%"}
-knitr::include_graphics("imgs/Wikimedia_donation_page_with_extended_validation_certificate_in_firefox.png")
+knitr::include_graphics("imgs/2017/Wikimedia_donation_page_with_extended_validation_certificate_in_firefox.png")
 ```
 
 ## Web
@@ -447,7 +447,7 @@ How this resource (URL) is used in document (HTML).
 First generation (1993)
 
 ```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("imgs/mosaic-browser.jpg")
+knitr::include_graphics("imgs/2017/mosaic-browser.jpg")
 ```
 
 ## Web application
@@ -458,7 +458,7 @@ knitr::include_graphics("imgs/mosaic-browser.jpg")
 - App also uses HTML/CSS/JS.
 
 ```{r, echo = FALSE, out.width = "55%"}
-knitr::include_graphics("imgs/HTML5_CSS_JavaScript.png")
+knitr::include_graphics("imgs/2017/HTML5_CSS_JavaScript.png")
 ```
 
 ## Web application
@@ -469,7 +469,7 @@ knitr::include_graphics("imgs/HTML5_CSS_JavaScript.png")
   - Easy to develop: less effort than Mobile App and cross-platform.
 
 ```{r, echo = FALSE, out.width = "25%"}
-knitr::include_graphics("imgs/heisencat.png")
+knitr::include_graphics("imgs/2017/heisencat.png")
 ```
 
 ## What would we like to do?
@@ -547,20 +547,20 @@ Disclaimer:
                                                 - John Gruber
 
 ```{r, echo = FALSE, out.width = "15%"}
-knitr::include_graphics("imgs/Markdown-mark.svg.png")
+knitr::include_graphics("imgs/2017/Markdown-mark.svg.png")
 ```
 
 ## Markdown example
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/markdown-example.md"))
+cat(htmltools::includeText("example/week1/markdown-example.md"))
 ```
 
 ## Markdown output example
 
 ```{r, echo = FALSE, out.width = "47%"}
-knitr::include_graphics("imgs/markdown-doc-preview.png")
+knitr::include_graphics("imgs/2017/markdown-doc-preview.png")
 ```
 
 ## Markdown: Header and Code
@@ -592,7 +592,7 @@ cat("    if (a > 0) {\n      print(a)\n    }\n")
             { code }
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/professortocat.png")
+knitr::include_graphics("imgs/2017/professortocat.png")
 ```
 
 * First paragraph.
@@ -631,7 +631,7 @@ Put 4 more spaces for each level.
     #. Chapter 3
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/gangnamtocat.png")
+knitr::include_graphics("imgs/2017/gangnamtocat.png")
 ```
 
 #. Chapter 1
@@ -649,7 +649,7 @@ knitr::include_graphics("imgs/gangnamtocat.png")
     | zebra stripes | are neat      |    $1 |
 
 ```{r, echo = FALSE, out.width = "12%"}
-knitr::include_graphics("imgs/ironocto.png")
+knitr::include_graphics("imgs/2017/ironocto.png")
 ```
 
 | Tables        | Are           | Cool  |
@@ -671,7 +671,7 @@ To emphasize some text, surround it with *s or _, like this:
     This is \*\*strong emphasis\*\* and \_\_with underscores\_\_.
 
 ```{r, echo = FALSE, out.width = "7%"}
-knitr::include_graphics("imgs/megacat-2.png")
+knitr::include_graphics("imgs/2017/megacat-2.png")
 ```
 
 This text is _emphasized with underscores_, and this is *emphasized with asterisks*.
@@ -713,7 +713,7 @@ Note:
     <http://google.com>
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/ninjacat.jpg")
+knitr::include_graphics("imgs/2017/ninjacat.jpg")
 ```
 
 <http://google.com>
@@ -722,13 +722,13 @@ knitr::include_graphics("imgs/ninjacat.jpg")
 
 A link immediately preceded by a ! will be treated as an image. The link text will be used as the image's alt text:
 
-    ![Pizza](imgs/bitcoin-pizza.png)
+    ![Pizza](imgs/2017/bitcoin-pizza.png)
 
 ```{r, echo = FALSE, out.width = "9%"}
-knitr::include_graphics("imgs/ski-octo.png")
+knitr::include_graphics("imgs/2017/ski-octo.png")
 ```
 
-![Pizza](imgs/bitcoin-pizza.png){width=40%}
+![Pizza](imgs/2017/bitcoin-pizza.png){width=40%}
 
 
 ## Markdown: Formula
@@ -754,7 +754,7 @@ $$\sum_{i=1}^n X_i$$
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/rmd-example-doc.Rmd"))
+cat(htmltools::includeText("example/week1/rmd-example-doc.Rmd"))
 ```
 
 ## R Markdown Document Output
@@ -861,7 +861,7 @@ I removed everything in functions `server` and `ui`. This is the minimal Shiny. 
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-1-empty.R"))
+cat(htmltools::includeText("example/week1/shiny-1-empty.R"))
 ```
 
 ## Sidebar Layout
@@ -870,7 +870,7 @@ Let's add a minimal sidebarLayout (shiny-2-sidebar.R)
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-2-sidebar.R"))
+cat(htmltools::includeText("example/week1/shiny-2-sidebar.R"))
 ```
 
 
@@ -892,7 +892,7 @@ cat(htmltools::includeText("example/shiny-2-sidebar.R"))
 
 \scriptsize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-3-sidebar-min.R"))
+cat(htmltools::includeText("example/week1/shiny-3-sidebar-min.R"))
 ```
 
 ## Sidebar layout with bar on the right
@@ -908,7 +908,7 @@ cat(htmltools::includeText("example/shiny-3-sidebar-min.R"))
 
 \tiny
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-3-sidebar.R"))
+cat(htmltools::includeText("example/week1/shiny-3-sidebar.R"))
 ```
 
 ## Each tag is a function.
@@ -933,14 +933,14 @@ Note:
 
 \scriptsize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-4-wellPanel.R"))
+cat(htmltools::includeText("example/week1/shiny-4-wellPanel.R"))
 ```
 
 ## Navlist panel (shiny-5-navPanel.R)
 
 \scriptsize
 ```{r echo = FALSE, comment = ""} 
-cat(htmltools::includeText("example/shiny-5-navPanel.R"))
+cat(htmltools::includeText("example/week1/shiny-5-navPanel.R"))
 ```
 
 
@@ -948,14 +948,14 @@ cat(htmltools::includeText("example/shiny-5-navPanel.R"))
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-6-tabPanel.R"))
+cat(htmltools::includeText("example/week1/shiny-6-tabPanel.R"))
 ```
 
 ## navBar (shiny-7-navbar.R)
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-7-navbar.R"))
+cat(htmltools::includeText("example/week1/shiny-7-navbar.R"))
 ```
 
 ## Column-based layout (shiny-8-column.R)
@@ -965,21 +965,21 @@ cat(htmltools::includeText("example/shiny-7-navbar.R"))
 
 \tiny
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-8-column.R"))
+cat(htmltools::includeText("example/week1/shiny-8-column.R"))
 ```
 
 ## Composition layout: Top and Down (shiny-10-composite.R)
 
 \tiny
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-10-composite.R"))
+cat(htmltools::includeText("example/week1/shiny-10-composite.R"))
 ```
 
 ## R Markdown can also contain Shiny (shiny-mfe-example.Rmd)
 
 \footnotesize
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-mfe-example.Rmd"))
+cat(htmltools::includeText("example/week1/shiny-mfe-example.Rmd"))
 ```
 
 <!--
@@ -1008,7 +1008,7 @@ This is interactive document.
 ## Demo website with navBar style.
 
 ```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("imgs/runchee.png")
+knitr::include_graphics("imgs/2017/runchee.png")
 ```
 
 # Lecture 4: R Programming
@@ -1025,7 +1025,7 @@ Let's review some R basics and progress to intermediate level. We have following
 ...
 
 ```{r, echo = FALSE, out.width = "12%"}
-knitr::include_graphics("imgs/Rlogo.png")
+knitr::include_graphics("imgs/2017/Rlogo.png")
 ```
 
 ## R: Vector

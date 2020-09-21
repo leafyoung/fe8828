@@ -48,7 +48,7 @@ bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
 ## Joins
 
 ```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("imgs/join_today_header_image.jpg")
+knitr::include_graphics("imgs/2017/join_today_header_image.jpg")
 ```
 
 ## `left_/right_/anti_/full_join`
@@ -635,7 +635,7 @@ Wide format <=> Long format
 Wide format
 
 ```{r echo = TRUE, results = "hide"}
-wfmt <- data_frame(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
+wfmt <- tibble(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
                    Copper_qty = round(runif(5) * 1000, 0),
                    Gold_qty = round(runif(5) * 1000, 0),
                    Silver_qty = round(runif(5) * 1000, 0))
@@ -716,7 +716,7 @@ kable(head(df, 7))
 ## Combine different columns' Quantity
 
 ```{r echo = FALSE, reuslts = "hide"}
-wfmt <- data_frame(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
+wfmt <- tibble(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
                    Copper_qty = round(runif(5) * 1000, 0),
                    Gold_qty = round(runif(5) * 1000, 0),
                    Silver_qty = round(runif(5) * 1000, 0))
@@ -832,7 +832,7 @@ Work on the bank dataset. Find 10 findings from data.
 Use R Markdown.
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/assignment.Rmd"))
+cat(htmltools::includeText("example/week3/assignment.Rmd"))
 ```
 
 ## Assignment

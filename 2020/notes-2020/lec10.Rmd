@@ -57,13 +57,13 @@ pre { /* Code block - determines code spacing between lines */
 
 
 ```{r, echo = FALSE, out.width = "55%"}
-knitr::include_graphics("imgs/ggplot2-10.png")
+knitr::include_graphics("imgs/2017/ggplot2-10.png")
 ```
 
 ## ggplot2 Examples
 
 ```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("new/ggplot2-examples.png")
+knitr::include_graphics("imgs/2018/ggplot2-examples.png")
 ```
 
 ## Why do we need ggplot?
@@ -71,7 +71,7 @@ knitr::include_graphics("new/ggplot2-examples.png")
 It's part of the exploration of the data via visualization.
 
 ```{r, echo = FALSE, out.width = "75%"}
-knitr::include_graphics("imgs/main-qimg-bf859b506013fd60589a28be4c3f9e47.png")
+knitr::include_graphics("imgs/2017/main-qimg-bf859b506013fd60589a28be4c3f9e47.png")
 ```
 
 ## ggplot system
@@ -91,7 +91,7 @@ ggplot(airquality, aes(Temp, Ozone)) +
           <GEOM_FUNCTION>(mapping = aes(<MAPPINGS>))
 
 ```{r, echo = FALSE, out.width = "53%"}
-knitr::include_graphics("imgs/ggplot2-basics.png")
+knitr::include_graphics("imgs/2017/ggplot2-basics.png")
 ```
 
 ## Syntax of ggplot
@@ -1053,7 +1053,7 @@ ggplot(world, aes(long, lat, group = group)) +
     - updateNumericInput(...)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-36-update.R"))
+cat(htmltools::includeText("example/week4/shiny-36-update.R"))
 ```
 
 ## `renderUI`
@@ -1064,20 +1064,20 @@ cat(htmltools::includeText("example/shiny-36-update.R"))
 ## Create dynamic output `tagList()`
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-34-renderUI.R"))
+cat(htmltools::includeText("example/week4/shiny-34-renderUI.R"))
 ```
 
 ## Create dynamic output 2
 You can use newly created UI immediately
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-35-renderUI-2.R"))
+cat(htmltools::includeText("example/week4/shiny-35-renderUI-2.R"))
 ```
 
 ## Create dynamic output 3
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-32-renderUI.R"))
+cat(htmltools::includeText("example/week4/shiny-32-renderUI.R"))
 ```
 
 ## Dynamic input and `update***Input`
@@ -1087,13 +1087,13 @@ cat(htmltools::includeText("example/shiny-32-renderUI.R"))
     - updateNumericInput(...)
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-36-update.R"))
+cat(htmltools::includeText("example/week4/shiny-36-update.R"))
 ```
 
 ## Very dynamic
 
 ```{r echo = FALSE, comment = ""}
-cat(htmltools::includeText("example/shiny-37-createDynamic.R"))
+cat(htmltools::includeText("example/week4/shiny-37-createDynamic.R"))
 ```
 
 ## ggplot/gridExtra
@@ -1239,7 +1239,7 @@ kable("html") %>%
 ## kable_styling: cell_spec
 
 ```{r, echo = FALSE, out.width = "45%"}
-knitr::include_graphics("imgs/virdis.png")
+knitr::include_graphics("imgs/2017/virdis.png")
 ```
 
 ```{r, echo = FALSE}
