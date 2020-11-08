@@ -1,0 +1,157 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+```{r}
+
+library(conflicted) # help to resolve name conflicts
+library(tidyverse)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+```
+```{r}
+bank
+```
+# Finding #1
+```{r}
+bank%>%group_by(job)%>%summarize(balance_mean=mean(balance),count=n(), age_mean=mean(age)) %>% arrange(desc(balance_mean))
+#besides the retired who has an average age of over 61, the housemaids have the most balance in accounts. Unemployed and Blue-collar have the least balance in account. In addition, students are the youngest group, with average age of 26.8, but their mean balance is not small, ranking only behind retired, housemaid, management and entrepreneur.
+```
+# Finding #2
+```{r}
+bank%>%group_by(education)%>%summarize(balance_mean=mean(balance),count=n(),age_mean=mean(age)) %>% arrange(desc(balance_mean))
+#Customers with tertiary education background tends to have higher banlance in account and youngest average age.
+```
+# Finding #3
+```{r}
+default_rate <- function(df) {
+  df %>% summarize(creadit_in_default=(sum(ifelse(default == "no", 0, 1)))/n(), age_mean=mean(age),balance_mean=mean(balance)) %>% arrange(desc(balance_mean))
+}
+df_1 <- bank%>%group_by(education,housing="+",job="+",marital="+")%>%default_rate 
+df_2 <- bank%>%group_by(education="+",housing,job="+",marital="+")%>%default_rate
+df_3 <- bank%>%group_by(education="+",housing="+",job,marital="+")%>%default_rate 
+df_4 <- bank%>%group_by(education="+",housing="+",job="+",marital)%>%default_rate 
+df_default<-bind_rows(df_1,df_2,df_3,df_4)
+df_default
+#Customers with low education tends to have higher default rate. Customers in entrepreneur tend to have a significant high default rate, over 4%; customers who are students or administrative tend to have a lower default rate. Customers who are divorced also have a significant default rate.
+```
+
+# Finding #4
+```{r}
+deposit_rate <- function(df) {
+  df %>% summarize(term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n(), balance_mean=mean(balance),age_mean=mean(age)) %>% ungroup()%>%arrange(desc(balance_mean))
+}
+df_1 <- bank%>%group_by(education,housing="+",job="+",marital="+")%>%deposit_rate 
+df_2 <- bank%>%group_by(education="+",housing,job="+",marital="+")%>%deposit_rate
+df_3 <- bank%>%group_by(education="+",housing="+",job,marital="+")%>%deposit_rate 
+df_4 <- bank%>%group_by(education="+",housing="+",job="+",marital)%>%deposit_rate 
+df_deposit<-bind_rows(df_1,df_2,df_3,df_4)
+df_deposit
+#Customers with no housing tends to consider investing term deposit. Customers who are retired or students tend to invest in term deposit than peers who have same balance; customers in entrepreneur have low term-deposit-rate. Customers who are married tend to have less investment in term deposit compared to the single and divorced.
+```
+# Finding #5
+```{r}
+# Find the big age group
+res<- bank%>%
+  group_by(balance_group = ifelse(balance<8000,(balance %/% 1500) * 1500,8000))%>%
+  summarise(count=n(),balance_mean=mean(balance),age_mean=mean(age),term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n(),creadit_in_default=(sum(ifelse(default == "no", 0, 1))/n()),loan_rate=(sum(ifelse(loan == "no", 0, 1)))/n()) %>%arrange(desc(balance_group)) 
+
+res
+
+plot(res$balance_group, res$term_deposit_rate)
+
+#For those who have balance between 1500-6000, they have the higher rate to subscribe a term deposit, those who are richer or poorer than them in balance account are less willingly to subscribe a term deposit.
+```
+
+# Finding #6
+```{r}
+
+deposit_rate <- function(df) {
+  df %>% summarise(count = n(),term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n())%>%arrange(desc(term_deposit_rate))
+}
+
+df_1<-bank %>% group_by(contact,month="+",poutcome="+") %>% deposit_rate
+df_2<-bank %>% group_by(contact="+",month,poutcome="+") %>% deposit_rate
+df_3<-bank %>% group_by(contact="+",month="+",poutcome) %>% deposit_rate
+df_sum<-bind_rows(df_1,df_2,df_3)
+df_sum
+#The communication has no influence on the subscription rate of term deposit. But the outcome of the previous marketing campaign has a significant influence on the success of current campaign. If last campaign succeeded, this time will have a successful rate over 64%; otherwise, success rate is below 20%. If last contact was in October, December, March and September, the subscription rate of term deposit is higher.
+```
+# Finding #7
+```{r}
+
+deposit_rate <- function(df) {
+  df %>% summarise(count = n(),term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n())%>%arrange(desc(duration_group))
+}
+
+df_1<-bank %>% group_by(duration_group = ifelse(duration<1000,(duration %/% 100) * 100,1000)) %>% deposit_rate
+df_1
+plot(df_1$duration_group, df_1$term_deposit_rate)
+#It seems that the longer the duration of the last contact, the higher success rate of the current market campaign.
+```
+# Finding #8
+```{r}
+
+deposit_rate <- function(df) {
+  df %>% summarise(count = n(),term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n())%>%arrange(desc(campaign_group))
+}
+
+df_1<-bank %>% group_by(campaign_group = ifelse(campaign<12,campaign,12)) %>% deposit_rate
+df_1
+plot(df_1$campaign_group, df_1$term_deposit_rate)
+#It seems that the repetition of contact does not boost(brings down) the success rate of the current market campaign.
+```
+# Finding #9
+```{r}
+
+deposit_rate <- function(df) {
+  df %>% summarise(count = n(),term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n())%>%arrange(desc(pdays_group))
+}
+
+df_1<-bank %>% group_by(pdays_group = ifelse(pdays<390,(pdays %/% 30) * 30,390)) %>% deposit_rate
+df_1
+plot(df_1$pdays_group, df_1$term_deposit_rate)
+#It seems that the number of days that passed by after the client was last contacted in previous campaign does not influence the success rate of the current market campaign.
+```
+# Finding #10
+```{r}
+
+deposit_rate <- function(df) {
+  df %>% summarise(count = n(),term_deposit_rate=(sum(ifelse(y == "no", 0, 1)))/n())%>%arrange(desc(previous_group))
+}
+
+df_1<-bank %>% group_by(previous_group = ifelse(previous<10,previous,10)) %>% deposit_rate
+df_1
+plot(df_1$previous_group, df_1$term_deposit_rate)
+#It seems that number of contacts performed before this campaign does not influence the success rate of the current market campaign.
+```
+
+# Finding #
+```{r}
+# Find the big age group
+bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n(),age_mean=mean(age)) %>%
+  arrange(age_group) -> res
+
+res
+
+#plot(res$age_group, res$count)
+```
+
+# Discover insights of data frame: bank
+- Employment
+- Social attributes.
+- Count for sub-total / total, plot graph

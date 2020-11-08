@@ -1,0 +1,43 @@
+Wei Xinyi
+
+# A1 Shiny Web
+
+- Good.
+
+# A2.1 Secretary
+
+- This logic is not right. You are to find the first item > best_evalu.
+  This first is not just "first". You need to loop over the selection group to find the first >= best_evalue.
+
+  if(selec_group[1] >= best_evalu){
+    return(selec_group[1])
+  }
+  else{
+    return(NA)
+  }
+
+  # Correction
+  for (iv in selec_group) {
+    if (iv > best_evalu) {
+        return(iv)
+    }
+  }
+  # If we can not find the item > best_evalu, we return the last item.
+  return(tail(selec_group,1))
+
+# A4.3 Portfolio
+
+The allocation per stock is wrong. It needs to be equal-weighted per stock.
+
+Sum_first<- MSFT$adjusted_close[1] + AMZN$adjusted_close[1] + AAPL$adjusted_close[1] + V$adjusted_close[1]
+## allocation ni per stock
+n<- floor(1000000*0.9/Sum_first)
+
+## Correction
+n_MSFT <- floor(1000000*0.9/4/MSFT$adjusted_close[1])
+n_AMZN <- ...
+...
+
+
+
+

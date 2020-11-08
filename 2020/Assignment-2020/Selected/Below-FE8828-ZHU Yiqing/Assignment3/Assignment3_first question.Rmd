@@ -1,0 +1,113 @@
+---
+title: "Assignment3_first question"
+author: "Zhu Yiqing"
+date: "2020/10/9"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+This data contains `r nrow(data)` rows.
+```{r}
+rows <- nrow(bank)
+print (rows)
+```
+# Discover insights of data frame: bank. 1st: age group
+```{r}
+# Find the big age group
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+res
+ggplot(res, aes(age_group, count,fill=age_group)) +geom_bar(stat="identity") +
+  xlab("Age Group") + ylab("Number of People") 
+```
+# Discover insights of data frame: bank. 2nd: employment
+```{r}
+# Find the employment situation
+# We also want to find out how much is in balance for different jobs
+bank %>%
+group_by(job) %>%
+  summarise(count = n(),avg_balance=mean(balance)) %>%
+  arrange(avg_balance)-> res2
+p=ggplot(res2,aes(job,avg_balance),color=job)+geom_bar(stat="identity")+
+  scale_x_discrete(guide=guide_axis(n.dodge=1.5,check.overlap=TRUE,angle=60)) +
+  xlab("Job") + ylab("Average Balance")
+p
+```
+# Discover insights of data frame: bank. 3rd: marital and housing
+```{r}
+# Find the marital status and housing relation
+bank %>%
+group_by(marital, housing) %>%
+  summarise(number = n()) %>%
+  mutate(percentage = number/sum(number))-> res3
+ggplot(res3,aes(marital,percentage,fill=housing))+
+  geom_bar(stat="identity",position="stack")+
+  theme(axis.ticks.length=unit(0.5,'cm'))
+
+```
+# Discover insights of data frame: bank. 4th: duration
+```{r}
+# Find the duration's distribution
+bank %>%
+group_by(duration_group = (duration %/% 20) * 20) %>%
+  summarise(count = n()) %>%
+  arrange(duration_group) -> res4
+ggplot(res4, aes(duration_group, count)) + geom_point() +
+  xlab("Duration") + ylab("Number of People")
+```
+# Discover insights of data frame: bank. 5th: month
+```{r}
+# Find month's distribution
+mon_order <- data.frame(month = c("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"))
+bank %>%
+  group_by(month) %>%
+  summarise(number = n()) -> res5_tempt
+# res6 <- res5[order(factor(res5$month, levels = mon_order)),]
+res5 <- left_join(mon_order,res5_tempt,by="month")
+res5
+res5$month <- factor(res5$month, levels = res5$month)
+p=ggplot(res5,aes(month, number),color=month)+geom_bar(stat="identity")+
+  scale_x_discrete(guide=guide_axis(n.dodge=1.5,check.overlap=TRUE,angle=60)) +
+  xlab("Month") + ylab("Number of People")
+p
+```
+# Discover insights of data frame: bank. 6th: education
+```{r}
+# We also want to find out how much is in balance for different jobs
+bank %>%
+group_by(education) %>%
+  summarise(count = n(),avg_balance=mean(balance)) %>%
+  arrange(avg_balance)-> res6
+p=ggplot(res6,aes(education,avg_balance),color=education)+geom_bar(stat="identity")+
+  scale_x_discrete(guide=guide_axis(n.dodge=1.5,check.overlap=TRUE,angle=60)) +
+  xlab("Education") + ylab("Average Balance")
+p
+```
+# Discover insights of data frame: bank. 7th: contact
+```{r}
+bank %>%
+  group_by(contact) %>%
+  summarise(number = n()) %>%
+  mutate(all = 'contact')-> res7
+p=ggplot(res7,aes(all,number,fill=contact))+
+  geom_bar(stat="identity",position="stack")+
+  coord_polar("y", start=0)
+
+p
+```
+
+
+

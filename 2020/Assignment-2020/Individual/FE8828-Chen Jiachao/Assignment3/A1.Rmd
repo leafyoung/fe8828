@@ -1,0 +1,64 @@
+---
+title: "w3a1"
+author: "CHEN"
+date: "10/17/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(dplyr)
+# bank<-read.csv(file="bank.csv",sep=(";"))
+```
+
+#Finding 1
+Not surprisingly, a retired person has the largest balance, followed by an entrepreneur.
+
+```{r }
+print(df <- bank %>%
+  group_by(job) %>%
+  filter(min_rank(desc(balance)) == 1) %>% 
+  arrange(balance))
+```
+
+#Finding 2
+Retired people have the largest balance on average, followed by an entrepreneur.
+blue-collars have the smallest balance on average.
+
+```{r }
+print(summarize(group_by(bank,job),mean(balance)))
+```
+
+#Finding 3
+People who have housing have less balance on average than those who don't.
+
+```{r }
+print(summarize(group_by(df,housing),mean(balance)))
+```
+
+#Finding 4
+Administrators technician, services and blue-collars are mostly secondary educated; 
+while entrepreneur are mostly tertiary educated.
+```{r }
+print(group_by(bank, job,education) %>% summarise(n = n()))
+```
+
+#Finding 5
+People who have tertiary education have the most balance on average.
+```{r }
+print(summarize(group_by(df,education),mean(balance)))
+```
+
+#Finding 6
+Married people have more balance than single ones on average while divorced people have least balance on average.
+```{r }
+print(summarize(group_by(df,marital),mean(balance)))
+```
+
+#Finding 7
+People who don't have loan have more balance than those who have on average.
+```{r }
+print(summarize(group_by(df,loan),mean(balance)))
+```

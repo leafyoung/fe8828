@@ -1,0 +1,106 @@
+---
+title: "Part II_Option trading_dynamic hedging"
+author: "Shen Lu"
+date: "10/18/2020"
+output: html_document
+---
+- Import libraries
+```{r}
+library(conflicted)
+library(tidyverse)
+library(fOptions)
+suppressMessages({
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+})
+```
+- Generate 1000 simulation with random-generated price series with a 20-day ATM call option **(for Q1 and Q2 calculation)**
+```{r}
+K <- 100
+sigma <-0.3
+drift <- 0
+timestep <- 1/250
+days <- 20/250
+N <- days/timestep
+
+mean <- (drift - 0.5 *sigma*sigma)*timestep
+sd <- sigma*sqrt(timestep)
+```
+
+
+**(1)** Show Taylor’s expansion to actual PnL with indeed small remainder
+```{r}
+option_pnl <- rep(0, 20000)
+approx_pnl <- rep(0, 20000)
+Sum <- rep(0,1000)
+for(i in 1:1000)
+{
+  S1 <- 100
+  Smove <- rep(S1, N)*c(cumprod(rlnorm(N, mean = mean, sd = sd)))
+  price1 <- GBSOption("c", S = S1, X = K, Time = days, r = 0, b = 0, sigma = sigma)@price# used for loop
+  
+  for(j in 1:20)
+  {
+    vega0 <- GBSGreeks("Vega", "c", S = S1, X = K, Time = (days - timestep*(j - 1)), r = 0, b = 0, sigma = sigma)
+    delta0 <- GBSGreeks("Delta", "c", S = S1, X = K, Time = (days - timestep*(j - 1)), r = 0, b = 0, sigma = sigma)
+    gamma0 <- GBSGreeks("Gamma", "c", S = S1, X = K, Time = (days - timestep*(j - 1)), r = 0, b = 0, sigma = sigma)
+    theta0 <- GBSGreeks("Theta", "c", S = S1, X = K, Time = (days - timestep*(j - 1)), r = 0, b = 0, sigma = sigma)
+    option_pnl[(i - 1)*20 + j] = GBSOption("c", S = Smove[j], X = 100, Time = (days - timestep*j), r = 0, b = 0, sigma = sigma)@price - price1
+    approx_pnl[(i - 1)*20 + j] = delta0*(Smove[j] - S1) + 0.5*gamma0*(Smove[j] - S1)**2 + vega0*0+theta0*timestep
+    Sum[i] = Sum[i] + 0.5*gamma0*(Smove[j] - S1)**2 + theta0*timestep
+    S1 <- Smove[j]
+    price1 <- GBSOption("c", S = S1, X = K, Time = (days - timestep*j), r = 0, b = 0, sigma = sigma)@price
+  }
+}
+```
+
+```{r}
+diffWithApprox <- tibble(day = c(1:20000), diff_with_approx = option_pnl - approx_pnl)
+
+ggplot(diffWithApprox, aes(diff_with_approx))+
+  geom_density(col = "steelblue3", fill = "steelblue3",alpha = 0.8)+
+  scale_x_continuous(name = "Diff with Approx")
+```
+
+- **We can see that during the whole calculation process, Taylor’s expansion to actual PnL will generate indeed small remainder**
+
+
+**(2)** Show that if realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other, i.e. 
+$$\sum_{i=1}^{N} {GammaPnL_{i} + ThetaPnL_{i}} \approx 0$$
+```{r}
+Sum <- tibble(sum = Sum)
+ggplot(Sum, aes(sum))+
+  geom_density(col = "steelblue3", fill = "steelblue3",alpha = 0.8)+
+  scale_x_continuous(name = "Sum of GammaPnL and ThetaPnL")
+```
+**From the density graph we can see that most of the summation results are around 0, it proofs that if realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other.**
+
+**(3)**Show that if realized volatility > implied volatility, there is positive “Overall PnL” (profit and loss).
+```{r}
+sigma <- 0.5
+mean <- (drift - 0.5 *sigma*sigma)*timestep
+sd <- sigma*sqrt(timestep)
+price0 <- GBSOption("c", S = 100, X = K, Time = days, r = 0, b = 0, sigma = 0.3)@price
+OPnL <- rep(-price0, 1000)
+
+for(i in 1:1000)
+{
+  S1 <- 100
+  Smove <- rep(S1, N)*c(cumprod(rlnorm(N, mean = mean, sd = sd)))
+  #print(Smove)
+  deltaPnL <- 0
+  for(j in 1:20)
+  {
+    delta0 <- GBSGreeks("Delta", "c", S = S1, X = K, Time = (days - timestep*(j - 1)), r = 0, b = 0, sigma = 0.3)
+    deltaPnL = deltaPnL - delta0*(Smove[j] - S1)
+    S1 = Smove[j]
+  }
+  OPnL[i] = OPnL[i] +max(Smove[20] - K,0) + deltaPnL
+}
+
+OPnL <- tibble(OPnL = OPnL)
+ggplot(OPnL, aes(OPnL))+
+  geom_density(col = "steelblue3", fill = "steelblue3",alpha = 0.8)+
+  scale_x_continuous(name = "Overall PnL")
+```
+**From the density graph we can see that most of the simulation's overall PnL is positive.**

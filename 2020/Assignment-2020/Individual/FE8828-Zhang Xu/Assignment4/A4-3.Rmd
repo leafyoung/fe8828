@@ -1,0 +1,158 @@
+---
+title: "A4-3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(bizdays)
+library(tidyverse)
+library(alphavantager)
+av_api_key("3IX7JE8GZJTHII0E")
+T
+# To speed up download, we use compact to download recent 100 days.
+# outputsize is default to "compact"
+
+if (FALSE) {
+ av_get("AAPL",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")%>%
+select(.,timestamp,adjusted_close)%>%
+  {saveRDS(.,file='C:/Users/josh1/Desktop/AAPL.rds')
+    select(.,timestamp,adjusted_close)
+    }%>%
+  rename(.,AAPL=adjusted_close)->AAPL
+
+av_get("GOOGL",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")%>%
+select(.,timestamp,adjusted_close)%>%
+  {saveRDS(.,file='C:/Users/josh1/Desktop/GOOGL.rds')
+    select(.,timestamp,adjusted_close)
+    }%>%
+  rename(.,GOOGL=adjusted_close)->GOOGL
+
+av_get("EBAY",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")%>%
+select(.,timestamp,adjusted_close)%>%
+  {saveRDS(.,file='C:/Users/josh1/Desktop/EBAY.rds')
+    select(.,timestamp,adjusted_close)
+  }%>%
+  rename(.,EBAY=adjusted_close)->EBAY
+
+av_get("HLT",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")%>%
+select(.,timestamp,adjusted_close)%>%
+  {saveRDS(.,file='C:/Users/josh1/Desktop/HLT.rds')
+    select(.,timestamp,adjusted_close)
+  }%>%
+  rename(.,HLT=adjusted_close)->HLT
+}
+
+readRDS('AAPL.rds') %>% select(timestamp,adjusted_close) %>% rename(AAPL=adjusted_close) -> AAPL
+readRDS('GOOGL.rds') %>% select(timestamp,adjusted_close) %>% rename(GOOGL=adjusted_close) -> GOOGL
+readRDS('EBAY.rds') %>% select(timestamp,adjusted_close) %>% rename(EBAY=adjusted_close) -> EBAY
+readRDS('HLT.rds') %>% select(timestamp,adjusted_close) %>% rename(HLT=adjusted_close) -> HLT
+
+
+```
+
+
+```{r}
+df<-bind_cols(AAPL,GOOGL,EBAY,HLT)
+df["timestamp"]<-df["timestamp...1"]
+select(df,timestamp,AAPL,GOOGL,EBAY,HLT)->df
+df
+```
+#adjusting the position according to strategy
+```{r}
+df['value']<-0
+df['cash_reserve']<-1000000
+df['position']<-floor(df[1,'cash_reserve']/sum(df[1,2:5]))
+
+df[1,'cash_reserve']<-1000000-floor(df[1,'cash_reserve']/sum(df[1,2:5]))*sum(df[1,2:5])
+df[2,'value']<-df[1,'position']*sum(df[2,2:5])
+df[2,'cash_reserve']<-(df[1,'position']*sum(df[2,2:5])+df[1,'cash_reserve'])
+df[2,'position']<-floor(0.9*df[2,'cash_reserve']/sum(df[2,2:5]))
+df[2,'cash_reserve']<-df[2,'cash_reserve']-df[2,'position']*sum(df[2,2:5])
+
+for(k in 3:100){
+df[k,'value']<-df[k-1,'position']*sum(df[k,2:5])
+df[k,'cash_reserve']<-(df[k-1,'position']*sum(df[k,2:5])+df[k-1,'cash_reserve'])
+df[k,'position']<-floor(0.9*df[k,'cash_reserve']/sum(df[k,2:5]))
+df[k,'cash_reserve']<-df[k,'cash_reserve']-df[k,'position']*sum(df[k,2:5])
+
+}
+
+df <- mutate(df,return=value/lag(value)-1)
+df[2,'return']<-NA
+df
+```
+calculate sharp ratio
+```{r}
+mean(df["return"],na.rm=TRUE)
+r <- c(unlist(df["return"]))
+b<-sd(r,na.rm = TRUE)
+b
+a<-mean(c(unlist(df["return"])),na.rm=TRUE)
+a
+sharp_ratio_p=(6.306811e-05-0.01/250)/0.01941336
+sharp_ratio_p
+```
+
+
+
+S&P
+```{r}
+if (FALSE) {
+  av_get("SPY",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")%>%
+  select(.,timestamp,adjusted_close)%>%
+    {saveRDS(.,file='C:/Users/josh1/Desktop/SPY.rds')
+      select(.,timestamp,adjusted_close)
+      }%>%
+    rename(.,SPY=adjusted_close)->SPY
+}
+
+readRDS('SPY.rds') %>% select(timestamp,adjusted_close) %>% rename(SPY=adjusted_close) -> SPY
+
+SPY<- mutate(SPY,return=SPY/lag(SPY)-1)
+SPY
+mean(SPY["return"],na.rm=TRUE)
+r <- c(unlist(SPY["return"]))
+b<-sd(r,na.rm = TRUE)
+b
+a<-mean(c(unlist(SPY["return"])),na.rm=TRUE)
+a
+sharp_ratio_p=(0.001734619-0.01/250)/0.01249272
+sharp_ratio_p
+
+```
+plot of daliy return
+```{r}
+ggplot(df,aes(return))+
+  geom_histogram(bins=50)
+```
+plot total vluation
+```{r}
+ggplot(df,aes(timestamp,value))+
+  geom_line()
+```
+plot relativity return for your investment portfolio and S&P.
+
+
+
+```{r}
+df['rel_return']<-df['value']/as.numeric(df[2,'value'])
+SPY['rel_return']<-SPY['SPY']/as.numeric(SPY[1,'SPY'])
+df['note']<-"portofolio"
+SPY['note']<-"S&P 500"
+df1<-bind_rows(df,SPY)
+df1%>%
+  ggplot(aes(x=timestamp,y=rel_return,color=note))+
+  geom_line()
+```
+
+
+
+```{r}
+tibble(t = 1:10, v1 = (1:10) * 2, v2 = 30:21) %>% pivot_longer(cols = v1:v2)
+```
+
+```{r}
+select(df,timestamp,value,cash_reserve) %>% pivot_longer(cols = value:cash_reserve) %>%
+  ggplot(.) + geom_area(aes(x = timestamp, y = value, fill = name), position = 'fill')
+```

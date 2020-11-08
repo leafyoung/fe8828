@@ -1,0 +1,156 @@
+---
+title: "ASM4-3"
+author: "Shen Shanshan"
+date: "2020/10/18"
+output: html_document
+---
+
+1. Load the data
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(alphavantager)
+av_api_key("AY2V3XHP9IUGCKSL")
+
+library(dplyr)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+
+#AAPL <- av_get("AAPL", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+#AMZN <- av_get("AMZN", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+#BABA <- av_get("BABA", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+#PYPL <- av_get("PYPL", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+#SPY <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+
+#write.csv(AAPL, file = "AAPL.csv", na = "NA")
+#write.csv(AMZN, file = "AMZN.csv", na = "NA")
+#write.csv(BABA, file = "BABA.csv", na = "NA")
+#write.csv(PYPL, file = "PYPL.csv", na = "NA")
+#write.csv(SPY, file = "SPY.csv", na = "NA")
+
+library(readr)
+AAPL <- read_csv("AAPL.csv")
+AMZN <- read_csv("AMZN.csv")
+BABA <- read_csv("BABA.csv")
+PYPL <- read_csv("PYPL.csv")
+SPY <- read_csv("SPY.csv")
+```
+
+2. Decide the allocation ni per stock and calculate daily valuation of the portfolio.
+```{r}
+ni_aapl <- round(1000000*0.9*0.25/AAPL$`adjusted_close`[1])
+ni_amzn <- round(1000000*0.9*0.25/AMZN$`adjusted_close`[1])
+ni_baba <- round(1000000*0.9*0.25/BABA$`adjusted_close`[1])
+ni_pypl <- round(1000000*0.9*0.25/PYPL$`adjusted_close`[1])
+cash <- 1000000 - (ni_aapl*AAPL$`adjusted_close`[1] +
+  ni_amzn*AMZN$`adjusted_close`[1] +
+  ni_baba*BABA$`adjusted_close`[1] +
+  ni_pypl*PYPL$`adjusted_close`[1])
+Rf <- 0.01/250
+cat(paste0("Number of shares assigned in AAPL is "), ni_aapl, "\n")
+cat(paste0("Number of shares assigned in AMZN is "), ni_amzn, "\n")
+cat(paste0("Number of shares assigned in BABA is "), ni_baba, "\n")
+cat(paste0("Number of shares assigned in PYPL is "), ni_pypl, "\n")
+cat(paste0("Initial cash holding is $"), cash, "\n")
+
+portfolio <- tibble(timestamp = AAPL$timestamp, daily_val = 1:100, return = rep(NA,100))
+for (i in 1:100) {
+  portfolio$daily_val[i] <- cash*((1+Rf)^i) + ni_aapl*AAPL$adjusted_close[i] +
+    ni_amzn*AMZN$adjusted_close[i] + ni_baba*BABA$adjusted_close[i] +
+    ni_pypl*PYPL$adjusted_close[i]
+  if(i == 1) {next}
+  else {
+    portfolio$return[i] <-  portfolio$daily_val[i]/portfolio$daily_val[i-1] - 1
+  }
+}
+portfolio
+```
+
+3. Calculate the Sharpe ratio for this portfolio and S&P
+```{r}
+mean_Rp <- mean(portfolio$return, na.rm = TRUE)
+std_Rp <- sd(portfolio$return, na.rm = TRUE)
+sharp_ratio_Rp <- (mean_Rp-Rf)/std_Rp
+cat(paste0("Sharp ratio of portflio is "), sharp_ratio_Rp, "\n")
+
+SPY$return <- rep(NA, 100)
+for (i in 2:100) {
+    SPY$return[i] <-  SPY$`adjusted_close`[i]/SPY$`adjusted_close`[i-1] - 1
+}
+mean_SPY <- mean(SPY$return, na.rm = TRUE)
+std_SPY <- sd(SPY$return, na.rm = TRUE)
+sharp_ratio_SPY <- (mean_SPY-Rf)/std_SPY
+cat(paste0("Sharp ratio of SPY is "), sharp_ratio_SPY, "\n")
+```
+
+4. Plot a histogram of daily return
+```{r}
+library(ggplot2)
+portfolio %>% ggplot(.) +
+  geom_histogram(mapping = aes(x = return), color = "blue", fill = "blue", alpha = 0.5)
+```
+
+5(1). Plot total valuation for your investment portfolio and S&P.
+```{r}
+SPY$daily_val <- rep(NA, 100)
+ni_spy <- round(1000000*0.9/SPY$adjusted_close[1])
+cash_spy <- 1000000 - ni_spy*SPY$adjusted_close[1]
+for(i in 1:100){
+  SPY$daily_val[i] <- cash_spy*((1+Rf)^i) + ni_spy*SPY$adjusted_close[i]
+}
+
+portfolio$rela_return <- rep(NA, 100)
+for(i in 1:100){
+  portfolio$rela_return[i] <- portfolio$daily_val[i] / portfolio$daily_val[1] -1
+}
+
+SPY$rela_return <- rep(NA, 100)
+for(i in 1:100){
+  SPY$rela_return[i] <- SPY$daily_val[i] / SPY$daily_val[1] -1
+}
+
+df_summary1 <- tibble(timestamp = portfolio$timestamp, 
+                      type = rep("portfolio", 100),
+                      total_val = portfolio$daily_val,
+                      return = portfolio$return,
+                      rela_return = portfolio$rela_return)
+
+df_summary2 <- tibble(timestamp = portfolio$timestamp, 
+                      type = rep("SPY", 100),
+                      total_val = SPY$daily_val,
+                      return = SPY$return,
+                      rela_return = SPY$rela_return)
+
+df_summary <- full_join(df_summary1, df_summary2)
+
+df_summary %>% ggplot(.) +
+  geom_line(aes(x = timestamp, y = total_val, color = type)) 
+```
+5(2). Plot relativity return for your investment portfolio and S&P.
+```{r}
+df_summary %>% ggplot(.) +
+  geom_line(aes(x = timestamp, y = rela_return, color = type)) 
+```
+
+6. Plot relative valuation for the different allocation (stocks and cash)
+```{r}
+library(tidyr)
+
+df_summary1$val_aapl <- rep(NA, 100)
+df_summary1$val_amzn <- rep(NA, 100)
+df_summary1$val_baba <- rep(NA, 100)
+df_summary1$val_pypl <- rep(NA, 100)
+df_summary1$val_cash <- rep(NA, 100)
+for(i in 1:100){
+  df_summary1$val_aapl[i] = ni_aapl * AAPL$adjusted_close[i]
+  df_summary1$val_amzn[i] = ni_amzn * AMZN$adjusted_close[i]
+  df_summary1$val_baba[i] = ni_baba * BABA$adjusted_close[i]
+  df_summary1$val_pypl[i] = ni_pypl * PYPL$adjusted_close[i]
+  df_summary1$val_cash[i] = cash * ((1+Rf)^i)
+}
+
+df_summary1 %>% pivot_longer(val_aapl:val_cash) %>% 
+  ggplot(.) + geom_area(aes(x = timestamp, y = value, fill = name), position = 'fill')
+
+```

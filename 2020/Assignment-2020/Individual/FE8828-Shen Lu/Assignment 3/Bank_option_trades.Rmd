@@ -1,0 +1,92 @@
+---
+title: "Book option trades"
+author: "Shen Lu"
+date: "10/6/2020"
+output: html_document
+---
+## 2.1 Import and clean the data
+```{r}
+library(tidyverse)
+library(lubridate)
+library(readr)
+library(fOptions)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+Google<- read_csv("Google_Dec 18_Option Chain.csv")
+
+names(Google) <- as.matrix(Google[1,])
+Google <- Google[-1:-2,]
+GoogleC <- Google[,1:8]
+GoogleP <- Google[, c(1, 8:14)]
+
+Calls <- tibble(`Exp. Date` = as.Date(paste0(GoogleC$`Exp. Date`[1], "-2020"), format = "%d-%b-%Y"), 
+                Strike = as.numeric(GoogleC$Strike),
+                `Open Int.` = as.numeric(GoogleC$`Open Int.`),
+                OptionType = "c",
+                Bid = as.numeric(GoogleC$Bid),
+                Ask = as.numeric(GoogleC$Ask),
+                Underlying = 1482.66,
+                Today = as.Date("2020-10-06"))
+Total_Option <- tibble(`Exp. Date` = as.Date(paste0(GoogleP$`Exp. Date`[1], "-2020"), format = "%d-%b-%Y"), 
+                Strike = as.numeric(GoogleP$Strike),
+                `Open Int.` = as.numeric(GoogleP$`Open Int.`),
+                OptionType = "p",
+                Bid = as.numeric(GoogleP$Bid),
+                Ask = as.numeric(GoogleP$Ask),
+                Underlying = 1482.66,
+                Today = as.Date("2020-10-06"))%>%
+                bind_rows(Calls, .)
+Total_Option
+rm(Calls, Google, GoogleC, GoogleP)
+```
+## 2.2 Calcualte the total valuation of 1) call alone, 2) put alone, 3) call and put
+```{r}
+CallsV <- filter(Total_Option, OptionType == "c")%>%
+    mutate(`Call Total Valuation` = `Open Int.`*(Bid+Ask)/2)%>%
+    select(Strike, `Call Total Valuation`)
+TotalV <- filter(Total_Option, OptionType == "p")%>%
+    mutate(`Put Total Valuation` = `Open Int.`*(Bid+Ask)/2)%>%
+    select(Strike, `Put Total Valuation`)%>%
+    inner_join(CallsV, ., by = "Strike")
+
+TotalV <- pivot_longer(TotalV, !Strike, names_to = "Type", values_to = "values")%>%
+    group_by(Strike)%>%
+    summarise(values = sum(values, na.rm = TRUE))%>%
+    mutate(Type = "Total Valuation")%>%
+    pivot_wider(names_from = Type, values_from = values)%>%
+    inner_join(TotalV, ., by = "Strike")
+rm(CallsV)
+
+TotalV
+```
+
+## 2.3 Find those in the money， and calculate their total Open Interest
+```{r}
+ITMC <- filter(Total_Option, OptionType == "c" & Strike < Underlying)%>%
+    select(Strike, `Open Int.`)
+Total_OI <- filter(Total_Option, OptionType == "p" & Strike > Underlying)%>%
+    select(Strike, `Open Int.`)%>%
+    bind_rows(ITMC, .)%>%
+    summarise(`Total Open Interest` = sum(`Open Int.`, na.rm = TRUE))
+
+rm(ITMC)
+Total_OI
+```
+
+## 2.4 Plot the volatility curve, strike v.s. vol.
+```{r}
+OTM <- filter(Total_Option, (OptionType == "c" & Strike > Underlying) | (OptionType == "p" & Strike < Underlying))%>%
+  arrange(Strike)
+
+find_vol <-function()
+{
+    Vol<- OTM%>%rowwise()%>%
+    mutate(Volatility = GBSVolatility((Bid + Ask)/2, OptionType, Underlying, Strike,
+    as.numeric(as.Date(`Exp. Date`) - as.Date(Today))/365,
+    r = 0.03, b = 0))
+  return(Vol)
+}
+
+VolCurve <- find_vol()
+plot(VolCurve$Strike, VolCurve$Volatility, type = "l", xlab = "Strike Price (USD)", ylab = "Volatility", col = "steelblue3", lwd = 2)
+```

@@ -1,0 +1,14 @@
+Zhu Yiqing
+
+# A1 Shiny Web
+
+- Good
+
+# A2.1 Secretary
+
+- Below code is a good handling when i reaches the last item in selection_group
+
+    else if (i == (N-split_number)){
+      select_one <- 0 # better to be selc_group[[i]], but does not affect the probability calculation
+    }
+

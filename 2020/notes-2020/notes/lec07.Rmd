@@ -1,0 +1,965 @@
+---
+title: "FE8828 Programming Web Applications in Finance"
+subtitle: "Week 3: 8. dplyr/2: More Verbs and EDA"
+date: "Oct 1, 2020"
+author: "Dr. Yang Ye \\ yy@runchee.com"
+institute: "Nanyang Business School"
+## titlegraphic: /Dropbox/teaching/clemson-academic.png
+fontsize: 10pt
+classoption:
+  - serif
+header-includes:
+  - \usepackage{fourier}
+always_allow_html: true
+make149: false
+## classoption: "aspectratio=169"
+# mainfont: "Bera Sans"
+# titlefont: "Calibri"
+# sansfont: "Bera Sans"
+# monofont: "Bera Sans Mono"
+# output: html_document
+# output: pdf_document
+---
+
+<style type="text/css">
+code.r{ /* Code block */
+    font-size: 23px;
+}
+pre { /* Code block - determines code spacing between lines */
+    font-size: 19px;
+}
+</style>
+
+```{r setup, include=FALSE}
+library(knitr)
+library(conflicted)
+library(tidyverse)
+library(shiny)
+library(lubridate)
+library(bizdays)
+library(fOptions)
+library(ggplot2)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", collapse = TRUE, cache = TRUE)
+chunk <- "```"
+inline <- function(x = "") paste0("`` `r ", x, "` ``")
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Lecture 8: dplyr/2: More Verbs and EDA
+
+## From tree (solo df) to forest (multi-df)
+
+We have been dealing with one data frame. Let's move onto multiple data frames with `join`.
+
+```{r echo = FALSE, out.width = "55%"}
+knitr::include_graphics("imgs/2020/pexels-jesse-3604268.jpg")
+```
+
+## Joins
+
+```{r echo = FALSE, out.width = "35%"}
+knitr::include_graphics("imgs/2017/join_today_header_image.jpg")
+```
+
+If we use arithmetic operators to represent different `join`.
+
+- `full_join` is `*`
+- `anti_join` is `-`
+- `inner_joins` is `-` to reduce to shared common rows and `+` (columns)
+- `left_join/right_join` is `+` (columns). 
+
+## `full_join` and `anti_join`
+
+- full_join(a, b): Find all combinations between table a and b. i.e. `a * b`
+- anti_join(a, b): Find those in a but not in b.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# From something simple
+df <- full_join(tibble(a = 1:2), tibble(a = 7:8), by = "a")
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+df <- anti_join(tibble(a = 1:2), tibble(a = 2:6), by = "a")
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## `full_join` and `anti_join` More
+
+\footnotesize
+```{r echo = TRUE}
+# All possible combination between job and education
+x <- full_join(distinct(bank, job) %>% mutate(dummy = 1),
+               distinct(bank, education) %>% mutate(dummy = 1),
+               by = "dummy") %>%
+     select(-dummy)
+# actual combination of job and education in bank dataset
+y <- distinct(bank, job, education)
+
+nrow(x)
+nrow(y)
+
+df1 <- anti_join(x, y, by = c("job", "education"))
+df2 <- anti_join(y, x, by = c("job", "education"))
+cat(paste0("nrow(df1):", nrow(df1)))
+cat(paste0("nrow(df2):", nrow(df2)))
+```
+\normalsize
+We can conclude that, in the bank dataset, there are all combinations for job and education.
+
+## `left/right/anti/full_join`
+
+Sample data:
+
+- data_day1
+
+\footnotesize
+
+    |    Date    | Position_id | Buy/Sell | Quantity | Risk Factor | Traded Price |
+    | -----------|------------ |----------|----------|-------------|--------------|
+    | 2019-11-07 |    00010001 |        B |      100 | DCE_IO_1901 |        505.3 |
+    | 2019-11-07 |    00010002 |        B |      100 | DCE_IO_1901 |        506.8 |
+
+- data_day2
+
+\footnotesize
+
+    |    Date    | Position_id | Buy/Sell | Quantity | Risk Factor | Traded Price |
+    | -----------|------------ |----------|----------|-------------|--------------|
+    | 2019-11-07 |    00010001 |        B |      100 | DCE_IO_1901 |        505.3 |
+    | 2019-11-07 |    00010002 |        B |      100 | DCE_IO_1901 |        506.8 |
+    | 2019-11-08 |    00010003 |        S |     -100 | DCE_IO_1901 |        507.9 |
+
+\normalsize
+Positions are additive (to close a position, we won't change the original position but to do a new reverse trade).
+Suppose we have two days of position data.
+
+
+## `left/right/anti/full_join`
+
+In order to find the new positions. We will use:
+
+    # order matters, data_day2 needs to be placed first.
+    # anti_join is like "data_day2 - data_day1"
+    anti_join(data_day2, data_day1, by = "position_id")
+
+In order to find older positions, we will use:
+
+- `inner_join` find the common positions
+    
+`inner_join(data_day2, data_day1, by = "position_id")`
+    
+- Because data_day2 includes all data from data_day1. Following two produce the same result
+    
+`left_join(data_day1, data_day2, by = "position_id")`
+`right_join(data_day2, data_day1, by = "position_id")`
+    
+- Produce all items in data_day2
+  
+`left_join(data_day2, data_day1, by = "position_id")`
+
+## Use case for `left_join / right_join`
+
+They can be used to do mapping table (aka. vlookup)
+
+\footnotesize
+Table `Product`:
+
+    | type_code | type_name |
+    | 1         | orange    |
+    | 2         | banana    |
+
+Table `Transaction`:
+
+    | type_code | quantity | customer_id |
+    | 1         | 1        | A           |
+    | 2         | 3        | B           |
+    | 3         | 4        | C           |
+    | 2         | 2        | D           |
+    | 1         | 6        | B           |
+
+Table `Customer`:
+
+    | customer_id | customer_phone |
+    | A           | +123           |
+    | B           | +456           |
+    | C           | +789           |
+
+## Use `left_join` to create a full report
+
+\footnotesize
+
+    left_join(Transaction, Product, by = "type_code") %>%
+    left_join(Customer, by = "customer_id")
+
+    | type_code | quantity | customer_id | type_name | customer_phone |
+    |-----------|----------|-------------|-----------|----------------|
+    | 1         | 1        | A           | orange    | +123           |
+    | 2         | 3        | B           | banana    | +456           |
+    | 3         | 4        | C           | NA        | +789           |
+    | 2         | 2        | D           | banana    | NA             |
+    | 1         | 6        | B           | orange    | +456           |
+
+
+## `group_by` / `summarize`
+
+`group_by` is the way leading to analyze the data at lower-dimension, reducing it to summary.
+`group_by` can be used together with `summarize`, `mutate`
+
+- `group_by(df, col1, col2, ...)`
+- `summarize(df, new_field = some_func_can_process_bulk_data())`
+
+Functions can process bulk data:
+
+- sum/mean/median/sd: basic statistics
+- min(x), quantile(x, 0.25), max(x): min/max/quantile
+- n()/n_distinct(): count and count distint
+- ntile: a rough divide into a few groups
+- first(x), last(x), nth(x, 2)
+- ...
+
+## `group_by` / `summarize`: Examples - 1
+
+\footnotesize
+```{r echo = TRUE, results = "hide" }
+# Add parameter na.rm, if there is NA among the data.
+df <- tibble(a = c(1, 3, 4, NA))
+```
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+\footnotesize
+```{r echo = TRUE, results = "hide" }
+summarise(df, total = sum(a))
+```
+\footnotesize
+```{r echo = FALSE}
+kable(summarise(df, total = sum(a)))
+```
+
+## `group_by` / `summarize`: Examples - 2
+
+\footnotesize
+```{r echo = TRUE, results = "hide" }
+summarise(df, total = sum(a, na.rm = TRUE))
+```
+\footnotesize
+```{r echo = FALSE}
+kable(summarise(df, total = sum(a, na.rm = TRUE)))
+```
+\footnotesize
+```{r echo = TRUE, results = "hide" }
+summarise(df, total = mean(a))
+```
+\footnotesize
+```{r echo = FALSE}
+kable(summarise(df, total = mean(a)))
+```
+\footnotesize
+```{r echo = TRUE, results = "hide" }
+summarise(df, total = mean(a, na.rm = TRUE))
+```
+\footnotesize
+```{r echo = FALSE}
+kable(summarise(df, total = mean(a, na.rm = TRUE)))
+```
+
+## `group_by` / `summarize`: Examples - 3
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# count number of people in each age group
+group_by(bank, age) %>% summarise(n = n())
+```
+\footnotesize
+```{r echo = FALSE}
+kable(head(group_by(bank, age) %>% summarise(n = n())), n = 10)
+```
+...
+
+## `group_by` / `summarize`: Examples - 4
+
+\footnotesize
+```{r echo = TRUE, fig.width=5, fig.height=3}
+group_by(bank, age) %>% summarise(n = n()) %>% plot
+```
+
+## `group_by` / `summarize`: Examples - 5
+
+Use `ifelse` in summarize/mutate for conditional statement.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+bank_age <- group_by(bank, age) %>%
+         summarise(balance_mean = mean(balance),
+                   count = n(),
+                   default_count = sum(ifelse(default == "no", 0, 1)))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(head(bank_age, n = 10))
+```
+...
+
+## `group_by` / `summarize`: Examples
+
+\footnotesize
+```{r echo = TRUE, results = "hide", fig.height=2, fig.width=5}
+# If combined with ggplot, to be learned in next session
+bank_age %>%
+  ggplot(aes(x = age, y = balance_mean)) +
+  geom_point(aes(size = count), alpha = 1/4, color = "red") +
+  geom_point(aes(size = default_count), alpha = 1/3, color = "blue") +
+  geom_smooth(se = FALSE)
+```
+
+## Group filter
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# Find the maximum and minimum balance on each age.
+df <- bank %>% 
+  group_by(age) %>%
+  filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+  arrange(age, balance)
+```
+
+\tiny
+```{r echo = FALSE}
+kable(head(df, n = 10))
+```
+...
+
+## Count for condition
+
+\footnotesize
+- `sum(TRUE) == 1`, `sum(FALSE) == 0`
+
+\scriptsize
+```{r echo = TRUE, results = "hide"}
+# Generate a report for balance and job
+d1 <- group_by(bank, job) %>%
+  summarise(`balance > 500` = sum(balance > 500))
+d2 <- group_by(bank, job) %>%
+  summarise(`balance <= 500` = sum(balance <= 500))
+# df collects all jobs, in case some jobs are missing from either d1 or d2
+# This is a typical example for collecting data.
+df <- distinct(bank, job) %>% arrange(job)
+df <- left_join(df, d1, by = "job")
+df <- left_join(df, d2, by = "job")
+df <- mutate(df, total = `balance > 500` + `balance <= 500`)
+```
+
+## Count for condition - Result
+
+\scriptsize
+```{r echo = FALSE}
+kable(df)
+```
+
+## `group_by` and `mutate` - 1
+
+```{r echo = TRUE, results = "hide"}
+# mutate with group_by
+df <- group_by(tibble(a = 1:10), quantile = ntile(a, 2)) %>%
+  mutate(b = a / sum(a))
+```
+
+```{r echo = FALSE}
+kable(df)
+```
+
+## `group_by` and `mutate` - 2
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# filter with group_by
+df <- group_by(bank, age) %>% filter(balance == max(balance))
+```
+
+\tiny
+```{r echo = FALSE}
+kable(head(df, n = 15))
+```
+...
+
+## `summarize/summarise` Example
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# summarise with group_by
+df <- group_by(tibble(a = 1:10), quantile = ntile(a, 2)) %>%
+  summarise(b = sum(a))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+\footnotesize
+```{r echo = TRUE, results = "hide" }
+# summarise without a group_by. It will treat entire df as one piece.
+df <- summarise(bank,
+                with_housing = sum(housing == "yes") / n(),
+                age_min = min(age),
+                duration_mean = mean(duration))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## `group_by`/`ungroup`
+
+`ungroup()` removes group definition, restores the "ungrouped" data frame back to entire data.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# wrong
+df_wrong <- group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  summarize(balance = mean(balance)) %>%
+  head(n = 3)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df_wrong)
+```
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# correct
+df_correct <- group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  ungroup %>%
+  summarize(balance = mean(balance))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df_correct)
+```
+
+## `group_by`/`ungroup`
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# If we miss ungroup, we can't remove age. R will prompt."
+df1 <- group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  select(-age) %>% head(n = 3)
+```
+
+\scriptsize
+```{r echo = FALSE}
+kable(df1)
+```
+
+```{r echo = TRUE, results = "hide"}
+# With ungroup, we can remove age.
+df2 <- group_by(bank, age) %>%
+  filter(balance == max(balance)) %>%
+  ungroup %>%
+  select(-age) %>% head(n = 3)
+```
+
+\scriptsize
+```{r echo = FALSE}
+kable(df2)
+```
+
+## `rowwise`
+
+`rowwise()` is a special `group_by` which makes every one row a group.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+df <- tibble(throw_dices = 1:10)
+df <- rowwise(df) %>% mutate( mean = mean(sample(1:6, throw_dices, replace = TRUE)))
+```
+
+With increasing number of sample size, mean is closer to 3.5.
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## Take-home: `group_by` and `summarise/summarize`
+
+- `group_by` is a like folding a paper without tearing it later.
+- `summarise` tears the paper to do individual pieces.
+- Therefore, `group_by` can be used with other verbs, `mutate`, `filter`, which will work within the group.
+- `summarise` can be used without group_by, then it will apply to entire data as one whole group.
+- `ungroup` is to unfold it
+- `rowwise` is to create one-row group for all.
+
+## `bind_rows`
+
+- bind_rows is the `+` operator for data frames.
+
+```{r echo = TRUE, results = "hide"}
+# add empty data frame is the same.
+df1 <- bind_rows(tibble(a = 3:4), tibble())
+```
+```{r echo = FALSE}
+kable(df1)
+```
+
+```{r echo = TRUE, results = "hide"}
+df2 <- bind_rows(tibble(), tibble(a = 3:4))
+```
+```{r echo = FALSE}
+kable(df2)
+```
+
+## `bind_rows`: Use case - 1
+
+I usually use bind_rows to collect results. For example,
+
+\footnotesize
+
+    new_positions <- tibble()
+    closed_positions <- tibble()
+
+    for (i in length(dates)-1) {
+      old_date <- dates[i]
+      new_date <- dates[i+1]
+
+      new_data <- filter(position, date == new_date)
+      old_data <- filter(position, date == old_date)
+
+      new_positions <- bind_rows(new_positions,
+                                 anti_join(new_data, old_data, by = "position_id"))
+    }
+
+    # new_positions contains all new positions on their day 1
+
+## `bind_rows`: Use case - 2
+
+If row order matters, bind_row can be used to re-order/splice and recombine.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# Get head and tail
+# Note: use { } to use the .
+df <- arrange(bank, age) %>%
+      { bind_rows(head(., n = 5), tail(., n = 5)) }
+```
+
+\scriptsize
+```{r echo = FALSE}
+kable(df)
+```
+
+## `bind_rows`: Use case - 3
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# summary
+df1 <- summarise_if(bank, is.numeric, mean)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df1)
+```
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# add summary to the records
+df2<- tail(bind_rows(bank, summarise_if(bank, is.numeric, mean)), n = 1)
+```
+
+\tiny
+```{r echo = FALSE}
+kable(df2)
+```
+
+## `bind_rows`: Use case - 4
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# bind_rows can match column names and type.
+# let's adjust the column order.
+# As due-deligence, better to check the result.
+# I remember earlier version of dplyr doesn't do match.
+df <- tail(bind_rows(bank, summarise_if(bank, is.numeric, mean) %>%
+  select(balance, day, everything())), n = 1) 
+```
+
+\tiny
+```{r echo = FALSE}
+kable(df)
+```
+
+## `bind_cols`
+
+- bind_cols is to extend the data frame in width.
+
+Use cases
+
+- It's a lazyman's `left_join` or `select`
+- It copies the columns
+- I usually find it useful to generate data frame for reports.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+dt1 <- bind_cols(select(bank, job), select(bank, education))
+dt1[1:3,]
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(dt1[1:3,])
+```
+
+## bind_cols
+
+If there are same-name columns in the data frames, they will be renamed by `...1`, `...2`, `...n`.
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+dt2 <- bind_cols(dt1, dt1)
+dt2[1:3,]
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(dt2[1:3,])
+```
+
+## bind_cols: Use cases
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+d1 <- filter(bank, month == "sep") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Duration Sep` = duration)
+d2 <- filter(bank, month == "oct") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Duration Oct` = duration)
+d3 <- filter(bank, month == "nov") %>%
+  summarize(duration = mean(duration)) %>%
+  rename(`Duration Nov` = duration)
+
+df <- bind_cols(d1, d2, d3)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df[])
+```
+
+## Exercise
+
+1. How to know the row number of the wrong date
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+df <- tibble(dt = c("2019-10-01", "2019-31-12",
+                        "2019-03-17", "2019-02-29",
+                        "2019-09-30"))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+Output:
+
+\footnotesize
+```{r echo = FALSE}
+mutate(df, nnn = 1:n(), x1 = as.Date(dt)) %>%
+filter(is.na(x1)) %>%
+{ cat(paste0("Wrong dates on rows: ", paste0(.$nnn, collapse = ", "))) }
+```
+
+## Exercise
+
+2. How to get sub-total and total on mean of age and balance, group by job and education?
+
+    | job       | education | mean(Age) | median(Balance) |
+    |-----------|-----------|-----------|-----------------|
+    | services  | primary   | ...       | ...             |
+    | services  |           | 
+    | services  | +         | ...       | ...             |
+    | ...
+    | +         | +         | ...       | ...             |
+
+## Exercise
+
+\footnotesize
+3. To evaluate a portfolio of options for its total value.
+
+\footnotesize
+```{r echo = TRUE, results="hide"}
+df <- tibble(type = sample(c("c", "p"), 100, replace = TRUE),
+                 strike = round(runif(100) * 100, 0),
+                 underlying = round(runif(100) * 100, 0),
+                 Time = 1,
+                 r = 0.01,
+                 b = 0,
+                 sigma = 0.3)
+df %>% rowwise() %>% mutate(
+  price = GBSOption(TypeFlag = "p", S = 3500, X = 3765,
+          Time = 1/12, r = 0, b = 0, sigma = 0.3)@price
+) %>% ungroup()
+```
+\footnotesize
+Not all R functions are able to take in vector and output vector. `GBSVolatility` can only take in single number, not vector.
+
+Use `rowwise() %>% mutate(... = GBSVolatility) %>% ungroup()`. `rowwise()` is a special kind of `group_by()` so it can pair up with `ungroup()`.
+
+## Assignment
+\footnotesize
+1. Exploratory Data
+Work on the bank dataset. Find 7 insights from data.
+Use R Markdown.
+
+\tiny
+```{r echo = FALSE, comment = ""}
+cat(htmltools::includeText("../example/week3/EDA-assignment.Rmd"))
+```
+
+
+## Assignment
+
+\footnotesize
+2. Book option trades
+
+2.1 Copy the options data from
+    https://www.nasdaq.com/symbol/goog/option-chain?dateindex=1
+
+- Select "December 2020"/Composite/Call&Puts/Near the Money/All(Types).
+- Copy the data to Excel, if it spans multiple pages, include all pages.
+- Load the data in R Studio as data frame. Clean it to have following columns. Note the original data make calls and puts share the same strike column.
+
+\footnotesize
+        | Exp. Date | Strike | Open Int. | OptionType | Bid | Ask | Underlying | Today
+
+        - Open Int. is the short-form for Open Interest.
+        - OptionType is "c" for "Calls", "p" for "Puts"
+        - Underlying/Today can be found on the top of the page.
+
+2.2 Calcualte the total valuation of 1) call alone, 2) put alone, 3) call and put. `Total Valuation = Open Interest * (Bid + Ask) / 2`. 
+
+2.3 Find those in the money (for calls, strike < underlying. for puts, strike > underlying.) and calculate their total `Open Interest`.
+    Find those out of the money (for calls, strike > underlying. for puts, strike < underlying.) and calculate their total `Open Interest`.
+
+## Assignment
+
+\footnotesize
+2.4. Plot the volatility curve, strike v.s. vol. For strike < current price, use puts' price; for strike > current price, use calls' price.
+
+```{r echo = TRUE}
+# GBSVolatility(price, TypeFlag, Underlying, Strike, Time, r, b, tol, maxiter)
+# Use Price to back-out implied volatility. Assume r = 0.03
+# Example:
+
+GBSVolatility(867.30, "c", 1135.67, 240,
+as.numeric((as.Date("2020-12-18") - as.Date("2020-09-29")))/365,
+r = 0.03, b = 0)
+```
+
+- Not all R functions are able to take in vector and output vector. `GBSVolatility` can only take in single number, not vector.
+- Use `rowwise() %>% mutate(vol = GBSVolatility(...)) %>% ungroup()` as a starting point.
+- `rowwise()` is a special kind of `group_by()` so it can pair up with `ungroup()`.
+
+
+## tidyr: `pivot_longer`/`pivot_wider`
+
+Wide format <=> Long format
+
+- Wide format is more familiar to us. Column name is the data attribute
+  - Wide data provides high-density view of data, more human-friendly.
+- Long format is what we reformat the data that common attributes are gathered together as a single variable.
+  - Long data is processing-friendly. This is call Tidy data principles <https://en.wikipedia.org/wiki/Tidy_data>
+
+## Wide v.s. Long
+
+Wide format
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+wfmt <- tibble(date = seq(from = as.Date("2019-01-01"),by = "day",length.out = 5),
+                   Copper_qty = round(runif(5) * 1000, 0),
+                   Gold_qty = round(runif(5) * 1000, 0),
+                   Silver_qty = round(runif(5) * 1000, 0))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(wfmt)
+```
+
+## Wide v.s. Long
+
+Long format
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+library(tidyr)
+df <- pivot_longer(wfmt, col = ends_with("qty"),
+                   names_to = "key", values_to = "value")
+```
+
+\footnotesize
+```{r echo = FALSE, results = "hide"}
+df <- gather(wfmt, key, value, -date)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## `pivot_long` example with *Bank* dataset
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+wfmt <- group_by(bank, job) %>% 
+  summarize(yy = sum(ifelse(default == "yes", 1, 0)),
+            nn = sum(ifelse(default == "no", 1, 0))) %>%
+  head(., 4) # slide space is limitd. Just take first 4 rows.
+df <- pivot_longer(wfmt, cols = c("yy","nn"),
+                   names_to = "default", values_to = "value") %>% 
+      arrange(job, default)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(wfmt)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## `pivor_wider` example with *Bank* dataset
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+lfmt <- group_by(bank, job, default) %>% summarize(nn = n()) %>% head(., 4)
+df <- pivot_wider(lfmt, names_from=default, values_from=nn)
+# How to take care of converting NA to zero?
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(lfmt)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## Combine different columns' Quantity - 1
+
+\footnotesize
+```{r echo = FALSE, reuslts = "hide"}
+wfmt <- tibble(date = seq(from = as.Date("2019-01-01"),by = "day",length.out = 5),
+                   Copper_qty = round(runif(5) * 1000, 0),
+                   Gold_qty = round(runif(5) * 1000, 0),
+                   Silver_qty = round(runif(5) * 1000, 0))
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(head(wfmt, 7))
+```
+
+\footnotesize
+```{r echo = TRUE, reuslts = "hide"}
+df <- wfmt %>%
+      pivot_longer(!date, names_to="key", values_to="value") %>%
+      group_by(date) %>%
+      summarize(value1 = sum(value)) %>%
+      rename(value = value1) %>%
+      mutate(key = "Total") %>%
+      pivot_wider(names_from=key, values_from=value) %>%
+      inner_join(wfmt, ., by = "date")
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## Combine different columns' Quantity - 2
+
+\footnotesize
+```{r echo = TRUE, results = "hide"}
+# although this works...
+# It takes "Hard coding" of column names "Copper_qty Gold_qty Silver_qty".
+df <- wfmt %>% mutate(total = Copper_qty + Gold_qty + Silver_qty)
+```
+
+\footnotesize
+```{r echo = FALSE}
+kable(df)
+```
+
+## Take-Home: CRUD with dplyr
+
+Create:
+
+- add new rows. bind_rows()
+
+Read:
+
+- You have known enough: filter/select/joins/... to get what you need.
+
+Delete:
+
+- Use filter to exclude the row(s). Save the result.
+
+```
+new_df <- filter(old_df, a > 1)
+```
+
+## Take-Home: CRUD with dplyr
+
+\footnotesize
+Update:
+- Use either data frame way or mutate.
+
+\footnotesize
+
+```
+# get all row numbers for students
+# . refers to the output of the pipe %>%. .$nnn => df$nnn
+row_nums <- mutate(bank, nnn = 1:n()) %>%
+            filter(job == "student" & age < 22) %>%
+            select(nnn) %>%
+            .$nnn
+ 
+bank1 <- bank
+bank1[row_nums, "taxable"] <- "no"
+bank1[setdiff(1:nrow(bank), row_nums), "taxable"] <- "yes"
+
+# use dplyr
+bank1 <- mutate(bank, taxable = ifelse(job == "student" & age < 22, "no", "yes"))
+distinct(bank1, taxable)
+```

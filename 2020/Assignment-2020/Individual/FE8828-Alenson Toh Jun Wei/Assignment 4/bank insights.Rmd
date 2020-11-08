@@ -1,0 +1,160 @@
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(knitr)
+options(scipen = 999)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE, message = F)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Insight 1
+Intuitively, there should be a positive correlation between education level and financial income. The chart below shows the distribution of the amounts in the accounts of individuals in each education category. According to the results, although the tertiary category is a little more balanced as compared to the other groups, there is no significant difference between them.
+
+```{r}
+education_balance <- bank %>% 
+  filter(education != "unknown") %>% 
+  filter(balance > 0) %>% 
+  mutate(education = factor(education, levels = c("primary","secondary", "tertiary")))
+
+education_balance %>% 
+  group_by(education) %>% 
+  summarise(mean_balance = mean(balance, na.rm = T),
+            median_balance = median(balance, nna.rm = T),
+            sd_balance = sd(balance, na.rm = T)) %>% 
+  kable()
+```
+
+
+```{r}
+ggplot(education_balance, aes(education, balance, color = education)) +
+  geom_boxplot() +
+  geom_jitter(width = .25, alpha = .1, size = .75) +
+  scale_y_log10() +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "The Balance Distribution of Differrent Education Levels",
+       x = "Education Level", y = "Balance (log scale)")
+```
+
+# Insight 2
+Salary distributions of different occupational groups differ. This difference should also cause differences in bank balances. The chart below shows the balance distributions of individuals in each occupation group.
+
+```{r}
+bank %>% 
+  group_by(job) %>% 
+  summarise(mean_balance = mean(balance, na.rm = T),
+            median_balance = median(balance, nna.rm = T),
+            sd_balance = sd(balance, na.rm = T)) %>% 
+  kable()
+```
+
+
+```{r}
+bank %>% 
+  ggplot(aes(balance, fill = job)) +
+  geom_histogram() +
+  scale_x_log10() +
+  facet_wrap(~job) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "The Balance Distribution of Differrent Proffessions",
+       x = "Balance (log scale)", y = "Count")
+```
+
+# Insight 3
+As the education level progresses, the purchasing power of individuals increases. For this reason, the possibility of owning a house is expected to increase. In the graphics below, the rate of home ownership of individuals with different educational backgrounds is illustrated.
+
+```{r}
+edu_housing <- bank %>% 
+  count(education, housing) %>% 
+  group_by(education) %>% 
+  mutate(percentage = n / sum(n) * 100) %>% 
+  filter(housing == "yes") %>% 
+  select(education, housing_percentage=percentage)
+
+edu_housing %>% 
+  kable()
+```
+
+
+```{r}
+edu_housing %>% 
+  ggplot(aes(education, housing_percentage, fill = housing_percentage)) +
+  geom_col() +
+  geom_text(aes(y = housing_percentage + 3, label = paste(round(housing_percentage), "%")))  +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "Percentages of Housing Among Different Education Status",
+       x = "Education Level", y = "Housing Percentage (%)")
+```
+
+# Insight 4
+The average age of individuals with different marital status varies. In the chart below, it is seen that the age distribution of individuals who are singles is around 30. On the other hand, the ages of individuals with married characteristics vary between 30 and 50.
+
+```{r}
+bank %>% 
+  group_by(marital) %>% 
+  summarise(mean_age = mean(age, na.rm = T),
+            median_age = median(age, nna.rm = T),
+            sd_age = sd(age, na.rm = T)) %>% 
+  kable()
+
+bank %>% 
+  ggplot(aes(age, fill = marital)) +
+  geom_histogram() +
+  facet_wrap(~marital, ncol = 1) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "The Age Distribution of Differrent Marital Status",
+       x = "Age", y = "Count")
+```
+# Insight 5
+Long-term experience is required to be able to choose some professions. In the graph below, it is seen that positions such as admin, blue_collar and management are predominantly 32 years old and continue until the age of 60. Retired people are grouped after the age of 60. Student individuals are generally less than 30 years old.
+
+```{r}
+bank %>% 
+  group_by(job) %>% 
+  summarise(mean_age = mean(age, na.rm = T),
+            median_age = median(age, nna.rm = T),
+            sd_age = sd(age, na.rm = T)) %>% 
+  arrange(mean_age) %>% 
+  kable()
+```
+
+```{r}
+bank %>% 
+  ggplot(aes(age, fill = job)) +
+  geom_histogram() +
+  facet_wrap(~job,) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(title = "The Age Distribution of Differrent Proffessions",
+       x = "Age", y = "Count")
+```
+
+# Insight 6
+Education level is an important requirement for some professions. In the graphic below, it is seen that the management position is mainly composed of individuals at tertiary education level; On the other hand, it is seen that the distribution in the housemaid position is at the primary education level. In general, secondary education level is the most common group.
+
+```{r}
+bank %>% 
+  count(education, job) %>% 
+  group_by(job) %>% 
+  pivot_wider(names_from = education, values_from = n) %>% 
+  kable()
+```
+
+
+```{r}
+bank %>% 
+  count(education, job) %>% 
+  group_by(job) %>% 
+  mutate(percentage = n / sum(n) * 100) %>%  
+  ggplot() +
+  geom_tile(aes(education, job, fill = percentage)) +
+  theme_minimal() +
+  labs(title = "Education Levels of Differrent Proffessions",
+       x = "Education Level", y = "Job")
+
+```

@@ -58,7 +58,6 @@ dateRangeInput("dateRange",
 numericInput("periods", "Periods to Forecast", 6, min = 1, max = 100)
 
 commodity <- reactive({
-  Quandl.api_key("d9EidiiDWoFESfdk5nPy")
   commodity <- Quandl(input$dataSet,
                  start_date = format(input$dateRange[1]),
                  end_date = format(input$dateRange[2]),
@@ -70,7 +69,7 @@ commodity <- reactive({
 
 combined_xts <- reactive({
   forecasted <- forecast(commodity(), h = input$periods)
-  forecast_dataframe <- data.frame(
+  forecast_dataframe <- tibble(
                         date = seq(input$dateRange[2], 
                         by = names(frequencyChoices[frequencyChoices == input$frequency]),
                         length.out = input$periods),

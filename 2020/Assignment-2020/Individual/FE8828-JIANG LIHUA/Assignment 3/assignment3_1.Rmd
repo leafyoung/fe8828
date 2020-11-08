@@ -1,0 +1,117 @@
+---
+title: "assignment3_1"
+author: "Jiang Lihua"
+date: "2020/10/8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r bank dataset}
+# bank <- read.csv("C://programming1//bank.csv", sep=";")
+# summary(bank)
+# View(bank)
+library(tibble)
+library(dplyr)
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+```
+
+```{r insight no.1}
+# 1: marriage
+single<-group_by(bank) %>% filter(bank$marital == "single")
+nrow(single)#1196
+single_rate<-nrow(single)/nrow(bank)
+single_rate#0.2645432
+housing_single<-single$housing
+have_housing_single<-group_by(single)%>% filter(housing_single=="yes")
+housing_rate_single<-(nrow(have_housing_single)/(nrow(single)))
+housing_rate_single#0.5317726
+
+married<-group_by(bank) %>% filter(bank$marital == "married")
+nrow(married)#2797
+married_rate<-nrow(married)/nrow(bank)
+married_rate#0.6186684
+housing_married<-married$housing
+have_housing_married<-group_by(married)%>% filter(housing_married=="yes")
+housing_rate_married<-(nrow(have_housing_married)/(nrow(married)))
+housing_rate_married#0.5809796
+
+divorced<-group_by(bank) %>% filter(bank$marital == "divorced")
+nrow(divorced)#528
+divorced_rate<-nrow(divorced)/nrow(bank)
+divorced_rate#0.1167883
+housing_divorced<-divorced$housing
+have_housing_divorced<-group_by(divorced)%>% filter(housing_divorced=="yes")
+housing_rate_divorced<-(nrow(have_housing_divorced)/(nrow(divorced)))
+housing_rate_divorced#0.5643939
+```
+
+
+```{r insight no.2}
+group_by(bank, month) %>% summarise(n = n())
+```
+
+
+```{r insight no.3}
+#find minimum and maximum balance in each month
+bank %>% group_by(month) %>% filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>% arrange(month, balance) 
+```
+
+
+```{r insight no.4}
+g1<-group_by(bank, marital) %>% summarise(`age > 40` = sum(age > 40))
+g2<-group_by(bank, marital) %>% summarise(`age <= 40` = sum(age <= 40))
+whole<-distinct(bank,marital)
+whole<-left_join(whole, g1, by = "marital")
+whole<-left_join(whole, g2, by = "marital")
+whole<-mutate(whole, total = `age > 40` + `age <= 40`)
+whole
+```
+
+
+```{r insight no.5}
+jan<-group_by(bank) %>% filter(bank$month == "jan")
+df1<-group_by(jan,day) %>% summarise(n = n())
+df1
+feb<-group_by(bank) %>% filter(bank$month == "feb")
+df2<-group_by(feb,day) %>% summarise(n = n())
+df2
+mar<-group_by(bank) %>% filter(bank$month == "mar")
+df3<-group_by(mar,day) %>% summarise(n = n())
+df3
+season1<-group_by(bank) %>% filter(bank$month == "jan" | bank$month=="feb" | bank$month =="mar")
+df<-group_by(season1,day) %>% summarise(n = n())
+df
+```
+
+
+```{r insight no.6}
+f1<-group_by(bank) %>% filter(marital == "single") %>%group_by(education)%>%summarise(single_n=n())
+f1
+f2<-group_by(bank) %>% filter(marital == "married") %>%group_by(education)%>%summarise(married_n=n())
+f2
+f3<-group_by(bank) %>% filter(marital == "divorced") %>%group_by(education)%>%summarise(divorced_n=n())
+f3
+f<-distinct(bank,education)
+f<-left_join(f,f1,by="education")
+f<-left_join(f,f2,by="education")
+f<-left_join(f,f3,by="education")
+f
+```
+
+
+```{r insight no.7}
+group_by(bank, duration) %>% summarise(balance_mean=mean(balance)) %>% plot
+```
+

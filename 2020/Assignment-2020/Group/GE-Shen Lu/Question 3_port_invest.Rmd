@@ -1,0 +1,562 @@
+---
+title: "Portfolio Investment Assignment"
+subtitle: "FE8828 AY20/21 Group Assignment"
+author: "Dr.Yang Ye  Chi Junwen  Shen Lu  Song Yifan  Zhang Xu"
+Email: 
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Overview
+
+- SPDR sector ETFs: `c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY')` and `'SPY'`
+- History from 1999-11-01 to now.
+- Strategy:
+  * Equal-weighted with 1) no re-balance, 2) monthly re-balance, 3) annual re-balance
+  * Momentum strategy with 1) long top 4, 2) long top 2 and short bottom 2
+- Note:
+  + All equity position, no cash.
+  + Do not load other library, use only the listed packages here.
+  + Submit Rmd and Rda data files together in a compressed file (.zip, .7z, etc.)
+- Disclaimer: this is no an investment advise.
+
+## Download
+
+```{r}
+# Change (FALSE) to (TRUE), when you need to download data.
+# Usually you only need to run this once.
+# Change file location
+
+# 'XLC', 'XLRE' has shorter history, don't use them.
+all_tickers <- c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY','SPY')
+```
+
+```{r}
+starttime <- Sys.time()
+endtime <- Sys.time()
+if (FALSE) {
+  av_api_key("AYQYMDI2Y114CYVB")
+  for (tt in all_tickers) {
+    df_xlc <- av_get(tt, av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize="full")
+    saveRDS(df_xlc, paste0("E:/NTU_CLASS/MiniT2/FE8828/Group_project/",tt,".Rds"))
+    cat(paste(tt,min(df_xlc$timestamp),max(df_xlc$timestamp),"\n"))
+    if(which(all_tickers == tt) == 5)
+    {
+       Sys.sleep(60)
+    }
+  }
+}
+```
+
+## Load and check
+
+```{r}
+# make sure all starts from the same time and same length.
+wd <- 'E:/Dropbox/MFE/FE8828/2020/Assignment-2020/Group/GD-Chen Leran/Grp Assignment -Q3/Data/'
+dd <- list()
+for (tt in all_tickers) {
+  dd[[tt]] <- readRDS(paste0(wd,tt,".Rds"))
+  print(paste(tt, min(dd[[tt]]$timestamp), nrow(dd[[tt]])))
+  assert(min(dd[[tt]]$timestamp) == as.Date('1999-11-01'))
+  assign(paste0('df_',tolower(tt)), dd[[tt]], envir = .GlobalEnv)
+}
+```
+
+### Technology vs. Energy
+
+- Energy was the rock star during 90s and 00s, abruptly stopped during GFC on the journey towards $200/bbl (never there).
+- Technology was a prodigy from late 70s, stumbled in early 00s, but now a rock star.
+
+```{r}
+plot(df_xlk$timestamp, df_xlk$adjusted_close,type='l')
+points(df_xle$timestamp, df_xle$adjusted_close,col='red',type='l')
+```
+
+# Equal-weighted Strategy
+
+## Compute daily return series
+
+```{r}
+len_tickers <- length(all_tickers)
+ii <- 1
+daily_ret <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+for (ii in 1:len_tickers) {
+  daily_ret[all_tickers[ii]] <- tail(dd[[ii]]$adjusted_close / lag(dd[[ii]]$adjusted_close, 1)-1,-1)
+}
+for (ii in 1:len_tickers) {
+  daily_ret[paste0(all_tickers[ii],"_cumret")] <- cumprod(1 + daily_ret[all_tickers[ii]])
+}
+```
+
+## Performance
+
+## Calculate Strategy return
+-no re-balance
+```{r}
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w <- rep(1, len_invest) / len_invest
+w
+
+daily_ret['EW'] <- as.matrix(daily_ret[,2:(2+len_invest-1)]) %*% w
+daily_ret %>% {plot(.$Date,.$EW,type='l')}
+```
+
+```{r}
+daily_ret['EW_cumret'] <- cumprod(daily_ret['EW'] + 1)
+
+daily_ret["no_rebalance EW_cumret"] <- as.matrix(select(daily_ret, ends_with("cumret"))[1:len_invest])%*%w
+daily_ret["no_rebalance EW"] <- rep(0, nrow(daily_ret))
+for(i in nrow(daily_ret):1)
+{
+  if(i == 1)
+  {
+    daily_ret[["no_rebalance EW"]][i] = daily_ret$`no_rebalance EW_cumret`[i]
+  }
+  else
+  {
+    daily_ret[["no_rebalance EW"]][i] = daily_ret$`no_rebalance EW_cumret`[i]/daily_ret$`no_rebalance EW_cumret`[i - 1] - 1
+  }
+}
+```
+
+Calculate other kinds of Portfolio
+```{r}
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+RBkind <- c("Monthly_rebalance ", "Yearly_rebalance ")
+
+# Monthly re-balance
+# every 21 days
+rebal_days_month <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+# Annual re-balance
+# every 252 days
+rebal_days_year <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+EW <- rep(0, nrow(daily_ret))
+cumret <- rep(0, nrow(daily_ret))
+countRet <- function(i, rebal)
+{
+  EW <- rep(0, nrow(daily_ret))
+  cumret <- rep(0, nrow(daily_ret))
+  for(m in 1:length(rebal))
+  {
+    range <- c(ifelse(m - 1 == 0, 1, rebal[m - 1]):(rebal[m] - 1))
+    tmp <- as.matrix(daily_ret[range,2:(2+len_invest-1)])+1
+    tmp[1, ] <- tmp[1, ]*w
+    tmp <- apply(tmp, 2, cumprod)
+    cumret[range] <- apply(tmp, 1, sum)
+    for(mm in range)
+    {
+      EW[mm] = cumret[mm]/ifelse(mm - 1 == 0, 1, cumret[mm - 1]) - 1
+    }
+    #print(EW[range])
+    w <- rep(cumret[range[length(range)]]/len_invest, len_invest)
+    #print(cumret[range])
+  }
+  daily_ret[paste0(RBkind[i],"EW")]<- EW
+  daily_ret[paste0(RBkind[i],"EW_cumret")] <- cumret
+  daily_ret
+}
+daily_ret <- countRet(1, rebal_days_month)
+daily_ret <- countRet(2, rebal_days_year)
+```
+
+# Momentum Strategy
+
+- Empirically, there appears to be certain “inertia” in stock returns known as the
+momentum effect, whereby future returns are positively correlated with past returns.
+
+- We use a price momentum here. At any point, we rank the ETFs according to following.
+  + At row `i`, momentum is `( price[i-21] - price[i-252] ) / price[i-252] - ( price[i-1] - price[i-21] ) / price[i-21]`
+
+- Set to re-balance every month
+  - Long the top 4 stocks with equal weights, or
+  - Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+```{r}
+daily_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_tickers) {
+  if (all_tickers[ii] == 'SPY') { next }
+  daily_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+daily_price
+
+rebal_days <- calc_rebal_days(nrow(daily_price), 21)
+rebal_days
+
+# Assume monthly re-balance
+momentum_month=tibble(tickers=invest_tickers)
+for (r in rebal_days) {
+  print(r)
+  mm <- numeric(len_invest)
+  
+  
+  # Generate momentum
+  # print(mm)
+  for (ii in 1:len_invest) {
+    tt <- invest_tickers[ii]
+    
+    # Use 1 if look-back period is not enough.
+    r_prev_d <- if_else(r > 1, r - 1, 1)
+    r_prev_m <- if_else(r > 21, r - 21, 1)
+    r_prev_y <- if_else(r > 252, r - 252, 1)
+    
+    x <- (daily_price[r_prev_m,tt] - daily_price[r_prev_y,tt] ) / daily_price[r_prev_y,tt] - ( daily_price[r_prev_d,tt] - daily_price[r_prev_m,tt] ) / daily_price[r_prev_m,tt]
+    mm[ii] <- as.numeric(x)
+  }
+  # TODO: rank and allocation.
+  # print(mm)
+  # run one cycle first, then remove break
+  momentum_month[as.character(r)]=mm
+}
+
+momentum_month
+
+```
+
+Calculate momentum-generated portfolio
+```{r}
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+
+rebal_mom_month<-daily_ret$`no_rebalance EW_cumret`
+gross_ret<-daily_ret[,2:(2+len_invest-1)]+1
+
+k=1
+long_num=4
+while (!is.na(rebal_days[k+1])){
+  long_stock=head(momentum_month["tickers"][[1]][order(-momentum_month[as.character(rebal_days[k])])],long_num)
+  weight<-rebal_mom_month[rebal_days[k]-1]/long_num
+  stock_ret=gross_ret[long_stock]
+  stock_ret[rebal_days[k],]=weight*stock_ret[rebal_days[k],]
+  stock_ret[rebal_days[k]:(rebal_days[k+1]-1),]<-apply(stock_ret[rebal_days[k]:(rebal_days[k+1]-1),],2,cumprod)
+  rebal_mom_month[rebal_days[k]:(rebal_days[k+1]-1)]=apply(stock_ret[rebal_days[k]:(rebal_days[k+1]-1),],1,sum)
+  k=k+1
+}
+for(i in 1:length(rebal_mom_month))
+{
+  EW[i] = rebal_mom_month[i]/ifelse(i - 1 == 0, 1, rebal_mom_month[i - 1]) - 1
+}
+daily_ret[["Long4 EW"]] <- EW
+daily_ret[["Long4_cumret"]] <- rebal_mom_month
+
+
+rebal_mom_month_2<-daily_ret$`no_rebalance EW_cumret`
+gross_long_ret<-daily_ret[,2:(2+len_invest-1)]+1
+gross_short_ret<-(-daily_ret[,2:(2+len_invest-1)])+1
+k=1
+long_num=2
+short_num=2
+
+while (!is.na(rebal_days[k+1])){
+  long_stock=head(momentum_month["tickers"][[1]][order(-momentum_month[as.character(rebal_days[k])])],long_num)
+       short_stock=head(momentum_month["tickers"][[1]][order(momentum_month[as.character(rebal_days[k])])],short_num)
+  weight<-rebal_mom_month_2[rebal_days[k]-1]/(long_num+short_num)
+  stock_long_ret=gross_ret[long_stock]
+  stock_short_ret=gross_short_ret[short_stock]
+ 
+  stock_long_ret[rebal_days[k],]=weight*stock_long_ret[rebal_days[k],]
+  stock_short_ret[rebal_days[k],]=weight*stock_short_ret[rebal_days[k],]
+  
+  stock_long_ret[rebal_days[k]:(rebal_days[k+1]-1),]<-apply(stock_long_ret[rebal_days[k]:(rebal_days[k+1]-1),],2,cumprod)
+  stock_short_ret[rebal_days[k]:(rebal_days[k+1]-1),]<-apply(stock_short_ret[rebal_days[k]:(rebal_days[k+1]-1),],2,cumprod)
+  
+  stock_ret=cbind(stock_long_ret[rebal_days[k]:(rebal_days[k+1]-1),],stock_short_ret[rebal_days[k]:(rebal_days[k+1]-1),])
+  
+  rebal_mom_month_2[rebal_days[k]:(rebal_days[k+1]-1)]=apply(stock_ret,1,sum)
+  k=k+1
+}
+for(i in 1:length(rebal_mom_month))
+{
+  EW[i] = rebal_mom_month_2[i]/ifelse(i - 1 == 0, 1, rebal_mom_month_2[i - 1]) - 1
+}
+daily_ret[["Long2Short2 EW"]] <- EW
+daily_ret[["Long2Short2_cumret"]] <- rebal_mom_month_2
+```
+### Relative Performance between EW and SPY
+
+```{r}
+daily_ret %>% {plot(.$Date,.$SPY,type='l')}
+daily_ret %>% {plot(.$Date,.$`no_rebalance EW`,type='l')}
+daily_ret %>% {plot(.$Date,.$`Monthly_rebalance EW`,type='l')}
+daily_ret %>% {plot(.$Date,.$`Yearly_rebalance EW`,type='l')}
+daily_ret %>% {plot(.$Date,.$`Long4 EW`,type='l')}
+daily_ret %>% {plot(.$Date,.$`Long2Short2 EW`,type='l')}
+ggplot(daily_ret%>%select(Date, EW_cumret, SPY_cumret,`no_rebalance EW_cumret`, `Monthly_rebalance EW_cumret`, `Yearly_rebalance EW_cumret`, `Long4_cumret`, `Long2Short2_cumret`)%>%pivot_longer(cols = !Date, values_to = "Cumulative Return", names_to = "Portfolio Name"))+
+  geom_line(aes(Date, `Cumulative Return`, col = `Portfolio Name`), alpha = 0.8)
+```
+
+### Metric
+
+```{r}
+# annualized return for EW
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+# annualized return for (no RB)EW
+prod(daily_ret$`no_rebalance EW` + 1) ** (250 / length(daily_ret$EW))
+# annualized return for (monthly RB)EW
+prod(daily_ret$`Monthly_rebalance EW` + 1) ** (250 / length(daily_ret$`Monthly_rebalance EW`))
+# annualized return for (yearly RB)EW
+prod(daily_ret$`Yearly_rebalance EW` + 1) ** (250 / length(daily_ret$`Yearly_rebalance EW`))
+# annualized return for Long 4 EW
+prod(daily_ret$`Long4 EW` + 1) ** (250 / length(daily_ret$`Long4 EW`))
+# annualized return for Long2 & Short2 EW
+prod(daily_ret$`Long2Short2 EW` + 1) ** (250 / length(daily_ret$`Long2Short2 EW`))
+```
+
+
+```{r}
+# simplified Sharp ratio
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW)) / sd(daily_ret$EW) / sqrt(250)
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250)
+prod(daily_ret$`no_rebalance EW`+1)**(250 / length(daily_ret$`no_rebalance EW`)) / sd(daily_ret$`no_rebalance EW`) / sqrt(250)
+prod(daily_ret$`Monthly_rebalance EW` + 1) ** (250 / length(daily_ret$`Monthly_rebalance EW`)) / sd(daily_ret$`Monthly_rebalance EW`) / sqrt(250)
+prod(daily_ret$`Yearly_rebalance EW` + 1) ** (250 / length(daily_ret$`Yearly_rebalance EW`)) / sd(daily_ret$`Yearly_rebalance EW`) / sqrt(250)
+prod(daily_ret$`Long4 EW` + 1) ** (250 / length(daily_ret$`Long4 EW`)) / sd(daily_ret$`Long4 EW`) / sqrt(250)
+prod(daily_ret$`Long2Short2 EW` + 1) ** (250 / length(daily_ret$`Long2Short2 EW`)) / sd(daily_ret$`Long2Short2 EW`) / sqrt(250)
+```
+
+```{r}
+# Calculate the Max DD
+# maximum_drawdown <- '' in %
+calc_MDD <- function(cumret)
+{
+  MDD <- 0
+  for(i in 1:(length(cumret) - 1)){
+    MDD = max(MDD, (cumret[i] - min(cumret[(1+i):length(cumret)]))/cumret[i])
+  }
+  MDD*100
+}
+maximum_drawdown <- tibble(Portfolio = c("no_rebalance", "EW", "Monthly_rebalance", "Yearly_rebalance","Long4", "Long2 & Short2"), `MDD (%)` = c(calc_MDD(daily_ret$`no_rebalance EW_cumret`), calc_MDD(daily_ret$EW_cumret), calc_MDD(daily_ret$`Monthly_rebalance EW_cumret`), calc_MDD(daily_ret$`Yearly_rebalance EW_cumret`), calc_MDD(daily_ret$`Long4_cumret`), calc_MDD(daily_ret$`Long2Short2_cumret`)))
+maximum_drawdown
+```
+
+### Analyze
+
+```{r}
+rank <- tibble(ETF = all_tickers[1:len_invest], EW_PnL = rep(1, len_invest),`no_rebalance EW_cumret PnL` = rep(1, len_invest), `Monthly_rebalance EW_cumret PnL` = rep(1, len_invest), `(yearly RB) EW_cumret PnL` = rep(1, len_invest), `MDD (%)` = rep(1,len_invest))
+
+# Rank all ETFs by its contribution to PnL over the entire period.
+```
+
+- rank them regarding the no-balance portfolio
+```{r}
+# count no re-balance
+rank$`no_rebalance EW_cumret PnL` = (as.vector(t(tail(select(daily_ret, ends_with("cumret"))[1:9], 1))) - 1)/9
+select(arrange(rank, desc(`no_rebalance EW_cumret PnL`)), ETF, `no_rebalance EW_cumret PnL`)
+```
+
+- rank them regarding the daily re-balance portfolio
+```{r}
+# count daily re-balance
+return <- as.matrix(daily_ret[,2:(2+len_invest-1)])
+EWcumret <- as.vector(t(daily_ret$`Monthly_rebalance EW_cumret`))
+for(i in 1:nrow(return))
+{
+  if(i == 1)
+  {
+    rank$EW_PnL = (return[i, ] + 1)*rep(1/len_invest, len_invest)
+  }
+  else
+  {
+    rank$EW_PnL = (return[i, ] + 1)*rep(sum(rank$EW_PnL)/len_invest, len_invest)
+  }
+  
+}
+rank$EW_PnL = rank$EW_PnL - 1/9
+select(arrange(rank, desc(EW_PnL)), ETF, EW_PnL)
+```
+
+- rank them regarding the monthly re-balance portfolio
+```{r}
+# count montly re-balance
+ETFcumret <- as.matrix(daily_ret[,12:(12+len_invest-1)])
+
+for(m in 1:length(rebal_days_month))
+{
+  if(m == 1)
+  {
+    range <- c(1:rebal_days_month[m]) - 1
+    range <- range[-1]
+    rank$`Monthly_rebalance EW_cumret PnL` = ETFcumret[range[length(range)],]/9
+  }
+  else
+  {
+    range <-  c((rebal_days_month[m - 1] + 1):rebal_days_month[m]) - 1
+    rank$`Monthly_rebalance EW_cumret PnL` = ETFcumret[range[length(range)],]/ETFcumret[range[1] - 1,]*rep(sum(rank$`Monthly_rebalance EW_cumret PnL`)/len_invest, len_invest)
+  }
+  
+}
+rank$`Monthly_rebalance EW_cumret PnL` = rank$`Monthly_rebalance EW_cumret PnL` - 1/9
+#sum(rank$`(monthly RB) EW_cumret PnL`)
+select(arrange(rank, desc(`Monthly_rebalance EW_cumret PnL`)), ETF, `Monthly_rebalance EW_cumret PnL`)
+```
+
+- rank them regarding the yearly re-balance portfolio
+```{r}
+# count yearly re-balance
+for(m in 1:length(rebal_days_year))
+{
+  if(m == 1)
+  {
+    range <- c(1:rebal_days_year[m]) - 1
+    range <- range[-1]
+    rank$`Yearly_rebalance EW_cumret PnL` = ETFcumret[range[length(range)],]*rep(1/len_invest, len_invest)
+  }
+  else
+  {
+    range <-  c((rebal_days_year[m - 1] + 1):rebal_days_year[m]) - 1
+    rank$`Yearly_rebalance EW_cumret PnL`= (ETFcumret[range[length(range)],]/ETFcumret[range[1] - 1,])*rep(sum(rank$`Yearly_rebalance EW_cumret PnL`)/len_invest, len_invest)
+  }
+  
+}
+rank$`Yearly_rebalance EW_cumret PnL` = rank$`Yearly_rebalance EW_cumret PnL` - 1/9
+#sum(rank$`(yearly RB) EW_cumret PnL`)
+select(arrange(rank, desc(`Yearly_rebalance EW_cumret PnL`)), ETF, `Yearly_rebalance EW_cumret PnL`)
+```
+
+- rank them regarding the long 4 stocks monthly re-balance portfolio
+```{r}
+mom_rebalance<-daily_ret[,c(2:10)]+1
+day_ret<-c(1,daily_ret$`Long4_cumret`)
+mom_rebalance[1:(rebal_days[1]-1),]=apply(mom_rebalance[1:(rebal_days[1]-1),],2,cumprod)
+mom_rebalance[(rebal_days[1]-1),]=(mom_rebalance[(rebal_days[1]-1),]-1)/9
+mom_rebalance[1:(rebal_days[1]-2),]=0
+
+
+long_num=4
+for(i in rebal_days[1:(length(rebal_days)-1)]){
+    long_stock<- head(momentum_month$tickers[order(-momentum_month[as.character(i)])],long_num)
+    for(ii in long_stock){
+    
+    mom_rebalance[ii][[1]][i]=day_ret[i]*mom_rebalance[ii][[1]][i]
+    k=rebal_days[which(i==rebal_days)+1]
+    mom_rebalance[ii][[1]][i:(k-1)]=cumprod(mom_rebalance[ii][[1]][i:(k-1)])
+    mom_rebalance[ii][[1]][k-1]=(mom_rebalance[ii][[1]][k-1]-day_ret[i])/long_num
+    mom_rebalance[ii][[1]][i:(k-2)]=0
+    }
+    for (m in setdiff(momentum_month$tickers,long_stock)){
+      k=rebal_days[which(i==rebal_days)+1]
+      mom_rebalance[m][[1]][i:(k-1)]=0
+    }
+  }
+mom_rebalance<-apply(mom_rebalance,2,sum)
+
+mom_rebalance<-as.data.frame(mom_rebalance)%>%arrange(desc(mom_rebalance))
+colnames(mom_rebalance)<-"Contribution"
+mom_rebalance
+```
+
+- rank them regarding the long 2 stocks and short 2 stocks monthly re-balance portfolio
+```{r}
+mom_rebalance<-daily_ret[,c(2:10)]+1
+day_ret<-c(1,daily_ret$`Long2Short2_cumret`)
+mom_rebalance[1:(rebal_days[1]-1),]=apply(mom_rebalance[1:(rebal_days[1]-1),],2,cumprod)
+mom_rebalance[(rebal_days[1]-1),]=(mom_rebalance[(rebal_days[1]-1),]-1)/9
+mom_rebalance[1:(rebal_days[1]-2),]=0
+
+
+long_num=2
+short_num=2
+
+for(i in rebal_days[1:(length(rebal_days)-1)]){
+  long_stock=head(momentum_month$tickers[order(-momentum_month[as.character(i)])],long_num)
+  short_stock=head(momentum_month$tickers[order(momentum_month[as.character(i)])],short_num)
+  for(ii in long_stock){
+    
+    mom_rebalance[ii][[1]][i]=day_ret[i]*mom_rebalance[ii][[1]][i]
+    k=rebal_days[which(i==rebal_days)+1]
+    mom_rebalance[ii][[1]][i:(k-1)]=cumprod(mom_rebalance[ii][[1]][i:(k-1)])
+    mom_rebalance[ii][[1]][k-1]=(mom_rebalance[ii][[1]][k-1]-day_ret[i])/(long_num+short_num)
+    mom_rebalance[ii][[1]][i:(k-2)]=0
+  }
+  for(ii in short_stock){
+    
+    mom_rebalance[ii][[1]][i]=day_ret[i]*mom_rebalance[ii][[1]][i]
+    k=rebal_days[which(i==rebal_days)+1]
+    mom_rebalance[ii][[1]][i:(k-1)]=cumprod(mom_rebalance[ii][[1]][i:(k-1)])
+    mom_rebalance[ii][[1]][k-1]=-(mom_rebalance[ii][[1]][k-1]-day_ret[i])/(long_num+short_num)
+    mom_rebalance[ii][[1]][i:(k-2)]=0
+  }
+  for (m in setdiff(momentum_month$tickers,c(long_stock,short_stock))){
+    k=rebal_days[which(i==rebal_days)+1]
+    mom_rebalance[m][[1]][i:(k-1)]=0
+  }
+}
+mom_rebalance<-apply(mom_rebalance,2,sum)
+
+mom_rebalance<-as.data.frame(mom_rebalance)%>%arrange(desc(mom_rebalance))
+colnames(mom_rebalance)<-"Contribution"
+mom_rebalance
+```
+
+- Rank them by their risk (max. draw down %) over the entire period
+```{r}
+for(ii in 1:len_invest)
+{
+  cumret <- as.vector(t(select(daily_ret, ends_with("cumret"))[ii]))
+  MDD <- 0
+  for(i in 1:(length(cumret) - 1)){
+      MDD = max(MDD, (cumret[i] - min(cumret[(1+i):length(cumret)]))/cumret[i])
+    }
+  rank$`MDD (%)`[ii] = MDD*100
+}
+select(arrange(rank, desc(`MDD (%)`)), !ends_with("PnL"))
+```
+
+
+### Let's try improve
+
+- Add Re-balance: reset the weights so each ETF has equal market value.
+
+```{r}
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Monthly re-balance
+# every 21 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+head(rebal_days)
+
+# Annual re-balance
+# every 252 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+head(rebal_days)
+```
+
+### TODO
+
+For each of EW strategy:
++ no re-balance
++ monthly re-balance, and
++ annually re-balance.
+
+Do the analysis prescribed in the ## Performance section.
+
+
+### TODO
+
+For each of Momentum strategy:
+- Long the top 4 stocks with equal weights, or
+- Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+Do the analysis prescribed in the ## Performance section.
+
+- Note: there is lead-in period *exclude* the lead-in period when Momentum strategy still wait for more data.
+  + For both momentum strategy portfolio and S&P in comparison, you need to exlcude the lead-in period so as to start from the first rebal_day day.

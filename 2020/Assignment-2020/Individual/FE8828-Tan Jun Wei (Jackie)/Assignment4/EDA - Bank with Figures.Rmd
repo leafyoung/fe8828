@@ -1,0 +1,86 @@
+---
+title: "EDA - Bank with figures"
+author: "Tan Jun Wei (Jackie)"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(cowplot)
+conflict_prefer("lag","dplyr")
+conflict_prefer("filter","dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+The distribution of all balances the bank has. It has a long right tail which signifies the existence of balances with relatively huge amount of money. 
+```{r All Balances}
+bank %>%
+  ggplot(aes(x = balance)) + geom_density()
+```
+
+# Finding #2
+By looking at the distribution of the customers' age, we can see that the bank has most of its customers' in their 20s to 50s. 
+```{r All Ages}
+bank %>% 
+ggplot(aes(x=age, y=..density..)) + 
+  geom_histogram(binwidth = 1, color="black", fill="white") +
+  geom_density(alpha=.2, fill="#FF6666")
+```
+
+# Finding #3
+
+In terms of martial status, we observe that the age distribution of customers who are single are generally lower than that of customers who are married. 
+``` {r Martial Status}
+bank %>%
+  ggplot(aes(x=age, y=..density.., color=marital)) +
+  geom_freqpoly(binwidth=10)
+```
+
+# Finding #4
+
+Looking at the distribution of customers' education level, we observe that for 20s to 40s, they mostly attain secondary or tertiary education level, whereas for 60s to 80s, they mostly attain primary or secondary education level. 
+
+```{r Education}
+bank %>%
+  ggplot() + 
+  geom_bar(aes(x=age,fill=education), position = 'fill') + 
+  coord_polar() + 
+  theme_minimal()
+```
+
+# Finding #5
+
+Ignoring the 'unknown' category, we can observe that the retirees have the tallest box among them. This tells us that the balances of the retirees vary across a wider range, compared to that of other job category. Also, among all customers, the customer with the most amount of money in his/her account is a retiree.
+```{r Job}
+bank %>%
+  ggplot(aes(x=job, y=balance, color=job)) +
+  geom_boxplot(show.legend = FALSE) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+# Finding #6
+
+Looking at the relationship between age and balances, there is no clear linear association between these two variables. Perhaps we cannot say that, in general, the customers of the bank are getting cash rich as they grow older! 
+```{r}
+point <- ggplot(bank, aes(x=age,y=balance)) + geom_point()
+d1 <- ggplot(bank, aes(x=age)) + geom_density() + theme(
+  axis.title.x=element_blank(),
+  axis.ticks.x=element_blank(),
+  axis.text.x=element_blank())
+d2 <- ggplot(bank, aes(y=balance)) + geom_density() + theme(
+  axis.title.y=element_blank(),
+  axis.ticks.y=element_blank(),
+  axis.text.y=element_blank())
+plot_grid(
+  d1, NULL, point, d2,
+  ncol = 2, rel_widths = c(3, 1), rel_heights = c(1,3)
+)
+```

@@ -1,0 +1,85 @@
+---
+title: "ASM3-2"
+author: "Shen Shanshan"
+date: "2020/10/11"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+
+library(readxl)
+options <- read_excel("options.xlsx", na="--")
+#View(options)
+
+library(dplyr)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+```
+
+# 2.1
+```{r}
+call <- tibble('Exp. Date' = as.Date(options$'Exp. Date'),
+               Strike = options$Strike,
+               'Open Int.' = options$'Open Int....7',
+               'Option Type' = rep('c', nrow(options)),
+               Bid = options$'Bid...4',
+               Ask = options$'Ask...5')
+temp <- tibble(Underlying = rep(1515.12, nrow(call)),
+               Today = rep(as.Date("2020-10-9"), nrow(call)))
+call <- cbind(call, temp)
+put <- tibble('Exp. Date' = as.Date(options$'Exp. Date'),
+               Strike = options$Strike,
+               'Open Int.' = options$'Open Int....14',
+               'Option Type' = rep('p', nrow(options)),
+               Bid = options$'Bid...11',
+               Ask = options$'Ask...12')
+put <- cbind(put, temp)
+new_options <- rbind(call, put)
+new_options
+```
+
+# 2.2
+```{r}
+Total_Val <- tibble('call alone' = call$'Open Int.'*(call$Bid+call$Ask)/2,
+                    'put alone' = put$'Open Int.'*(put$Bid+put$Ask)/2)
+Total_Val <- cbind(Strike = call$'Strike', Total_Val, tibble('call&put' = Total_Val$'call alone' + Total_Val$'put alone'))
+Total_Val
+```
+
+# 2.3
+```{r}
+total_Op_Int1 <- call %>% filter(Strike < Underlying) %>% summarise(total_Op_Int = sum(.$`Open Int.`, na.rm = TRUE))
+total_Op_Int2 <- put %>% filter(Strike > Underlying) %>% summarise(total_Op_Int = sum(.$`Open Int.`, na.rm = TRUE))
+total_Op_Int <- tibble(total_Op_Int = total_Op_Int1$total_Op_Int + total_Op_Int2$total_Op_Int)
+total_Op_Int
+```
+
+# 2.4
+```{r}
+library(fOptions)
+
+new_options <- new_options %>% rowwise() %>% mutate(
+  Vol = GBSVolatility(price = (Bid + Ask) / 2, 
+                      TypeFlag = `Option Type`, 
+                      S = Underlying, 
+                      X = Strike,  
+                      Time = as.numeric(as.Date(`Exp. Date`) - as.Date(`Today`))/365, 
+                      r = 0.03, 
+                      b = 0)) %>% ungroup()
+
+Vol_curve  <-  rbind(filter(new_options, Strike < Underlying & `Option Type` == 'p'),
+                     filter(new_options, Strike > Underlying & `Option Type` == 'c'))
+
+library(ggplot2)
+
+ggplot(Vol_curve, aes(Strike, Vol)) + geom_point() + geom_smooth(method = "loess", se = FALSE)
+```
+
+
+
+
+
+
+

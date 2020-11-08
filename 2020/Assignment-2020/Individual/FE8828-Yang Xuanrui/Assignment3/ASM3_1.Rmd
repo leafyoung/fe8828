@@ -1,0 +1,105 @@
+---
+title: "ASM3-1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale("LC_TIME", "English")
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(Hmisc)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+This people with __secondary education__ background is more likely to default.
+
+```{r,echo = FALSE}
+
+bank %>%
+group_by(education) %>%
+  summarise(default_ratio = sum(ifelse(default == "no",0,1))/n()) ->res1
+
+ggplot(res1) + geom_bar(aes(x=education, y=default_ratio),stat="identity")
+
+```
+
+# Finding #2
+The total banlance is highest in the __May__
+
+```{r,echo = FALSE}
+bank2 <- mutate(bank, Month = case_when(
+month == "jan" ~ 1,month == "feb" ~ 2,month == "mar" ~ 3,month == "apr" ~ 4,
+month == "may" ~ 5,month == "jun" ~ 6,month == "jul" ~ 7,month == "aug" ~ 8,
+month == "sep" ~ 9,month == "oct" ~ 10,month == "nov" ~ 11,month == "dec" ~ 12
+))
+
+bank2 %>% group_by(Month) %>%
+  summarise(balance_sum = sum(balance)) %>%
+  arrange(as.Date(Month,format="%b",origin = Sys.Date()))-> res2
+
+ggplot(res2) + geom_line(aes(x=Month, y=balance_sum)) +
+  scale_x_discrete(limit = levels(factor(res2$Month))) 
+
+```
+
+
+
+# Finding #3
+The majority of customers have balance __less than 5000__
+```{r,echo = FALSE}
+ggplot(bank, aes(balance)) + geom_density() + xlim(0,20000)
+  
+```
+
+
+# Finding #4
+- Getting married may not increase balance. 
+- But balance decline may be a reason or a result of getting divorced.
+
+```{r,echo = FALSE}
+bank %>% group_by(marital) %>% summarise(mean_balance=mean(balance)) -> res4
+
+ggplot(res4) + geom_bar(aes(x=marital, y=mean_balance),stat="identity")
+
+```
+
+
+
+# Finding #5
+Blue-collar, management and technician are main customers of this group. 
+
+```{r,echo = FALSE}
+ggplot(bank) + geom_bar(aes(x=job)) +
+theme(text = element_text(size=16),
+      axis.text.x = element_text(angle=45, hjust=1))
+```
+
+
+# Finding #6
+The balance upon retired are extremely high compared to other age level.
+
+```{r,echo = FALSE}
+bank %>% group_by(age) %>% summarise(mean_balance=mean(balance)) -> res6
+
+ggplot(res6) + geom_bar(aes(x=age, y=mean_balance),stat="identity")+theme(text = element_text(size=12),
+      axis.text.x = element_text(angle=45, hjust=1))
+```
+
+
+# Finding #7 
+No student customer got divorced.
+
+```{r,echo = FALSE}
+res7 <- filter(bank, job=="student",marital =="divorced")
+count(res7, marital =="divorced")
+```
+
+
+
+
+
+

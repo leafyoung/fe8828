@@ -1,0 +1,111 @@
+---
+title: "FE8828 Assignment 4 Part 1- Data Insight"
+author: "WU Hongsheng <sub> <Email:uncia668@gmail.com> </sub>"
+date: "17 Oct 2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+Explore the job distribution in different age
+```{r}
+f1 <- bank %>%
+  dplyr::filter(age <= 80, age >= 20, job != "unknown") %>%
+  group_by(age_group = (age %/% 5) * 5)
+
+ggplot(f1) +
+geom_bar(mapping = aes(x = age_group, fill = job), position = "fill") +
+coord_polar() + theme(text = element_text(size=10))
+```
+Story: We can see that the youngest age group has the highest percentile of student, when age > 30, there is no student appearing in the plot. Besides, the management percentile increases until age 60-65, which indicates that the more experienced (older) people are suitable for management. After 60, the percentile of retired suddenly increases, which is also easy to understand. All other jobs have a relatively stable distribution among 25-60, which indicates that the industry is healthy to accept all the age group in most of jobs.
+
+# Finding #2
+Explore the highest and lowest balance for each age
+```{r}
+f2 <- bank %>%
+  group_by(age) %>%
+  dplyr::filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+  arrange(age, balance) %>%
+  mutate(highlow = case_when(
+  min_rank(balance) == 1 ~ "Low",
+  min_rank(desc(balance)) == 1 ~ "High")) %>%
+  select(age, balance, highlow)
+
+ggplot(f2, aes(age, balance, color = highlow)) +
+  geom_point() + theme(text = element_text(size=10))
+
+```
+Story: We observed that almost all the lowest balance have the close value to each other. However, from 30-60, the highest balance value are higher than the age from <30 and >60. Which indicates that the mature people who has a stable job may have higher possibility to get higher balance in his/her account.
+
+# Finding #3
+We then further explore the relationship still between age and balance but we use mean balance. We also count the total number in each age.
+```{r}
+f3 <- group_by(bank, age) %>%
+summarise(balance_mean = mean(balance), count = n())
+
+ggplot(f3, aes(x = age, y = balance_mean)) +
+  geom_point(aes(size = count), alpha = 1/3, color = "lightseagreen") +
+  geom_smooth(se = FALSE, color = "royalblue2")
+
+```
+Story: We can see that on average, the balance also increase as the age increases from 20 to 70, which is intuitive that older people may accumulate more wealth and have higher balance.
+
+# Finding #4
+Explore the relationship between job and balance group
+```{r}
+f4 <- bank %>%
+  dplyr::filter(balance <= 20000, balance >= 0, job != "unknown") %>%
+  select(job, balance) %>%
+  group_by(balance_group = (balance %/% 1000) * 1000) %>%
+  arrange(balance_group)
+
+ggplot(f4) + 
+  geom_bar(mapping = aes(x = balance_group, fill = job),
+  position = "fill") +
+  theme(text = element_text(size=10))
+
+```
+Story: We group the balance (1000 balance per group) and we can see that management and retired job tend to be in the position of higher balance group, while student, unemployed tend to be in the lower balance group.
+
+# Finding #5
+Find the average education level for each age group <br>
+We define point 1 ~ Primary; 2 ~ Secondary; 3 ~ Tertiary <br>
+Exclude the "unknown" education level data
+```{r}
+f5 <- select(bank, age, education) %>%
+  arrange(age) %>%
+  dplyr::filter(education != "unknown") %>%
+  mutate(edu_points = case_when(
+  education == "primary" ~ 1,
+  education == "secondary" ~ 2,
+  education == "tertiary" ~ 3))  %>%
+  group_by(age_group = (age %/% 1) * 1) %>%
+  summarise(average_edu_points = mean(edu_points))
+
+ggplot(f5, aes(age_group, average_edu_points)) + 
+  geom_bar(stat = 'identity', colour = 'cornflowerblue', fill = "skyblue1") +
+  theme(text = element_text(size=10))
+```
+Story: We can see that overall, the younger people have the higher education level, while the age around 30 and age 63 has the highest education level. So that means the younger investors may become more educated than before.
+
+# Finding #6
+Similar to Finding #5, we explore the relationship between job and education level <br>
+We calculate each education level's percentile within each job
+```{r}
+f6 <- select(bank, job, education) %>%
+  dplyr::filter(education != "unknown") %>%
+  arrange(job)
+
+ggplot(f6) + 
+  geom_bar(mapping = aes(x = job, fill = education),
+  position = "fill") +
+  theme(text = element_text(size=10))
+```
+Story: We can see that job "management" has the highest ratio of tertiary education, while the blue collar has the highest ratio of primary education. So we can see the job function also has specific requirements on education levels. 

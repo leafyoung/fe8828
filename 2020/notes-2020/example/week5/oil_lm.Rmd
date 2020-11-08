@@ -1,0 +1,342 @@
+---
+title: "Oil Trading Game"
+subtitle: "FE8828 AY20/21 Demo"
+author: "Yang Ye"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(Quandl)
+library(xts)
+library(forecast)
+library(dygraphs)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Oil Trading Game
+- WTI Crude Oil <https://fred.stlouisfed.org/series/DCOILWTICO>
+- Price history: 2006-01-01 to 2020-10-05
+- Daily price predication. Once started, have either long or short every day.
+- Idea: Time series prediction. We assume a linear relationship between past returns to next return. 
+$$\textit{Ret}_{n+1} = \sum_{i=0}^{n} {w_{i} \textit{Ret}_{i}}$$
+- Regression and classification are two main categories of machine learning algorithms under supervised learning.
+- We use regression to calculate the weights.
+- Disclaimer: This is not an investment advice. There are many assumptions made in this code for the data. Not all prices are tradable.
+
+## Download Price
+
+```{r}
+# It seems find to leave token_qd as empty string. Subject to Quandl package.
+# Setup Quandl
+token_qd <- ''
+Quandl.api_key(token_qd)
+
+# Start with daily data. Note that "type = raw" will download a data frame.
+oil_daily <- Quandl("FRED/DCOILWTICO", type = "raw", collapse = "daily",  
+                    start_date="2006-01-01", end_date="2020-10-05")
+head(oil_daily)
+```
+
+```{r}
+ggplot(oil_daily) + geom_line(aes(Date, Value))
+```
+
+## Autocorrelation function (ACF)
+
+### ACF on Price
+
+```{r}
+oil_daily_original <- oil_daily
+acf(oil_daily$Value)
+```
+
+### ACF on Return
+
+```{r}
+oil_daily_ret <- oil_daily %>% mutate(ret = Value / lead(Value, 1) - 1 ) %>% head(-1)
+head(oil_daily_ret)
+tail(oil_daily_ret)
+tail(oil_daily)
+acf_result <- acf(oil_daily_ret$ret)
+```
+
+### Use ACF to identify significant past returns
+
+```{r}
+# The return value from acf function is a list, containing the data.
+acf_result
+str(acf_result)
+acf_result$acf
+acf_v <- acf_result$acf
+acf_v
+```
+
+### Extract Top 3
+
+```{r}
+acf_vv <- cbind(acf_v, 1:length(acf_v), abs(acf_v))
+# pick the top 3
+acf_index <- acf_vv[order(acf_vv[,3], decreasing = TRUE),][2:4,2]
+acf_index
+```
+
+## Create Linear Regression Model
+
+### Create training data
+
+```{r}
+# 2 12 3
+max(acf_index)
+
+# Because max(acf_index) == 12,
+# first 11 = 12-1 days is the observation period
+ret1d <- oil_daily_ret$ret
+ret1d_res <- head(ret1d, -1 * (max(acf_index)-1))
+
+length(ret1d_res)
+```
+
+```{r}
+# assert from testit package to test for condition
+# If we enable below statement, notebook will fail to continue to execute.
+# assert(FALSE)
+```
+
+### Creating 2d/3d/12d lagged series
+
+```{r}
+assert(all(head(ret1d_res) == head(ret1d)))
+
+ret1d_2d <- tail(head(ret1d, -1 * (max(acf_index)-2)),-1)
+assert(length(ret1d_2d) == length(ret1d_res))
+
+ret1d_3d <- tail(head(ret1d, -1 * (max(acf_index)-3)),-2)
+assert(length(ret1d_3d) == length(ret1d_res))
+
+# ret1d_12d was not implemented correctly.
+ret1d_12d <- tail(head(ret1d, -1 * (max(acf_index)-12)),-11)
+# assert(length(ret1d_12d) == length(ret1d_res))
+length(ret1d_12d)
+```
+
+### Let's create a function to generate lagged series.
+
+```{r}
+ret_lag <- function(ret_series, trunc, lag_n) {
+  ll <- length(ret_series)
+  ret_series[(lag_n):(ll+lag_n-1-trunc+1)]
+}
+
+# Verification code
+assert(length(ret_lag(ret1d, max(acf_index), 1)) == length(ret1d_res))
+
+assert(
+  all(ret_lag(ret1d, max(acf_index), 1) == ret1d_res) &
+  all(ret_lag(ret1d, max(acf_index), 2) == ret1d_2d) &
+  all(ret_lag(ret1d, max(acf_index), 3) == ret1d_3d) &
+  all(head(ret1d_res)[-1] == head(lag(ret1d_2d))[-1]) &
+  all(head(ret1d_2d)[-1] == head(lag(ret1d_3d))[-1])
+)
+
+ret1d_res <- ret_lag(ret1d, max(acf_index), 1)
+ret1d_2d <- ret_lag(ret1d, max(acf_index), 2)
+ret1d_3d <- ret_lag(ret1d, max(acf_index), 3)
+ret1d_12d <- ret_lag(ret1d, max(acf_index), 12)
+
+# check again
+assert(
+  all(head(ret1d_res)[-1] == head(lag(ret1d_2d))[-1]) &
+  all(head(ret1d_2d)[-1] == head(lag(ret1d_3d))[-1])
+)
+```
+
+## Run the model
+
+### Linear regression model with lm()
+
+In R, it is to describe a model using a formula expression, `y ~ x`.
+
+```{r}
+lm_res <- lm(ret1d_res ~ ret1d_2d + ret1d_3d + ret1d_12d)
+summary(lm_res)
+
+# lm also returns a list
+
+lm_res$coefficients
+as.matrix(lm_res$coefficients)
+```
+
+### Generate prediction
+
+```{r}
+# ret1d_pred <- 0.2645566 * ret1d_2d + -0.1611476 * ret1d_3d + -0.0931533 * ret1d_12d -0.0006623
+ret1d_pred <- cbind(1, ret1d_2d, ret1d_3d, ret1d_12d) %*% as.matrix(lm_res$coefficients)
+ret1d_pred[1:2]
+
+# 1st return:
+0.2645566 * -0.0418073228 + -0.1611476 * -0.0384519351 + -0.0931533 * 0.0024396194 - 0.0006623
+
+plot(ret1d_res, ret1d_2d)
+plot(ret1d_res, ret1d_3d)
+plot(ret1d_res, ret1d_12d)
+```
+
+We can sense there are problem due to outliers in the plots. Let's continue first.
+
+## Test Performance
+
+```{r}
+# Making sure prediction has the same length as actual
+assert(length(ret1d_pred) == length(ret1d_res))
+
+oil_daily_ret_trunc <- filter(oil_daily_ret, n() - row_number() >= max(acf_index)-1)
+assert(nrow(oil_daily_ret_trunc) == length(ret1d_res))
+
+oil_daily_ret_trunc['ret_pred'] <- ret1d_pred
+oil_daily_ret_trunc
+```
+
+### Predication correctness
+
+```{r}
+oil_daily_ret_trunc['pred_correct'] <- oil_daily_ret_trunc['ret_pred'] * oil_daily_ret_trunc['ret'] > 0 
+
+oil_daily_ret_trunc %>% group_by(pred_correct) %>% summarise(nn = n()) %>% ungroup() %>% 
+  { ggplot(.) + geom_bar(aes(x='',y = nn, fill = pred_correct), stat='identity') + coord_polar("y", start=0) }
+
+oil_daily_ret_trunc %>% group_by(year = year(Date),pred_correct) %>% summarise(nn = n()) %>% ungroup() %>%
+  mutate(nn = if_else(pred_correct, nn, -nn)) %>% ggplot(.) +
+  geom_bar(aes(x = year, y = nn, fill = pred_correct), stat = "identity")
+```
+
+### Trading return
+
+```{r}
+oil_daily_ret_trunc['real_ret'] <- if_else(oil_daily_ret_trunc['ret_pred'] > 0, 1, -1) * oil_daily_ret_trunc['ret']
+
+hist(oil_daily_ret_trunc$real_ret)
+
+oil_daily_ret_trunc %>% { plot(.$Date, .$real_ret, type = 'l') }
+
+arrange(oil_daily_ret_trunc, Date) %>% mutate(Trading_Ret = cumprod(1 + real_ret)) %>% { plot(.$Date, .$Trading_Ret, type = 'l') }
+
+oil_daily_ret_trunc %>% { plot(.$Date, .$Value / .[1,'Value',drop=TRUE], type = 'l') }
+```
+
+## We shall readdress the problem of outliers
+
+- It's negative prices in Apr-20,
+
+```{r}
+plot(lm_res)
+```
+
+```{r}
+oil_daily_original <- oil_daily
+oil_daily_original %>% filter(Value < 0)
+```
+
+### Restart and let's get organized now
+
+```{r}
+oil_daily <- oil_daily_original %>% filter(Value > 0)
+oil_daily_ret <- oil_daily %>% mutate(ret = Value / lead(Value, 1) - 1 ) %>% head(-1)
+acf_result <- acf(oil_daily_ret$ret)
+acf_v <- acf_result$acf
+acf_vv <- cbind(acf_v, 1:length(acf_v), abs(acf_v))
+# pick the top 3
+acf_index <- acf_vv[order(acf_vv[,3], decreasing = TRUE),][2:4,2]
+acf_index
+
+ret1d <- oil_daily_ret$ret
+ret1d_res <- ret_lag(ret1d, max(acf_index), 1)
+ret1d_t1 <- ret_lag(ret1d, max(acf_index), acf_index[1])
+ret1d_t2 <- ret_lag(ret1d, max(acf_index), acf_index[2])
+ret1d_t3 <- ret_lag(ret1d, max(acf_index), acf_index[3])
+# We have earlier tested the code to be implemented correctedly so we can just use them.
+
+lm_res <- lm(ret1d_res ~ ret1d_t1 + ret1d_t2 + ret1d_t3)
+summary(lm_res)
+plot(lm_res)
+
+ret1d_pred <- cbind(1, ret1d_t1, ret1d_t2, ret1d_t3) %*% as.matrix(lm_res$coefficients)
+
+oil_daily_ret_trunc <- filter(oil_daily_ret, n() - row_number() >= max(acf_index)-1)
+assert(nrow(oil_daily_ret_trunc) == length(ret1d_res))
+oil_daily_ret_trunc['ret_pred'] <- ret1d_pred
+```
+
+### Predication correctness
+
+```{r}
+oil_daily_ret_trunc['pred_correct'] <- oil_daily_ret_trunc['ret_pred'] * oil_daily_ret_trunc['ret'] > 0 
+
+oil_daily_ret_trunc %>% group_by(pred_correct) %>% summarise(nn = n()) %>% ungroup() %>% 
+  { ggplot(.) + geom_bar(aes(x='',y = nn, fill = pred_correct), stat='identity') + coord_polar("y", start=0) }
+
+oil_daily_ret_trunc %>% group_by(year = year(Date),pred_correct) %>% summarise(nn = n()) %>% ungroup() %>%
+  mutate(nn = if_else(pred_correct, nn, -nn)) %>% ggplot(.) +
+  geom_bar(aes(x = year, y = nn, fill = pred_correct), stat = "identity")
+```
+
+### Trading return
+
+```{r}
+# Just one line, but this calculates the PnL.
+oil_daily_ret_trunc['real_ret'] <- if_else(oil_daily_ret_trunc['ret_pred'] > 0, 1, -1) * oil_daily_ret_trunc['ret']
+
+hist(oil_daily_ret_trunc$real_ret)
+
+oil_daily_ret_trunc %>% { plot(.$Date, .$real_ret, type = 'l') }
+
+arrange(oil_daily_ret_trunc, Date) %>% mutate(Trading_Ret = cumprod(1 + real_ret)) %>% { plot(.$Date, .$Trading_Ret, type = 'l') }
+
+oil_daily_ret_trunc %>% { plot(.$Date, .$Value / .[1,'Value',drop=TRUE], type = 'l') }
+```
+
+### With stop loss
+
+```{r}
+# Just one line, but this calculates the PnL.
+oil_daily_ret_trunc['real_ret'] <- if_else(oil_daily_ret_trunc['ret_pred'] > 0, 1, -1) * oil_daily_ret_trunc['ret']
+
+oil_daily_ret_trunc['real_ret_sl'] <- pmax(-0.02, oil_daily_ret_trunc$real_ret)
+
+hist(oil_daily_ret_trunc$real_ret_sl)
+
+oil_daily_ret_trunc %>% { plot(.$Date, .$real_ret_sl, type = 'l') }
+
+arrange(oil_daily_ret_trunc, Date) %>% mutate(Trading_Ret = cumprod(1 + real_ret_sl)) %>% { plot(.$Date, .$Trading_Ret, type = 'l') }
+```
+
+## To verify everything
+
+- Clean the environment and run again.
+- Move the code from notebook to R script file
+
+## Take-Home
+
+* The actual quant work takes small steps to build something
+  - Exploratory data analysis and observation
+  - Data filtering/cleaning
+  - Modeling: I must state here that output from model was not clearly examined, like p-value and residual error. We use as is to figure out the relationship between output and dependents.
+  - Running: Often, we need to repeat the whole thing from beginning.
+  - Check the code repeatedly
+  
+* Therefore, programming practice/habit is important
+  - Use simple code first, later refine for better visualization.
+  - Add header/comments to organize the code
+  - Add many assertion point so as to remember and test the assumptions.
+  - Write functions, reduce code copying to the minimal.
+  - Try to write the code when need to do things again, when moving the code (the main logic) from notebook to script files.

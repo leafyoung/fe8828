@@ -1,0 +1,113 @@
+---
+title: "Assignment 4.1"
+author: "yang dun"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r setup,echo=FALSE}
+library("conflicted")
+library("dplyr")
+library(forcats)
+library(scales)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+#library(hrbrthemes)
+conflict_prefer("filter","dplyr")
+conflict_prefer("tag","dplyr")
+knitr::opts_chunk$set(echo = TRUE)
+```
+      
+
+```{r rename}
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+#View(bank)
+bank <- rename(bank,p_loan=loan,term_dpt=y)
+
+```
+
+### **Finding 1**:  The distribution of contact duration is similar across all job groups and closely resembles that of a chi-square distribution with a large positive right skew. It also shows that most people spend less than 5 minutes talking with sales person regardless of job.
+
+```{r finding_1}
+ggplot(bank, aes(x = duration/60,color = job))+geom_density()+theme(legend.position="right")+
+  scale_x_continuous(name="Duration (Min)")+
+  scale_y_continuous(name="Density")+
+  ggtitle("Distribution of Contact Time By Job")
+
+```
+
+### **Finding 2**: Next, we plot the success rate and the duration of contact for each job. We found that the unknown group on average requires the least time and produces the highest success rate among all job group. This suggests that the bank should spend more resources to identify this group of customers for better campaigning in the future.The studnet, retired and admin groups are also favorable targets for campaign. The entrepreneur and blue-collar groups are the least favourable with long contact duration but low success rate. 
+
+```{r finding_2}
+contact_job <- bank%>%
+               group_by(job)%>%
+               summarise(
+                 count=n(),
+                 mean_duration=mean(duration),
+                 success=sum(ifelse(poutcome=="success",1,0))
+               ) %>%
+               mutate(success_rate=success/count)
+ggplot(contact_job,aes(x=fct_reorder(job,success_rate),y=success_rate))+
+                  geom_bar(stat='identity',fill="blue")+
+                  geom_point(aes(x=fct_reorder(job,success_rate),y=mean_duration/5000),color='black',size=4)+
+                  scale_y_continuous(
+                    name = "Success Rate of Contact",
+                    sec.axis = sec_axis(~.*5000,name="Mean Duration (Min)"))+
+                  theme_bw()+
+                  theme(
+                  axis.title.y = element_text(color = "blue",size = 10),
+                  axis.title.y.right = element_text(color = "black",size=10),
+                  axis.text.x = element_text(angle=90,size=10))+
+                  ggtitle("Success Rate vs Mean Duration Of Contact")
+```
+
+### **Finding 3**: The majority of the successful cases are obtained from customers between age of 30 and 40 who have high bank balances. However, this group also has the highest portion of customers with existing loans, making them less than ideal for campaigning. In contrast, the group of 80's has the highest bank balances but no existing loans, making them potentially the most profitable cusotmers. However, very few successful cases were achieved for this age group. This suggests that the bank should try to either expand this customer sector or campaign harder for this group of old and rich customers.     
+
+
+```{r finding_3}
+
+bank_loan <- filter(bank,poutcome=="success")%>%
+             mutate(Loan_Status=ifelse( (housing =="no") & (p_loan=="no"),"No Loan","Have Loan"))
+ggplot(bank_loan,aes(x=age,y=balance/200))+
+    stat_summary(fun = "mean",geom="line")+stat_summary(fun = "mean",geom="point")+
+    #for self note: use fill, not color for bar chart or histogram!
+    geom_histogram(binwidth = 10,mapping=aes(age,fill=Loan_Status),color = "black",alpha=0.5,inherit.aes = F)+   
+    scale_x_continuous(breaks=seq(20,80,by=10), name = "Age Group")+
+    scale_y_continuous(
+      name = "Mean Balance/200 (Line)",
+      sec.axis = sec_axis(~.*1,name="Number of Success (Bar)")
+    )+
+    scale_fill_manual(values= c("blue", "orange"))+
+    theme_bw()+
+    ggtitle("Breakdown Of Successful Cases By Age, Loan Status and Balance")
+
+                  
+
+```
+
+### **Finding 4**: Excluding students, customers with job as technicians have the highest proportion of being single but relatively lower proportion of being divorced. The retired and unemployed group have higher divorce rate than other job groups. 
+
+```{r finding_4_plot}
+
+ggplot(bank,aes(x=reorder(job,age,FUN="mean"),fill=marital))+geom_bar(position="fill")+
+      theme( axis.text.x=element_text(angle=90))+
+      ggtitle("Marital Status By Job")
+
+```
+ 
+### **Finding 5**: By plotting the density of marital status against age, we found an intersting pattern of the evolution of marital status among the customers, in which the peak density for single, married and divorced customers is around 30 years, 35 years and 45 years old, respectively. Both marraige and divorce rate decrease very fast when people become order than 55 years old as there is less incentive or option to change marital status.
+
+```{r finding_5}
+ggplot(bank, aes(age, color = marital, fill = marital, alpha = 0.3)) +
+     geom_density() + theme_bw()+
+     ggtitle("Marital Status By Age")
+```
+
+
+### **Finding 6**: Lastly, it is observed that the higher the customers' education, the higher the chance that he or she will be single. On the other hand, it seems that the level of education does not affect the divorce rate for the bank's customers.
+
+```{r finding_6}
+ggplot(bank)+geom_bar(aes(education,fill=marital),position="fill")+
+ggtitle("Education vs Marital Status")
+```

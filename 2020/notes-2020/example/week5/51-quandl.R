@@ -51,8 +51,6 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  Quandl.api_key("d9EidiiDWoFESfdk5nPy")
-  
   gold <- reactive({
     gold <- Quandl(goldChoice,
                    start_date = format(input$dateRange[1]),

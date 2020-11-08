@@ -1,0 +1,7 @@
+Hi Dr Yang,
+
+For the Bond Schedule, I have taken weekends into consideration, payment schedule that falls on weekends will be paid on
+the Friday before. For example, if coupon payment falls on 3rd or 4th October 2020 (Saturday/Sunday), the coupon payment
+will be on 2nd October 2020 instead (Friday). Thank you!
+
+Alenson 

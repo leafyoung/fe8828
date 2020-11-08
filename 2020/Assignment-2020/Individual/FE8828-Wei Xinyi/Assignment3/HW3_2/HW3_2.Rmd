@@ -1,0 +1,101 @@
+---
+title: "HW3_2"
+author: "Wei Xinyi"
+date: "2020年10月8日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+##### 2.1
+```{r}
+library(readxl)
+HW3_2_data <- read_excel("C:/Users/10377/Desktop/FE8828-Wei Xinyi/Assignment3/HW3_2/HW3_2_data.xlsx")
+
+
+HW3_2_data1<- HW3_2_data%>%
+  select(Exp_Date, Strike, Open_Int., OptionType, Bid, Ask )
+
+Underlying<- rep(1460.29, 88)
+Today<- rep((1460.29 + 6.85), 88)
+
+HW3_2_data2<- HW3_2_data1%>%
+  mutate(Underlying, Today)
+HW3_2_data2
+```
+
+##### 2.2
+```{r}
+HW3_2_data2$Open_Int.<- as.double(HW3_2_data2$Open_Int.)
+
+Total_Valuation<- rep(NA, 88)
+Total_Valuation_Sum<- rep(NA, 88)
+for(i in 1:88){
+  Total_Valuation[i] = HW3_2_data2$Open_Int.[i] * (HW3_2_data2$Bid[i] + HW3_2_data2$Ask[i]) / 2}
+for(i in 1:44){
+  Total_Valuation_Sum[i] = Total_Valuation[i] + Total_Valuation[i+44]
+}
+for(i in 45:88){
+  Total_Valuation_Sum[i] = Total_Valuation_Sum[i-44]
+}
+HW3_2_data3<- HW3_2_data2%>%
+  mutate(Total_Valuation, Total_Valuation_Sum)
+HW3_2_data3
+```
+
+##### 2.3
+```{r}
+HW3_2_Calls<- HW3_2_data3%>%
+  filter(OptionType == "c" & Strike < Underlying)
+HW3_2_Calls
+Open_Int._Sum_Calls<- sum(HW3_2_Calls$Open_Int., na.rm = T)
+Open_Int._Sum_Calls
+
+HW3_2_Puts<- HW3_2_data3%>%
+  filter(OptionType == "p" & Strike > Underlying)
+HW3_2_Puts
+Open_Int._Sum_Puts<- sum(HW3_2_Puts$Open_Int., na.rm = T)
+Open_Int._Sum_Puts
+Open_Int._Sum <- Open_Int._Sum_Calls + Open_Int._Sum_Puts
+Open_Int._Sum
+```
+
+##### 2.4
+```{r}
+library(fOptions)
+Vol<- rep(NA,44)
+Ty<- rep(NA, 44)
+Price<- rep(NA, 44)
+for(i in 1:44){
+  if(HW3_2_data3$Strike[i] < HW3_2_data3$Today[i]){
+    Ty[i] = "p"
+    Price[i] = HW3_2_data3$Ask[i+44]
+    }
+  else{
+    Ty[i] = "c"
+    Price[i] = HW3_2_data3$Ask[i]
+  }
+}
+
+  
+
+for(i in 1:44 ){
+  Vol[i]<- GBSVolatility(Price[i],
+                         Ty[i], 
+                         1460.29,
+                         round(HW3_2_data3$Strike[i],4),
+                         as.numeric((as.Date("2020-12-18") - as.Date("2020-09-29")))/365,
+                         r = 0.03,
+                         b = 0) 
+}
+Vol
+Time<- seq(1, 44, 1)
+
+Vol_data <-data.frame(Vol, Time)
+ggplot(data = Vol_data, mapping = aes(x = Time, y = Vol)) + 
+  geom_point() +
+  geom_smooth()
+
+```

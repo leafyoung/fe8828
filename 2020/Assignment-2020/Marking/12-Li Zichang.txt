@@ -1,0 +1,42 @@
+Li Zichang
+
+# A1 Shiny Web
+
+- Good. We need sport to keep fit.
+
+# A2.1 Secretary
+
+- The break needs to be inside a block. Otherwise, this loop will run only for one time.
+
+  for (i in 1:length(sele_grp)){
+    if (sele_grp[[i]] > emax) {
+        emax <- sele_grp[[i]]
+        break
+    }
+  }
+
+
+- Missing handling the case when all items in selection_group is less than evaluation group
+  The end of the function can be modified to
+
+  for (i in 1:length(sele_grp)){
+    if (sele_grp[[i]] > emax) {
+        emax <- sele_grp[[i]]
+        return(emax)
+    }
+  }
+  # return the last item in the selection group
+  return(sele_grp[[Ns]])
+
+
+# A2.2 Bond Schedule
+
+- Neat and fast
+
+# A2.3 Stock data
+
+- eventReactive returns an reactive value. So, use df_res() in later code to extract the value.
+
+    output$p1 <- renderPlot({ plot(df_res()$timestamp, df_res()$adjusted_close) })
+    output$p2 <- renderPlot({ lines(df_res()$timestamp, df_res()$adjusted_close) })
+

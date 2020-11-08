@@ -1,0 +1,530 @@
+---
+title: "Portfolio Investment Assignment"
+subtitle: "FE8828 AY20/21 Group Assignment"
+author: NEE, TSLA, APPL, NVDA, AMD
+Email: 
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE, pillar.sigfig = 6)
+```
+
+# Overview
+
+- SPDR sector ETFs: `c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY')` and `'SPY'`
+- History from 1999-11-01 to now.
+- Strategy:
+  * Equal-weighted with 1) no re-balance, 2) monthly re-balance, 3) annual re-balance
+  * Momentum strategy with 1) long top 4, 2) long top 2 and short bottom 2
+- Note:
+  + All equity position, no cash.
+  + Do not load other library, use only the listed packages here.
+  + Submit Rmd and Rda data files together in a compressed file (.zip, .7z, etc.)
+- Disclaimer: this is no an investment advise.
+
+## Download
+
+```{r}
+# Change (FALSE) to (TRUE), when you need to download data.
+# Usually you only need to run this once.
+# Change file location
+
+# 'XLC', 'XLRE' has shorter history, don't use them.
+all_tickers <- c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY','SPY')
+# all_tickers <- c('XLY','SPY')
+
+if (FALSE) {
+  av_api_key("")
+  
+  for (tt in all_tickers) {
+    df_xlc <- av_get(tt, av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize="full")
+    save(df_xlc, file = paste0("C:/Data/",tt,".Rda"))
+    cat(paste(tt,min(df_xlc$timestamp),max(df_xlc$timestamp),"\n"))
+  }
+}
+```
+
+## Load and check
+
+```{r Load Data}
+# make sure all starts from the same time and same length.
+dd <- list()
+wd <- 'E:/Dropbox/MFE/FE8828/2020/Assignment-2020/Group/GD-Chen Leran/Grp Assignment -Q3/Data/'
+for (tt in all_tickers) {
+  dd[[tt]] <- readRDS(paste0(wd,tt,".Rds"))
+  print(paste(tt, min(dd[[tt]]$timestamp), nrow(dd[[tt]])))
+  assert(min(dd[[tt]]$timestamp) == as.Date('1999-11-01'))
+  assign(paste0('df_',tolower(tt)), dd[[tt]], envir = .GlobalEnv)
+}
+len_tickers <- length(all_tickers)
+```
+
+### Technology vs. Energy
+
+- Energy was the rock star during 90s and 00s, abruptly stopped during GFC on the journey towards $200/bbl (never there).
+- Technology was a prodigy from late 70s, stumbled in early 00s, but now a rock star.
+
+```{r Tech vs Energy}
+plot(df_xlk$timestamp, df_xlk$adjusted_close,type='l')
+points(df_xle$timestamp, df_xle$adjusted_close,col='red',type='l')
+```
+
+# Equal-weighted Daily Re-balance Strategy
+
+## Compute daily return series for daily re-balance strategy
+
+```{r daily return}
+len_tickers <- length(all_tickers)
+ii <- 1
+daily_ret <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+for (ii in 1:len_tickers) {
+  daily_ret[all_tickers[ii]] <- tail(dd[[ii]]$adjusted_close / lag(dd[[ii]]$adjusted_close, 1)-1,-1)
+}
+for (ii in 1:len_tickers) {
+  daily_ret[paste0(all_tickers[ii],"_cumret")] <- cumprod(1 + daily_ret[all_tickers[ii]])
+}
+```
+
+## Performance
+
+## Calculate Strategy return for daily rebalancing
+
+```{r strategy return: daily rebalancing}
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w <- rep(1, len_invest) / len_invest
+w
+
+daily_ret['EW'] <- as.matrix(daily_ret[,2:(2+len_invest-1)]) %*% w
+daily_ret %>% {plot(.$Date,.$EW,type='l')}
+```
+
+### Relative Performance between EW Daily Re-balancing and SPY
+
+```{r relative performance: daily re-balancing}
+daily_ret['EW_cumret'] <- cumprod(daily_ret['EW'] + 1)
+daily_ret %>% {plot(.$Date,.$SPY,type='l')}
+daily_ret %>% {plot(.$Date,.$EW_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+```
+
+### Metric
+
+```{r annualized return: daily re-balancing}
+# annualized return for EW
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+```
+
+
+```{r}
+# simplified Sharp ratio
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW)) / sd(daily_ret$EW) / sqrt(250)
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250)
+```
+
+```{r Max DD}
+# Calculate the Max DD
+# maximum_drawdown <- '' in %
+maximum_drawdown <- function(table, column)
+{
+  max_value <- table[1,column]
+  max_date <- "1999-11-01"
+  maximum_drawdown <- 0
+  col <- table[,column]
+  is_tracking <- FALSE
+  for (row in 2:nrow(daily_ret)) {
+    if (!is_tracking & col[row,] < max_value) {
+      is_tracking <- TRUE
+    } else if (col[row,] >= max_value) {
+      if (is_tracking) {
+        # Find the minimum value during the period
+        lowest <- min(filter(table, Date > max_date, Date < table$Date[row])[,column])
+        # Calculate drawdown during the period
+        drawdown <- (max_value - lowest) / max_value * 100
+        # print(paste(max_date, daily_ret$Date[row], max_value, daily_ret$EW_cumret[row], lowest, drawdown))
+        if (drawdown > maximum_drawdown) maximum_drawdown <- drawdown
+        is_tracking <- FALSE
+      }
+      max_value <- col[row,]
+      max_date <- table$Date[row]
+    }
+  }
+  maximum_drawdown
+}
+```
+
+```{r Max DD daily rebalance}
+maximum_drawdown(daily_ret, "EW_cumret")
+```
+
+### Analyze
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+# daily_ret %>% select(starts_with("XL") & ends_with("cumret")) %>% tail(1) %>% .[order(t(.))]
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+```
+
+# Equal-weighted No Re-balance Strategy
+
+## Compute daily return for no re-balance portfolio
+
+To achieve this, we buy $1 of each ETFs and hold it till the end. This is equivalent to buying 1/adjusted_close(day1) units since Day 1.
+
+```{r daily return series for no re-balance}
+# Divide daily adjusted close with the first adjusted close to get the dollar value of each ETF without re-balancing. 
+
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w_no_rebalance <- c()
+for (ii in 1:len_invest) {
+  w_no_rebalance <- c(w_no_rebalance, 1/dd[[ii]]$adjusted_close[1])
+}
+w_no_rebalance
+
+daily_ret_no_rebalance <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_invest) {
+  daily_ret_no_rebalance[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+
+daily_ret_no_rebalance[2:10] <- as.matrix(daily_ret_no_rebalance[2:10]) %*% diag(w_no_rebalance)
+daily_ret_no_rebalance['value'] <- rowSums(daily_ret_no_rebalance[2:10])
+# daily_ret_no_rebalance['value'] <- as.matrix(daily_ret_no_rebalance[,2:(2+len_invest-1)]) %*% w_no_rebalance
+
+# Then we derive the portfolio's daily returns and cumulative returns. 
+daily_ret_no_rebalance['ret'] <- daily_ret_no_rebalance$value/ lag(daily_ret_no_rebalance$value, 1) - 1
+daily_ret_no_rebalance['cumret'] <- daily_ret_no_rebalance['value'] / 9
+daily_ret_no_rebalance
+
+daily_ret_no_rebalance %>% {plot(.$Date,.$ret,type='l')}
+
+```
+
+## Performance
+
+### Relative Performance between EW No Re-balancing and SPY
+
+```{r relative performance: no re-balancing}
+daily_ret_no_rebalance %>% {plot(.$Date,.$cumret,type='l',col='red');}
+daily_ret %>% {points(.$Date,.$SPY_cumret,type='l');}
+```
+
+### Metric
+
+```{r annualized return: no re-balance}
+# annualized return for EW No Re-balance
+prod(daily_ret_no_rebalance$ret + 1, na.rm=TRUE) ** (250 / length(daily_ret_no_rebalance$ret))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+```
+
+```{r max drawdown: no re-balance}
+maximum_drawdown(daily_ret_no_rebalance, "value")
+```
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+# We observe the last recorded dollar value of each ETF to rank them accordingly. 
+daily_ret_no_rebalance %>% select(starts_with("XL")) %>% tail(1) %>% .[order(t(.))]
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+mdd <- c()
+for (i in colnames(daily_ret_no_rebalance)[2:10]) {
+  mdd <- c(mdd, maximum_drawdown(daily_ret_no_rebalance, i))
+}
+as_tibble(mdd) %>% .[order(t(.))]
+```
+
+### Let's try improve
+
+- Add Re-balance: reset the weights so each ETF has equal market value.
+
+```{r}
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Monthly re-balance
+# every 21 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+head(rebal_days)
+
+# Annual re-balance
+# every 252 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+head(rebal_days)
+```
+## Compute daily return for monthly re-balance portfolio
+
+To achieve this, we buy $1 of each ETFs and rebalance monthly. This is equivalent to buying 1/adjusted_close(day1) units on Day 1, and rebalance every month.
+
+```{r daily return series for monthly re-balance}
+# Divide daily adjusted close with the first adjusted close to get the dollar value of each ETF with monthly re-balancing. 
+
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Monthly re-balance
+# every 21 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+head(rebal_days)
+
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w_month_rebalance <- c()
+for (ii in 1:len_invest) {
+  w_month_rebalance <- c(w_month_rebalance, 1/dd[[ii]]$adjusted_close[1])
+}
+w_month_rebalance
+
+orig_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_invest) {
+  orig_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+
+daily_ret_month_rebalance <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_invest) {
+  daily_ret_month_rebalance[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+
+daily_ret_month_rebalance[1,2:10] <- as.matrix(orig_price[1,2:10]) %*% diag(w_month_rebalance)
+daily_ret_month_rebalance[1,'value'] <- rowSums(daily_ret_month_rebalance[1,2:10])
+for (i in 2:nrow(daily_ret_month_rebalance)) {
+  
+  daily_ret_month_rebalance[i,2:10] <- as.matrix(daily_ret_month_rebalance[i,2:10]) %*% diag(w_month_rebalance)
+  daily_ret_month_rebalance[i,'value'] <- rowSums(daily_ret_month_rebalance[i,2:10])
+  
+  # On rebal days, change the weight of the portfolio to (the portfolio value the previous day / 9) * 1/price of each ETF the previous day
+  if (i %in% rebal_days) {
+    (1/unlist(orig_price[i,2:10], use.names = FALSE)) * (unlist(daily_ret_month_rebalance[i,"value"], use.names = FALSE) / 9) -> w_month_rebalance
+  }
+}
+
+# Then we derive the portfolio's daily returns and cumulative returns. 
+daily_ret_month_rebalance['ret'] <- daily_ret_month_rebalance$value/ lag(daily_ret_month_rebalance$value, 1) - 1
+daily_ret_month_rebalance <- tail(daily_ret_month_rebalance, -1)
+daily_ret_month_rebalance['cumret'] <- cumprod(daily_ret_month_rebalance['ret'] + 1)
+daily_ret_month_rebalance
+
+daily_ret_month_rebalance %>% {plot(.$Date,.$ret,type='l')}
+
+```
+## Performance
+
+### Relative Performance between EW Monthly Re-balancing and SPY
+
+```{r relative performance: monthly re-balancing}
+daily_ret_month_rebalance %>% {plot(.$Date,.$cumret,type='l',col='red');}
+daily_ret %>% {points(.$Date,.$SPY_cumret,type='l');}
+```
+### Metric
+
+```{r annualized return: monthly re-balance}
+# annualized return for EW Monthly Re-balance
+prod(daily_ret_month_rebalance$ret + 1, na.rm=TRUE) ** (250 / length(daily_ret_month_rebalance$ret))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+```
+
+```{r}
+# simplified Sharp ratio
+prod(daily_ret_month_rebalance$ret + 1) ** (250 / length(daily_ret_month_rebalance$ret)) / sd(daily_ret_month_rebalance$ret) / sqrt(250)
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250)
+```
+
+```{r max dd: monthly rebalance}
+maximum_drawdown(daily_ret_month_rebalance, "value")
+```
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+# We observe the last recorded dollar value of each ETF to rank them accordingly. 
+daily_ret_month_rebalance %>% select(starts_with("XL")) %>% tail(1) %>% .[order(t(.))]
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+mdd <- c()
+for (i in colnames(daily_ret_month_rebalance)[2:10]) {
+  mdd <- c(mdd, maximum_drawdown(daily_ret_month_rebalance, i))
+}
+as_tibble(mdd) %>% .[order(t(.))]
+```
+
+## Compute daily return for yearly re-balance portfolio
+
+To achieve this, we buy $1 of each ETFs and rebalance yearly. This is equivalent to buying 1/adjusted_close(day1) units on Day 1, and rebalance every year.
+
+```{r daily return series for monthly re-balance}
+# Divide daily adjusted close with the first adjusted close to get the dollar value of each ETF with yearly re-balancing. 
+
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Annual re-balance
+# every 252 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+head(rebal_days)
+
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w_year_rebalance <- c()
+for (ii in 1:len_invest) {
+  w_year_rebalance <- c(w_year_rebalance, 1/dd[[ii]]$adjusted_close[1])
+}
+w_year_rebalance
+
+orig_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_invest) {
+  orig_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+
+daily_ret_year_rebalance <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_invest) {
+  daily_ret_year_rebalance[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+
+daily_ret_year_rebalance[1,2:10] <- as.matrix(orig_price[1,2:10]) %*% diag(w_year_rebalance)
+daily_ret_year_rebalance[1,'value'] <- rowSums(daily_ret_year_rebalance[1,2:10])
+for (i in 2:nrow(daily_ret_year_rebalance)) {
+  
+  daily_ret_year_rebalance[i,2:10] <- as.matrix(daily_ret_year_rebalance[i,2:10]) %*% diag(w_year_rebalance)
+  daily_ret_year_rebalance[i,'value'] <- rowSums(daily_ret_year_rebalance[i,2:10])
+  
+  # On rebal days, change the weight of the portfolio to (the portfolio value the previous day / 9) * 1/price of each ETF the previous day
+  if (i %in% rebal_days) {
+    (1/unlist(orig_price[i,2:10], use.names = FALSE)) * (unlist(daily_ret_year_rebalance[i,"value"], use.names = FALSE) / 9) -> w_year_rebalance
+  }
+}
+
+# Then we derive the portfolio's daily returns and cumulative returns. 
+daily_ret_year_rebalance['ret'] <- daily_ret_year_rebalance$value/ lag(daily_ret_year_rebalance$value, 1) - 1
+daily_ret_year_rebalance <- tail(daily_ret_year_rebalance, -1)
+daily_ret_year_rebalance['cumret'] <- cumprod(daily_ret_year_rebalance['ret'] + 1)
+daily_ret_year_rebalance
+
+daily_ret_year_rebalance %>% {plot(.$Date,.$ret,type='l')}
+
+```
+## Performance
+
+### Relative Performance between EW Yearly Re-balancing and SPY
+
+```{r relative performance: yearly re-balancing}
+daily_ret_year_rebalance %>% {plot(.$Date,.$cumret,type='l',col='red');}
+daily_ret %>% {points(.$Date,.$SPY_cumret,type='l');}
+```
+### Metric
+
+```{r annualized return: yearly re-balance}
+# annualized return for EW Yearly Re-balance
+prod(daily_ret_year_rebalance$ret + 1, na.rm=TRUE) ** (250 / length(daily_ret_year_rebalance$ret))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+```
+
+```{r}
+# simplified Sharp ratio
+prod(daily_ret_year_rebalance$ret + 1) ** (250 / length(daily_ret_year_rebalance$ret)) / sd(daily_ret_year_rebalance$ret) / sqrt(250)
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250)
+```
+
+```{r max dd: yearly rebalance}
+maximum_drawdown(daily_ret_year_rebalance, "value")
+```
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+# We observe the last recorded dollar value of each ETF to rank them accordingly. 
+daily_ret_year_rebalance %>% select(starts_with("XL")) %>% tail(1) %>% .[order(t(.))]
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+mdd <- c()
+for (i in colnames(daily_ret_year_rebalance)[2:10]) {
+  mdd <- c(mdd, maximum_drawdown(daily_ret_year_rebalance, i))
+}
+as_tibble(mdd) %>% .[order(t(.))]
+```
+
+# Momentum Strategy
+
+- Empirically, there appears to be certain “inertia” in stock returns known as the
+momentum effect, whereby future returns are positively correlated with past returns.
+
+- We use a price momentum here. At any point, we rank the ETFs according to following.
+  + At row `i`, momentum is `( price[i-21] - price[i-252] ) / price[i-252] - ( price[i-1] - price[i-21] ) / price[i-21]`
+
+- Set to re-balance every month
+  - Long the top 4 stocks with equal weights, or
+  - Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+```{r}
+daily_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_tickers) {
+  if (all_tickers[ii] == 'SPY') { next }
+  daily_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+daily_price
+```
+
+```{r}
+rebal_days <- calc_rebal_days(nrow(daily_price), 21)
+# rebal_days
+
+allocation_begin <- daily_price[1,]
+allocation_begin <- bind_rows(allocation[0,])
+allocation_end <- daily_price[1,]
+allocation_end <- bind_rows(allocation[0,])
+# Assume monthly re-balance
+for (r in rebal_days) {
+  # print(r)
+  mm <- numeric(len_invest)
+  
+  # Generate momentum
+  # print(mm)
+  for (ii in 1:len_invest) {
+     tt <- invest_tickers[ii]
+     
+     # Use 1 if look-back period is not enough.
+     r_prev_d <- if_else(r > 1, r - 1, 1)
+     r_prev_m <- if_else(r > 21, r - 21, 1)
+     r_prev_y <- if_else(r > 252, r - 252, 1)
+     
+     # Correction: The following statement is wrong
+  #x <- (daily_price[r_prev_m,tt] - daily_price[r_prev_y,tt] ) / daily_price[r_prev_y,tt] - ( daily_price[r_prev_d,tt] - daily_price[r_prev_m,tt] ) / daily_price[r_prev_d,tt]
+     
+     x <- (daily_price[r_prev_m,tt] - daily_price[r_prev_y,tt] ) / daily_price[r_prev_y,tt] - ( daily_price[r_prev_d,tt] - daily_price[r_prev_m,tt] ) / daily_price[r_prev_m,tt]
+     mm[ii] <- as.numeric(x)
+  }
+  # TODO: rank and allocation.
+  
+  rank <- which(order(mm, decreasing = TRUE) <= 4)
+  allocation_begin <- add_row(allocation_begin, daily_price[r,'Date'])
+  invest_cols <- colnames(allocation)[2:10]
+  for (i in 1:length(invest_cols)) {
+    if (i %in% rank) {
+      allocation_begin[nrow(allocation_begin),invest_cols[i]] <- daily_price[r,invest_cols[i]]
+    } else {
+      allocation_begin[nrow(allocation_begin),invest_cols[i]] <- 0
+    }
+  }
+  # run one cycle first, then remove break
+  # break
+}
+
+allocation
+
+```
+
+The main idea is to have 2 rank trackers and 2 dataframe to keep track of when the ETF enter the portfolio and when the ETF leave the portfolio. With these 2 dataframes, we can take the differences of the ETF price from 1 rebalance day to the next rebalance day. This will track how well/poorly each ETF contribution to the portfolio. Furthermore, the portfolio value serves as an important guide on how we should rebalance. For instance, if the portfolio value is now \$2, then each ETF is allocated with \$0.50 and we get the new weight for the newer portfolio share.
+
+Sorry, we can't complete this on time. We have some ideas, but no time to code. 

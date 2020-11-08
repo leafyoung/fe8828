@@ -1,0 +1,103 @@
+---
+title: "Assignment1_6_Insights"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse) 
+library(conflicted)
+library(lubridate) 
+library(bizdays)
+library(ggplot2)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	cache = TRUE,
+	collapse = TRUE
+)
+ 
+
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+bank
+colnames(bank)
+```
+
+# Insight #1
+``` {r }
+# Find balance among different age groups
+df <- group_by(bank, age) %>%
+  summarise(max_balance = max(balance),
+            avg_balance = mean(balance),
+            min_balance = min(balance))
+df
+ggplot(data=df, aes(x=age, y=avg_balance)) +
+  geom_line()+
+  geom_point()+
+  theme(axis.text = element_text(angle = 60)) 
+```
+### From the plot, we can tell that the average balance gradually increases with age. It reaches maximimum at around age 65~80. Then it gradually decreases. 
+
+
+# Insight #2
+``` {r }
+df1 <- bank %>% 
+  group_by(age) %>%
+  summarize(`Default No` = sum(default == 'no')) 
+df2 <- bank %>% 
+  group_by(age) %>%
+  summarize(`Default Yes` = sum(default == 'yes')) 
+df <- distinct(bank, age) %>%
+  arrange(age)
+df <- left_join(df, df1, by = 'age') 
+df <- left_join(df, df2, by = 'age')
+
+df3 <- df %>%
+  pivot_longer(!(age))
+df3
+
+ggplot(bank, mapping = aes(x=age, fill=default)) +
+  geom_histogram(binwidth = 1)
+ggplot(df3, aes(fill=name, y=value, x=age)) + 
+    geom_bar(position="fill", stat="identity")
+```
+### From the number of default among different age plot, we can tell that the people in the age range of 25-55 tend to have higher default rate compared with other age groups.
+
+# Insight #3
+``` {r }
+ggplot(data = bank) +
+  geom_point(mapping = aes(x=age, y=balance)) +
+  facet_wrap(~education, nrow = 1) 
+```
+### Relationship between age, banlance, and education： From the plots, we can tell that people with teritary education tend to have higher balance amang the same age groups. And among the same education level, people aged between 30-50 tend to have higher balance. 
+
+# Insight #4 
+``` {r }
+ggplot(bank, mapping = aes(x=y, fill=poutcome)) +
+  geom_bar(position="fill")
+  
+```
+### From the plot, we can tell that there is a relatonship between previous marketing outcome and current outcome. Those who success in the previous outcome are more likely to success the tis marketing campaign. 
+
+# Insight #5 
+``` {r }
+ggplot(bank, aes(job, balance)) +
+  geom_boxplot() +
+  ylim(-5000,30000) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+```
+# From the plot, management people tend to have higher balances compared with other groups, while blue-collar and services people tend to have lower balances. Also the balance distributions for management and technician people are more disperse compared with other job groups. 
+
+# Insight #6 
+``` {r }
+ggplot(bank) +
+  geom_bar(mapping = aes(x = job, fill=y), position = "fill") +
+  coord_polar()
+```
+### From the plot, student and retired people have higher percentage to subscribe the campaign. 
+
+
+

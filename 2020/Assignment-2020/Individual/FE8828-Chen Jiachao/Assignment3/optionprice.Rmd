@@ -1,0 +1,48 @@
+---
+title: "optionprice"
+author: "CHEN"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(openxlsx)
+options <- read.xlsx("options.xlsx")
+```
+
+calculate total valuation
+
+```{r}
+totalvaluation<-0
+options$value<-rep(0,nrow(options))
+for (i in 1:nrow(options))
+{
+  if(!is.na(options[i,'OpenInt']))
+  {
+    options[i,'value']<-options[i,'OpenInt']*(options[i,'Bid']+options[i,'Ask'])/2
+  }
+}
+
+
+```
+
+
+calculate value in the money
+```{r}
+valueinmoney<-0
+for (i in 1:nrow(options))
+{
+  if(options[i,'OptionType']=='C'&&options[i,'Strike']<1621)
+  {
+   valueinmoney<-valueinmoney+options[i,'OpenInt']*(options[i,'Bid']+options[i,'Ask'])/2
+  }
+  if(options[i,'OptionType']=='P'&&options[i,'Strike']>1621)
+  {
+   valueinmoney<-valueinmoney+options[i,'OpenInt']*(options[i,'Bid']+options[i,'Ask'])/2
+  }
+}
+```
+
+
+

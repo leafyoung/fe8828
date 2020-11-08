@@ -1,0 +1,24 @@
+Xiang Zishun
+
+# A1 Shiny Web
+
+- Good. We will go back to school classroom.
+
+# A2.1 Secretary
+
+- Good handling of the last-item case with following code.
+
+    return(tail(select_group,1))
+
+# A2.2 Bond Schedule
+
+- Neat and fast
+
+# A2.3 Stock data
+
+- Good for the error handling
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done. Good effort for producing the findings.

@@ -1,0 +1,111 @@
+---
+title: "HW3"
+author: "Wei Xinyi"
+date: "2020年10月16日"
+output: html_document
+---
+
+```{r}
+library(alphavantager) 
+library(tidyverse)
+av_api_key("HTWHRB1D0MJLKM8X")
+
+MSFT<- av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED") 
+AMZN<- av_get("AMZN", av_fun = "TIME_SERIES_DAILY_ADJUSTED") 
+AAPL<- av_get("AAPL", av_fun = "TIME_SERIES_DAILY_ADJUSTED") 
+V<- av_get("V", av_fun = "TIME_SERIES_DAILY_ADJUSTED") 
+
+Sum_first<- MSFT$adjusted_close[1] + AMZN$adjusted_close[1] + AAPL$adjusted_close[1] + V$adjusted_close[1]
+
+## allocation ni per stock
+
+n<- floor(1000000*0.9/Sum_first)
+
+## daily value
+
+Value<- rep(NA, 100)
+for (i in 1:100){
+  Value[i] = n*(MSFT$adjusted_close[i] + AMZN$adjusted_close[i] + AAPL$adjusted_close[i] + V$adjusted_close[i])
+}
+
+## return
+
+Rp<- rep(0,100)
+for (i in 2:100){
+  Rp[i]<- Value[i] / Value[i-1] - 1
+}
+
+VR<- data.frame(MSFT$timestamp, Value, Rp)
+VR
+
+## sharpe ratio
+
+Portfolio_SR<- (mean(Rp) - 0.01/250)/sd(Rp) 
+Portfolio_SR
+```
+
+```{r}
+# daily return plot
+
+ggplot(data = VR, aes(x = factor(MSFT$timestamp), y = Rp)) +
+  geom_bar(stat = "identity") +
+theme(axis.text.x = element_text(size = 1))
+
+```
+
+```{r}
+## total value plot
+
+ggplot(data = VR, aes(x = factor(MSFT$timestamp), y = Value)) +
+  geom_bar(stat = "identity") +
+theme(axis.text.x = element_text(size = 1))
+
+## at 100th day the value plot
+
+names<- c("Total", "MSFT", "AMZN", "V")
+names2<- c("Cash", "Stock")
+Value_end<- c(VR$Value[100], MSFT$adjusted_close[100]*n, AMZN$adjusted_close[100]*n, V$adjusted_close[100]*n)
+Return_end<- c(VR$Value[100]/VR$Value[1]-1,
+               MSFT$adjusted_close[100]/MSFT$adjusted_close[1]-1,
+               AMZN$adjusted_close[100]/AMZN$adjusted_close[1]-1,
+               V$adjusted_close[100]/V$adjusted_close[1]-1)
+End_Value<- data.frame(names, Value_end, Return_end)
+
+# value
+
+ggplot(data = End_Value, aes(x = factor(names), y = Value_end)) +
+  geom_bar(stat = "identity") 
+
+# return
+
+ggplot(data = End_Value, aes(x = factor(names), y = Return_end)) +
+  geom_bar(stat = "identity") 
+``` 
+
+```{r}
+## different allocation
+
+names2<- c("Cash", "Stock")
+Value_end2<- c(1000000-n*Sum_first*(1 + 0.01/250), VR$Value[100])
+End_Value2<- data.frame(names2, Value_end2)
+ggplot(data = End_Value2, aes(x = factor(names2), y = Value_end2)) +
+  geom_bar(stat = "identity") 
+```
+```{r}
+AAPL_value<- rep(NA,100)
+AMZN_value<- rep(NA, 100)
+MSFT_value<- rep(NA, 100)
+V_value<- rep(NA, 100)
+Cash_value<- rep(NA, 100)
+for (i in 1:100) {
+AAPL_value[i]<- AAPL$adjusted_close[i]*n
+AMZN_value[i]<- AMZN$adjusted_close[i]*n
+MSFT_value[i]<- MSFT$adjusted_close[i]*n
+V_value[i]<- V$adjusted_close[i]*n
+Cash_value[i]<- (1000000-n*Sum_first)*(1 + 0.01/250)^i
+}
+tibble(AAPL_va = AAPL_value, MSFT_va = MSFT_value, AMZN_va = AMZN_value, V_va = V_value, Cash_va = Cash_value, time = MSFT$timestamp)%>%
+  pivot_longer(cols = AAPL_va : Cash_va)%>%
+  ggplot(.) + geom_area(aes(x = time, y = value, fill = name), position = "fill")
+
+```

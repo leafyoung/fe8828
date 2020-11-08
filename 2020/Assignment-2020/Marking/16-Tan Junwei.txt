@@ -1,0 +1,31 @@
+Tan Junwei
+
+# A1 Shiny Web
+
+- Good. You made a game. I bought all durians.
+
+# A2.1 Secretary
+
+- Good.
+
+
+# A2.3 Stock data
+
+- Avoid re-using names for different function and variable.
+
+    data <- eventReactive(input$downloadData, {
+        ...
+        
+    output$stockPlot <- renderPlot({
+        data <- data()
+
+
+- Good handling of error.
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done
+
+
+

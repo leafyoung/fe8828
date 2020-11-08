@@ -1,0 +1,145 @@
+---
+title: "Client report"
+author: "Andrea"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(ggthemes)
+av_api_key("5WZYQ22PJ7YB73U2")
+
+# setwd("C:/TEMP")
+MSFT <- av_get("MSFT",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+GOOG <- av_get("GOOG",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+DIS <- av_get("DIS",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+AAPL <- av_get("AAPL",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+SPY <- av_get("SPY",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+
+if (FALSE) {
+  saveRDS(df_res1,file="C:/TEMP/data1.RDS")
+  saveRDS(df_res2,file="C:/TEMP/data2.RDS")
+  saveRDS(df_res3,file="C:/TEMP/data3.RDS")
+  saveRDS(df_res4,file="C:/TEMP/data4.RDS")
+  saveRDS(df_res5,file="C:/TEMP/data5.RDS")
+  MSFT <- readRDS(file="C:/TEMP/data1.RDS")
+  GOOG <- readRDS(file="C:/TEMP/data2.RDS")
+  DIS <- readRDS(file="C:/TEMP/data3.RDS")
+  AAPL <- readRDS(file="C:/TEMP/data4.RDS")
+  SPY <- readRDS(file="C:/TEMP/data5.RDS")
+}
+
+
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+```
+
+```{r} 
+# Determine investment
+Cash <- 1000000
+Equalweight <- 0.9*Cash/4
+
+MSFTp <- MSFT[[1,6]]
+MSFTq <- round(Equalweight/MSFTp)
+MSFTi <- MSFTp*MSFTq
+
+GOOGp <- GOOG[[1,6]]
+GOOGq <- round(Equalweight/GOOGp)
+GOOGi <- GOOGp*GOOGq
+
+DISp <- DIS[[1,6]]
+DISq <- round(Equalweight/DISp)
+DISi <- DISp*DISq
+
+AAPLp <- AAPL[[1,6]]
+AAPLq <- round(Equalweight/AAPLp)
+AAPLi <- AAPLp*AAPLq
+
+SPYp <- SPY[[1,6]]
+SPYq <- round(0.9*Cash/SPYp)
+SPYi <- SPYp*SPYq
+
+Inv_Summary <- tibble(Ticker=c("MSFT","GOOG","DIS","AAPL","SPY"),
+             Quantity=c(MSFTq,GOOGq,DISq,AAPLq,SPYq),
+             Price=c(MSFTp,GOOGp,DISp,AAPLp,SPYp),
+             Investment=c(MSFTi,GOOGi,DISi,AAPLi,SPYi))
+Inv_Summary
+view(Inv_Summary) #open in new window
+
+SP_Reserve <- Cash - SPYi
+Inv_Reserve <- Cash - MSFTi - GOOGi - DISi - AAPLi  
+SP_Reserve
+Inv_Reserve
+```
+
+```{r} 
+# Client report
+Rf <- 0.01/250
+Valuation <- tibble(Period = 1:100, Date = MSFT$timestamp)
+Valuation <- mutate(Valuation, 
+                MSFT_Val = MSFTq*MSFT$adjusted_close,
+                GOOG_Val = GOOGq*GOOG$adjusted_close,
+                DIS_Val = DISq*DIS$adjusted_close,
+                AAPL_Val = AAPLq*AAPL$adjusted_close,
+                InvCash_Val = Inv_Reserve*((1+Rf)^(Period-1)),
+                InvPort_Val = (MSFT_Val + GOOG_Val + DIS_Val +
+                  AAPL_Val + InvCash_Val),
+                SPY_Val = SPYq*SPY$adjusted_close,
+                SPCash_Val = SP_Reserve*((1+Rf)^(Period-1)),
+                SPPort_Val = (SPY_Val + SPCash_Val),
+                SPPort_Ret = (SPPort_Val/lag(SPPort_Val,1))-1,
+                InvPort_Ret = (InvPort_Val/lag(InvPort_Val,1))-1)
+Valuation
+view(Valuation) #open in new window
+
+Sharpe <- summarise(Valuation,M=mean(InvPort_Ret,na.rm=TRUE),
+                    SD=sd(InvPort_Ret,na.rm=TRUE))
+Sharpe_Ratio <- (Sharpe[[1]]-Rf)/Sharpe[[2]]
+Sharpe_Ratio
+```
+
+```{r} 
+#Plot a histogram of daily return
+ggplot(Valuation, aes(x=InvPort_Ret)) +
+  geom_histogram(binwidth=0.001,color="black",fill="white") +
+  theme(text = element_text(size=10)) + theme_economist() +
+  labs(x = "Daily Portfolio Return") + labs(title = "Daily portfolio return")
+```
+
+```{r}
+#Plot total valuation, and relativity return for your investment portfolio and S&P
+V1 <- Valuation %>% select(Date, InvPort_Val, SPPort_Val) %>%
+  rename(`Investment Portfolio` = InvPort_Val, `S&P` = SPPort_Val) %>% gather(key = "variable", value = "value", -Date)
+ggplot(V1, aes(x = Date, y = value)) + 
+  geom_line(aes(color = variable, linetype = variable)) + 
+  scale_color_manual(values = c("darkred", "steelblue")) +
+  theme(text = element_text(size=10),
+        legend.position = "bottom",
+        legend.title = element_blank()) +
+  labs(x = "Date",y = "Total valuation", title = "Total valuation for the investment portfolio and S&P")
+
+V2 <- Valuation %>% select(Date, InvPort_Val, SPPort_Val) %>% 
+  mutate(C1 = InvPort_Val/InvPort_Val[1], C2 = SPPort_Val/SPPort_Val[1]) %>% rename(`Investment Portfolio` = C1, `S&P` = C2) %>%   select(Date,`Investment Portfolio`,`S&P`) %>%
+  gather(key = "variable", value = "value", -Date)
+ggplot(V2, aes(x = Date, y = value)) + 
+  geom_line(aes(color = variable, linetype = variable)) + 
+  scale_color_manual(values = c("darkred", "steelblue")) +
+  theme(text = element_text(size=10),
+        legend.position = "bottom",
+        legend.title = element_blank()) +
+  labs(x = "Date",y = "Relative valuation", title = "Relative valuation for the investment portfolio and S&P")
+
+#Plot relative valuation for the different allocation (stocks and cash) (Hint: bar chart)
+tibble(t = Valuation$Date, 
+       MSFT = Valuation$MSFT_Val, 
+       GOOG = Valuation$GOOG_Val,
+       DIS = Valuation$DIS_Val,
+       AAPL = Valuation$AAPL_Val,
+       Cash = Valuation$InvCash_Val) %>% 
+  pivot_longer(cols = c(MSFT,GOOG,DIS,AAPL,Cash)) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name), position = 'fill') + labs(title = "Relative valuation of stocks and cash")
+```
+

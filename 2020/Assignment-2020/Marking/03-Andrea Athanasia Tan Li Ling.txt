@@ -1,0 +1,32 @@
+Andrea Athanasia Tan Li Ling
+
+A1: Shiny Web
+
+- Nice
+
+A2.1 Secretary
+
+Following line is not right. With a split_number = 10, it returns 0:9 from 1:split_number-1 and first nine elements of the vector.
+It shall be 1:(split_number-1). But this also makes your split_number miss by one. 
+
+    e <- input_list[c(1:split_number-1)]
+
+ Below is correct code to create vector e with length split_number.
+
+    e <- input_list[1:split_number]
+    s <- input_list[(split_number+1):N]
+
+Rest is fine. Minor mistake.
+
+# A2.2 Bond Schedule:
+
+Good
+
+# A2.3 Stock data:
+
+Good handling of error code
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done. Good effort for producing the findings.

@@ -1,0 +1,124 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Tan Jun Wei <sub> <Email:ta0012ei@e.ntu.edu.sg> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+conflict_prefer("lag","dplyr")
+conflict_prefer("filter","dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+This data contains `r nrow(bank)` rows. <br>
+The followings are a quick summary of all the balances the bank has. 
+```{r}
+bank %>%
+  summarise('balance_mean' = mean(balance),
+            'balance_median' = median(balance),
+            'balance_max' = max(balance),
+            'balance_min' = min(balance))
+```
+
+# Finding #2
+
+Find the number of customers in each age group
+```{r}
+bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+
+res
+
+plot(res$age_group, res$count)
+```
+
+# Finding #3
+
+There are `r sum(bank$default == "yes")` customers who has defaulted their payments, and they represent `r sum(bank$default=="yes")/nrow(bank)*100`% of all the customers in the list. 
+
+# Finding #4
+
+For each job category group, the mean of customers' balances within the group, number of customers in the group and number of defaults in the group. 
+
+```{r}
+bank %>%
+  group_by(job) %>%
+  summarise(balance_mean = mean(balance), 
+            count=n(),
+            default_count = sum(default=='yes'))
+```
+# Finding #5
+
+Find the top 3 and bottom 3 balances of each job category
+```{r}
+bank %>%
+  group_by(job) %>%
+  filter(min_rank(balance) <= 3 | min_rank(desc(balance)) <= 3) %>%
+  arrange(job, balance)
+```
+# Finding #6
+
+For each marital status group, count the number of customers who have more than 1000 or not as their balances.
+```{r}
+bank %>% 
+  group_by(marital) %>%
+  summarise(`balance > 1000` = sum(balance > 1000)) -> d1
+bank %>% 
+  group_by(marital) %>%
+  summarise(`balance <= 1000` = sum(balance <= 1000)) -> d2
+df <- distinct(bank, marital) %>% arrange(marital)
+df <- left_join(df, d1, by = "marital")
+df <- left_join(df, d2, by = "marital")
+df <- mutate(df, total = `balance > 1000` + `balance <= 1000`)
+df
+```
+# Finding #7
+
+For each job category and education level group, count the number of defaults and rank from highest to lowest. 
+```{r}
+bank %>% 
+  group_by(job, education) %>%
+  summarise('defaults_per_group' = sum(default == 'yes')) %>%
+  arrange(desc(defaults_per_group))
+```
+# Finding #8
+
+Between the 2 groups which 1 group is homeowners and 1 isn't, the balances' mean within the group, number of customers in the group and number of defaults in the group.
+```{r}
+bank %>%
+  group_by(housing) %>%
+  summarise(balance_mean = mean(balance), 
+            count=n(),
+            default_count = sum(default=='yes'))
+```
+# Finding #9
+
+Between the 2 groups which 1 group is debtors and 1 isn't, the balances' mean within the group, number of customers in the group and number of defaults in the group.
+
+```{r}
+bank %>%
+  group_by(loan) %>%
+  summarise(balance_mean = mean(balance), 
+            count=n(),
+            default_count = sum(default=='yes'))
+```
+# Finding #10
+
+For each education group, the balances' mean within the group, number of customers in the group and number of defaults in the group.
+```{r}
+bank %>%
+  group_by(education) %>%
+  summarise(balance_mean = mean(balance), 
+            count=n(),
+            default_count = sum(default=='yes'))
+```

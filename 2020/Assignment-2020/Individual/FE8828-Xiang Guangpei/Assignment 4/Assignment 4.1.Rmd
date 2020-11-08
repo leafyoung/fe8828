@@ -1,0 +1,52 @@
+---
+title: "Assignment 4.1"
+author: "XGP"
+date: "10/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+#1
+```{r}
+ggplot(data = bank) +
+  geom_point(mapping = aes(x = age, y = balance , color = job)) +
+  facet_grid( ~ education) 
+```
+#2
+```{r}
+ggplot(data = bank, mapping = aes(x = age, fill = marital)) +
+  geom_bar() + 
+  coord_flip()
+```
+#3
+```{r}
+ggplot(bank) +
+  geom_bar(mapping = aes(x = age, fill = education), position = "fill") +
+  coord_polar()
+```
+#4
+```{r}
+theme_set(theme_bw())
+ggplot(bank, aes(age, balance, color = job)) + 
+  geom_point() + 
+  geom_smooth(method="lm", se=F)
+```
+#5
+```{r}
+ggplot(bank, mapping = aes(x = age, colour = marital)) +
+  geom_freqpoly(binwidth = 5)
+```
+#6
+```{r}
+ggplot(bank) + 
+  geom_bar(mapping = aes(x = job, fill = education),
+  position = "fill")
+```

@@ -1,0 +1,74 @@
+---
+title: "Assignment3.1"
+author: "Chi Junwen"
+date: "2020/10/6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+conflict_prefer("filter","dplyr")
+conflict_prefer("lag","dplyr")
+# bank<-read.csv("https://goo.gl/PBQnBt",sep=";")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Finding#1
+The first finding is that blue-collar holds the least average balance while the retired has the largest mean balance according to the data.
+
+```{r,message=FALSE}
+group_by(bank,job)%>%summarise(`mean balance`=mean(balance))%>%arrange(`mean balance`)
+```
+
+
+### Finding#2
+Regarding the result of telemarketing, the blue-collar tends to be most reluctant with a success rate of only 7.3% while the retired has the highest success rate at around 23.5%.
+
+
+```{r,message=FALSE}
+group_by(bank,job)%>%summarise(successrate=sum(ifelse(y=="yes",1,0))/n())%>%arrange(successrate)
+```
+### Finding#3
+As for the influence on success rate caused by housing and loan status, we can see from the chart below, people with housing and loan will be significantly more reluctant to have a bank long-term deposit.
+```{r,message=FALSE}
+df1<-group_by(bank,housing,loan)%>%summarise(successrate=sum(ifelse(y=="yes",1,0))/n())%>%arrange(successrate)
+df2<-group_by(bank,housing,loan="+")%>%summarise(successrate=sum(ifelse(y=="yes",1,0))/n())%>%arrange(successrate)
+df3<-group_by(bank,housing="+",loan)%>%summarise(successrate=sum(ifelse(y=="yes",1,0))/n())%>%arrange(successrate)
+df4<-group_by(bank,housing="+",loan="+")%>%summarise(successrate=sum(ifelse(y=="yes",1,0))/n())
+bind_rows(df1,df2,df3,df4)
+```
+### Finding#4
+Another interesting finding is that as people grow older, difference between the upper 1/2 quantile average balance and the lower 1/2 quantile become larger and larger which means the polarization problem become more severe for older age group.
+
+```{r,message=FALSE}
+df1<-mutate(bank,age_group=case_when(age<20~"youth",age<40~"middle-age",age<50~"senior",TRUE~"old"),ntile=ntile(balance,2))%>%group_by(age_group,ntile)%>%
+    summarise(`mean balance`=mean(balance))%>%ungroup
+df2<-group_by(df1,age_group)%>%summarize(perc_diff=max(`mean balance`)-min(`mean balance`))%>%arrange(perc_diff)
+df2
+```
+### Finding#5
+I divided the data into two job status, one is people who don't have jobs including student and unemployed and the other one is people who have jobs. We can see a nuance that people who have a job has a relatively lower default rate than those without a job.
+
+```{r,message=FALSE}
+filter(bank,job!="unknown")%>%mutate(job_status=ifelse(job=="student"|job=="unemployed","No","Yes"))%>%
+    group_by(job_status)%>%summarise(nn=n(),default_rate=sum(ifelse(default=="yes",1,0)/n())) 
+```
+### Finding#6
+As for the influence on housing percentage caused by education degree, we can see an increase in the percentage as the education degree becomes higher. The unknown row, namely the unresponsive one may be caused by low education level which people feel reluctant to tell.
+
+```{r,message=FALSE}
+group_by(bank,education)%>%mutate(housing=ifelse(housing=="yes",1,0))%>%summarise(nn=sum(housing),percentage=sum(housing)/n())%>%arrange(percentage)
+```
+### Finding#7
+The last finding is that as people grow older, both the percentage of people divorced and people married increase while the percentage of single people decreased.
+
+```{r,message=FALSE}
+df1<-mutate(bank,age_group=case_when(age<20~"youth",age<40~"middle-age",age<50~"senior",TRUE~"old"))
+
+group_by(df1,age_group)%>%summarise(total=n(),single=sum(ifelse(marital=="single",1,0)),married=sum(ifelse(marital=="married",1,0)),divorced=sum(ifelse(marital=="divorced",1,0)))%>%ungroup%>%
+  mutate(single_perc=single/total,married_perc=married/total,divorced_perc=divorced/total)%>%arrange(married_perc)
+
+```

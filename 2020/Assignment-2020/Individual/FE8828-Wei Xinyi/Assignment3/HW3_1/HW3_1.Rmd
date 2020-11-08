@@ -1,0 +1,106 @@
+---
+title: "HW3_1"
+author: "Wei Xinyi"
+date: "2020年10月7日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse) 
+library(lubridate) 
+library(bizdays) 
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE) 
+```
+```{r}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE) 
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";") 
+head(bank,10)
+```
+
+##### insight1
+```{r}
+summary(bank)
+
+##This data contains `4521` rows.
+```
+
+##### insight2
+```{r}
+res<-bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>% 
+  summarise(count = n()) %>% 
+  arrange(age_group) 
+res
+plot(res$age_group, res$count) 
+
+##The bigest age group is 30.
+```
+
+##### insight3
+```{r}
+bank3<- bank %>% 
+  group_by(job) %>% 
+  summarise(count = n()) %>% 
+  arrange(desc(count))
+bank3
+
+ggplot(data = bank) + 
+  geom_bar(mapping = aes(x = job))+
+  theme(axis.text.x = element_text(size = 6))
+
+##The bigest job tpye is `management`.
+```
+
+##### insight4 & insight5
+```{r}
+bank4 <- bank %>% 
+  group_by(job) %>% 
+  summarise(
+    age_mean = mean(age),
+    balance_mean = mean(balance),
+    age_median = median(age),
+    balance_median = median(balance)
+  )%>%
+  arrange(desc(age_mean))
+bank4
+
+bank4%>%
+  arrange(desc(balance_mean))
+
+ggplot(data = bank4) +
+  geom_point(mapping = aes(x = job, y = age_mean))+
+  theme(axis.text.x = element_text(size = 6))
+
+ggplot(data = bank4) +
+  geom_point(mapping = aes(x = job, y = balance_mean))+
+  theme(axis.text.x = element_text(size = 6))
+
+## Group `Retired` has the biggest age_mean and balance_mean.
+```
+
+##### insight4 & insight5
+```{r}
+bank5 <- bank %>% 
+  group_by(education) %>% 
+  summarise(
+    age_mean = mean(age),
+    balance_mean = mean(balance),
+    age_median = median(age),
+    balance_median = median(balance)
+  )%>%
+  arrange(desc(age_mean))
+bank5
+
+bank5%>%
+  arrange(desc(balance_mean))
+
+ggplot(data = bank5) +
+  geom_point(mapping = aes(x = education, y = age_mean))+
+  theme(axis.text.x = element_text(size = 6))
+
+ggplot(data = bank5) +
+  geom_point(mapping = aes(x = education, y = balance_mean))+
+  theme(axis.text.x = element_text(size = 6))
+
+## Group `primary` has the biggest age_mean and group `tertiary` has the biggest balance_mean.
+```

@@ -1,0 +1,136 @@
+---
+title: "Assignment 3.1"
+author: "yang dun"
+date: "4/10/2020"
+output: html_document
+---
+
+```{r setup,echo=FALSE}
+library("conflicted")
+library("dplyr")
+library(scales)
+library(lubridate)
+library(bizdays)
+conflict_prefer("filter","dplyr")
+conflict_prefer("tag","dplyr")
+knitr::opts_chunk$set(echo = TRUE)
+```
+      
+
+```{r rename}
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+#View(bank)
+bank <- rename(bank,p_loan="loan",term_dpt="y")
+
+```
+
+```{r finding_1}
+contact_percent <- nrow(filter(bank,duration<600))/nrow(bank)
+
+```
+### **Finding 1**: `r percent(contact_percent)` of last contact with customers last less than 10 minutes 
+
+```{r finding_1_plot}
+hist(bank$duration/60, main="Distribution of Contact Duration", xlab="Minutes")
+
+```
+
+### **Finding 2**: The unemployed group on average spend the most time talking to the sales person but their success rate is ranked only 7th among all the job-groups. It is suggested that the sales team should spend less time calling them but more time for the other groups (e.g. admin, student and the retired) to improve success rate per unit time spent. 
+
+```{r finding_2}
+contact_job <- bank%>%
+               group_by(job)%>%
+               summarise(
+                 count=n(),
+                 mean_duration=mean(duration),
+                 success=sum(ifelse(poutcome=="success",1,0))
+               ) %>%
+               mutate(success_rate=percent(success/count))%>%
+               arrange(mean_duration)
+
+```
+
+
+```{r finding_3}
+bank_default_age <- mutate(bank,age_group=(age%/%10)*10) %>%
+                group_by(age_group)%>%
+                summarise(
+                    count=n(),
+                    dft_count=sum(ifelse(default=="yes",1,0)))%>%
+                mutate(dft_rate=dft_count/count)
+
+```
+
+### **Finding 3**: The age-group of 20~29 has the highest default rate at `r percent(bank_default_age$dft_rate[2],accuracy = 0.01)`
+```{r finding_3_plot}
+plot(data.frame(age_group=bank_default_age$age_group,default_rate=bank_default_age$dft_rate))
+
+```
+
+### **Finding 4**: On average, The retired has the highest bank balance; housemaid and management come in second and third.   
+```{r finding_4}
+bank_mblance<- bank %>% 
+                    group_by(job)%>%
+                    summarise(
+                        mean_balance=mean(balance))%>%
+                    arrange(mean_balance)
+print(bank_mblance)
+```
+
+### **Finding 5**: Excluding students, technicians have the highest ratio of being single (at 46.5%)    
+```{r finding_5}
+job_marriage <- bank %>% 
+                    group_by(job)%>%
+                    summarise(
+                      count=n(),
+                      single= sum(ifelse(marital=="single"|marital=="divorced",1,0)),
+                      mean_balance=mean(balance))%>%
+                    mutate(single_ratio=single/count)%>%
+                    arrange(single_ratio)
+print(job_marriage)
+```
+
+
+### **Finding 6**:   For each marital status (married, single and divorced), the campaign success rate are much higher for people with no loans than those with loans. People with no loans also have higher mean bank balance than otherwise.  
+```{r finding_6}
+campaign_sucs1 <- bank %>% 
+                  filter(p_loan =="yes"|housing =="yes")%>%
+                  group_by(marital)%>%
+                 
+                 summarise(
+                    count=n(),
+                    camp_success= sum(ifelse(poutcome=="success",1,0)),
+                    mean_balance=mean(balance))%>%
+                  mutate(success_ratio=camp_success/count)%>%
+                  mutate(loan="yes")%>%
+                  arrange(success_ratio)
+campaign_sucs2 <- bank %>% 
+                  filter(p_loan=="no", housing=="no")%>%
+                  group_by(marital)%>%
+                  summarise(
+                    count=n(),
+                    camp_success= sum(ifelse(poutcome=="success",1,0)),
+                    mean_balance=mean(balance))%>%
+                  mutate(success_ratio=camp_success/count)%>%
+                  mutate(loan="no")%>%
+                  arrange(success_ratio)%>%
+                  rbind(.,campaign_sucs1)
+campaign_sucs2$success_ratio <-  percent(campaign_sucs2$success_ratio,accuracy=0.01)
+print(campaign_sucs2)
+```
+ 
+### **Finding 7**: People with management jobs have the highest ratio of Tertiary degrees among all job groups     
+```{r finding_7}
+job_edu <- bank %>% 
+            group_by(job)%>%
+            summarise(
+              count=n(),
+              Primary=sum(ifelse(education=="primary",1,0)),
+              Secondary=sum(ifelse(education=="secondary",1,0)),
+              Tertiary=sum(ifelse(education=="tertiary",1,0)))%>%
+            mutate(Primary=percent(Primary/count))%>%
+            mutate(Secondary=percent(Secondary/count))%>%
+            mutate(Tertiary=percent(Tertiary/count))%>%
+            arrange(.,Tertiary)
+print(job_edu)
+```

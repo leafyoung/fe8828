@@ -1,0 +1,27 @@
+Chen Jiachao
+
+# A1 Shiny Web
+
+- Good.
+
+# A2.1 Secretary
+
+- Good handling the case when j == N
+
+# A2.2 Bond Schedule
+
+- Missing
+
+# A2.3 Stock data
+
+- reactive function creates a reactive value. To access the value, use df_res like function ().
+
+  output$price <- renderPlot({
+    plot(df_res()$timestamp, df_res()$adjusted_close) 
+    lines(df_res()$timestamp, df_res()$adjusted_close)
+  })
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done. Good effort for producing the findings.

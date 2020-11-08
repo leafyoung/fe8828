@@ -1,0 +1,46 @@
+Zhang Xu
+
+# A1 Shiny Web
+
+- Good
+
+# A2.1 Secretary
+
+- Code has syntax error. Missing }.
+  Below is not correct logic. The rank is invisible to the selection.
+  When N is in the evaluation group, you may not know it's the best for all.
+
+  best <- max(eva_group)
+  if (best==N){
+    return(N)
+  }
+
+
+# A2.2 Bond Schedule
+
+- Minor issue when coupon frequency is year and tenor = 1
+
+# A2.3 Stock data
+
+
+# A3.1 Bank data analysis
+
+
+# A3.2 Option data
+
+
+# A4.1 Bank data analysis
+
+
+# A4.2 Infection rate
+
+
+# A4.3 Portfolio
+
+The value and cash_reserve in first row is not correct.
+value = 1mio, cash_reserve = 100k
+
+              AAPL   | GOOGL  | EBAY    | HLT   | value | cash_reserve | position
+2020-05-20 | 79.6605 | 1409.1 | 42.4365 | 77.72 | 0.0   | 825.283	     | 621
+
+

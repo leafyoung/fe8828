@@ -1,0 +1,40 @@
+---
+title: "ASM02"
+output: html_notebook
+---
+
+```{r}
+#How far to make a choice?
+
+N <- 100
+
+make_choice <- function(N, split_number){
+  input_list <- sample(1:N,N,replace=FALSE)
+  best <- max(input_list[1:split_number])
+  if(best == N)  return(0)
+  for(m in input_list[(split_number+1):N]){
+    if (m > best) {
+      best <- m
+      break
+    }
+  }
+  return(best)
+}
+
+find_optimal <- function(){
+  opt <- list()
+  for(i in 1:(N/2)){
+    count <- 0
+    for(j in 1:7000){    #Increase to 7000 to improve accuracy
+      best <- make_choice(N,i)
+      if(best == N) count <- count + 1
+    }
+    prob <- count/100
+    opt <- c(opt, prob)
+  }
+  opt_split <- which.max(opt)
+  print(opt_split)
+}
+
+find_optimal()
+```

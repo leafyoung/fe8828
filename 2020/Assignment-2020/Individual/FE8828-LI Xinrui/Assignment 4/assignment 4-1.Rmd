@@ -1,0 +1,339 @@
+---
+title: "assignment 4-1"
+author: "LI Xinrui"
+date: "10/14/2020"
+output: html_document
+---
+
+```{r}
+library(readxl)
+df_1 <- read_excel("~/Downloads/SLRData (5-Beer Study-2)_Migrated Data.xls")
+head(df_1) 
+
+library(ggplot2)
+ggplot(df_1, aes(Pct_Alcohol,Calories)) + geom_point() +
+geom_smooth(method = "loess", se = FALSE)
+#The percent of alcohol has a positive correlation with the calories in beers.
+```
+
+```{r}
+ggplot(df_1, aes(x = Pct_Alcohol, y = Calories, color = Light)) + 
+  geom_point() +
+  geom_smooth(method = "lm")+
+  facet_grid(. ~ Dist_Type)
+  #theme(legend.position="bottom", text = element_text(size=8))
+#For light beeers calories are lower with the same level of alcohol. Regional beers do not have alcohol below 3.5% while national beers do. There is no essential difference on the positive correlation between national beers and regional beers.
+```
+
+```{r}
+data("iris")
+head(iris)
+```
+
+```{r}
+ggplot(iris, aes(Species,Sepal.Length)) + 
+  geom_boxplot() + 
+  theme(text = element_text(size=8),
+        axis.text.x = element_text(angle = 45, hjust = 1))
+
+#Virginica has the biggest Sepal Length among the three and its variation is also the largest. Setosa has the smallest Sepal Length among the three and its variation is also the smallest.
+```
+```{r}
+ggplot(iris, aes(Petal.Length, fill = Species,alpha=0.3)) + 
+  geom_density() + 
+  theme(text = element_text(size=8))
+#From the graph, if the flower's Petal Length is larger than 2.3, it must be either Versicolor or Virginica. Setosa has the smallest Petal Length among the three and its variation is also the smallest, it has greatest density at about Petal Length=1.5.Virginica has the biggest Petal Length among the three, with variation similar to Versicolor's.
+
+```
+```{r}
+data("ToothGrowth")
+head(ToothGrowth)
+```
+```{r}
+ggplot(ToothGrowth, aes(x = dose, y = len, color = supp)) + 
+  geom_point() +
+  theme(legend.position="left", text = element_text(size=8))  
+#Orange juice is significantly better than ascorbic acid at dose level 0.5 and 1.0, while at dose level 2.0, the effect of orange juice and ascorbic acidhas no much difference except that orange juice has larger variation in tooth length treatment.
+```
+```{r}
+data("mtcars")
+head(mtcars)
+```
+
+```{r}
+ggplot(mtcars) +
+  geom_point(mapping = aes(x = hp, y = mpg)) + 
+  facet_grid( ~ gear) + 
+  theme(text = element_text(size=8))
+#Generally, the bigger the horsepower, the more oil-costing for the cars. Under the same level of oil-consumption level, 4 forward gears will have the more horsepower than 3-forward-fear cars.
+```
+
+```{r}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+```{r}
+library(shiny)
+library(ggplot2)
+
+ui <- fluidPage(
+  fluidRow(
+        column(3,
+               h4("Map of COVID-19 Test"),
+               numericInput("infect_rate","infect_rate",0.05)
+        ),
+        column(8, offset = 1,
+               plotOutput("p1")
+        )
+
+)
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output) {
+
+output$p1<-renderPlot({
+  library(ggplot2)
+  df_sensi <- full_join(
+   tibble(x = 1:25, color = 'Actual Neg'), 
+   tibble(y = 1:20, color = 'Actual Neg'), by = 'color')
+# At 5% infection rate,
+# Positive 500 * 5% = 25 = Actual Pos (24 at 95%) + False Neg (1 at 5%)
+# Negative 500 * 95% = 475 = Actual Neg (451 at 95%) + False Pos (24 at 5%) 
+  i=input$infect_rate
+  actual_pos<-round(500 * i *0.95)
+  false_neg<-round(500 * i *0.05)
+  actual_neg<-round(500 * (1-i) *0.95)
+  false_pos<-round(500 * (1-i) *0.05)
+
+df_sensi['color'] <- c(rep('False Neg', false_neg),
+                       rep('Actual Pos', actual_pos),
+                       rep('False Pos', false_pos),
+                       rep('Actual Neg', actual_neg))
+  ggplot(df_sensi) +
+  geom_point(aes(x, y,colour = color),size = 4, shape="circle") + 
+  theme_bw() +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
+        axis.line=element_blank(),axis.text.x=element_blank(),
+        axis.text.y=element_blank(),axis.ticks=element_blank())
+  })
+
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+```{r}
+fluidPage(
+      fluidRow(
+        column(3,
+               h4("Map of COVID-19 Test"),
+               sliderInput('infect_rate', 'Infection Rate', 
+                           value=0.05, 
+                           min=0, max=1.00, 
+                           step=0.01, round=0.01),
+        ),
+        column(8, offset = 1,
+               plotOutput("p1")
+        )
+        )
+      )
+```
+
+```{r}
+
+library(ggplot2)
+  df_sensi <- full_join(
+   tibble(x = 1:25, color = 'Actual Neg'), 
+   tibble(y = 1:20, color = 'Actual Neg'), by = 'color')
+# At 5% infection rate,
+# Positive 500 * 5% = 25 = Actual Pos (24 at 95%) + False Neg (1 at 5%)
+# Negative 500 * 95% = 475 = Actual Neg (451 at 95%) + False Pos (24 at 5%) 
+  i=0.05
+  actual_pos<-round(500 * i *0.95)
+  false_neg<-round(500 * i *0.05)
+  actual_neg<-round(500 * (1-i) *0.95)
+  false_pos<-round(500 * (1-i) *0.05)
+
+df_sensi['color'] <- c(rep('False Neg', false_neg),
+                       rep('Actual Pos', actual_pos),
+                       rep('False Pos', false_pos),
+                       rep('Actual Neg', actual_neg))
+  ggplot(df_sensi) +
+  geom_point(aes(x, y,colour = color),size = 4, shape="circle") + 
+  theme_bw() +
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
+        axis.line=element_blank(),axis.text.x=element_blank(),
+        axis.text.y=element_blank(),axis.ticks=element_blank())
+```
+
+
+```{r}
+library(alphavantager) 
+#all_tickers <- c('C','JPM','WFC','BAC')
+av_api_key("02LJKLGOH7WD6PC1")
+df_res <- av_get("MSFT",av_fun ="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# Below code can return NA if bad code is passed. 
+df_res <- tryCatch({
+  df_res <- av_get("SomeBADCODE", av_fun ="TIME_SERIES_DAILY_ADJUSTED") 
+  df_res
+  }, error = function(e) {
+    NA 
+  })
+is.na(df_res) # TRUE
+View(df_res)
+# plots
+plot(df_res$timestamp, df_res$adjusted_close) 
+lines(df_res$timestamp, df_res$adjusted_close)
+```
+
+```{r}
+library(alphavantager) 
+all_tickers <- c('C','JPM','WFC','BAC','SPY')
+av_api_key("02LJKLGOH7WD6PC1")
+for (tt in all_tickers) {
+  df_xlc <- av_get(tt, av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize="compact")
+  saveRDS(df_xlc, paste0("data/",tt,".Rds"))
+  cat(paste(tt,min(df_xlc$timestamp),max(df_xlc$timestamp),"\n"))
+}
+```
+
+```{r}
+dd <- list()
+for (tt in all_tickers) {
+  dd[[tt]] <- readRDS(paste0("data/",tt,".Rds"))
+  print(paste(tt, min(dd[[tt]]$timestamp), nrow(dd[[tt]])))
+  assert(min(dd[[tt]]$timestamp) == as.Date('2020-06-11'))
+  assign(paste0('df_',tolower(tt)), dd[[tt]], envir = .GlobalEnv)
+}
+```
+
+```{r}
+len_tickers <- length(all_tickers)
+ii <- 1
+daily_ret <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+for (ii in 1:len_tickers) {
+  daily_ret[all_tickers[ii]] <- tail(dd[[ii]]$adjusted_close / lag(dd[[ii]]$adjusted_close, 1)-1,-1)
+}
+daily_ret['bond'] <- rep(R_f,99)
+for (ii in 1:len_tickers) {
+  daily_ret[paste0(all_tickers[ii],"_cumret")] <- cumprod(1 + daily_ret[all_tickers[ii]])
+}
+
+```
+
+```{r}
+len_tickers <- length(all_tickers)
+ii <- 1
+portfolio <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_tickers) {
+  portfolio[paste0(all_tickers[ii],"_adjusted_close")] <- dd[[ii]]$adjusted_close
+}
+```
+
+```{r}
+cash<-1e6
+cash_invest<-0.9*cash
+n1<-cash_invest%/%4%/%df_c$adjusted_close[[1]]
+w1<-n1*df_c$adjusted_close[[1]]
+cash_invest<-0.9*cash
+n2<-cash_invest%/%4%/%df_jpm$adjusted_close[[1]]
+w2<-n2*df_jpm$adjusted_close[[1]]
+cash_invest<-0.9*cash
+n3<-cash_invest%/%4%/%df_wfc$adjusted_close[[1]]
+w3<-n3*df_wfc$adjusted_close[[1]]
+cash_invest<-0.9*cash
+n4<-cash_invest%/%4%/%df_bac$adjusted_close[[1]]
+w4<-n4*df_bac$adjusted_close[[1]]
+n1 
+n2
+n3
+n4
+cash_reserve<-cash-w1-w2-w3-w4
+cash_reserve
+```
+
+```{r}
+n<-c(n1,n2,n3,n4)
+
+#p<-matrix(c(df_c$adjusted_close,df_jpm$adjusted_close,df_wfc$adjusted_close,df_bac$adjusted_close), nrow=100,ncol=4)
+#portfolio['Value'] <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+portfolio['Value'] <- as.matrix(portfolio[,2:(2+4-1)]) %*% n
+portfolio['risk_free']<-cash_reserve
+portfolio['P_Value'] <- portfolio['Value']+portfolio['risk_free']
+```
+
+```{r}
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w <- c(w1/(w1+w2+w3+w4),w2/(w1+w2+w3+w4),w3/(w1+w2+w3+w4),w4/(w1+w2+w3+w4))
+w
+daily_ret['EW'] <- as.matrix(daily_ret[,2:(2+len_invest-1)]) %*% w
+```
+
+
+```{r}
+R_f <- 0.01/250
+sigma_p <-sd(daily_ret$EW)
+sharp_ratio<-(mean(daily_ret$EW)-R_f)/sigma_p
+sharp_ratio
+```
+
+```{r}
+daily_ret %>% {plot(.$Date,.$EW,type='l')}
+```
+
+```{r}
+
+len_invest <- length(all_tickers)
+W <- c(w1/cash,w2/cash,w3/cash,w4/cash,cash_reserve/cash)
+W
+daily_ret['port'] <- as.matrix(daily_ret[,2:(2+len_invest-1)]) %*% W
+```
+```{r}
+plot(x = daily_ret$Date, y = daily_ret$port, type ="l", ylab = "return",main = "Map of Return", xlab = "Time",col = "green")
+par(new = TRUE)
+plot(x = daily_ret$Date, y = daily_ret$SPY, type ="l",col = "blue",xaxt = "n", yaxt = "n",
+     ylab = "", xlab = "")
+axis(side = 4)
+legend("bottomright", c("portfolio", "SPY"),
+       col = c("green", "blue"), lty = c(1, 1))
+```
+```{r}
+m<-cash/df_spy$adjusted_close[[1]]
+portfolio['SPY_port'] <- as.matrix(portfolio$SPY_adjusted_close) %*% m
+```
+
+```{r}
+plot(x = portfolio$Date, y = portfolio$P_Value, type ="l", ylab = "return",main = "Map of Return", xlab = "Time",col = "green")
+par(new = TRUE)
+plot(x = portfolio$Date, y = portfolio$SPY_port, type ="l",col = "blue",xaxt = "n", yaxt = "n",
+     ylab = "", xlab = "")
+axis(side = 4)
+legend("top", c("portfolio", "SPY"),
+       col = c("green", "blue"), lty = c(1, 1))
+
+```
+```{r}
+portfolio['C_value'] <- as.matrix(portfolio$C_adjusted_close) %*% n1
+portfolio['JPM_value'] <- as.matrix(portfolio$JPM_adjusted_close) %*% n2
+portfolio['WFC_value'] <- as.matrix(portfolio$WFC_adjusted_close) %*% n3
+portfolio['BAC_value'] <- as.matrix(portfolio$BAC_adjusted_close) %*% n4
+
+
+tibble(C = portfolio$C_value, JPM = portfolio$JPM_value, WFC = portfolio$WFC_value, BAC = portfolio$BAC_value, Cash = portfolio$risk_free, time = portfolio$Date)%>%
+  pivot_longer(cols = C : Cash)%>%
+  ggplot(.) + 
+  geom_area(aes(x = time, y = value, fill = name), position = "fill")
+```
+

@@ -1,0 +1,145 @@
+---
+title: "Week 3 Assignment 2"
+output: html_document
+---
+
+## 2.1
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+library(tidyverse)
+library(readxl)
+library(dbplyr)
+library(readxl)
+NASDAQ_data <- read_excel("~/Library/Mobile Documents/com~apple~CloudDocs/NTU /Y4 Masters/Mini Term 2/FE8828 Programming Web Applications/NASDAQ data.xlsx",
+col_types = c("date", "numeric", "numeric","numeric", "numeric", "numeric","numeric", "numeric", "numeric","numeric", "numeric", "numeric","numeric", "numeric"))
+
+```
+
+```{r, include = FALSE}
+calls <- c(rep("c", 38))
+puts <- c(rep("p", 38))
+underlying <- c(rep(1515.00, 38))
+today <- c(rep(as.Date("2020-10-11"), 38))
+
+d1 <- bind_cols(select(NASDAQ_data, `Exp Date`), select(NASDAQ_data,`Strike`), select(NASDAQ_data, `Open Int. C`), OptionType = calls, select(NASDAQ_data, `Bid C`), select(NASDAQ_data, `Ask C`), Underlying = underlying, Today = today) %>%
+  rename(`Open Int` = `Open Int. C`) %>%
+  rename(`Bid` = `Bid C`) %>%
+  rename(`Ask` = `Ask C`) 
+
+d2 <- bind_cols(select(NASDAQ_data, `Exp Date`), select(NASDAQ_data,`Strike`), select(NASDAQ_data, `Open Int. P`), OptionType = puts, select(NASDAQ_data, `Bid P`), select(NASDAQ_data, `Ask P`), Underlying = underlying, Today = today) %>%
+  rename(`Open Int` = `Open Int. P`) %>%
+  rename(`Bid` = `Bid P`) %>%
+  rename(`Ask` = `Ask P`) 
+
+d4 <- bind_rows(d1, d2)
+
+print(d4)
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(d4)
+```
+
+## 2.2 (1) Total Valuation of Call alone
+
+```{r, include = FALSE}
+calls_only <- dplyr::filter(d4, OptionType == "c")
+
+valuation_calls <- c()
+for(i in 1:nrow(calls_only)){
+  valuation_calls[i] <- calls_only$`Open Int`[i] * ((calls_only$Bid[i] + calls_only$Ask[i]) / 2)
+}
+
+total_valuation_calls <- bind_cols(calls_only, Valuation = valuation_calls)
+
+print(total_valuation_calls)
+print(sum(valuation_calls, na.rm = TRUE))
+```
+```{r, echo  = FALSE}
+
+library(knitr)
+kable(total_valuation_calls)
+
+paste("The sum of total valuation of calls alone is", sum(valuation_calls, na.rm = TRUE))
+```
+
+## 2.2 (2) Total Valuation of Put alone
+
+```{r, include = FALSE}
+puts_only <- dplyr::filter(d4, OptionType == "p")
+valuation_puts <- c()
+for(i in 1:nrow(puts_only)){
+  valuation_puts[i] <- puts_only$`Open Int`[i] * ((puts_only$Bid[i] + puts_only$Ask[i]) / 2)
+}
+
+total_valuation_puts <- bind_cols(puts_only, Valuation = valuation_calls)
+
+print(total_valuation_puts)
+print(sum(valuation_puts, na.rm = TRUE))
+```
+```{r, echo  = FALSE}
+
+library(knitr)
+kable(total_valuation_puts)
+
+paste("The sum of total valuation of puts alone is", sum(valuation_puts, na.rm = TRUE))
+```
+
+## 2.2 (3) Total Valuation of Call and Put
+```{r, echo  = FALSE}
+print(sum(valuation_puts, na.rm = TRUE) + sum(valuation_calls, na.rm = TRUE))
+```
+
+## 2.3 
+```{r, include = FALSE}
+ITM_calls <- dplyr::filter(calls_only, Strike < Underlying)
+ITM_puts <- dplyr::filter(puts_only, Strike > Underlying)
+
+open_int_calls <- sum(ITM_calls$`Open Int`, na.rm = TRUE)
+
+open_int_puts <- sum(ITM_puts$`Open Int`, na.rm = TRUE)
+
+print(open_int_calls + open_int_puts)
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(ITM_calls)
+kable(ITM_puts)
+
+paste("The total Open Interest of in the money calls and puts is", sum(open_int_calls,open_int_puts))
+```
+
+## 2.4
+```{r, include = FALSE}
+library(dplyr)
+library(fOptions)
+library(purrr)
+
+average_price <- c()
+for(i in 1:nrow(calls_only)){
+  if(calls_only$Strike[i] < calls_only$Underlying[i])
+    {average_price[i] <- (puts_only$Bid[i] + puts_only$Ask[i])/2}
+  else
+    {average_price[i] <- (calls_only$Bid[i] + calls_only$Ask[i])/2}
+}
+
+dx <- bind_cols(calls_only, Price = average_price)
+
+for(i in 1:nrow(dx)){
+  if(dx$Strike[i] < dx$Underlying[i])
+    dx$OptionType[i] <- "p"
+}
+
+print(dx)
+
+vol_calls <- dx %>%
+  rowwise() %>%
+  mutate(Volatility = GBSVolatility(Price, OptionType, Underlying, Strike, as.numeric((as.Date("2020-12-18") - as.Date("2020-10-09")))/365, r = 0.03, b = 0)) 
+
+print(vol_calls)
+plot(vol_calls$Strike,vol_calls$Volatility, type = "l")
+
+```
+```{r, echo  = FALSE}
+plot(vol_calls$Strike,vol_calls$Volatility, type = "l")
+```

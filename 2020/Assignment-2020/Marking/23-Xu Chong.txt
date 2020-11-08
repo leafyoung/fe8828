@@ -1,0 +1,18 @@
+Xu Cong
+
+# A1 Shiny Web
+
+- Good.
+
+# A2.1 Secretary
+
+- Good
+
+# A2.3 Stock data
+
+- Good for the error handling
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done.

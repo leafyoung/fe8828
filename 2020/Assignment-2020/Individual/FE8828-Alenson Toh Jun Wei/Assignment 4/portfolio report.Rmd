@@ -1,0 +1,149 @@
+
+Our portfolio consists of:
+1. American Airline (AAL)
+2. JP Morgan (JPM)
+3. Facebook (FB)
+4. Amazon (AMZN)
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(ggthemes)
+av_api_key("4QR0JPQ9TLYDJ54M")
+
+
+df_res1 <- av_get("AAL",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(df_res1,file="data/AAL_data.RDS")
+df_res2 <- av_get("JPM",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(df_res2,file="data/JPM_data.RDS")
+df_res3 <- av_get("FB",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(df_res3,file="data/FB_data.RDS")
+df_res4 <- av_get("AMZN",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(df_res4,file="data/AMZN_data.RDS")
+df_res5 <- av_get("SPY",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(df_res5,file="data/SPY_data.RDS")
+
+AAL <- readRDS(file="data/AAL_data.RDS")
+JPM <- readRDS(file="data/JPM_data.RDS")
+FB <- readRDS(file="data/FB_data.RDS")
+AMZN <- readRDS(file="data/AMZN_data.RDS")
+SPY <- readRDS(file="data/SPY_data.RDS")
+
+
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+```
+
+```{r} 
+# Evaluate how many shares of each asset we will purchase
+# with 1 million USD
+
+Cash <- 1000000
+allocation <- 0.9*Cash/4
+
+AAL_price <- AAL[[1,6]]
+AAL_quant <- round(allocation/AAL_price)
+AAL_invest <- AAL_price*AAL_quant
+
+JPM_price <- JPM[[1,6]]
+JPM_quant <- round(allocation/JPM_price)
+JPM_invest <- JPM_price*JPM_quant
+
+FB_price <- FB[[1,6]]
+FB_quant <- round(allocation/FB_price)
+FB_invest <- FB_price*FB_quant
+
+AMZN_price <- AMZN[[1,6]]
+AMZN_quant <- round(allocation/AMZN_price)
+AMZN_invest <- AMZN_price*AMZN_quant
+
+SPY_price <- SPY[[1,6]]
+SPY_quant <- round(0.9*Cash/SPY_price)
+SPY_invest <- SPY_price*SPY_quant
+
+Inv_Summary <- tibble(Ticker=c("AAL","JPM","FB","AMZN","SPY"),
+             Quantity=c(AAL_quant,JPM_quant,FB_quant,AMZN_quant,SPY_quant),
+             Price=c(AAL_price,JPM_price,FB_price,AMZN_price,SPY_price),
+             Investment=c(AAL_invest,JPM_invest,FB_invest,AMZN_invest,SPY_invest))
+Inv_Summary
+view(Inv_Summary) 
+
+SP_Reserve <- Cash - SPY_invest
+Inv_Reserve <- Cash - AAL_invest - JPM_invest - FB_invest - AMZN_invest  
+SP_Reserve
+Inv_Reserve
+```
+
+```{r} 
+# Evaluate Sharpe Ratio and Valuations
+Rf <- 0.01/250
+Valuation <- tibble(Period = 1:100, Date = AAL$timestamp)
+Valuation <- mutate(Valuation, 
+                AAL_Val = AAL_quant*AAL$adjusted_close,
+                JPM_Val = JPM_quant*JPM$adjusted_close,
+                FB_Val = FB_quant*FB$adjusted_close,
+                AMZN_Val = AMZN_quant*AMZN$adjusted_close,
+                InvCash_Val = Inv_Reserve*((1+Rf)^(Period-1)),
+                InvPort_Val = (AAL_Val + JPM_Val + FB_Val +
+                  AMZN_Val + InvCash_Val),
+                SPY_Val = SPY_quant*SPY$adjusted_close,
+                SPCash_Val = SP_Reserve*((1+Rf)^(Period-1)),
+                SPPort_Val = (SPY_Val + SPCash_Val),
+                SPPort_Ret = (SPPort_Val/lag(SPPort_Val,1))-1,
+                InvPort_Ret = (InvPort_Val/lag(InvPort_Val,1))-1)
+Valuation
+view(Valuation) 
+
+Sharpe <- summarise(Valuation,M=mean(InvPort_Ret,na.rm=TRUE),
+                    SD=sd(InvPort_Ret,na.rm=TRUE))
+Sharpe_Ratio <- (Sharpe[[1]]-Rf)/Sharpe[[2]]
+Sharpe_Ratio
+```
+
+```{r} 
+#Histogram of daily return
+ggplot(Valuation, aes(x=InvPort_Ret)) +
+  geom_histogram(binwidth=0.001,color="black",fill="white") +
+  theme(text = element_text(size=10)) + theme_economist_white() +
+  labs(x = "Daily Portfolio Return") + labs(title = "Daily Portfolio Returns")
+```
+
+```{r}
+#Total valuation, and relativity return of investment portfolio and S&P
+V1 <- Valuation %>% select(Date, InvPort_Val, SPPort_Val) %>%
+  rename(`Investment Portfolio` = InvPort_Val, `S&P` = SPPort_Val) %>% gather(key = "variable", value = "value", -Date)
+ggplot(V1, aes(x = Date, y = value)) + 
+  geom_line(aes(color = variable, linetype = variable)) + 
+  scale_color_manual(values = c("blueviolet", "firebrick")) +
+  theme(text = element_text(size=10),
+        legend.position = "bottom",
+        legend.title = element_blank()) +
+  labs(x = "Date",y = "Total valuation", title = "Total Valuation of Our Investment Portfolio and S&P")
+
+V2 <- Valuation %>% select(Date, InvPort_Val, SPPort_Val) %>% 
+  mutate(C1 = InvPort_Val/InvPort_Val[1], C2 = SPPort_Val/SPPort_Val[1]) %>% rename(`Investment Portfolio` = C1, `S&P` = C2) %>%   select(Date,`Investment Portfolio`,`S&P`) %>%
+  gather(key = "variable", value = "value", -Date)
+ggplot(V2, aes(x = Date, y = value)) + 
+  geom_line(aes(color = variable, linetype = variable)) + 
+  scale_color_manual(values = c("blueviolet", "firebrick")) +
+  theme(text = element_text(size=10),
+        legend.position = "bottom",
+        legend.title = element_blank()) +
+  labs(x = "Date",y = "Relative valuation", title = "Relative valuation of our investment portfolio and S&P")
+
+```
+
+```{r}
+#Relative valuation for the different allocation (stocks and cash) 
+tibble(Date = Valuation$Date, 
+       AAL = Valuation$AAL_Val, 
+       JPM = Valuation$JPM_Val,
+       FB = Valuation$FB_Val,
+       AMZN = Valuation$AMZN_Val,
+       Cash = Valuation$InvCash_Val) %>% 
+  pivot_longer(cols = c(AAL,JPM,FB,AMZN,Cash)) %>%
+  ggplot(.) + geom_area(aes(x = Date, y = value, fill = name), position = 'fill') + labs(title = "Relative valuation of Our Portfolio Stocks and Cash with Time")
+
+```
+

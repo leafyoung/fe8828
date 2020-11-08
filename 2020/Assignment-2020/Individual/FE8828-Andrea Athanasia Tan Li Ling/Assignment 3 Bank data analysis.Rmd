@@ -1,0 +1,118 @@
+---
+title: "Bank data"
+author: "Andrea"
+date: "10/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1 
+```{r}
+# Find the age distribution of retirees
+jobs <- select(bank,c(age,job))
+retirees <- dplyr::filter(jobs,job=="retired")
+retirees <- group_by(retirees,age) %>% summarise(n=n())
+
+retirees
+plot(retirees$age,retirees$n,xlab="Age",ylab="Number of retirees")
+
+common <- retirees[which(retirees$n==max(retirees$n)),1,drop=T]
+
+common
+# The most common retirement age among bank customers is 58
+```
+
+# Finding 2 
+```{r}
+# Find the average bank balance based on employment
+employment <- group_by(bank,job) %>% 
+  summarise(balance_mean = mean(balance,na.rm=TRUE))%>% 
+  arrange(desc(balance_mean),job)
+
+employment 
+
+ggplot(employment,aes(job,balance_mean)) + geom_col() + 
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+# Retirees have the highest average bank balance 
+```
+
+# Finding 3
+```{r}
+# Find the median age and balance grouped by marital status and education
+agemarital <- bank %>% group_by(marital,education) %>%
+  summarise('median(Age)' = median(age,na.rm=TRUE), 'median(Balance)' = median(balance,na.rm=TRUE))
+
+agemarital
+# Findings as per the table below
+```
+
+# Finding 4  
+```{r}
+# Find the average bank balance of clients with loans
+haveloan <- bank%>%filter(housing=="yes"|loan=="yes")
+canpay <- group_by(haveloan,housing,loan)%>%summarise(`avg balance` = mean(balance),`balance > avg`=sum(balance>mean(balance)),`balance <= avg`=sum(balance<=mean(balance)))
+canpay <- mutate(canpay,total=`balance > avg`+`balance <= avg`)
+canpay
+# Findings as per the table below
+```
+
+# Finding 5 
+```{r}
+# Find the combinations of job, education and marital status not in the bank dataset
+x1 <- full_join(distinct(bank,job)%>%mutate(dummy=1),
+               distinct(bank,education)%>%mutate(dummy=1),
+               by = "dummy")%>% select(-dummy)
+x2 <- full_join(distinct(bank,education)%>%mutate(dummy=1),
+               distinct(bank,marital)%>%mutate(dummy=1),
+               by = "dummy")%>% select(-dummy)
+x3 <- full_join(x1,x2,by = "education")
+y <- distinct(bank,job,education,marital)
+nrow(x3)
+nrow(y)
+missing <- anti_join(x3,y,by = c("job", "education", "marital"))
+missing
+# There are 14 combinations of job, education and marital status that are not in the bank dataset
+```
+
+# Finding 6 
+```{r}
+# Find the age group with the highest successful turnover
+campaign <- bank%>% group_by(age)%>%
+  summarise(success=sum(ifelse(y=="yes",1,0)),
+            failure=sum(ifelse(y=="no",1,0)),
+            total = n())
+
+campaign
+
+successrate <- c(campaign$success/campaign$total*100)
+bestcampaign <- campaign[which.max(successrate),,]
+max(successrate)
+bestcampaign[[1]]
+# Age group 68 had a 100% success rate 
+```
+
+# Finding 7
+```{r}
+# Find if an increase in contacts in the current campaign helped to turn previous failures into success
+prevfail <- bank %>% filter(bank$poutcome == "failure")
+nrow(prevfail)
+
+failthensucceed <- bank %>% filter(bank$poutcome == "failure" & y == "yes")
+nrow(failthensucceed)
+
+df1 <- select(failthensucceed,poutcome,previous,y,campaign)
+df1 <- mutate(df1,change = df1$campaign-df1$previous)
+df1
+
+averagechange <- summarise(df1, average_change = mean(change))
+averagechange
+# For clients who were successful in the current campaign, but failed previously, the average number of contacts actually decreased, suggesting that it could be the quality of the campaign or other external contributory factors that made them change their mind.
+```

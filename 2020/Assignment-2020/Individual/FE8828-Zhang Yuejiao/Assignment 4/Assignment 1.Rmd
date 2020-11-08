@@ -1,0 +1,130 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Zhang Yuejiao <sub> <Email:yzhang176@e.ntu.edu.com> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(tidyverse)
+library(knitr)
+library(ggplot2)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1: Age and Employment
+
+- It is in line with expectation that in general __retired__ has greater age and __student__ are younger. 
+- Surprisingly __management__ does not have a greater age than others.
+- __Housemaid__ has a greater spread of age.
+
+
+```{r}
+# Age and Job
+
+
+ggplot(bank, aes(x = job, y = age)) +
+geom_boxplot() +
+ggtitle("Age v.s. Employment")+
+theme(legend.position="bottom", 
+      text = element_text(size=12),
+      axis.text.x = element_text(angle=45, hjust=1))
+
+```
+
+
+# Finding #2: Job and Housing Loan
+
+- __Blue-collar__ has the highest rate of having housing loan.
+- __Retired__ has significantly lower rate of having housing loan.
+
+
+```{r}
+bank %>% filter(job != "student" & job !=  "unknown") %>%
+  ggplot(.) + geom_bar(aes(housing), alpha = 0.8) +
+  facet_grid(. ~ job) + theme(text = element_text(size=8))+
+  theme(text = element_text(size=8),
+        axis.text.x = element_text(angle=45, hjust=1))
+
+```
+
+
+# Finding #3: Balance, Age and Employment
+
+- Most of the jobs have a tendency of balance increase along with age.
+- Housemaid is an exception that shows balance decline over age.
+- Entrepreneur's balance is rather steady with a slight tendency of decrease.
+
+```{r}
+bank %>% filter(job != "retired" & job != "student" & job !=  "unknown") %>%
+  ggplot(aes(x = age, y = balance)) + 
+  geom_point() + geom_smooth(method = "lm") + facet_grid(. ~ job) +
+  theme(text = element_text(size = 8))
+
+```
+
+----
+
+# Finding #4: Balance and Housing Loan
+
+- More than 2250 clients are having balance in the (-500, 500) range.
+- In order to make the plot more readable, the top 20 balance (20000 ~ 70000) are not included. Nevertheless, there is still a long tail on the right, suggesting a small group of clients with much higher balance than the majority.
+- Those with credit in default mainly in the (-500, 500) balance range.
+
+```{r}
+head(arrange(bank, balance),-20) %>%  
+  ggplot(mapping = aes(x = balance, fill = default)) +
+  ggtitle("Balance Distribution")+
+  geom_histogram(binwidth = 1000) + theme(text = element_text(size=8))
+
+```
+
+---
+
+# Finding #5: Education and Job
+
+- __Management__ has a very high rate (~80%) of tertiary education, whilst __blue-collar__ has almost no tertiary education.
+- More than 80% of __Admin__ and __Services__ are of secondary education
+- __Housemaid__ has the highest percentage of primary education (>50%)
+
+```{r}
+# An analysis of  and default
+
+bank %>% filter(education != "unknown") %>% 
+  ggplot(.) + geom_bar(mapping = aes(x = job, fill = education),
+                       position = "fill") +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=45, hjust=1))
+
+```
+
+---
+
+
+# Finding #6: Education and Marital Status
+
+- At each age level, the rate of being _married_ tend to decline from __primary__ to __tertiary__
+- __Tertiary__ tend to have a higher rate of getting _divorced_
+- Higher rate of _divorced_ is observed around 50-60 age range.
+
+
+
+```{r, results = 'asis'}
+bank %>% filter(education != "unknown") %>% 
+ggplot(.) +
+geom_bar(mapping = aes(x = age, fill = marital), position = "fill") +
+  facet_grid(. ~ education)+
+coord_flip() + scale_x_reverse() + theme(text = element_text(size=8))
+```
+
+
+
+----
+
+-END-

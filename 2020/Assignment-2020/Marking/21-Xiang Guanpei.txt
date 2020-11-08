@@ -1,0 +1,32 @@
+Xiang Guanpei
+
+# A1 Shiny Web
+
+- Good. We will go back to NBS building.
+
+# A2.1 Secretary
+
+- Good handling of the last-item case with following code.
+
+    else if (i == (N-split_number)){
+      return(FALSE)
+    }
+
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done!
+
+# A4.3 Portfolio
+
+- Error with variable name.
+
+data1 <-data.frame(Rp1)
+# ! reference to data not data1
+ggplot(data, aes(x=Rp1)) + geom_histogram(binwidth=0.001)
+
+#Plot the histogram of daily return of the SPY
+data2 <-data.frame(Rp2)
+# ! reference to data not data2
+ggplot(data, aes(x=Rp2)) + geom_histogram(binwidth=0.001)

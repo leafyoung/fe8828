@@ -1,0 +1,312 @@
+---
+title: "Portfolio Investment Assignment"
+subtitle: "FE8828 AY20/21 Group Assignment"
+author: NEE, TSLA, APPL, NVDA, AMD
+Email: 
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Overview
+
+- SPDR sector ETFs: `c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY')` and `'SPY'`
+- History from 1999-11-01 to now.
+- Strategy:
+  * Equal-weighted with 1) no re-balance, 2) monthly re-balance, 3) annual re-balance
+  * Momentum strategy with 1) long top 4, 2) long top 2 and short bottom 2
+- Note:
+  + All equity position, no cash.
+  + Do not load other library, use only the listed packages here.
+  + Submit Rmd and Rda/RDs data files together
+- Disclaimer: this is no an investment advise.
+
+## Download
+
+```{r}
+# Change (FALSE) to (TRUE), when you need to download data.
+# Usually you only need to run this once.
+# Change file location
+
+# 'XLC', 'XLRE' has shorter history, don't use them.
+all_tickers <- c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY','SPY')
+
+if (FALSE) {
+  av_api_key("")
+  
+  for (tt in all_tickers) {
+    df_xlc <- av_get(tt, av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize="full")
+    saveRDS(df_xlc, paste0("E:/Dropbox/MFE/FE8828/2020/notes-2020/example/spdr/",tt,".Rds"))
+    cat(paste(tt,min(df_xlc$timestamp),max(df_xlc$timestamp),"\n"))
+  }
+}
+```
+
+## Load and check
+
+```{r}
+# make sure all starts from the same time and same length.
+dd <- list()
+for (tt in all_tickers) {
+  dd[[tt]] <- readRDS(paste0("E:/Dropbox/MFE/FE8828/2020/notes-2020/example/spdr/",tt,".Rds"))
+  print(paste(tt, min(dd[[tt]]$timestamp), nrow(dd[[tt]])))
+  assert(min(dd[[tt]]$timestamp) == as.Date('1999-11-01'))
+  assign(paste0('df_',tolower(tt)), dd[[tt]], envir = .GlobalEnv)
+}
+```
+
+### Technology vs. Energy
+
+- Energy was the rock star during 90s and 00s, abruptly stopped during GFC on the journey towards $200/bbl (never there).
+- Technology was a prodigy from late 70s, stumbled in early 00s, but now a rock star.
+
+```{r}
+plot(df_xlk$timestamp, df_xlk$adjusted_close,type='l')
+points(df_xle$timestamp, df_xle$adjusted_close,col='red',type='l')
+```
+
+# Equal-weighted Strategy
+
+## Compute daily return series
+
+```{r}
+len_tickers <- length(all_tickers)
+ii <- 1
+daily_ret <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+for (ii in 1:len_tickers) {
+  daily_ret[all_tickers[ii]] <- tail(dd[[ii]]$adjusted_close / lag(dd[[ii]]$adjusted_close, 1)-1,-1)
+}
+for (ii in 1:len_tickers) {
+  daily_ret[paste0(all_tickers[ii],"_cumret")] <- cumprod(1 + daily_ret[all_tickers[ii]])
+}
+```
+
+## Performance
+
+### Calculate Strategy Return
+
+```{r}
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w <- rep(1, len_invest) / len_invest
+w
+
+em_cumret <- as.matrix(daily_ret %>% select(XLB_cumret:XLY_cumret)) %*% w
+ret_from_cumret <- function(cumret) {
+  ret <- cumret / lag(cumret,1) - 1
+  ret[1,1] <- cumret[1,1]-1
+  ret
+}
+em_ret <- ret_from_cumret(em_cumret)
+
+daily_ret['EW_cumret'] <- em_cumret
+daily_ret['EW_ret'] <- em_ret
+  
+daily_ret %>% {plot(.$Date,.$EW_cumret,type='l')}
+```
+
+### Relative Performance between EW and SPY
+
+```{r}
+daily_ret %>% {plot(.$Date,.$SPY,type='l'); points(.$Date,.$EW_ret,type='l', col='red'); }
+daily_ret %>% {plot(.$Date,.$EW_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+```
+
+### Metric
+
+```{r}
+# annualized return for EW
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+```
+
+
+```{r}
+# simplified Sharp ratio
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW)) / sd(daily_ret$EW) / sqrt(250)
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250)
+```
+
+```{r}
+# Calculate the Max DD
+# maximum_drawdown <- '' in %
+```
+
+### Analyze
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+```
+
+
+### Let's try improve
+
+- Add Re-balance: reset the weights so each ETF has equal market value.
+
+Re-balance is an action to adjust the weights of each stock so each ETF will have equal market value. Without re-balance, one stock can grow its value to a certain extend that reduces the diversification of our investment portfolio.
+
+* The starting allocation for each ETF is 1/9.
+* On the next re-balance day, calculate the value of the portfolio. For example, it has grown to 1.3 based on each ETF’s relative return during the previous period.
+* The allocation for each ETF becomes 1.3/9.
+
+
+If we re-balance every day, multiply weights to return everyday
+
+```{r}
+daily_ret['EW_daily'] <- as.matrix(daily_ret %>% select(XLB:XLY)) %*% w
+daily_ret %>% {plot(.$Date,.$EW_daily,type='l')}
+daily_ret['EW_daily_cumret'] <- cumprod(daily_ret['EW_daily'] + 1)
+
+tail(daily_ret['EW_daily_cumret'],1)
+
+# annualized return for EW_daily
+prod(daily_ret$EW_daily + 1) ** (250 / length(daily_ret$EW_daily))
+```
+
+- If we re-balance less frequently.
+
+Step 1: to calculate re-balance dates so the last re-balance happens on the last day.
+
+rebal_days is the vector of numbers. They are the n-th days on which re-balance is applied. I have written the custom function calc_rebal_days() to help you to obtain the rebal_days vector which always ends at the last day of the downloaded data.
+
+
+```{r}
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Monthly re-balance
+# every 21 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+head(rebal_days)
+
+# Annual re-balance
+# every 252 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+head(rebal_days)
+```
+
+Step 2: generalized code to do re-balance
+
+```{r}
+# 12:20 is where we have stored cumret for each ETF  We will re-write these columns' content.
+
+row_daily_ret <- nrow(daily_ret)
+
+rebal_days <- 1:row_daily_ret
+w0 <- w
+for (ii in 1:row_daily_ret) {
+  if (ii == 1) {
+    prev_cumret <- matrix(w0,1,len_invest)
+  }
+  daily_ret[ii,12:20] <- prev_cumret * as.matrix(1 + daily_ret[ii,2:10])
+  
+  if (ii %in% rebal_days) {
+    # when re-balance, multiple weights with cumret
+    port_sum <- sum(daily_ret[ii,12:20])
+    daily_ret[ii,12:20] <- matrix(rep(port_sum, len_invest) / len_invest, 1, len_invest)
+  }
+  prev_cumret <- as.matrix(daily_ret[ii,12:20])
+}
+
+sum(daily_ret[row_daily_ret,12:20])
+daily_ret['EM_Daily_cumret'] <- rowSums(as.matrix(daily_ret[12:20]))
+daily_ret %>% { plot(.$Date, .$EM_Daily_cumret, type='l') }
+
+daily_ret['EM_Daily_ret'] <- ret_from_cumret(daily_ret['EM_Daily_cumret'])
+daily_ret %>% { plot(.$Date, .$EM_Daily_ret, type='l') }
+```
+
+### TODO
+
+For each of 3 EW strategy:
++ no re-balance
++ monthly re-balance, and
++ annually re-balance.
+
+Do the analysis prescribed in the ## Performance section.
+
+# Momentum Strategy
+
+- Empirically, there appears to be certain “inertia” in stock returns known as the
+momentum effect, whereby future returns are positively correlated with past returns.
+
+- We use a price momentum here. At any point, we rank the ETFs according to following.
+  + At row `i`, momentum is `( price[i-21] - price[i-252] ) / price[i-252] - ( price[i-1] - price[i-21] ) / price[i-21]`
+
+- Set to re-balance every month
+  1. Long the top 4 stocks with equal weights,
+      + Calculate the portfolio value of A, B, C, D on re-balance day. For example, 1.2
+      + Allocation is to replace B,D with E,F. Make A,C,E,F has equal weights of 1.2/4 for the next period, or
+  2. Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+      + Shorting means borrow the stock, sell it and later buy it back to return. You need to pay the full cost of the stock to borrow it and you won't not receive cash from selling. It will be held against your liability of returning the stock.
+      + In simple terms, for either long or short, you pay the full cost of stock at the start.
+      + It's still equal weights from the portfolio value, 1/4 each for the top 2 long, and -1/4 each for the bottom 2 shorts.
+
+```{r}
+daily_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_tickers) {
+  if (all_tickers[ii] == 'SPY') { next }
+  daily_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+daily_price
+
+rebal_days <- calc_rebal_days(nrow(daily_price), 21)
+rebal_days
+
+# Assume monthly re-balance
+for (r in rebal_days) {
+  print(r)
+  mm <- numeric(len_invest)
+  
+  # Calculate momentum
+  # print(mm)
+  for (ii in 1:len_invest) {
+     tt <- invest_tickers[ii]
+     
+     # Use 1 if look-back period is not enough.
+     r_prev_d <- if_else(r > 1, r - 1, 1)
+     r_prev_m <- if_else(r > 21, r - 21, 1)
+     r_prev_y <- if_else(r > 252, r - 252, 1)
+     
+     x <- (daily_price[r_prev_m,tt] - daily_price[r_prev_y,tt] ) / daily_price[r_prev_y,tt] - ( daily_price[r_prev_d,tt] - daily_price[r_prev_m,tt] ) / daily_price[r_prev_m,tt]
+     
+     mm[ii] <- as.numeric(x)
+  }
+  # TODO: rank and allocation.
+  # print(mm)
+  # run one cycle first, then remove break
+  break
+}
+
+mm
+
+```
+
+
+### TODO
+
+For each of 2 Momentum strategies (Both are monthly re-balanced):
+- Long the top 4 stocks with equal weights, or
+- Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+Do the analysis prescribed in the ## Performance section.
+
+- Note: there is lead-in period *exclude* the lead-in period when Momentum strategy still wait for more data.
+  + For both momentum strategy portfolio and S&P in comparison, you need to exlcude the lead-in period so as to start from the first rebal_day day.
+  

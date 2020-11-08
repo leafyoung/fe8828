@@ -1,0 +1,63 @@
+---
+title: "Assignment 3.2"
+author: "yang dun"
+date: "4/10/2020"
+output: html_document
+---
+
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("dplyr")
+library(fOptions)
+library(quantmod)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+```
+
+Plot the implied volatility against strike for out-of-money call and put options with expiration on 2020-11-06. The underlying is RCL.The bid price is used as option price.
+
+```{r plot}
+data_RCL <- getOptionChain("RCL",Exp= "2020-11-06", src="yahoo")
+c_opt <- data_RCL$calls
+#View(c_opt)
+c_opt$today <-Sys.Date()  
+c_opt$exp <-"2020-11-6" 
+c_opt <-c_opt %>% 
+        mutate(T=bizdays(today,exp,"weekends")/252)%>%
+        relocate(T,.after=last_col())%>%
+        mutate(Share_p=getQuote("RCL",src="yahoo")$Last)
+        
+#remove calls which are in the money
+c_opt <- c_opt[c_opt$Strike>=c_opt$Share_p,]%>%
+        rowwise()%>%
+        #rf = 10yr us gov bond yield
+        mutate(`Implied Vol`=GBSVolatility(Bid,"c",S=Share_p,X = Strike,Time =T,r =0,0.007,b = 0,maxiter=500))%>%
+        mutate(option="c")
+
+#repeat the smae steps for out of money put options
+
+p_opt <- data_RCL$puts
+#View(p_opt)
+p_opt$today <-Sys.Date()  
+p_opt$exp <-"2020-11-6" 
+p_opt <-p_opt %>% 
+        mutate(T=bizdays(today,exp,"weekends")/252)%>%
+        relocate(T,.after=last_col())%>%
+        mutate(Share_p=getQuote("RCL",src="yahoo")$Last)
+        
+        
+#remove puts which are in the money
+p_opt <- p_opt[p_opt$Strike<=p_opt$Share_p,]%>%
+        rowwise()%>%
+        #rf = 10yr us gov bond yield
+        mutate(`Implied Vol`=GBSVolatility(Bid,"p",S=Share_p,X = Strike,Time =T,r =0,0.007,b = 0,maxiter=500))%>%
+        mutate(option="p")
+
+all_opt <- rbind(p_opt,c_opt)
+
+
+ggplot(all_opt, aes(x = Strike, y = `Implied Vol`))+geom_line()+geom_point()
+
+```
+

@@ -1,0 +1,27 @@
+---
+title: "R Shiny Demo"
+output: html_notebook
+runtime: shiny
+---
+
+## Text
+
+```{r echo = FALSE}
+library(shiny)
+
+ui <- fluidPage(
+  actionButton('go', 'Go') 
+)
+
+server <- function(input, output, session) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+# Text 2
+
+```{r echo = FALSE}
+actionButton('go', 'Go')
+```

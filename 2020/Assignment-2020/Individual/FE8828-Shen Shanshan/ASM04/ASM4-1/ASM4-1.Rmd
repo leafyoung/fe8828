@@ -1,0 +1,67 @@
+---
+title: "ASM4-1"
+author: "Shen Shanshan"
+date: "2020/10/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+
+library(readr)
+bank <- read_delim("bank.csv", ";", escape_double = FALSE, trim_ws = TRUE)
+
+library(dplyr)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+library(ggplot2)
+```
+
+#1 houing percentage in different careers
+```{r}
+ggplot(bank) +
+  geom_bar(mapping = aes(x = job, fill = housing)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+#2 Balance gaps among education background
+```{r}
+ggplot(bank) +
+  geom_density(aes(x = balance, color = education, fill = education, alpha = 0.3)) +
+  xlim(0, 10000)
+```
+
+#3 Marital status throughout ages
+```{r}
+ggplot(bank) +
+  geom_histogram(mapping = aes(x = age, fill = marital)) +
+  theme_bw()
+```
+
+#4 Relation among age, balance and housing condition
+```{r}
+ggplot(bank) +
+  geom_point(mapping = aes(age, balance, color = housing)) +
+  geom_smooth(mapping = aes(age, balance), method = 'lm', inherit.aes = FALSE) +
+  ylim(0, 30000) +
+  theme_bw()
+```
+
+#5 education requirement among different careers
+```{r}
+ggplot(bank) +
+  geom_bar(mapping = aes(job, fill = education), position = "fill") +
+  coord_polar() 
+```
+
+#6 housing condition between different ages and jobs
+```{r}
+g <- group_by(bank, job, age, housing) %>% summarise(nn=n()) 
+ggplot(g) +
+    geom_point(data=filter(g, housing=="yes"), aes(job, age, size = nn), alpha=0.3, color='red', shape='circle') +
+    geom_point(data=filter(g, housing=="no"), aes(job, age, size = nn), alpha=0.3, color='blue', shape='square') +
+    facet_grid( ~housing) +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+

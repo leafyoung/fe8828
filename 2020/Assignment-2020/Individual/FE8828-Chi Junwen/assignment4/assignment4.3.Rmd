@@ -1,0 +1,187 @@
+---
+title: "Assignment4.3"
+author: "Chi Junwen"
+date: "2020/10/13"
+output: html_document
+---
+## STEP1
+##### load the data and package
+
+```{r setup, include=FALSE}
+SPY<-readRDS(file ="data/SPY.Rds")
+MSFT<-readRDS(file="data/MSFT.Rds")
+AAPL<-readRDS(file="data/AAPL.Rds")
+MMM<-readRDS(file="data/MMM.Rds")
+FB<-readRDS(file="data/FB.Rds")
+library(conflicted)
+library(tidyverse)
+library(ggplot2)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+options(dplyr.summarise.inform = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## STEP2
+
+- The allocation of the four stocks is 307 MSFT,711 AAPL, 389MMM and 243FB and in the second portfolio I will hold 3078SPY.
+- The return of the portfolio is shown below.
+
+```{r}
+each_value=900000/4
+n_SPY<-900000%/%SPY$adjusted_close[1]
+n_MSFT<-each_value%/%MSFT$adjusted_close[1]
+n_AAPL<-each_value%/%AAPL$adjusted_close[1]
+n_MMM<-each_value%/%MMM$adjusted_close[1]
+n_FB<-each_value%/%FB$adjusted_close[1]
+
+cash_por1<-1000000-n_MSFT*MSFT$adjusted_close[1]-n_AAPL*AAPL$adjusted_close[1]-
+  n_MMM*MMM$adjusted_close[1]-n_FB*FB$adjusted_close[1]
+
+
+cash_por2<-1000000-n_SPY*SPY$adjusted_close[1]
+
+
+portfolio1<-tibble(Date=AAPL$timestamp,price_MSFT=MSFT$adjusted_close,
+                   price_AAPL=AAPL$adjusted_close,price_MMM=MMM$adjusted_close,
+                   price_FB=FB$adjusted_close,N_MSFT=n_MSFT,N_AAPL=n_AAPL,
+                   N_MMM=n_MMM,N_FB=n_FB)
+
+
+
+diff_days<-as.numeric(AAPL$timestamp[2:length(AAPL$timestamp)]-AAPL$timestamp[1:(length(AAPL$timestamp)-1)])
+cash_value<-c(cash_por1,cash_por1*cumprod((1+0.01/250)^diff_days))
+
+portfolio1<-portfolio1%>%mutate(cash_value<-cash_value)
+
+portfolio1<-portfolio1%>%mutate(value=price_MSFT*N_MSFT+price_AAPL*N_AAPL+price_MMM*N_MMM+price_FB*N_FB+cash_value)
+
+return<-c(0,portfolio1$value[2:length(portfolio1$value)]/portfolio1$value[1:(length(portfolio1$value)-1)]-1)
+
+portfolio1<-portfolio1%>%mutate(return=return)
+portfolio1$return
+
+```
+
+## STEP3
+```{r}
+return_p1<-mean(portfolio1$return[2:length(portfolio1$return)])
+sigma_p1<-sd(portfolio1$return[2:length(portfolio1$return)])
+sr1<-(return_p1-0.01/250)/sigma_p1
+portfolio2<-tibble(Date=AAPL$timestamp,price_SPY=SPY$adjusted_close,
+                                        N_SPY=n_SPY)
+
+cash_value2<-c(cash_por2,cash_por2*cumprod((1+0.01/250)^diff_days))
+portfolio2<-portfolio2%>%mutate(cash_value=cash_value2)
+portfolio2<-portfolio2%>%mutate(value=price_SPY*N_SPY+cash_value)
+
+
+return2<-c(0,portfolio2$value[2:length(portfolio2$value)]/portfolio2$value[1:(length(portfolio2$value)-1)]-1)
+
+portfolio2<-portfolio2%>%mutate(return=return2)
+
+return_p2<-mean(portfolio2$return[2:length(portfolio2$return)])
+sigma_p2<-sd(portfolio2$return[2:length(portfolio2$return)])
+sr2<-(return_p2-0.01/250)/sigma_p2
+
+c(sr1,sr2)
+```
+
+The sharp ratio of the two portfolios is `r sr1` and `r sr2` respectively.
+
+## STEP4
+
+histograms of daily return
+```{r}
+ggplot(portfolio1)+geom_histogram(aes(return),binwidth=0.002)
+ggplot(portfolio2)+geom_histogram(aes(return),binwidth = 0.002)
+```
+## STEP5
+
+total valuation, and relativity return of my your investment portfolio and S&P.
+
+1.total value
+```{r,message=FALSE}
+colors <- c("Stock Portfolio" = "steelblue3", "SPY Porfolio" = "red")
+ggplot()+geom_line(data=portfolio1,aes(Date,value,color="Stock Portfolio"),size=1.5)+geom_line(data=portfolio2,aes(Date,value,color="SPY Porfolio"),size=1.5)+
+                  scale_color_manual(
+                   values = colors)+
+            labs(x = "Date",
+               y = "value",
+             color = "Legend")
+             theme(legend.title=element_blank(),
+            legend.position = c(0.9, 0.9))
+```
+2.relative return
+
+```{r,message=FALSE}
+portfolio1<-portfolio1%>%mutate(relreturn=value/1000000-1)
+
+portfolio2<-portfolio2%>%mutate(relreturn=value/1000000-1)     
+
+ggplot()+geom_line(data=portfolio1,aes(Date,relreturn,color="Stock Portfolio"),size=1.5)+geom_line(data=portfolio2,aes(Date,relreturn,color="SPY Porfolio"),size=1.5)+
+  scale_color_manual(
+    values = colors)+
+  labs(x = "Date",
+       y = "Relative Return",
+       color = "Legend")
+theme(legend.title=element_blank(),
+      legend.position = c(0.9, 0.9))
+```
+
+## STEP6
+
+relative valuation for the different allocation (stocks and cash)
+
+I mainly compare 4 allocation of stock weight, 25%,50%,75% and 100% of the initial stock value 900000 respectively.
+
+The bar chart shows that from p1 to p4, it has a downside squeezing trend which means the bigger weight of stocks, the higher value of the portfolio.
+
+```{r}
+each_value=900000*0.75/4
+
+n_MSFT<-each_value%/%MSFT$adjusted_close[1]
+n_AAPL<-each_value%/%AAPL$adjusted_close[1]
+n_MMM<-each_value%/%MMM$adjusted_close[1]
+n_FB<-each_value%/%FB$adjusted_close[1]
+cash_por1<-1000000-n_MSFT*MSFT$adjusted_close[1]-n_AAPL*AAPL$adjusted_close[1]-
+  n_MMM*MMM$adjusted_close[1]-n_FB*FB$adjusted_close[1]
+cash_value<-c(cash_por1,cash_por1*cumprod((1+0.01/250)^diff_days))
+
+p2_value<-MSFT$adjusted_close*n_MSFT+AAPL$adjusted_close*n_AAPL+MMM$adjusted_close*n_MMM+FB$adjusted_close*n_FB+cash_value
+
+
+each_value=900000*0.5/4
+
+n_MSFT<-each_value%/%MSFT$adjusted_close[1]
+n_AAPL<-each_value%/%AAPL$adjusted_close[1]
+n_MMM<-each_value%/%MMM$adjusted_close[1]
+n_FB<-each_value%/%FB$adjusted_close[1]
+cash_por1<-1000000-n_MSFT*MSFT$adjusted_close[1]-n_AAPL*AAPL$adjusted_close[1]-
+  n_MMM*MMM$adjusted_close[1]-n_FB*FB$adjusted_close[1]
+cash_value<-c(cash_por1,cash_por1*cumprod((1+0.01/250)^diff_days))
+
+p3_value<-MSFT$adjusted_close*n_MSFT+AAPL$adjusted_close*n_AAPL+MMM$adjusted_close*n_MMM+FB$adjusted_close*n_FB+cash_value
+
+
+
+
+each_value=900000*0.25/4
+
+n_MSFT<-each_value%/%MSFT$adjusted_close[1]
+n_AAPL<-each_value%/%AAPL$adjusted_close[1]
+n_MMM<-each_value%/%MMM$adjusted_close[1]
+n_FB<-each_value%/%FB$adjusted_close[1]
+cash_por1<-1000000-n_MSFT*MSFT$adjusted_close[1]-n_AAPL*AAPL$adjusted_close[1]-
+  n_MMM*MMM$adjusted_close[1]-n_FB*FB$adjusted_close[1]
+cash_value<-c(cash_por1,cash_por1*cumprod((1+0.01/250)^diff_days))
+
+p4_value<-MSFT$adjusted_close*n_MSFT+AAPL$adjusted_close*n_AAPL+MMM$adjusted_close*n_MMM+FB$adjusted_close*n_FB+cash_value
+
+
+combine<-tibble(Date=AAPL$timestamp,p1=portfolio1$value,p2=p2_value,p3=p3_value,p4=p4_value)%>%pivot_longer(cols=p1:p4)
+ggplot(combine) + geom_area(aes(x = Date, y = value, fill = name),position="fill")
+
+
+
+```

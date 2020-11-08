@@ -1,0 +1,409 @@
+## Objective
+1. Know the way of Internet: the network, the cloud and the application.
+2. Use data manipulation and data visualization to do exploratory data analysis.
+3. To do option valuation, and trading strategy performance analysis.
+4. Build real-world data-driven reports and dashboard, data visualization and ~predictive model~.
+5. Latest technology in cryptocurrency and payment system based on Bitcoin and Blockchain.
+
+* Programming is our tool
+- R is a system that has been designed to process data.
+- Intermidiate-to-Advanced level R
+- Use R in other MFE courses
+- A complete suite for data science.
+
+## When it wants to visit someone on the network? 2/2
+* Then, your device creates and send the packet "request". Wait for response.
+* Router and gateway will relay the packets to the receiver.
+
+```{r, echo = FALSE, out.width = "50%"}
+knitr::include_graphics("imgs/2017/India_Post_Letter_Box.jpg")
+```
+
+
+# Time
+
+Convert time to date, be aware of timezone. Use the current timezone, "+08"
+```{r, echo = TRUE}
+Sys.time()
+[1] "2017-10-30 22:50:22 +08"
+
+> as.Date(Sys.time(), tz = "NZ")
+"2017-10-31"
+
+> as.Date(Sys.time(), tz = "UTC")
+"2017-10-30"
+```
+
+# Call function with the name of the function
+
+new_option <- function(strike, call_put, quantity, underlying)
+{
+  params <- as.list(match.call())[-1]
+  do.call("list", params)
+}
+
+do.call("function name", ...)
+
+
+## SQL does CRUD
+
+```
+# Select everything from Shops.
+SELECT * FROM Shops;
+
+# Select with a filter
+SELECT * FROM Shops WHERE size = "Big";
+
+# Select with a filter and order
+SELECT * FROM Shops WHERE size = "Big" ORDER BY Name;
+
+# Select with a filter, order, group and summary function `sum`
+SELECT Region, sum(Sales) FROM Shops WHERE size = "Medium" GROUP BY Region;
+
+# Insert a new record to Shops.
+INSERT into Shops (Name, Region, Sales) VALUES ("Costco", "North", 123456, ...);
+
+# Update a field
+UPDATE Shops SET Sales = Sales + 1000 WHERE Name = "Costco";
+
+# Delete from Shops with a filter
+DELETE from Shops WHERE Sales < 1000
+```
+
+## `full_join` and `anti_join` More
+
+```{r, echo = TRUE}
+# All possible combination between job and education
+x <- full_join(distinct(bank, job) %>% mutate(dummy = 1),
+               distinct(bank, education) %>% mutate(dummy = 1),
+               by = "dummy") %>%
+     select(-dummy)
+y <- distinct(bank, job, education)
+
+nrow(x)
+nrow(y)
+
+df1 <- anti_join(x, y, by = c("job", "education"))
+df2 <- anti_join(y, x, by = c("job", "education"))
+```
+
+- df1: Empty result
+
+```{r, echo = FALSE}
+kable(df1)
+```
+
+- df2: Empty result
+```{r, echo = FALSE}
+kable(df2)
+```
+
+## `separate/unite`
+
+    separate(data, col, into, sep = "[^[:alnum:]]+", remove = TRUE,
+      convert = FALSE, extra = "warn", fill = "warn", ...)
+
+    #> # A tibble: 6 × 3
+    #>       country  year              rate
+    #> *       <chr> <int>             <chr>
+    #> 1 Afghanistan  1999      745/19987071
+    #> 2 Afghanistan  2000     2666/20595360
+    #> 3      Brazil  1999   37737/172006362
+    #> 4      Brazil  2000   80488/174504898
+    #> 5       China  1999 212258/1272915272
+    #> 6       China  2000 213766/1280428583
+
+    separate(df, rate, into = c("cases", "population"))
+    separate(df, rate, into = c("cases", "population"), convert = TRUE)
+  
+    unite(df, century, year) # default sep is "_"
+    unite(df, century, year, sep = "") # seamless unite
+
+## Rules of Thumb for use list of data frame
+
+* Use list to store app data, i.e. configuration. `conf <- list(use_calendar_days = TRUE, do_fx_conversion = FALSE, year_convention = 252)`
+* User data frame to store repeating data of similar structure.
+* Every data frame is better to have a id column, like **item_id**. It can be number or character. Make it unique.
+  If **item_id** is a number, when insert new record to the data frame, we need to increment it somewhere.
+  So, use a variable to keep it somewhere, or use `max(item_id) + 1` (It will do calculation for all ids. Performance still good with small data set)
+* Delete is not good for enterprise. We need to leave an audit trail. And we can prevent from wrong operation.
+  Add a column name with a common name, e.g. SYS_DEL. Its default value is FALSE, when you want to delete it, set it to TRUE.
+  When extracting data, use `filter(df1, !SYS_DEL)`.
+  The advanced version involves the user and datetime, i.e. SYS_DEL_USER, SYS_DEL_DATETIME.
+
+
+        | position_id | call_put | amount | strike | SYS_DEL |
+        | X123        |          |        |        |
+
+
+# Replace `spread/gather` with `pivot_wide/pivot_long`
+
+## `spread/gather` convert for Wide format <=> Long format
+
+    # Original help
+    gather(data, key, value, ...)
+    # My annotated version
+    gather(data,
+           new_key_col_name,
+           new_value_col_name,
+           -columns_to_be_included_in_the_left)
+    
+... is where you want to make as independent columns.
+You need to specify all columns that should be `gather`ed (or before `gather`, remove all columns that should _not_ be `gather`ed).
+
+## `gather` example with *Bank* dataset
+
+```{r echo = TRUE, results = "hide"}
+wfmt <- group_by(bank, job) %>% summarize(yy = sum(ifelse(default == "yes", 1, 0)), nn = sum(ifelse(default == "no", 1, 0)))
+df <- gather(wfmt, default, value, -job) %>% arrange(job, default)
+```
+
+```{r, echo = FALSE}
+kable(head(wfmt, 7))
+```
+...
+
+```{r, echo = FALSE}
+kable(head(df, 7))
+```
+...
+
+## `spread`
+
+    # Original help
+    spread(data, key, value)
+    # My annotated version
+    spread(data, colname_to_be_header, value_to_be_filled_under_header)
+
+## `spread` example with *Bank* dataset
+
+```{r echo = TRUE, results = "hide"}
+lfmt <- group_by(bank, job, default) %>% summarize(nn = n())
+df <- spread(lfmt, default, nn)
+# How to take care of converting NA to zero?
+```
+
+```{r, echo = FALSE}
+kable(head(lfmt, 7))
+```
+...
+
+```{r, echo = FALSE}
+kable(head(df, 7))
+```
+...
+
+## Combine different columns' Quantity
+
+```{r echo = FALSE, reuslts = "hide"}
+wfmt <- tibble(date = seq(from = as.Date("2019-01-01"), by = "day", length.out = 5),
+                   Copper_qty = round(runif(5) * 1000, 0),
+                   Gold_qty = round(runif(5) * 1000, 0),
+                   Silver_qty = round(runif(5) * 1000, 0))
+```
+
+```{r, echo = FALSE}
+kable(head(wfmt, 7))
+```
+...
+
+```{r echo = TRUE, reuslts = "hide"}
+df <- wfmt %>%
+      gather(key, value, -date) %>%
+      group_by(date) %>%
+      summarize(value1 = sum(value)) %>%
+      rename(value = value1) %>%
+      mutate(key = "Total") %>%
+      spread(key = key, value = value) %>%
+      inner_join(wfmt, ., by = "date")
+```
+
+```{r, echo = FALSE}
+kable(df)
+```
+
+
+```{r, echo = TRUE, results = "hide"}
+# although this works...
+# It takes "Hard coding" of column names "Copper_qty Gold_qty Silver_qty".
+df <- wfmt %>% mutate(total = Copper_qty + Gold_qty + Silver_qty)
+```
+
+```{r, echo = FALSE}
+kable(df)
+```
+
+
+# -- ggplot additional 
+
+
+## ggplot: one more thing: nz
+
+```{r echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# install.packages("maps")
+library(maps)
+nz <- map_data("nz")
+ggplot(nz, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+```
+
+## ggplot: one more thing - world
+
+```{r echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+world <- map_data("world")
+ggplot(world, aes(long, lat, group = group)) +
+  geom_polygon(fill = "white", colour = "black") +
+  coord_quickmap()
+```
+
+
+# -- Facet
+
+## Facets - finding the best
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# doesn't look great because we have so many jobs.
+ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(job ~ .)
+```
+
+## Facets - finding the best. still trying.
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# Not a good choice, neither
+ggplot(bank, aes(pdays)) + geom_histogram() + facet_grid(. ~ job)
+```
+
+## Facets - finding the best. better
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# Can we do better?
+ggplot(bank, aes(campaign)) + geom_histogram() + facet_grid(. ~ job)
+```
+
+## Facets - finding the best. try another
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+ggplot(bank, aes(duration)) + geom_histogram(aes(color = job)) +
+  facet_grid(. ~ job)
+```
+
+## Facets - finding the best. Try points
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# facet with points is good
+ggplot(bank, aes(balance, age)) + geom_point() + facet_grid(. ~ job)
+```
+
+## Facets - finding the best. Better with color
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# do better
+ggplot(bank, aes(balance, age)) + geom_point(aes(color = job)) +
+  facet_grid(. ~ job)
+```
+
+## Facets - finding the best. Try Points
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# Can we apply points between age and balance?
+ggplot(bank, aes(age, balance, color = job)) +
+  geom_point() + geom_smooth() +
+  facet_grid(. ~ job)
+```
+
+## Facets - finding the best. Try Smoothie
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# Smooth line is mixed with points
+ggplot(bank, aes(age, balance)) + geom_point(aes(color = job)) +
+  geom_smooth() +
+  facet_grid(. ~ job)
+```
+
+## Facets in full power
+
+\footnotesize
+```{r, echo = TRUE, fig.show = "hide"}
+# Levels gives more control to the layer and style.
+cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
+# The age_group variable is now a categorical factor variable containing
+# 3 levels, indicating the ranges of age.
+bank$age_group <- cut(bank$age, cutpoints)
+levels(bank$age_group)
+# Use facet_wrap to specify nrow/ncol.
+ggplot(bank, aes(age, duration)) +
+  geom_point(alpha = 1/3) + 
+  facet_wrap(job ~ age_group, nrow = 2) +
+  geom_smooth(method="lm", se=FALSE, col="steelblue") + 
+  theme_bw(base_size = 10) + 
+  labs(x = "age", y = expression("log " * Duration)) + 
+  scale_y_log10() +
+  labs(title = "Bank Clients") +
+  theme(text = element_text(size=8))
+```
+
+## Facets in full power: plot
+
+\footnotesize
+```{r, echo = FALSE, fig.height=2.5, fig.width=2.5, cache=TRUE}
+# Levels gives more control to the layer and style.
+cutpoints <- quantile(bank$age, seq(0, 1, length = 4), na.rm = TRUE)
+# The age_group variable is now a categorical factor variable
+# containing 3 levels, indicating the ranges of age.
+bank$age_group <- cut(bank$age, cutpoints)
+# Use facet_wrap to specify nrow/ncol.
+ggplot(bank, aes(age, duration)) +
+  geom_point(alpha = 1/3) + 
+  facet_wrap(job ~ age_group, nrow = 2) +
+  geom_smooth(method="lm", se=FALSE, col="steelblue") + 
+  theme_bw(base_size = 10) + 
+  labs(x = "age", y = expression("log " * Duration)) + 
+  scale_y_log10() +
+  labs(title = "Bank Clients") + 
+  theme(text = element_text(size=8))
+```
+
+# -- group
+
+## Differentiate groups - `group`
+
+```{r, echo = TRUE, fig.height=2.5, fig.width=4, cache=TRUE}
+# Use group.
+ggplot(bank) +
+  geom_point(aes(age, duration, group = contact))
+```
+
+\footnotesize
+
+theme(text = element_text(size=8))
+
+
+```{r, include = TRUE, fig.height=3, fig.width=3, cache=TRUE}
+ggplot(data = filter(bank, job == "entrepreneur"),
+       aes(age, duration)) + geom_point() +
+  geom_smooth(method = "lm") + facet_grid(. ~ job)
+```
+
+
+## Different data for different layer
+
+```{r, echo = TRUE, }
+df_ys <-
+  group_by(bank, round(age / 10)) %>%
+  summarise(y = sum(default == "yes"), total = n()) %>%
+  mutate(n = total - y) %>%
+  rename(age = `round(age/10)`) %>%
+  mutate(age = age * 10)
+
+ggplot() +
+  geom_point(data = bank %>% mutate(`Age Group` = paste0(round(age / 10) * 10, "s")), aes(age, default, color = `Age Group`)) +
+  geom_text(data = select(df_ys, age, n) %>% filter(n > 0), aes(x = age, y = 1.2, label = n)) +
+  geom_text(data = select(df_ys, age, y) %>% filter(y > 0), aes(x = age, y = 2.2, label = y))
+```
+
+-- Options
+
+ "fOptions", "fExoticOptions", 
+- Please validate option pricing code.
+    + For example, I found Asian Option `TurnbullWakemanAsianApproxOption()` in `fExoticOptions` is strangely implemented. I use a modified version.

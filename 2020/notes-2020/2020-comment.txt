@@ -7,3 +7,161 @@
         - remove kableExtra (optional)
 
     - remove some shiny/3 content
+    
+
+Research is often presented in very selective containers slideshows, journal, articles,books,or maybe even website
+
+Organize your data,code,document into folders, 
+Self-contained.
+Reproducible.
+
+\analysis
+\analysis\data
+\doc
+
+Split your data gathering code Use if…for local cache
+
+R
+Rmarkdown
+Organization
+
+The three basic stages of a typical computational empirical research project are:
+•data gathering,
+•data analysis,
+•results presentation.
+
+
++ Propose alternative strategy:
+    + Re-balance portfolio on 21st, 41st, 61st, 81st and 100th day. Repeat the strategy analysis. Re-balance means to keep the weight still equal.
+    + Hint: create functions for the plot, reduce the code-copying.
+
+
+Examples:
+
+Research is often presented in very selective containers slideshows,journal, articles,books,or maybe even website
+
+Organize your data,code,document into folders, 
+Self-contained.
+Reproducible.
+
+\analysis
+\analysis\data
+\doc
+
+Split your data gathering code Use if…for local cache
+
+R
+Rmarkdown
+Organization
+
+The three basic stages of a typical computational empirical research project are:
+•data gathering,
+•data analysis,
+•results presentation.
+
+Examples:
+
+2. COVID-19 Pictorical story.
+
+Plot block, tell a story
+
+https://www.scientificamerican.com/article/coronavirus-antibody-tests-have-a-mathematical-pitfall/
+
+
+1.  AlphaVangeter: get stock prices.
+    Save RDS
+    Test CAPM
+
+    portfolio building with 6 SPDR sector ETF.
+    ETF re-balance
+
+    S&P trading universe.
+
+    - return monitoring
+        Return
+        Monthly return
+        Individual return
+        Portfolio return
+        Weights
+
+        Standard deviation
+        Rolling standard deviation.
+
+    - Sharpe ratio
+    - 
+
+
+2. Trend-following
+
+
+3. Momentum algorithm
+
+( price[-21] - price[-252] ) / price[-252] - ( price[-1] - price[-21] ) / price[-21]
+
+measure performance by using
+month/year/week.
+
+re-balance.
+
+
+https://quantpedia.com/strategies/asset-class-momentum-rotational-system/
+Simple trading strategy
+The investment universe consists of 5 ETFs (SPY – US stocks, EFA – foreign stocks, BND – bonds, VNQ – REITs, GSG – commodities). Pick 3 ETFs with the strongest 12-month momentum into your portfolio and weight them equally. Hold for one month and then rebalance.
+Hedge for stocks during bear markets
+Partially - Tactical asset allocation strategy like the one proposed by Mebane Faber in his famous paper “A Quantitative Approach to Tactical Asset Allocation” usually contains equity-like risk assets, and the TAA strategy tries to rotate out of them during the time of stress. Therefore the proposed strategy isn’t mainly used as an add-on to a portfolio to hedge equity risk directly. Still, it is more an overlay that can be used to manage the percentual representation of equities (or “equity-like assets”) in a portfolio. The tactical asset allocation framework can decrease the overall risk of equities in a portfolio, and it can improve the risk-adjusted returns.
+Source paper
+Mebane Faber: Relative Strength Strategies for Investing
+http://papers.ssrn.com/sol3/papers.cfm?abstract_id=1585517
+- Abstract
+The purpose of this paper is to present simple quantitative methods that improve risk-adjusted returns for investing in US equity sectors and global asset class portfolios. A relative strength model is tested on the French-Fama US equity sector data back to the 1920s that results in increased absolute returns with equity-like risk. The relative strength portfolios outperform the buy and hold benchmark in approximately 70% of all years and returns are persistent across time. The addition of a trend-following parameter to dynamically hedge the portfolio decreases both volatility and drawdown. The relative strength model is then tested across a portfolio of global asset classes with supporting results.
+
+From <https://quantpedia.com/strategies/asset-class-momentum-rotational-system/> 
+
+
+
+
+4. risk parity
+
+same sharp ratio but with higher return.
+
+S.R = (R_2 - R_1) / \sigma_p
+
+S.R = (2 * R_2 - R_1 - R_1) / 2 * \sigma_p = (R_2 - R_1) / \sigma_p
+
+5. Decision tree
+
+stock picking?
+
+6. Factor
+
+Momentum
+
+
+Jegadeesh, N., & Titman, S. (1993). Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency. The Journal of Finance, 48(1), 65-91.
+
+Jegadeesh and Titman (1993) 选择了过去 J 月的股票累计收益作为排序指标，并按照标准的因子构造方式来定义动量策略： f(J, K, L)，其中， J 为信号形成期长度， K 为持有期长度，而 L 为交易滞后期长度。具体操作如下：
+
+
+
+每隔 K 月的月末，依据过去 J 月的股票累计收益排序，将股票分为 10 组；
+
+等权重买入累计收益最高的一组，同时卖空累计收益最低一组的等权组合，并持有 K 个月。
+
+K 月后重新筛选股票，构建新的组合。
+
+此外，L 则是为了保障研究结果贴近真实交易结果而加入的交易时滞， Jegadeesh and Titman (1993) 设定为 L = 0.25，即在每月末生成新的交易信号后，延迟一周执行。
+
+low volatitlity factors
+
+- Total volatility
+last 252
+
+- Beta
+
+cov(r_i, r_m) \over var(r_m)
+
+- Downside beta
+
+另一方面，Vliet and Koning (2017) 一书则创造性地将低波动和动量与价值因子三者结合，构建了一个表现非常优异的投资策略。他们的方法也很简单，首先按照波动率从低到高排序，选出波动率较低的一半股票。然后，对选出的股票，计算其动量和价值得分并排序，将两项排名加总作为总分，并据此筛选出一定数量的股票（例如，仍然是 10% 的比例）。这样构建的股票组合，比单纯的低波动组合或者动量组合，表现都要优异很多。以美国市场1929年以来的表现为例，该策略的复合收益是单纯低波动组合的 54 倍， amazing !
+
+

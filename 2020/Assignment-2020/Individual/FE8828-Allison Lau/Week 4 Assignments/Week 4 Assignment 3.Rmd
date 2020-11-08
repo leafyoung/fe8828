@@ -1,0 +1,161 @@
+---
+title: "Week 4 Assignment 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(alphavantager)
+library(ggplot2)
+library(tidyverse)
+
+# Stocks to use: Netflix, Amazon, Facebook, Electronic Arts 
+
+av_api_key("70OGL0JJKXIMSMHC")
+NFLX <- av_get("NFLX",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+AMZN <- av_get("AMZN",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+FB <- av_get("FB",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+EA <- av_get("EA",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+SPY <- av_get("SPY",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+
+if (FALSE) {
+  saveRDS(NFLX, file = "/Users/allisonlau/Library/Mobile Documents/com~apple~CloudDocs/NTU /Y4 Masters/Mini Term 2/FE8828 Programming Web Applications/NFLX.rds")
+  saveRDS(AMZN, file = "/Users/allisonlau/Library/Mobile Documents/com~apple~CloudDocs/NTU /Y4 Masters/Mini Term 2/FE8828 Programming Web Applications/AMZN.rds")
+  saveRDS(FB, file = "/Users/allisonlau/Library/Mobile Documents/com~apple~CloudDocs/NTU /Y4 Masters/Mini Term 2/FE8828 Programming Web Applications/FB.rds")
+  saveRDS(EA, file = "/Users/allisonlau/Library/Mobile Documents/com~apple~CloudDocs/NTU /Y4 Masters/Mini Term 2/FE8828 Programming Web Applications/EA.rds")
+  saveRDS(SPY, file = "/Users/allisonlau/Library/Mobile Documents/com~apple~CloudDocs/NTU /Y4 Masters/Mini Term 2/FE8828 Programming Web Applications/SPY.rds")
+}
+```
+
+```{r, include = FALSE}
+#225k investable in each stock
+n_nflx <- as.integer(floor(225000/NFLX$adjusted_close[1]))
+n_amzn <- as.integer(floor(225000/AMZN$adjusted_close[1]))
+n_fb <- as.integer(floor(225000/FB$adjusted_close[1]))
+n_ea <- as.integer(floor(225000/EA$adjusted_close[1]))
+
+n_spy <- as.integer(floor(900000/SPY$adjusted_close[1]))
+
+```
+
+With a portfolio of $1 million and a cash reserve of 10%, investing equal-weighted in Amazon, Netflix, Electronic Arts and Facebook, our portfolio will consist of `r n_amzn` shares of Amazon, `r n_nflx` shares of Netflix, `r n_ea` shares of Electronic Arts, and `r n_fb` shares of Facebook. 
+
+```{r, include=FALSE}
+value_portfolio <- c()
+return_portfolio <- c()
+
+for(i in 1:nrow(NFLX)){
+  value_portfolio[i] <- n_nflx * NFLX$adjusted_close[i] + n_amzn * AMZN$adjusted_close[i] + n_fb * FB$adjusted_close[i] + n_ea * EA$adjusted_close[i]
+}
+
+for(j in 2:nrow(NFLX)){
+  return_portfolio[1] <- NA
+  return_portfolio[j] <- (value_portfolio[j]/value_portfolio[j-1]) -1
+}
+
+value_spy <- c()
+return_spy <- c()
+
+for(i in 1:nrow(SPY)){
+  value_spy[i] <- n_spy * SPY$adjusted_close[i] 
+}
+
+for(j in 2:nrow(SPY)){
+  return_spy[1] <- NA
+  return_spy[j] <- (value_spy[j]/value_spy[j-1]) -1
+}
+
+Rp_mean <- mean(return_portfolio, na.rm=TRUE)
+sharpe_portfolio <- (Rp_mean-(0.01/250))/sd(return_portfolio, na.rm=TRUE)
+
+S_mean <- mean(return_spy, na.rm = TRUE)
+sharpe_s <- (S_mean-(0.01/250)/sd(return_spy, na.rm=TRUE))
+
+print(return_portfolio)
+
+d_return <- tibble(
+    Date = NFLX$timestamp,
+    DailyReturn = return_portfolio,
+  )
+
+#Assuming cash grows at the risk-free rate 
+
+cash <- c()
+for(k in 2:nrow(NFLX)){
+  cash[1] <- 1000000 - value_portfolio[1]
+  cash[k] <- cash[k-1] + cash[k-1] * 0.01/250
+}
+
+portfolio_percent <- c()
+cash_percent <- c()
+for(j in 1:nrow(NFLX)){
+  portfolio_percent[j] <- value_portfolio[j]/(value_portfolio[j] + cash[j])
+  cash_percent[j] <- cash[j]/(value_portfolio[j] + cash[j])
+}
+
+d_valuation <- tibble(
+  Date = NFLX$timestamp,
+  ValuationPortfolio = value_portfolio,
+  ValuationSP = value_spy,
+)
+
+r_valuation <- tibble(
+  Date = NFLX$timestamp, 
+  Portfolio = portfolio_percent,
+  Cash = cash_percent
+)
+
+relativity_portfolio <- c()
+relativity_s <- c()
+for(i in 2:nrow(NFLX)){
+  relativity_portfolio[1] <- 0
+  relativity_portfolio[i] <- (value_portfolio[i]/value_portfolio[1])-1
+  relativity_s[1] <- 0
+  relativity_s[i] <- (value_spy[i]/value_spy[1])-1
+}
+
+relative <- tibble(
+  Date = NFLX$timestamp,
+  Portfolio = relativity_portfolio,
+  SP = relativity_s
+)
+
+print(d_valuation)
+```
+
+## Daily Returns
+
+The Sharpe ratio of the portfolio is `r sharpe_portfolio`, while the Sharpe ratio of the S&P portfolio is `r sharpe_s`.
+
+The daily returns of the portfolio are as follows: 
+
+```{r, echo = FALSE}
+ggplot(d_return, aes(x=DailyReturn)) + geom_histogram(bins = 50, color="black", fill="lightblue", na.rm=TRUE)
+```
+
+## Total Valuation
+
+The daily valuation over time of the portfolio vs the S&P is as follows:
+
+```{r, echo = FALSE}
+ggplot(d_valuation, aes(x=Date)) + geom_line(aes(y=ValuationPortfolio,color = "Portfolio")) + geom_line(aes(y=ValuationSP,colour = "S&P"))
+```
+
+## Relativity Return
+
+The relative return of the held portfolio as well as the S&P portfolio is as follows:
+
+```{r, echo = FALSE}
+ggplot(relative, aes(x=Date)) + geom_line(aes(y=Portfolio,color = "Portfolio")) + geom_line(aes(y=SP,colour = "S&P"))
+```
+
+## Relative Valuation
+
+The relative valuation of the portfolio held to the remaining 10% held in cash (approximately $100,000) is as follows: 
+
+``` {r, echo = FALSE}
+
+r_valuation %>% pivot_longer(cols=Portfolio:Cash) %>% ggplot(.) + geom_area(aes(x=Date, y=value, fill=name), position='fill')
+```
+
+

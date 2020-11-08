@@ -1,0 +1,27 @@
+Yu Xi
+
+# A1 Shiny Web
+
+- Good
+
+# A2.1 Secretary
+
+- Good. You are among few that produces a chart with all the outcomes.
+
+# A2.2 Bond Schedule
+
+- Wrong understanding of Cashflow with NPV.
+  Cashflow of a bond is the coupon payout in defined frequency and final coupon+face value payout.
+  
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done
+
+# A4.3 Portfolio
+
+- Good overall but there is one thing you missed from the question.
+
+SPY shall be used in the place of GSPC.
+There is difference between index (GSPC) and tradeable (SPY).
+The tradeable for S&P500 index is SPY ETF. There are many ETF for S&P. SPY is the most popular one.

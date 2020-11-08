@@ -1,0 +1,773 @@
+---
+title: "Portfolio Investment Assignment"
+subtitle: "FE8828 AY20/21 Group Assignment"
+author: NEE, TSLA, APPL, NVDA, AMD
+Email: 
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Overview
+
+- SPDR sector ETFs: `c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY')` and `'SPY'`
+- History from 1999-11-01 to now.
+- Strategy:
+  * Equal-weighted with 1) no re-balance, 2) monthly re-balance, 3) annual re-balance
+  * Momentum strategy with 1) long top 4, 2) long top 2 and short bottom 2
+- Note:
+  + All equity position, no cash.
+  + Do not load other library, use only the listed packages here.
+  + Submit Rmd and Rda data files together in a compressed file (.zip, .7z, etc.)
+- Disclaimer: this is no an investment advise.
+
+## Download
+
+```{r}
+# Change (FALSE) to (TRUE), when you need to download data.
+# Usually you only need to run this once.
+# Change file location
+
+# 'XLC', 'XLRE' has shorter history, don't use them.
+all_tickers <- c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY','SPY')
+
+if (FALSE) {
+  av_api_key("VBA57XNBTQK090XZ")
+  
+  for (tt in all_tickers) {
+    df_xlc <- av_get(tt, av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize="full")
+    saveRDS(df_xlc, paste0("Data/",tt,".Rds"))
+    cat(paste(tt,min(df_xlc$timestamp),max(df_xlc$timestamp),"\n"))
+  }
+}
+```
+
+## Load and check
+
+```{r}
+wd <- ('E:/Dropbox/MFE/FE8828/2020/Assignment-2020/Group/GA-Xu Xinzhi/Q3/Data')
+# make sure all starts from the same time and same length.
+dd <- list()
+for (tt in all_tickers) {
+  dd[[tt]] <- readRDS(paste0(wd,"/",tt,".Rds"))
+  print(paste(tt, min(dd[[tt]]$timestamp), nrow(dd[[tt]])))
+  assert(min(dd[[tt]]$timestamp) == as.Date('1999-11-01'))
+  assign(paste0('df_',tolower(tt)), dd[[tt]], envir = .GlobalEnv)
+}
+```
+
+### Technology vs. Energy
+
+- Energy was the rock star during 90s and 00s, abruptly stopped during GFC on the journey towards $200/bbl (never there).
+- Technology was a prodigy from late 70s, stumbled in early 00s, but now a rock star.
+
+```{r}
+plot(df_xlk$timestamp, df_xlk$adjusted_close,type='l')
+points(df_xle$timestamp, df_xle$adjusted_close,col='red',type='l')
+```
+
+# Equal-weighted Strategy
+
+## Compute daily return series
+
+```{r}
+len_tickers <- length(all_tickers)
+ii <- 1
+daily_ret <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+for (ii in 1:len_tickers) {
+  daily_ret[all_tickers[ii]] <- tail(dd[[ii]]$adjusted_close / lag(dd[[ii]]$adjusted_close, 1)-1,-1)
+}
+for (ii in 1:len_tickers) {
+  daily_ret[paste0(all_tickers[ii],"_cumret")] <- cumprod(1 + daily_ret[all_tickers[ii]])
+}
+```
+
+## Performance
+
+## Calculate Strategy return
+
+Daily Re-balance
+
+```{r}
+# ====================
+#  Daily Re-balance
+# ====================
+
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w <- rep(1, len_invest) / len_invest
+#w
+
+daily_ret['EW'] <- as.matrix(daily_ret[,2:(2+len_invest-1)]) %*% w
+daily_ret['EW_cumret'] <- cumprod(daily_ret['EW'] + 1)
+daily_ret %>% {plot(.$Date,.$EW,type='l')}
+
+```
+
+No Re-balance
+
+```{r}
+# ====================
+#   No Re-balance
+# ====================
+
+# Without Re-balance, strategy return = sum (return of each ETF) / len_invest
+
+daily_ret['EW_nrb_cumret'] <- as.matrix(daily_ret[,12:(12+len_invest-1)]) %*% w
+daily_ret <- mutate(daily_ret, EW_nrb = EW_nrb_cumret/lag(EW_nrb_cumret,1)-1)
+daily_ret$EW_nrb[1] <- daily_ret$EW_nrb_cumret[1]-1
+
+daily_ret %>% {plot(.$Date,.$EW_nrb,type='l')}
+```
+
+
+Function to calculate rebalance day for monthly and yearly rebalance
+
+```{r}
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+```
+
+Monthly Re-balance
+
+```{r}
+# ====================
+#   Monthly Re-balance
+# ====================
+
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Monthly re-balance
+# every 21 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+head(rebal_days)
+
+# Note: reduce by 1 since dataframe daily_ret is starting from day2 of historical data
+rebal_days <- rebal_days-1
+
+mm <- rep(1,(rebal_days[1]))
+for(j in (2:length(rebal_days))){
+    mm <- c(mm, rep((j),21))
+}
+
+# adding a column to label every obs. with month number  
+daily_ret['mth'] <- mm
+
+# intra-month cumret -> cumret since month beginning
+daily_ret <- daily_ret %>% group_by(mth) %>%
+    mutate(XLB_cumret_mth = cumprod(XLB+1), XLE_cumret_mth = cumprod(XLE+1),
+           XLF_cumret_mth = cumprod(XLF+1), XLI_cumret_mth = cumprod(XLI+1),
+           XLK_cumret_mth = cumprod(XLK+1), XLP_cumret_mth = cumprod(XLP+1),
+           XLU_cumret_mth = cumprod(XLU+1), XLV_cumret_mth = cumprod(XLV+1),
+           XLY_cumret_mth = cumprod(XLY+1),
+           ) %>% ungroup
+
+# portfolio cumret since month beginning:
+daily_ret['cumret_in_mth'] <- as.matrix(daily_ret[,27:(27+len_invest-1)]) %*% w
+# portfolio value when entering the month
+prevmth_cumret <- cumprod(c(1.0,daily_ret$cumret_in_mth[rebal_days]))
+
+daily_ret <- daily_ret %>% group_by(mth) %>%
+    mutate(EW_mrb_cumret = cumret_in_mth * prevmth_cumret[mth]) %>% ungroup
+
+
+daily_ret <- mutate(daily_ret, EW_mrb = EW_mrb_cumret/lag(EW_mrb_cumret,1)-1)
+daily_ret$EW_mrb[1] <- daily_ret$EW_mrb_cumret[1]-1
+
+daily_ret %>% {plot(.$Date,.$EW_mrb,type='l')}
+```
+
+
+Annual Re-balance
+
+```{r}
+# ====================
+#   Annual Re-balance
+# ====================
+
+# Annual re-balance
+# every 252 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+head(rebal_days)
+
+# reduce by 1 since daily_ret starting from day2 of historical data
+rebal_days <- rebal_days-1
+
+yy <- rep(1,(rebal_days[1]))
+for(j in (2:length(rebal_days))){
+    yy <- c(yy, rep((j),252))
+}
+
+  
+daily_ret['yr'] <- yy
+
+# intra-year cumret -> cumret since year beginning
+daily_ret <- daily_ret %>% group_by(yr) %>%
+    mutate(XLB_cumret_yr = cumprod(XLB+1), XLE_cumret_yr = cumprod(XLE+1),
+           XLF_cumret_yr = cumprod(XLF+1), XLI_cumret_yr = cumprod(XLI+1),
+           XLK_cumret_yr = cumprod(XLK+1), XLP_cumret_yr = cumprod(XLP+1),
+           XLU_cumret_yr = cumprod(XLU+1), XLV_cumret_yr = cumprod(XLV+1),
+           XLY_cumret_yr = cumprod(XLY+1),
+           ) %>% ungroup
+
+# cumret since month beginning:
+daily_ret['cumret_in_yr'] <- as.matrix(daily_ret[,40:(40+len_invest-1)]) %*% w
+# portfolio's cumret when entering the month
+prevyr_cumret <- cumprod(c(1.0,daily_ret$cumret_in_yr[rebal_days]))
+
+daily_ret <- daily_ret %>% group_by(yr) %>%
+    mutate(EW_arb_cumret = cumret_in_yr * prevyr_cumret[yr]) %>% ungroup
+
+
+daily_ret <- mutate(daily_ret, EW_arb = EW_arb_cumret/lag(EW_arb_cumret,1)-1)
+daily_ret$EW_arb[1] <- daily_ret$EW_arb_cumret[1]-1
+
+daily_ret %>% {plot(.$Date,.$EW_arb,type='l')}
+```
+
+### Relative Performance between EW and SPY
+
+```{r}
+daily_ret %>% {plot(.$Date,.$EW_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+daily_ret %>% {plot(.$Date,.$EW_nrb_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+daily_ret %>% {plot(.$Date,.$EW_mrb_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+daily_ret %>% {plot(.$Date,.$EW_arb_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+
+```
+
+### Metric
+
+```{r}
+# annualized return for SPY
+cat(paste0("Annualized return for SPY: ",prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)),'\n'))
+
+# annualized return for EW
+cat(paste0("Annualized return for EW (daily rebalance): ", prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW)),'\n'))
+
+# annualized return for EW no rebalance
+cat(paste0("Annualized return for no rebalance: ", prod(daily_ret$EW_nrb + 1) ** (250 / length(daily_ret$EW_nrb)),'\n'))
+
+# annualized return for EW with monthly rebalance
+cat(paste0("Annualized return for monthly rebalance: ", prod(daily_ret$EW_mrb + 1) ** (250 / length(daily_ret$EW_mrb)),'\n'))
+
+# annualized return for EW with annual rebalance
+cat(paste0("Annualized return for yearly rebalance: ", prod(daily_ret$EW_arb + 1) ** (250 / length(daily_ret$EW_arb)),'\n'))
+
+```
+
+
+```{r}
+# simplified Sharp ratio
+cat(paste0("Simplified Sharp ratio for SPY: ",
+           prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250),'\n'))
+
+cat(paste0("Simplified Sharp ratio for EW (daily rebalance): ",
+           prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW)) / sd(daily_ret$EW) / sqrt(250),'\n'))
+
+cat(paste0("Simplified Sharp ratio for no rebalance: ",
+           prod(daily_ret$EW_nrb + 1) ** (250 / length(daily_ret$EW_nrb)) / sd(daily_ret$EW_nrb) / sqrt(250),'\n'))
+
+cat(paste0("Simplified Sharp ratio for monthly rebalance: ",
+           prod(daily_ret$EW_mrb + 1) ** (250 / length(daily_ret$EW_mrb)) / sd(daily_ret$EW_mrb) / sqrt(250),'\n'))
+
+cat(paste0("Simplified Sharp ratio for yearly rebalance: ",
+           prod(daily_ret$EW_arb + 1) ** (250 / length(daily_ret$EW_arb)) / sd(daily_ret$EW_arb) / sqrt(250),'\n'))
+
+```
+
+
+```{r}
+# Calculate the Max DD
+max_dd <- function(x){ 
+  max_cum_ret <- cummax(c(1, x))[-1]  
+  col_dd <- x / max_cum_ret -1
+  maximum_drawdown <- min(col_dd)
+  return(maximum_drawdown)
+  
+}
+
+#maximum_drawdown <- max_dd(daily_ret$EW_cumret)
+#maximum_drawdown
+cat(paste0("Max DD for daily rebalance: ", max_dd(daily_ret$EW_cumret),'\n'))
+cat(paste0("Max DD for no rebalance: ", max_dd(daily_ret$EW_nrb_cumret),'\n'))
+cat(paste0("Max DD for monthly rebalance: ", max_dd(daily_ret$EW_mrb_cumret),'\n'))
+cat(paste0("Max DD for annually rebalance: ", max_dd(daily_ret$EW_arb_cumret),'\n'))
+```
+
+
+### Analyze
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+#=========================
+# EW (daily rebalance)
+#=========================
+pnl_dailyrb <- list() 
+for (tt in invest_tickers){
+  pnl_dailyrb[[tt]] <- sum((daily_ret[paste0(tt)]*(1/9*lag(daily_ret['EW_cumret']))), na.rm = TRUE) + as.numeric(daily_ret[paste0(tt)][1,1])
+}
+rank_dailyrb <- pnl_dailyrb[order(-unlist(pnl_dailyrb))]
+cat(paste0("Ranking by contribution - Daily Rebalance: ",'\n'))
+rank_dailyrb
+#=========================
+# No Rebalance
+#=========================
+pnl_nrb <- list() 
+for (tt in invest_tickers){
+  pnl_nrb[[tt]] <- 1/9*(as.numeric(tail(daily_ret[paste0(tt,"_cumret")],1))-1)
+}
+rank_nrb <- pnl_nrb[order(-unlist(pnl_nrb))]
+cat(paste0("Ranking by contribution - No Rebalance: ",'\n'))
+rank_nrb
+#=========================
+# Monthly Rebalance
+#=========================
+pnl_mrb <- list() 
+mthend_return <- daily_ret %>% group_by(mth) %>% filter(Date == max(Date))
+daily_ret <- daily_ret %>% ungroup
+
+for (tt in invest_tickers){
+  pnl_mrb[[tt]] <- sum((mthend_return[paste0(tt,"_cumret_mth")]-1)*(1/9*prevmth_cumret))
+}
+rank_mrb <- pnl_mrb[order(-unlist(pnl_mrb))]
+cat(paste0("Ranking by contribution - Monthly Rebalance: ",'\n'))
+rank_mrb
+#=========================
+# Yearly Rebalance
+#=========================
+pnl_yrb <- list() 
+yrend_return <- daily_ret %>% group_by(yr) %>% filter(Date == max(Date))
+daily_ret <- daily_ret %>% ungroup
+
+for (tt in invest_tickers){
+  pnl_yrb[[tt]] <- sum((yrend_return[paste0(tt,"_cumret_yr")]-1)*(1/9*prevyr_cumret))
+}
+rank_yrb <- pnl_yrb[order(-unlist(pnl_yrb))]
+cat(paste0("Ranking by contribution - Yearly Rebalance: ",'\n'))
+rank_yrb
+
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+# Rank all ETFs by its contribution to PnL over the entire period.
+# no rebalance: (1/9)(cumret-1)/(total-1)
+# EW: sum(1/9 * EW_cumret(i-1)*r)
+# monthly: sum(1/9* ETF_mth_cumret * EW_cumret(-1) -1)
+
+```
+
+```{r}
+
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+#=========================
+# daily rebalance
+#=========================
+df_nval_dyrb <- tibble(port_val = c(1, daily_ret$EW_cumret))
+for (ii in c(1:length(invest_tickers))) {
+    df_nval_dyrb[paste0(invest_tickers[ii],"_val")] <- 0
+}
+
+for (i in 1:nrow(df_nval_dyrb)) {
+  if (i == 1) {
+    df_nval_dyrb$XLB_val[i] = 1/9
+    df_nval_dyrb$XLE_val[i] = 1/9
+    df_nval_dyrb$XLF_val[i] = 1/9
+    df_nval_dyrb$XLI_val[i] = 1/9
+    df_nval_dyrb$XLK_val[i] = 1/9
+    df_nval_dyrb$XLP_val[i] = 1/9
+    df_nval_dyrb$XLU_val[i] = 1/9
+    df_nval_dyrb$XLV_val[i] = 1/9
+    df_nval_dyrb$XLY_val[i] = 1/9}
+  else {
+    df_nval_dyrb$XLB_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLB[i-1]))/9
+    df_nval_dyrb$XLE_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLE[i-1]))/9
+    df_nval_dyrb$XLF_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLF[i-1]))/9
+    df_nval_dyrb$XLI_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLI[i-1]))/9
+    df_nval_dyrb$XLK_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLK[i-1]))/9
+    df_nval_dyrb$XLP_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLP[i-1]))/9
+    df_nval_dyrb$XLU_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLU[i-1]))/9
+    df_nval_dyrb$XLV_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLV[i-1]))/9
+    df_nval_dyrb$XLY_val[i] = (df_nval_dyrb$port_val[i-1] * (1+daily_ret$XLY[i-1]))/9}
+}
+
+rank_max_dd_dyrb <- tibble(type = invest_tickers,
+                    max_dd = c(max_dd(df_nval_dyrb$XLB_val), max_dd(df_nval_dyrb$XLE_val), max_dd(df_nval_dyrb$XLF_val), 
+                               max_dd(df_nval_dyrb$XLI_val), max_dd(df_nval_dyrb$XLK_val), max_dd(df_nval_dyrb$XLP_val), 
+                               max_dd(df_nval_dyrb$XLU_val), max_dd(df_nval_dyrb$XLV_val), max_dd(df_nval_dyrb$XLY_val)))
+rank_max_dd_dyrb[order(rank_max_dd_dyrb$max_dd),]
+
+#=========================
+# No Rebalance
+#=========================
+rank_max_dd_nrb <- tibble(type = invest_tickers,
+                    max_dd = c(max_dd(daily_ret$XLB_cumret), max_dd(daily_ret$XLE_cumret), max_dd(daily_ret$XLF_cumret), 
+                               max_dd(daily_ret$XLI_cumret), max_dd(daily_ret$XLK_cumret), max_dd(daily_ret$XLP_cumret), 
+                               max_dd(daily_ret$XLU_cumret), max_dd(daily_ret$XLV_cumret), max_dd(daily_ret$XLY_cumret)))
+rank_max_dd_nrb[order(rank_max_dd_nrb$max_dd),]
+
+#=========================
+# Monthly Rebalance
+#=========================
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21) -1
+
+df_nval_mrb <- tibble(port_val = c(1, daily_ret$EW_mrb_cumret[rebal_days]),
+    XLB_cumret_mth = c(1, daily_ret$XLB_cumret_mth[rebal_days]), XLE_cumret_mth = c(1, daily_ret$XLE_cumret_mth[rebal_days]),
+    XLF_cumret_mth = c(1, daily_ret$XLF_cumret_mth[rebal_days]), XLI_cumret_mth = c(1, daily_ret$XLI_cumret_mth[rebal_days]),
+    XLK_cumret_mth = c(1, daily_ret$XLK_cumret_mth[rebal_days]), XLP_cumret_mth = c(1, daily_ret$XLP_cumret_mth[rebal_days]),
+    XLU_cumret_mth = c(1, daily_ret$XLU_cumret_mth[rebal_days]), XLV_cumret_mth = c(1, daily_ret$XLV_cumret_mth[rebal_days]),
+    XLY_cumret_mth = c(1, daily_ret$XLY_cumret_mth[rebal_days]))  
+
+for (ii in c(1:length(invest_tickers))) {
+    df_nval_mrb[paste0(invest_tickers[ii],"_val")] <- 0
+}
+
+for (i in 1:nrow(df_nval_mrb)) {
+  if (i == 1) {
+    df_nval_mrb$XLB_val[i] = 1/9
+    df_nval_mrb$XLE_val[i] = 1/9
+    df_nval_mrb$XLF_val[i] = 1/9
+    df_nval_mrb$XLI_val[i] = 1/9
+    df_nval_mrb$XLK_val[i] = 1/9
+    df_nval_mrb$XLP_val[i] = 1/9
+    df_nval_mrb$XLU_val[i] = 1/9
+    df_nval_mrb$XLV_val[i] = 1/9
+    df_nval_mrb$XLY_val[i] = 1/9}
+  else {
+    df_nval_mrb$XLB_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLB_cumret_mth[i]))/9
+    df_nval_mrb$XLE_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLE_cumret_mth[i]))/9
+    df_nval_mrb$XLF_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLF_cumret_mth[i]))/9
+    df_nval_mrb$XLI_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLI_cumret_mth[i]))/9
+    df_nval_mrb$XLK_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLK_cumret_mth[i]))/9
+    df_nval_mrb$XLP_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLP_cumret_mth[i]))/9
+    df_nval_mrb$XLU_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLU_cumret_mth[i]))/9
+    df_nval_mrb$XLV_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLV_cumret_mth[i]))/9
+    df_nval_mrb$XLY_val[i] = (df_nval_mrb$port_val[i-1] * (df_nval_mrb$XLY_cumret_mth[i]))/9}
+}
+
+rank_max_dd_mrb <- tibble(type = invest_tickers,
+                    max_dd = c(max_dd(df_nval_mrb$XLB_val), max_dd(df_nval_mrb$XLE_val), max_dd(df_nval_mrb$XLF_val), 
+                               max_dd(df_nval_mrb$XLI_val), max_dd(df_nval_mrb$XLK_val), max_dd(df_nval_mrb$XLP_val), 
+                               max_dd(df_nval_mrb$XLU_val), max_dd(df_nval_mrb$XLV_val), max_dd(df_nval_mrb$XLY_val)))
+rank_max_dd_mrb[order(rank_max_dd_mrb$max_dd),]
+
+#=========================
+# Yearly Rebalance
+#=========================
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252) -1
+
+df_nval_arb <- tibble(port_val = c(1, daily_ret$EW_arb_cumret[rebal_days]),
+    XLB_cumret_yr = c(1, daily_ret$XLB_cumret_yr[rebal_days]), XLE_cumret_yr = c(1, daily_ret$XLE_cumret_yr[rebal_days]),
+    XLF_cumret_yr = c(1, daily_ret$XLF_cumret_yr[rebal_days]), XLI_cumret_yr = c(1, daily_ret$XLI_cumret_yr[rebal_days]),
+    XLK_cumret_yr = c(1, daily_ret$XLK_cumret_yr[rebal_days]), XLP_cumret_yr = c(1, daily_ret$XLP_cumret_yr[rebal_days]),
+    XLU_cumret_yr = c(1, daily_ret$XLU_cumret_yr[rebal_days]), XLV_cumret_yr = c(1, daily_ret$XLV_cumret_yr[rebal_days]),
+    XLY_cumret_yr = c(1, daily_ret$XLY_cumret_yr[rebal_days]))  
+
+for (ii in c(1:length(invest_tickers))) {
+    df_nval_arb[paste0(invest_tickers[ii],"_val")] <- 0
+}
+
+for (i in 1:nrow(df_nval_arb)) {
+  if (i == 1) {
+    df_nval_arb$XLB_val[i] = 1/9
+    df_nval_arb$XLE_val[i] = 1/9
+    df_nval_arb$XLF_val[i] = 1/9
+    df_nval_arb$XLI_val[i] = 1/9
+    df_nval_arb$XLK_val[i] = 1/9
+    df_nval_arb$XLP_val[i] = 1/9
+    df_nval_arb$XLU_val[i] = 1/9
+    df_nval_arb$XLV_val[i] = 1/9
+    df_nval_arb$XLY_val[i] = 1/9}
+  else {
+    df_nval_arb$XLB_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLB_cumret_yr[i]))/9
+    df_nval_arb$XLE_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLE_cumret_yr[i]))/9
+    df_nval_arb$XLF_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLF_cumret_yr[i]))/9
+    df_nval_arb$XLI_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLI_cumret_yr[i]))/9
+    df_nval_arb$XLK_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLK_cumret_yr[i]))/9
+    df_nval_arb$XLP_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLP_cumret_yr[i]))/9
+    df_nval_arb$XLU_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLU_cumret_yr[i]))/9
+    df_nval_arb$XLV_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLV_cumret_yr[i]))/9
+    df_nval_arb$XLY_val[i] = (df_nval_arb$port_val[i-1] * (df_nval_arb$XLY_cumret_yr[i]))/9}
+}
+
+rank_max_dd_arb <- tibble(type = invest_tickers,
+                    max_dd = c(max_dd(df_nval_arb$XLB_val), max_dd(df_nval_arb$XLE_val), max_dd(df_nval_arb$XLF_val), 
+                               max_dd(df_nval_arb$XLI_val), max_dd(df_nval_arb$XLK_val), max_dd(df_nval_arb$XLP_val), 
+                               max_dd(df_nval_arb$XLU_val), max_dd(df_nval_arb$XLV_val), max_dd(df_nval_arb$XLY_val)))
+rank_max_dd_arb[order(rank_max_dd_arb$max_dd),]
+```
+
+---
+
+# Momentum Strategy
+
+- Empirically, there appears to be certain “inertia” in stock returns known as the
+momentum effect, whereby future returns are positively correlated with past returns.
+
+- We use a price momentum here. At any point, we rank the ETFs according to following.
+  + At row `i`, momentum is `( price[i-21] - price[i-252] ) / price[i-252] - ( price[i-1] - price[i-21] ) / price[i-21]`
+
+- Set to re-balance every month
+  - Long the top 4 stocks with equal weights, or
+  - Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+## Long Top 4 & Long Top 2 and Short Bottom 2
+
+```{r}
+
+#=============================================================================
+# We combined the codes of Long Top 4 and Long top 2 & Short bottom 2 because they
+# are calculated in the same loop
+#=============================================================================
+daily_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_tickers) {
+  if (all_tickers[ii] == 'SPY') { next }
+  daily_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+#daily_price
+
+rebal_days <- calc_rebal_days(nrow(daily_price), 21)
+#rebal_days
+
+end <- length(daily_ret$Date)
+
+# intra-month cum return. i.e. cum return since month beginning
+daily_ret['cumret_in_mth_tp4'] <- rep(1,end)
+daily_ret['cumret_in_mth_tp2bm2'] <- rep(1,end)
+
+# exclude lead-period (first month) for data to accumulate
+day1 <- 25
+mth1 <- 2
+mth_count <- 1
+
+# initialize variables
+# ----
+# cum return in previous month
+prevmth_cumret_4w <- rep(1.0, (mth1))
+prevmth_cumret_2t2b <- rep(1.0, (mth1))
+
+# cum return in previous month
+pnl_mrb_t4 <- list()
+for (tt in invest_tickers){
+  pnl_mrb_t4[[tt]] <- 0
+}
+
+pnl_mrb_t2b2 <- list()
+for (tt in invest_tickers){
+  pnl_mrb_t2b2[[tt]] <- 0
+}
+
+df_pos <- tibble(day = rebal_days, mth = c(1:length(rebal_days)))
+df_pos2 <- tibble(day = rebal_days, mth = c(1:length(rebal_days)))
+for (ii in c(1:len_invest)) {
+    df_pos[invest_tickers[ii]] <- 0
+    df_pos2[invest_tickers[ii]] <- 0
+}
+
+# Assume monthly re-balance
+for (r in rebal_days) {
+  #print(r)
+  
+  if(r < tail(rebal_days,1) & r >= day1){
+    # Generate momentum
+    # print(mm)
+    mm <- numeric(len_invest)
+    for (ii in 1:len_invest) {
+       tt <- invest_tickers[ii]
+       
+       
+       # Use 1 if look-back period is not enough.
+       r_prev_d <- if_else(r > 1, r - 1, 1)
+       r_prev_m <- if_else(r > 21, r - 21, 1)
+       r_prev_y <- if_else(r > 252, r - 252, 1)
+       
+       x <- (daily_price[r_prev_m,tt] - daily_price[r_prev_y,tt] ) / daily_price[r_prev_y,tt] - ( daily_price[r_prev_d,tt] - daily_price[r_prev_m,tt] ) / daily_price[r_prev_m,tt]
+       mm[ii] <- as.numeric(x)
+    }
+      
+    # vector of 9 representing position of each ETF in this month, i.e. either 0 or 1/4
+      top4w <- rep(0,len_invest)
+      top4w[match(tail(sort(mm),4),mm)] <- 1/4
+    # vector of 9 representing position of each ETF in this month, i.e. 0 or 1/4 or -1/4
+      tp2bm2w <- rep(0,len_invest)
+      tp2bm2w[match(tail(sort(mm),2),mm)] <- 1/4
+      tp2bm2w[match(head(sort(mm),2),mm)] <- -1/4
+      
+      daily_ret['cumret_in_mth_tp4'][r:(r+21-1),] <- as.matrix(daily_ret[r:(r+21-1),27:(27+len_invest-1)]) %*% top4w
+      
+      # Return = 1/4((R1-1)+1) + 1/4((R2-1)+1) + 1/4((1-R3) + 1) + 1/4((1-R4) + 1)
+      #        = 1/4*R1 +1/4*R2 - 1/4*R3 +1/4*2 -1/4*R4 +1/4*2
+      daily_ret['cumret_in_mth_tp2bm2'][r:(r+21-1),] <- (as.matrix(daily_ret[r:(r+21-1),27:(27+len_invest-1)]) %*% tp2bm2w)+1/4*(2+2)
+      
+      # vector to record the increase from month beginning (taken as 1) to month end
+      prevmth_cumret_4w <- c(prevmth_cumret_4w,daily_ret$cumret_in_mth_tp4[(r+21-1)])
+      prevmth_cumret_2t2b <- c(prevmth_cumret_2t2b,daily_ret$cumret_in_mth_tp2bm2[(r+21-1)])
+      
+      df_pos[mth_count,3:11] <- as.list(top4w)
+      df_pos2[mth_count,3:11] <- as.list(tp2bm2w)
+      
+      mth_count <- mth_count+1
+      # Computing contribution by each ETF involved in this month
+      for (k in c(1:len_invest)){
+        if(top4w[k] != 0){
+          pnl_mrb_t4[[invest_tickers[k]]] <- pnl_mrb_t4[[invest_tickers[k]]] + as.numeric(prod(prevmth_cumret_4w[1:mth_count])*(daily_ret[paste0(invest_tickers[k],"_cumret_mth")][(r+21-1),1]-1)*1/4)
+        }
+        
+        if(tp2bm2w[k] > 0){
+          pnl_mrb_t2b2[[invest_tickers[k]]] <- pnl_mrb_t2b2[[invest_tickers[k]]] + as.numeric(prod(prevmth_cumret_2t2b[1:mth_count])*(daily_ret[paste0(invest_tickers[k],"_cumret_mth")][(r+21-1),1]-1)*1/4)
+        }else if (tp2bm2w[k] < 0){
+          pnl_mrb_t2b2[[invest_tickers[k]]] <- pnl_mrb_t2b2[[invest_tickers[k]]] + as.numeric(prod(prevmth_cumret_2t2b[1:mth_count])*(1- daily_ret[paste0(invest_tickers[k],"_cumret_mth")][(r+21-1),1])*1/4)
+        }
+      }
+  }
+}
+
+# cum return at each month end
+prev_cumret <- cumprod(prevmth_cumret_4w)
+prev_cumret2 <- cumprod(prevmth_cumret_2t2b)
+
+# intra-month cum return * cum return by the end of prev month = cum return since day1
+daily_ret <- daily_ret %>% group_by(mth) %>%
+    mutate(EW_mrb_cumret_tp4 = cumret_in_mth_tp4 * prev_cumret[mth])%>%
+    mutate(EW_mrb_cumret_tp2bm2 = cumret_in_mth_tp2bm2 * prev_cumret2[mth]) %>% ungroup
+
+
+daily_ret <- mutate(daily_ret, EW_mrb_tp4 = EW_mrb_cumret_tp4/lag(EW_mrb_cumret_tp4,1)-1)
+daily_ret <- mutate(daily_ret, EW_mrb_tp2bm2 = EW_mrb_cumret_tp2bm2/lag(EW_mrb_cumret_tp2bm2,1)-1)
+daily_ret %>% {plot(.$Date,.$EW_mrb_tp4,type='l')}
+daily_ret %>% {plot(.$Date,.$EW_mrb_tp2bm2,type='l')}
+
+```
+
+
+### Relative Performance between EW and SPY
+
+```{r}
+daily_ret %>% {plot(.$Date[day1:end],.$EW_mrb_cumret_tp4[day1:end],type='l',col='red'); points(.$Date[day1:end],.$SPY_cumret[day1:end],type='l');}
+
+
+daily_ret %>% {plot(.$Date[day1:end],.$SPY_cumret[day1:end],type='l'); points(.$Date[day1:end],.$EW_mrb_cumret_tp2bm2[day1:end],type='l',col='red');}
+```
+
+### Metric
+```{r}
+# Annualized return
+cat(paste0("Annualized return for Long-Top4 strategy: ", 
+           prod(daily_ret$EW_mrb_tp4[day1:end] + 1) ** (250 / length(day1:end)),'\n'))
+cat(paste0("Annualized return for Long-Top2-Short-Bottom2 strategy: ", 
+           prod(daily_ret$EW_mrb_tp2bm2[day1:end] + 1) ** (250 / length(day1:end)),'\n'))
+```
+
+
+
+```{r}
+# simplified Sharp ratio
+cat(paste0("Simplified Sharp ratio for Long Top4: ",
+           prod(daily_ret$EW_mrb_tp4[day1:end]+ 1) ** (250 / length(daily_ret$EW_mrb_tp4[day1:end])) / sd(daily_ret$EW_mrb_tp4[day1:end]) / sqrt(250),'\n'))
+
+cat(paste0("Simplified Sharp ratio for Long Top2 Short Bottom2: ",
+           prod(daily_ret$EW_mrb_tp2bm2[day1:end] + 1) ** (250 / length(daily_ret$EW_mrb_tp2bm2[day1:end])) / sd(daily_ret$EW_mrb_tp2bm2[day1:end]) / sqrt(250),'\n'))
+
+```
+
+### Analyze
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+cat(paste0("Ranking by contribution - Long Top 4: ",'\n'))
+pnl_mrb_t4[order(-unlist(pnl_mrb_t4))]
+cat(paste0("Ranking by contribution - Long Top 2 Short Bottom 2: ",'\n'))
+pnl_mrb_t2b2[order(-unlist(pnl_mrb_t2b2))]
+
+```
+
+
+```{r}
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+# long top 4
+df_nval_mm_tp4 <- tibble(port_val = c(1, daily_ret$EW_mrb_cumret_tp4[rebal_days-1]),
+                      XLB_cumret_mth = c(1, daily_ret$XLB_cumret_mth[rebal_days-1]), XLE_cumret_mth = c(1, daily_ret$XLE_cumret_mth[rebal_days-1]),
+                      XLF_cumret_mth = c(1, daily_ret$XLF_cumret_mth[rebal_days-1]), XLI_cumret_mth = c(1, daily_ret$XLI_cumret_mth[rebal_days-1]),
+                      XLK_cumret_mth = c(1, daily_ret$XLK_cumret_mth[rebal_days-1]), XLP_cumret_mth = c(1, daily_ret$XLP_cumret_mth[rebal_days-1]),
+                      XLU_cumret_mth = c(1, daily_ret$XLU_cumret_mth[rebal_days-1]), XLV_cumret_mth = c(1, daily_ret$XLV_cumret_mth[rebal_days-1]),
+                      XLY_cumret_mth = c(1, daily_ret$XLY_cumret_mth[rebal_days-1]),
+                     XLB_val = rep(0, 252), XLE_val = rep(0, 252), XLF_val = rep(0, 252), XLI_val = rep(0, 252), XLK_val = rep(0, 252), XLP_val = rep(0, 252), 
+                     XLU_val = rep(0, 252), XLV_val = rep(0, 252), XLY_val = rep(0, 252)) 
+
+for (ii in 1:len_invest) {
+  for (jj in 2:252) {
+    if (df_pos[jj-1, ii+2] == 0.25){
+        df_nval_mm_tp4[jj, ii+10] = df_nval_mm_tp4$port_val[jj-1] * df_nval_mm_tp4[jj, ii+1]/4
+    }
+    else { #if (df_pos[jj-1, ii+2] == 0){
+        df_nval_mm_tp4[jj, ii+10] = df_nval_mm_tp4[jj-1, ii+10]
+    }
+  }
+}
+
+rank_max_dd_mm_tp4 <- tibble(type = invest_tickers,
+   max_dd = c(max_dd(tail(df_nval_mm_tp4$XLB_val,-min(which(df_nval_mm_tp4$XLB_val!=0))+1)), 
+              max_dd(tail(df_nval_mm_tp4$XLE_val,-min(which(df_nval_mm_tp4$XLE_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLF_val,-min(which(df_nval_mm_tp4$XLF_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLI_val,-min(which(df_nval_mm_tp4$XLI_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLK_val,-min(which(df_nval_mm_tp4$XLK_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLP_val,-min(which(df_nval_mm_tp4$XLP_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLU_val,-min(which(df_nval_mm_tp4$XLU_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLV_val,-min(which(df_nval_mm_tp4$XLV_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp4$XLY_val,-min(which(df_nval_mm_tp4$XLY_val!=0))+1))
+              ))
+
+rank_max_dd_mm_tp4[order(rank_max_dd_mm_tp4$max_dd),]
+
+#long top 2 and short bottom 2
+df_nval_mm_tp2bm2 <- tibble(port_val = c(1, daily_ret$EW_mrb_cumret_tp2bm2[rebal_days-1]),
+                      XLB_cumret_mth = c(1, daily_ret$XLB_cumret_mth[rebal_days-1]), XLE_cumret_mth = c(1, daily_ret$XLE_cumret_mth[rebal_days-1]),
+                      XLF_cumret_mth = c(1, daily_ret$XLF_cumret_mth[rebal_days-1]), XLI_cumret_mth = c(1, daily_ret$XLI_cumret_mth[rebal_days-1]),
+                      XLK_cumret_mth = c(1, daily_ret$XLK_cumret_mth[rebal_days-1]), XLP_cumret_mth = c(1, daily_ret$XLP_cumret_mth[rebal_days-1]),
+                      XLU_cumret_mth = c(1, daily_ret$XLU_cumret_mth[rebal_days-1]), XLV_cumret_mth = c(1, daily_ret$XLV_cumret_mth[rebal_days-1]),
+                      XLY_cumret_mth = c(1, daily_ret$XLY_cumret_mth[rebal_days-1]),
+                     XLB_val = rep(0, 252), XLE_val = rep(0, 252), XLF_val = rep(0, 252), XLI_val = rep(0, 252), XLK_val = rep(0, 252), XLP_val = rep(0, 252), 
+                     XLU_val = rep(0, 252), XLV_val = rep(0, 252), XLY_val = rep(0, 252)) 
+
+for (ii in 1:len_invest) {
+  for (jj in 2:252) {
+    if (df_pos[jj-1, ii+2] == 0.25){
+        df_nval_mm_tp2bm2[jj, ii+10] = df_nval_mm_tp2bm2$port_val[jj-1] * df_nval_mm_tp2bm2[jj, ii+1]/4
+    }
+    else if (df_pos[jj-1, ii+2] == 0){
+        df_nval_mm_tp2bm2[jj, ii+10] = df_nval_mm_tp2bm2[jj-1, ii+10]
+    }
+    else if (df_pos[jj-1, ii+2] == -0.25){
+        df_nval_mm_tp2bm2[jj, ii+10] = df_nval_mm_tp2bm2$port_val[jj-1] * (2 - df_nval_mm_tp2bm2[jj, ii+1])/4
+    }
+  }
+}
+
+rank_max_dd_mm_tp2bm2 <- tibble(type = invest_tickers,
+   max_dd = c(max_dd(tail(df_nval_mm_tp2bm2$XLB_val,-min(which(df_nval_mm_tp2bm2$XLB_val!=0))+1)), 
+              max_dd(tail(df_nval_mm_tp2bm2$XLE_val,-min(which(df_nval_mm_tp2bm2$XLE_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLF_val,-min(which(df_nval_mm_tp2bm2$XLF_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLI_val,-min(which(df_nval_mm_tp2bm2$XLI_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLK_val,-min(which(df_nval_mm_tp2bm2$XLK_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLP_val,-min(which(df_nval_mm_tp2bm2$XLP_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLU_val,-min(which(df_nval_mm_tp2bm2$XLU_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLV_val,-min(which(df_nval_mm_tp2bm2$XLV_val!=0))+1)),
+              max_dd(tail(df_nval_mm_tp2bm2$XLY_val,-min(which(df_nval_mm_tp2bm2$XLY_val!=0))+1))
+              ))
+
+rank_max_dd_mm_tp2bm2[order(rank_max_dd_mm_tp2bm2$max_dd),]
+
+```

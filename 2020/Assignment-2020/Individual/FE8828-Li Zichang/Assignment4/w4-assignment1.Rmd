@@ -1,0 +1,70 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+library(readr)
+bank <- read_delim("E:/NTU/FE8828 Programming web application/FE8828-Li Zichang/Assignment4/bank.csv", 
+    ";", escape_double = FALSE, trim_ws = TRUE)
+```
+
+
+#1 The line of age and duration is relatively stable, slightly increasing in older people
+```{r}
+colnames(bank)
+ggplot(bank,aes(age, duration)) + 
+  geom_point() + geom_smooth()  
+
+```
+
+#2 The entrepreneur has the highest default rate
+```{r}
+ggplot(bank) +
+  geom_bar(mapping = aes(x = job,fill = default), position = "fill") +
+  coord_flip() 
+
+```
+
+
+#3 management", "admin.", "technician" have similar age distributions.
+```{r}
+bank %>%
+  filter(job %in% c("management", "admin.", "technician", "entrepreneur")) %>%
+  ggplot(aes(age, fill = job, alpha = 0.01)) +
+  geom_density() 
+
+```
+
+#4 Telemarketing prefer the married people, but the change pattern are similar in three marital groups.   
+```{r}
+ggplot(bank, aes(campaign, color = marital)) +
+  geom_density() +
+  xlim(0,10)
+
+```
+
+#5 For the young people, most are contacted by cellular, but for the elder people, they tend to be contacted by telephone. The "unknown" way also account around 25% for people in 30 to 60 ages. 
+```{r}
+
+ggplot(bank) +
+  geom_bar(aes(age, fill = contact), position = "fill")
+
+```
+
+#6 The mode for different education levels is very similar.
+```{r}
+ggplot(bank,aes(x = balance, color = education)) +
+  geom_freqpoly(bindwidth = 30) +
+  xlim(-1000, 10000)
+
+```
+
+
+

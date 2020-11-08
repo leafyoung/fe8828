@@ -1,0 +1,56 @@
+---
+title: "Assignment 2-1"
+Author: "MFE - Fan Wenqing"
+output: html_document
+---
+
+#Q1: Secretary Problem
+```{r}
+make_choice <- function(N, n){
+  count = 0
+  for(i in 1:1000){
+    seq_secre <- sample(1:N, N, replace = FALSE)
+    input_list <- list()
+    input_list$eval_list <- seq_secre[1:n]
+    input_list$sele_list <- seq_secre[(n+1):N]
+  
+    eval_max <- max(input_list$eval_list)
+    #print(eval_max)
+  
+    for(i in 1:(N-n)){
+       if(input_list$sele_list[i] > eval_max){
+          x <- input_list$sele_list[i]
+      #cat(paste0("choice:", x,"\n"))
+          i = i + 1
+          
+       if(x == N){
+          count = count + 1
+       }
+       break
+       }else{break}
+      
+    }
+  
+  }
+  prof_N = count/1000
+  return(prof_N)
+}
+
+
+
+find_optimal <- function(N){
+  prob <- c()
+  for(i in 1:(N/2)){
+    prob[i] <- make_choice(N, i)
+    i = i + 1
+  }
+  return(which.max(prob))
+}
+
+
+find_optimal(3)
+find_optimal(10)
+find_optimal(100)
+
+```
+

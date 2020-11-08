@@ -1,0 +1,142 @@
+---
+title: "Assignment 3-1"
+author: "Fan Wenqing"
+output: html_document
+---
+
+```{r} 
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Finding #1
+```{r }
+#find out the age range of this sample group
+cat(paste0("The data set contains information of a group between ",min(bank$age)," - ", max(bank$age), " years old."))
+
+```
+
+
+# Finding #2
+```{r}
+group_by(bank, marital) %>%
+  summarise('balance mean' = mean(balance))
+```
+
+The mean of balance from divorced group is lower than that from married and single group.
+
+
+# Finding #3
+```{r}
+ ggplot(data = bank) +
+  geom_point(mapping = aes(x = age, y = balance)) +
+  geom_line(aes(x = age, y = balance)) +
+  geom_smooth(aes(x = age, y = balance)) +
+  facet_grid( ~ marital) + 
+  theme(text = element_text(size=8))
+
+#remove the extreme points larger than 40000
+bank %>%
+  filter(balance < 40000) %>%
+  ggplot() +
+  geom_point(mapping = aes(x = age, y = balance)) +
+  geom_line(aes(x = age, y = balance)) +
+  geom_smooth(aes(x = age, y = balance)) +
+  facet_grid( ~ marital) + 
+  theme(text = element_text(size=8))
+```
+
+After removing the marital impact, people's balance shows an upward with their increasing age as a whole.
+
+
+# Finding #4
+```{r}
+df1 <-bank %>% 
+  group_by(age) %>%
+  arrange(age, job, education) %>%
+  mutate(balance_median = median(balance)) %>%
+  filter(balance_median < 3000) %>%
+  select(age, education, balance_median) %>%
+  distinct()
+
+ggplot(df1, mapping = aes(x = age, y = balance_median, color = education)) +
+  geom_point() +
+  geom_smooth()
+
+```
+
+Before age reaches 70, the balance level of people with different education backgrounds could go up when their age increases. Before 50, their balance might increase at the approximately same rate dispite their different educational levels.
+
+
+# Finding #5
+```{r}
+d1 <- bank %>% group_by(age) %>%
+  summarize(`single` = sum(marital == "single"))
+d2 <- bank %>% group_by(age) %>%
+  summarize(`married` = sum(marital == "married"))
+d3 <- bank %>% group_by(age) %>%
+  summarize(`divorced` = sum(marital == "divorced"))           
+
+
+df <- bank %>% distinct(age) %>% arrange(age)
+df <- left_join(df, d1, by = "age")
+df <- left_join(df, d2, by = "age")
+df <- left_join(df, d3, by = "age")
+df <- mutate(df, total = `single` + `married` + `divorced`)
+
+
+ggplot(df, aes(x = age), xlab = "age")+
+  geom_line(aes(y = single, color = "Single")) +
+  geom_line(aes(y = married, color = "Married")) +
+  geom_line(aes(y = divorced, color = "Divorced")) +
+  scale_colour_manual("", 
+  values = c("Single"="red","Married"="cyan", 
+                                "Divorced"="blue")) +
+  scale_y_continuous("Count") 
+ 
+```
+
+The number of married people is larger than that of other two groups. Moerover, the number of married people increased sharply at around 30, and we might guess people at this time point might decide to get married. 
+
+# Finding #6
+```{r}
+d3 <- bank %>%
+  group_by(age) %>%
+  filter(min_rank(balance) == 1) %>% 
+  arrange(age, balance)
+
+d4 <- bank %>%
+  group_by(age) %>%
+  filter(min_rank(desc(balance)) == 1) %>% 
+  arrange(age, balance)
+
+ggplot(d3, aes(x = age, y = balance)) +
+  geom_point() +
+  geom_line()+
+  geom_smooth()
+
+ggplot(d4, aes(x = age, y = balance)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth()
+```
+
+When people are very young or senior, their minimum balance could be at the same level. But it is likely to get the maximum balance when they are middle-aged.
+
+
+# Finding #7
+```{r}
+
+group_by(bank, job, duration) %>% 
+  summarise(nn = n()) %>%
+  filter(duration < 2000)  %>% 
+  ggplot(.) + geom_point(aes(duration,job, size = nn)) +
+  scale_y_discrete(limit = rev(levels(factor(bank$job))))
+```
+
+After removing some extreme points (duration >= 2000), we could see the contact duration with admin, blue-collar, management, services are mainly between 0 to 500 seconds 
+

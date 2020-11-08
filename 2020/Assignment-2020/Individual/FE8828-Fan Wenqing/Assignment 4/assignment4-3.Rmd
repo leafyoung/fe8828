@@ -1,0 +1,160 @@
+---
+title: "Assignment 4-3"
+author: "Fan Wenqing"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", 
+                      collapse = TRUE, cache = TRUE)
+
+spy <- read_csv("/Users/fanwenqing/Desktop/R/FE8828-Fan Wenqing/assignment4/stock/SPY.csv",
+                col_types = cols(Date = col_date(format = "%m/%d/%Y")))[1:100,]
+
+apple <- read_csv("/Users/fanwenqing/Desktop/R/FE8828-Fan Wenqing/assignment4/stock/apple.csv",
+                col_types = cols(Date = col_date(format = "%m/%d/%Y")))[1:100,]
+
+intel <- read_csv("/Users/fanwenqing/Desktop/R/FE8828-Fan Wenqing/assignment4/stock/intel.csv",
+                col_types = cols(Date = col_date(format = "%m/%d/%Y")))[1:100,]
+
+ebay <- read_csv("/Users/fanwenqing/Desktop/R/FE8828-Fan Wenqing/assignment4/stock/ebay.csv",
+                col_types = cols(Date = col_date(format = "%m/%d/%Y")))[1:100,]
+
+tesla <- read_csv("/Users/fanwenqing/Desktop/R/FE8828-Fan Wenqing/assignment4/stock/tesla.csv",
+                col_types = cols(Date = col_date(format = "%m/%d/%Y")))[1:100,]
+```
+
+
+```{r}
+close_price <- bind_cols(
+  rev(spy$Date),
+  rev(spy$`Close/Last`),
+  rev(as.numeric(substr(apple$`Close/Last`, 2, 7))),
+  rev(as.numeric(substr(intel$`Close/Last`, 2, 6))),
+  rev(as.numeric(substr(tesla$`Close/Last`, 2, 7))),
+  rev(as.numeric(substr(ebay$`Close/Last`, 2, 6))))
+
+cat(paste0("close price:", "\n"))
+close_price <- close_price %>% 
+  rename(date = ...1) %>%
+  rename(spy = ...2) %>%
+  rename(apple = ...3) %>%
+  rename(intel = ...4) %>%
+  rename(tesla = ...5) %>%
+  rename(ebay = ...6) 
+close_price
+```
+
+
+```{r}
+#Decide the allocation n(i) per stock
+n.apple = (0.9*(10^8)/4) %/% close_price$apple[1]
+n.intel = (0.9*(10^8)/4) %/% close_price$intel[1]
+n.ebay = (0.9*(10^8)/4) %/% close_price$ebay[1]
+n.tesla = (0.9*(10^8)/4) %/% close_price$tesla[1]
+
+
+#Calculate daily valuation of the portfolio
+#Calculate return of the portfolio
+close_price <- close_price %>%
+  mutate(stock.value = n.apple*apple
+         + n.intel*intel + n.ebay*ebay + n.tesla*tesla) %>%
+  mutate(cash = 10^8 - stock.value)
+
+for(i in 2:100){
+  close_price$cash[i] = 
+    close_price$cash[i-1] * ((1 + 0.01/250)^(i/365))
+}
+
+close_price <- close_price %>%
+  mutate(value = cash + stock.value) %>%
+  mutate(Rp = value/lag(value) - 1)
+
+  
+# sharpe ratio
+sharpe = (mean(close_price$Rp, na.rm = TRUE)-
+            (0.01/250))/sd(close_price$Rp, na.rm = TRUE)
+
+cat(paste0("Sharpe Ratio = ", sharpe, "\n"))
+```
+
+
+
+##Plot a histogram of daily return.
+```{r}
+close_price %>%
+  ggplot(aes(x = date, y = Rp)) +
+  geom_line() 
+```
+
+
+
+##Plot total valuation for your investment portfolio and S&P.
+```{r}
+n.spy = (0.9*(10^8)) %/% close_price$spy[1]
+close_price <- close_price %>%
+  mutate(spy.0 = n.spy*spy) %>%
+  mutate(spy.cash = 10^8 - spy.0)
+
+for(i in 2:100){
+  close_price$spy.cash[i] = 
+    close_price$spy.cash[i-1] * ((1 + 0.01/250)^(i/365))
+}
+
+close_price <- close_price %>%
+  mutate(spy.value = cash + spy.0) %>%
+  mutate(spy.rp = spy.value/lag(spy.value) - 1)
+
+close_price %>%
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = "Portfolio")) +
+  geom_line(aes(x = date, y = spy.value, color = "SPY")) +
+  scale_colour_manual("", 
+                      values = c("SPY"="red",
+                                 "Portfolio"="blue"))+
+  labs(title = "Total Valuation For Investment Portfolio and S&P")
+
+```
+
+
+
+##Plot relativity return for your investment portfolio and S&P.
+```{r}
+close_price <- close_price %>%
+  mutate(relativereturn.p = value/value[1] -1) %>%
+  mutate(relativereturn.s = spy.value/spy.value[1] -1)
+
+close_price %>%
+  ggplot() +
+  geom_line(aes(x = date, y = relativereturn.p, 
+                color = "Portfolio")) +
+  geom_line(aes(x = date, y = relativereturn.s, 
+                color = "SPY")) +
+  scale_colour_manual("", 
+                      values = c("SPY"="red",
+                                 "Portfolio"="blue"))+
+  labs(title = 
+  "Relativity Return For Investment Portfolio and S&P")
+
+```
+
+
+
+##Plot relative valuation（at day 100) for the different allocation (stocks and cash)
+```{r}
+tibble(date = close_price$date,
+       apple = close_price$apple * n.apple, 
+       ebay = close_price$ebay * n.ebay,
+       intel = close_price$intel * n.intel,
+       tesla = close_price$tesla * n.tesla,
+       cash = close_price$cash) %>% 
+  pivot_longer(cols = apple:cash) %>%
+  ggplot(.) + 
+  geom_area(aes(x = date, y = value, fill = name), 
+            position = 'fill')
+```

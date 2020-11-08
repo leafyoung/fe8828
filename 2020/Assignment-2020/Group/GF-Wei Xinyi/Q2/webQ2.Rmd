@@ -1,0 +1,150 @@
+---
+title: "WebQ2"
+author: "Wei Xinyi"
+date: "2020年10月25日"
+output: html_document
+---
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+
+library(conflicted) 
+library(tidyverse)
+library(fOptions) 
+```
+
+
+#### Preparation
+```{r}
+suppressMessages({ 
+  conflict_prefer("filter", "dplyr")
+  conflict_prefer("lag", "dplyr") 
+  })
+
+## sss: generates 1000*20 S
+sss<- array(rep(NA, 20000),c(1000, 20))
+for (i in 1:1000) {
+  S <- 100
+  K <- 100
+  sigma <- 0.3
+  drift <- 0 # drift = r - q
+  timestep <- 1 / 250
+  days <- 20 / 250
+  N <- days / timestep
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  # ss is the simulated price movement for N days
+  ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+  sss[i, ]<- ss
+}
+
+## generate_data: generates some data for every 20 days
+generate_data<- function(ss, sigma){
+  days<- 20
+  df <- data.frame(S = ss, days = 1:days) 
+  opt <- rowwise(df) %>% mutate(
+    price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)@price, 
+    delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma), 
+    gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma),
+    theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma),
+    vega = GBSGreeks("Vega", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma))
+  
+  option_pnl<- rep(NA, 20)
+  approx_pnl<- rep(NA, 20)
+  diff_pnl<- rep(NA, 20)
+  GammaPnL<- rep(NA, 20)
+  ThetaPnL<- rep(NA, 20)
+  DeltaPnL<- rep(NA, 20)
+                   
+  for (i in 1:19) {
+    option_pnl[i] <- (opt$price[20 - i] - opt$price[20 - i + 1])
+    approx_pnl[i] <- opt$delta[20 - i + 1] * (opt$S[20 - i] - opt$S[20 - i + 1]) + 0.5 * opt$gamma[20 - i + 1] * (opt$S[20 - i] - opt$S[20 - i + 1]) ** 2 + opt$vega[20 - i + 1] * 0 + opt$theta[20 - i + 1] * 1/250 
+    diff_pnl[i]<- option_pnl[i] - approx_pnl[i] ## calculate everday difference
+    GammaPnL[i]<- 0.5 * opt$gamma[20 - i + 1] * (opt$S[20 - i] - opt$S[20 - i + 1]) ** 2
+    ThetaPnL[i]<- opt$theta[20 - i + 1] * 1/250 
+    DeltaPnL[i]<- opt$delta[20 - i + 1] * (opt$S[20 - i] - opt$S[20 - i + 1])
+  }
+
+  Output<- list(diff_pnl[1:19], opt$price[20], opt$S[1], sum(GammaPnL[1:19]), sum(ThetaPnL[1:19]), sum(DeltaPnL[1:19])) 
+  return(Output)
+}
+
+## gnerate for 1000 times
+diff_pnl_1000<- array(rep(NA, 19000), c(1000, 19))
+
+Sum_GammaPnL<- rep(NA, 1000)
+Sum_ThetaPnL<- rep(NA, 1000)
+for (i in 1:1000) {
+  diff_pnl_1000[i, ]<- generate_data(ss = sss[i, ], 0.3)[[1]]
+  Sum_GammaPnL[i]<- generate_data(ss = sss[i, ], 0.3)[[4]][[1]]
+  Sum_ThetaPnL[i]<- generate_data(ss = sss[i, ], 0.3)[[5]][[1]]
+}
+```
+
+#### 2.1
+```{r}
+data1<- as.vector(diff_pnl_1000) ## 20 diff_pnl each group for 1000 times(20000 numbers)
+plot(data1)
+mean(data1,na.rm = T)
+sd(data1, na.rm = T)
+
+## Almost close to zero
+```
+
+#### 2.2
+```{r}
+data2<- data.frame(Sum_GammaPnL, Sum_ThetaPnL)
+data3<- data2%>%
+  mutate(Sum = Sum_GammaPnL + Sum_ThetaPnL) ## One Sum each group for 1000 times
+plot(data3$Sum)
+mean(data3$Sum, na.rm = T)
+sd(data3$Sum, na.rm = T)
+
+## Almost close to zero
+```
+
+#### 2.3
+```{r}
+options(scipen = 5)
+## generate 1000*20 S again with different sigma
+sss<- array(rep(NA, 20000),c(1000, 20))
+sigma_1000<- rep(NA, 1000)
+for (i in 1:1000) {
+  S <- 100
+  K <- 100
+  sigma <- 0.5 ## reset realized sigma as 0.5 which is bigger than implied sigma 0.3
+  drift <- 0 # drift = r - q
+  timestep <- 1 / 250
+  days <- 20 / 250
+  N <- days / timestep
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  # ss is the simulated price movement for N days
+  ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+  sss[i, ]<- ss
+
+}
+
+final_payoff<- rep(NA, 1000)
+DeltaPnL_1000<- rep(NA, 1000)
+cost_of_option<- rep(NA, 1000)
+
+for (i in 1:1000) {
+  if(generate_data(ss = sss[i, ], 0.3)[[3]][[1]] > 100){
+    final_payoff[i]<- generate_data(ss = sss[i, ], 0.3)[[3]][[1]] - 100
+  }
+  else{
+    final_payoff[i]<- 0
+  }
+  
+  cost_of_option[i]<- generate_data(ss = sss[i, ], 0.3)[[2]][[1]] ## use the option price at day0 
+  DeltaPnL_1000[i]<- generate_data(ss = sss[i, ], 0.3)[[6]][[1]] ## should calculate the sum of daily deltaPnL
+}
+
+
+data4<- data.frame(-cost_of_option, final_payoff, -DeltaPnL_1000) ##  cost of option is negative & position in underlying is to the opposite of delta
+data5<- data4%>%
+  mutate(OverallPnL = - cost_of_option + final_payoff - DeltaPnL_1000)
+plot(data5$OverallPnL)
+
+## Almost all are positive
+```

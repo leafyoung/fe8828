@@ -1,0 +1,23 @@
+Shen Lu
+
+# A1 Shiny Web
+
+- Good. Informative.
+
+# A2.1 Secretary
+
+- Good
+
+# A2.2 Bond Schedule
+
+- Good
+
+# A2.3 Stock data
+
+- Good for the error handling
+- Indeed a "nicer" downloader
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done

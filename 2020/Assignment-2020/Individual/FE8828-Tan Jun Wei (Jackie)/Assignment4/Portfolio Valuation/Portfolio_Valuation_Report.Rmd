@@ -1,0 +1,107 @@
+---
+title: "Portfolio Valuation Report"
+author: "Tan Jun Wei (Jackie)"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+## Load the daily price data
+```{r data}
+if (FALSE) {
+  setwd("~/Studies/NTU MFE/T1MT2 FE8828 Programming Web Applications in Finance (E)/Homeworks/Assignment4/data")
+  data <- readRDS("data.rds")
+  data
+}
+data <- readRDS("data/data.rds")
+```
+
+## Deciding on the allocation per stock
+
+Suppose we have $1mio cash, where we are restricted to invest 90% of it into an equally-weighted (long only) four stocks portfolio since the 1st day and keep 10% as cash reserve. Also, we can only invest in integer number of shares. 
+
+```{r allocation}
+allocation = floor(1e6 * 0.9 * 0.25 / data[1,3:6])
+cashReserve = 1e6 - sum(allocation * data[1,3:6])
+allocation
+cashReserve
+```
+## Calculating the daily valuation and the return of the portfolio
+
+```{r valuation}
+valuation = data[3:6]
+for (i in c(1:4)) {
+  valuation[i] <- valuation[i] * allocation[[i]]
+}
+
+for (i in 1:nrow(valuation)) {
+  valuation[i, "Cash"] <- cashReserve * exp((i-1) * 0.01/250)
+}
+
+valuation %>% 
+  mutate(Value = rowSums(.)) %>% 
+  mutate(Return = .$Value/lag(.$Value) - 1) %>%
+  cbind(data$timestamp, .) %>%
+  rename('Timestamp' = 'data$timestamp') -> valuation
+
+valuation
+```
+## Setting up another portfolio with S&P and Cash only
+
+Suppose we have $1mio cash, where we are restricted to invest 90% of it into SPY (long only) since the 1st day and keep 10% as cash reserve. Also, we can only invest in integer number of shares.
+
+Similar to our portfolio analysis, we calculate the daily valuation and daily returns of S&P portfolio.
+```{r S&P}
+allocation_SPY <- floor(1e6 * 0.9 / data$SPY[1])
+cashReserve_SPY <- 1e6 - allocation_SPY * data$SPY[1]
+for (i in 1:nrow(valuation)) {
+  valuation[i,'Value_SPY'] <- allocation_SPY * data[i,"SPY"] + cashReserve_SPY * exp((i-1) * 0.01/250)  
+}
+
+valuation <- mutate(valuation, Return_SPY = valuation$Value_SPY/lag(valuation$Value_SPY) - 1)
+
+valuation
+```
+## Calculating the Sharpe Ratio of the Portfolio and of S&P
+
+The Sharpe Ratio of our portfolio is `r (mean(valuation$Return, na.rm = TRUE) - .01/250) / sd(valuation$Return, na.rm = TRUE)`. The Sharpe Ratio of S&P portfolio is `r (mean(valuation$Return_SPY, na.rm = TRUE) - .01/250) / sd(valuation$Return_SPY, na.rm = TRUE)`.
+
+## Plotting the Histogram of Daily Return
+```{r histogram}
+ggplot(data = valuation, mapping = aes(x = Return)) +
+  geom_histogram(binwidth = 0.005) +
+  theme_minimal()
+```
+
+## Plotting Total Valuation of our Investment Portfolio and of S&P
+```{r Total Valuation}
+cols = c("Timestamp", "Value", "Value_SPY")
+valuation_long <- pivot_longer(valuation[cols], col = -Timestamp, names_to = "key", values_to = "value")
+ggplot(data=valuation_long, mapping = aes(x = Timestamp, y = value, colour=key)) +
+  geom_line() + 
+  labs(colour = "Portfolios")
+```
+
+## Plotting Relative Valuation of our Investment Portfolio and of S&P
+```{r Relative Valuation}
+relValuation <- valuation["Timestamp"]
+relValuation["relValue"] <- valuation$Value / valuation$Value[1] - 1
+relValuation["relValue_SPY"] <- valuation$Value_SPY / valuation$Value_SPY[1] - 1
+cols = c("Timestamp", "relValue", "relValue_SPY")
+relValuation_long <- pivot_longer(relValuation[cols], col = -Timestamp, names_to = "key", values_to = "value")
+ggplot(data=relValuation_long, mapping = aes(x = Timestamp, y = value, colour=key)) +
+  geom_line() +
+  labs(colour = "Portfolios")
+```
+
+## Plotting Relative Valuation for the different allocation (stocks and cash)
+
+```{r Different Allocation}
+valuation %>% 
+  pivot_longer(cols = BABA:Cash) %>%
+  ggplot(.) + geom_area(aes(x = Timestamp, y = value, fill = name), position = 'fill')
+```

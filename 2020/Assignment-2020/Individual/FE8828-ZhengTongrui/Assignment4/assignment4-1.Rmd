@@ -1,0 +1,34 @@
+---
+title: ""
+output: html_document
+---
+
+```{r plot}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+
+#Finding1: find the relationship between education&martial
+df2<-group_by(bank,education,marital) %>% summarise(count=n())
+df2<-pivot_wider(df2,names_from=marital,values_from=count)
+# ggplot(df2,aes(education,count))+geom_point() # +facet_grid(.~marital)
+
+#Finding2: adding averaged_age to different jobs
+df6<-group_by(bank,job) %>% summarise(mean_age=mean(age))%>% select(job,mean_age)
+ggplot(df6) +
+  geom_point(aes(job,mean_age),color="red")+theme(text=element_text(size=10),axis.text.x=element_text(angle=45,hjust=1))
+  
+#Finding3:find the relationship between job$marital$balance
+ggplot(bank,aes(age,balance,color=marital)) + geom_smooth()+
+  theme(legend.position="left")
+
+#Finding4
+ggplot(bank%>%dplyr::filter(pdays!=1 & pdays!=-1),mapping=aes(x=pdays,fill=poutcome))+geom_histogram()
+  
+#Finding5
+ggplot(bank%>%dplyr::filter(education=="tertiary"))+geom_density(aes(balance,fill=marital),alpha=0.3)+scale_x_log10()+theme(legend.position="left")         
+
+#Finding6
+ggplot(bank,mapping=aes(balance,color=loan))+geom_freqpoly(binwidth=10000)
+```

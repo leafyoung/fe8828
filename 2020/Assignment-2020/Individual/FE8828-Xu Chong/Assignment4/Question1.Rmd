@@ -1,0 +1,58 @@
+---
+title: "FE8828 Assignment4: Question1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(ggplot2)
+library(knitr)
+conflict_prefer("summarize", "dplyr")
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = T)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Insight 1
+When people's age increases, the duration is generally increasing too. We can see that, the duration mean(blue points) is in an increasing trend comparing to age group. This might because they are more patient.
+```{r Insight1, echo = TRUE, warning = FALSE}
+AgeGrpTable <- mutate(bank, AgeGroup = (age %/% 10) * 10)
+ggplot(AgeGrpTable, aes(AgeGroup, duration, group = AgeGroup)) + geom_point() + geom_boxplot() + stat_summary(fun.y = mean,geom = "point", colour="blue", size=3)
+```
+
+# Insight 2
+Now, does duration has a positive correlation vs. subscription? The answer is yes.
+```{r Insight2, echo = TRUE}
+fun_mean <- function(x){
+  mean(x) %>%
+  data.frame(y=.,label=mean(x,na.rm=T))}
+
+ggplot(bank, aes(y, duration)) + geom_boxplot() + geom_point() +
+  stat_summary(fun.y = mean,geom = "point", colour="blue", size=3) + 
+  stat_summary(fun.data=fun_mean, geom="text", vjust= -0.5)
+```
+
+# Insight 3
+Now we can conclude that old people are more likely to sign the contract as they are more patient.
+```{r Insight3, echo = TRUE}
+mutate(AgeGrpTable, OldOrYoung = ifelse(AgeGroup >= 60, "Old People", "Young People")) %>% ggplot(.) + geom_bar(mapping = aes(x=OldOrYoung, fill=y), position = "fill") + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+# Insight 4
+Interestingly, with higher education level, the more chance they are using a cellular phone. 
+```{r Insight4, echo = TRUE}
+ggplot(bank) + geom_bar(mapping = aes(x=education, fill = contact), position = "fill") + coord_flip()
+```
+
+# Insight 5
+Having a jon can actually increase your chance of getting married.
+```{r Insight5, echo = TRUE, warning = FALSE}
+EmployTable <- mutate(bank, employment = ifelse(job == "admin." | job == "blue-collar" | job == "entrepreneur" |job == "management" |job == "self-employed" |job == "services" |job == "technician", "Employed", "No Job"))
+ggplot(EmployTable) + geom_bar(aes(x = employment, fill = marital), position = "fill") 
+```
+
+# Insight 6
+However having higher education won't.
+```{r Insight6, echo = TRUE}
+ggplot(bank) + geom_bar(mapping = aes(x=education, fill = marital), position = "fill")
+```

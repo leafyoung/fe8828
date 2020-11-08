@@ -1,0 +1,108 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+# The frame of the dataset
+```{r}
+nrow(bank)
+ncol(bank)
+colnames(bank)
+dim(bank)
+```
+
+# Finding #2
+# How many people have been employed
+```{r}
+unique(bank$job)
+df1 <- filter(bank, !(job %in% c("student","retired","unknown","unemployed"))) 
+nrow(df1)
+```
+
+# Finding #3
+# The mean, max age for different jobs
+```{r}
+df1 %>% 
+  group_by(job) %>%
+  summarise(mean_age = mean(age), max_age = max(age), sd_age = sd(age)) %>%
+  arrange(mean_age)
+
+```
+
+# Finding #4
+# The largest campaign group by job or age
+```{r}
+bank %>% 
+  group_by(job) %>% 
+  summarise(max_campaign = max(campaign)) %>%   
+  arrange(desc(max_campaign))
+
+bank %>% 
+  group_by(age) %>% 
+  summarise(max_campaign = max(campaign)) %>%   
+  arrange(desc(max_campaign))
+
+bank %>% 
+  group_by(age, job) %>%
+  summarise(max_campaign = max(campaign)) 
+
+```
+
+
+# Finding #5
+# The biggest mean-campaign group by job or age
+```{r}
+bank %>% 
+  group_by(job) %>% 
+  summarise(mean_campaign = mean(campaign)) %>%   #Sub-total
+  arrange(desc(mean_campaign))
+
+bank %>% 
+  group_by(age) %>% 
+  summarise(mean_campaign = mean(campaign)) %>%   #Sub-total
+  arrange(desc(mean_campaign))
+
+bank %>% 
+  summarise(total_mean_campaign = mean(campaign)) #Total
+
+```
+
+# Finding #6
+# The new and previous campaign ratio. Its mean is greater than 1. 
+```{r}
+bank %>%
+  filter(previous != 0) %>%
+  mutate(Now_Pre_ratio =  campaign / previous) %>%
+  summarise(mean_ratio = mean(Now_Pre_ratio, na.rm = TRUE), sd_ratio = sd(Now_Pre_ratio), min_ratio = min(Now_Pre_ratio), na.rm = TRUE)
+
+#unique(bank$campaign)
+```
+
+# Finding #7
+# The group (by job) having the largest success rate in current campaign  
+```{r}
+#colnames(bank)
+bank %>%
+  mutate(count = ifelse(y %in% "yes", 1, 0)) %>%
+  group_by(job) %>%
+  summarise(count_y = sum(count), total = n(), success_rate = count_y / total) %>%
+  arrange(desc(success_rate))
+```
+
+
+# Discover insights of data frame: bank
+- Employment
+- Social attributes.
+- Count for sub-total / total, plot graph

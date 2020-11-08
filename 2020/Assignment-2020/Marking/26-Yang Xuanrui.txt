@@ -1,0 +1,50 @@
+Yang Xuanrui
+
+# A1 Shiny Web
+
+- Good use of offset for layout
+
+# A2.1 Secretary
+
+- Good handling of this case:
+
+    if(criteria==N){next} 
+
+  Having error with code. Below is to be corrected.
+
+    for(i in selection+1:N){ # wrong
+    for(i in (selection+1):N){ # correct
+
+
+# A2.2 Bond Schedule
+
+
+# A2.3 Stock data
+
+- Good for the error handling
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done!
+
+# A4.2 Infection rate
+
+- Good effort. Better to use reactive value
+
+  Replace this 
+  test <- function(){
+    ...
+  }
+  
+  with
+  test <- reactive({
+    ...
+  })
+
+  test is a reactive value. It can be used like a function, i.e. test()
+
+# A4.3 Portfolio
+
+
+

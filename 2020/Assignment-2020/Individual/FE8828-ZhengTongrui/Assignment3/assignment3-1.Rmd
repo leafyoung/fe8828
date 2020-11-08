@@ -1,0 +1,43 @@
+---
+title: ""
+output: html_document
+---
+
+
+```{r cars}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+
+#Finding1: find the biggest averaged balance month
+df1<-group_by(bank,month) %>% summarise(balance_mean=mean(balance)) %>% arrange(.,desc(balance_mean)) %>% head(.,n=1)
+
+
+#Finding2: find the relationship between education&martial
+df2<-group_by(bank,education,marital) %>% summarise(count=n())
+df2<-pivot_wider(df2,names_from=marital,values_from=count)
+
+#Finding3: find the relationship betwenn housing$loan
+df3<-group_by(bank,housing,loan) %>% summarise(count1=n()) 
+df3<-pivot_wider(df3,names_from=loan,values_from=count1)
+names(df3)[names(df3) == "no"] <- "no_loan"
+names(df3)[names(df3) == "yes"] <- "loaned"
+
+#Finding4: find the 6 most long/short duration account
+df4<-arrange(bank,duration) %>% {
+  bind_rows(head(.,n=6),tail(.,n=6))
+}%>% select(age,balance,duration)
+
+#Finding5: find some infomation regarding different jobs
+df5<-group_by(bank,job) %>% filter (job!="unknown") %>% mutate(marriage=ifelse(marital=="married","married","not married now")) %>% mutate(edu=ifelse(education=="tertiary","educated","less-educated")) %>% select(job,marriage,edu) %>% distinct(.)
+
+#Finding6: adding averaged_age to finding5
+df6<-group_by(bank,job) %>% summarise(mean_age=mean(age))%>% select(job,mean_age)
+df6<-full_join(df5,df6,by="job")
+
+#Finding7: finding paydays v.s. poutcomes
+df7<-filter(bank,pdays>0) %>% group_by(pday_quantile=ntile(pdays,6)) %>% summarise(count_success=sum(ifelse(poutcome=="success",1,0)),count_others=(n()-sum(ifelse(poutcome=="success",1,0))))
+
+
+```
+

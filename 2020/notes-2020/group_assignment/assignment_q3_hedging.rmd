@@ -1,0 +1,112 @@
+# 3. Option Delta Hedging (Real-world)
+
+Show case how delta hedging works as a trading strategy.
+
+- Show how one trade works
+- Backtest for available history (12-months, each month as ) - one-year history from the website.
+
+Assumption:
+
+- You hold 100 ATM call/put option which expires in 30 days (calendar days). You just need to do either Call or Put.
+  After finishing the tasks below, duplicate the R Notebook and carry out 2nd-round analysis using an option of ~25% delta, take a guess for the strike level.
+- You start to do delta hedging daily immediately till 2nd last day. You close stock position in the last day. Option expires on the last day as well (either ITM with positive PnL or ATM/OTM with zero PnL)
+- Delta hedging: calculate the delta from option, negate it, that's the quantity what you need to hold over 1 day. Repeat for every trading day.
+- Daily PnL: (option premium change) + (stock holding quantity * price change).
+
+- You can get your favorite stocks here. There is one year of data.
+    + Many website started charging data download. Luckily we can have CBOE pushing VIX Index for top five active trading stocks.
+    + <http://www.cboe.com/vix>
+    + "The VIX Index is a calculation designed to produce a measure of constant, 30-day expected volatility of the U.S. stock market, derived from real-time, mid-quote prices of S&P 500® Index (SPXSM) call and put options. On a global basis, it is one of the most recognized measures of volatility -- widely reported by financial media and closely followed by a variety of market participants as a daily market indicator."
+    + Data is available to download from here. Pick one of five stocks.
+    <https://fred.stlouisfed.org/search/?st=%20CBOE%20Equity%20VIX>
+    + Combine with Yahoo's stock price series (Use Close)
+    
+- Daily IV 30 is provided, IV 30 is implied volatility for 30 days. We flat-extrapolate it to be for < 30 days (which means don't change it).
+
+- As underlying is equity, dividend yield is applicable for B-S valuation
+
+- US risk-free rate for 1M: 0.8% (annualized)
+
+Analysis: For one trade
+
+- Daily PnL v.s. Time to expiry: split into option and stock.  
+- Final PnL: accumulative of Daily PnL. split into option and stock
+- Max Drawdown: accumulative of Daily PnL, max - min.
+- Sharpe ratio: Sharpe ratio = (Mean of Daily PnL - Risk-free rate)/Standard deviation of Daily PnL
+
+Analysis: For backtest
+
+- Distribution of Final PnL
+- Distribution of Max Drawdown
+- Final PnL v.s. Option Expiry Date
+- ...
+- More analysis
+- in R Markdown
+
+Example flow of analysi:
+
+- Create xts object from the data from website.
+- One trade analysis
+    - Pick a date range using xts object.
+      - Get starting date and end date.
+
+              dates <- index(xts_obj)
+              start_date <- min(dates)
+              end_date <- max(dates)
+              start_price <- xts_obj[start_date, "Close"]
+              start_volatility <- xts_obj[start_date, "IV30"]
+
+      - Create a df with date column
+
+              df <- tibble(date = dates)
+              df$Close <- coredata(xts_obj[, "Close"])
+
+    - Daily Profit and Loss ("DoD PnL")
+        - Option side:
+        
+                X <- start_price
+                sigma = start_volatility
+                r <- 0.8 / 100
+                # Vary S and Time everyday
+                S <- Close
+                Time <- (end_date - date) / 365
+                GBSOption(TypeFlag, S, X, Time, r, b, sigma)@price
+        
+                df_opt <- rowwise(df) %>%
+                  mutate(premium = GBSOption(TypeFlag = "...",
+                                             S = Close,
+                                             X = start_price,
+                                             Time = (end_date - date) / 365,
+                                             r = ..., # interest rate
+                                             b = ..., # dividend yield
+                                             sigma = start_volatility)@price) %>%
+                  ungroup %>%
+                  mutate(Option_DoD_PnL = ifelse(date == start_date,
+                  # On the 1st date, we count the cost of buying the option
+                                                 premium * (-1), 
+                                                 premium - lag(premium)))
+
+        - Hedging side:
+      
+                df %>%
+                rowwise() %>%
+                mutate(delta_hedge = GBSGreeks("delta", TypeFlag, S, X, Time, r, b, sigma) *
+                                     quantity * (-1)) %>%
+                ungroup() %>%
+                mutate(Hedging_DoD_Pnl = ifelse(date == start_date,
+                                                0,
+                                                delta_hedge * (Close - lag(Close))))
+
+        - Daily PnL (combined):
+        
+                mutate(DoD_PnL = Option_DoD_PnL + Hedging_DoD_Pnl)
+        
+- Max Drawdown: accumulative of Daily PnL, max - min.
+
+        ungroup() %>%
+        mutate(PnL = cumsum(DoD_PnL)) %>%
+        {
+          xs <- .$PnL
+          max(cummax(xs) - cummin(xs))
+        }
+

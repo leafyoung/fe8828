@@ -1,0 +1,115 @@
+---
+title: "Assignment2_Book_Option_Trades"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(readxl)
+library(tidyverse) 
+library(lubridate) 
+library(bizdays)
+library(ggplot2)
+library(fOptions)
+library(timeDate)
+library(timeSeries)
+library(fBasics)
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	cache = TRUE,
+	collapse = TRUE
+)
+data <- read_excel("Option_data.xlsx", sheet = "Sheet1", 
+    skip = 1)
+data
+nrow(data)
+```
+
+
+# 2.1
+```{r}
+colnames(data)
+```
+## Create new dataframe to have the below columns
+## Exp. Date | Strike | Open Int. | OptionType | Bid | Ask | Underlying | Today
+```{r}
+UNDERLYING = 1515.22 # DATA AS OF OCT 09, 2020
+TODAY = '2020-10-09' 
+x <- c("Exp. Date", "Strike", "Open Int.", "OptionType", "Bid","Ask", "Underlying", "Today" )
+
+dfc <- data.frame(matrix(ncol = 8, nrow = nrow(data)))
+colnames(dfc) <- x
+dfc$`Exp. Date` = data$`Exp. Date`
+dfc$Strike = data$Strike
+dfc$`Open Int.` = data$`Open Int....7`
+dfc$OptionType = replicate(nrow(data),'c')
+dfc$Bid = data$Bid...4
+dfc$Ask = data$Ask...5
+dfc$Underlying = replicate(nrow(data),UNDERLYING)
+dfc$Today = replicate(nrow(data),TODAY)
+
+dfp <- data.frame(matrix(ncol = 8, nrow = nrow(data)))
+colnames(dfp) <- x
+dfp$`Exp. Date` = data$`Exp. Date`
+dfp$Strike = data$Strike
+dfp$`Open Int.` = data$`Open Int....14`
+dfp$OptionType = replicate(nrow(data),'p')
+dfp$Bid = data$Bid...11
+dfp$Ask = data$Ask...12
+dfp$Underlying = replicate(nrow(data),UNDERLYING)
+dfp$Today = replicate(nrow(data),TODAY)
+
+df <- rbind(dfc, dfp)
+df
+```
+
+# 2.2 
+## Calcualte the total valuation of 1) call alone, 2) put alone, 3) call and put. (Total Valuation = Open Interest * (Bid + Ask) / 2.)
+```{r}
+df1 <- data %>%
+  mutate(`Call Alone` = as.numeric(`Open Int....7`)*(`Bid...4`+ `Ask...5`)/2) %>%
+  mutate(`Put Alone` = as.numeric(`Open Int....14`)*(`Bid...11`+ `Ask...12`)/2) %>%
+  mutate(`Call and Put` = `Call Alone` + `Put Alone`)
+df1
+
+```
+# 2.3 
+## Find those in the money (for calls, strike < underlying. for puts, strike > underlying.) and calculate their total Open Interest.
+```{r}
+df2 <- df %>%
+  mutate(`in the money` = ifelse(OptionType == 'c', 
+                                 ifelse(Strike < Underlying, 'Yes', 'No'),
+                                 ifelse(Strike > Underlying, 'Yes', 'No'))) %>%
+  mutate(`Open Int. in the money` =ifelse(`in the money` == 'Yes', `Open Int.`, 0))
+df2
+
+sum(as.numeric(df2$`Open Int. in the money`), na.rm = TRUE) #6943
+```
+# 2.4. 
+## Plot the volatility curve, strike v.s. vol. For strike < current price, use puts’ price; for strike > current price, use calls’ price.
+```{r}
+# assume price = (Bid + Ask) /2
+df3 <- data %>%
+  mutate(Price = ifelse(Strike < UNDERLYING, (Bid...11+Ask...12)/2,  (Bid...4+Ask...5)/2)) %>%
+  mutate(Type = ifelse(Strike < UNDERLYING, 'p', 'c')) %>%
+  rowwise %>%
+  mutate(Vol = GBSVolatility(Price, 
+                             Type,
+                             UNDERLYING,
+                             Strike,
+                             as.numeric((as.Date("2020-12-18") - as.Date("2020-10-09")))/365,
+                             r = 0.03, 
+                             b = 0)) %>%
+  ungroup()
+
+df3
+
+```
+
+```{r}
+ggplot(df3, aes(x=Strike, y=Vol)) + 
+  geom_line()+
+  geom_point()
+```
+

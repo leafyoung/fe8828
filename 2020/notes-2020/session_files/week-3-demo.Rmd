@@ -1,0 +1,280 @@
+---
+title: "Week 3 Demo"
+output: html_notebook
+---
+
+# Use mutate with functions.
+
+## create a data frame
+```{r}
+bond_cf <- tibble(date = 1:10, cf = rep(1,10))
+bond_cf <- mutate(bond_cf, cf = ifelse(date == 10, cf + 100, cf))
+bond_cf <- mutate(bond_cf, dcf = exp( - 0.03 * date) * cf)
+# older syntax if we don't use mutate
+# bond_cf['dcf'] <- exp( -0.03 * bond_cf['date']) * bond_cf['cf']
+```
+
+## add new columns
+```{r}
+bond_cf <- mutate(bond_cf, dcf_diff_mean = dcf - mean(dcf))
+bond_cf <- mutate(bond_cf, dcf_perc = dcf / sum(dcf))
+bond_cf <- mutate(bond_cf, dcf_diff_next2 = dcf - lag(dcf,2))
+```
+
+## calculate MA
+```{r}
+bond_cf <- mutate(bond_cf, tcf = cumsum(dcf))
+
+ma_n <- 5
+bond_cf <- mutate(bond_cf,
+    tcf_ma = tail((c(0,tcf) - lag(c(0,tcf),ma_n))/ma_n,-1))
+```
+
+We start from below expression which calculate MA.
+# tcf : cumulative sum of dcf. 
+tcf - lag(tcf,2)
+
+Explain:
+
+dcf:                       1, 2, 3, 4
+tcf = cumsum(dcf):         1, 3, 6,10
+lag(tcf, 2):              NA,NA, 1, 3
+tcf - lag(tcf,2):         NA,NA, 5, 7
+We expect MA to be        NA, 3, 5, 7  / 2
+We just miss 3 in the front.
+
+A: cumsum(padded):         0, 1, 3, 6, 10
+B: cumsum(padded,lagged): NA,NA, 0, 1,  3, 6
+A - B:                    NA,NA, 3, 5,  7
+tail(A-B,-1):             NA ,3, 5, 7 / 2 
+This is we expected to be the MA.
+
+The whole express is below
+
+tail(c(0,tcf) - lag(c(0,tcf),ma_n)) / ma_n, -1)
+
+
+Hint:
+# remove the first element
+tail(1:10, -1)
+
+# remove the last element
+head(1:10, -1)
+
+
+```{r}
+bond_cf <- mutate(bond_cf, rr = rank(dcf))
+bond_cf <- mutate(bond_cf, tt = ntile(dcf,2))
+bond_cf <- mutate(bond_cf, nn = row_number())
+```
+
+## Environment
+
+```{r}
+x <- 3
+local({
+  print(x)
+  assign("x",1,envir=.GlobalEnv)
+  print(x)
+})
+print(x)
+
+# We shall expect output of 3,1,3. x in the out environment is unchanged.
+
+
+abc <- function() {
+  x <- 3
+  env <- environment()
+  local({
+    print(x)
+    assign("x",1,envir=env)
+    print(x)
+  })
+  print(x)
+}
+
+abc()
+
+# We shall expect output of 3,1,1. x in the out environment is changed.
+```
+
+# Pipe
+
+```{r}
+# re-write them with pipe
+bond_cf <- tibble(date = 1:10, cf = rep(1,10))
+
+bond_cf2 <- bond_cf %>%
+            mutate(cf = ifelse(date == 10, cf + 100, cf)) %>%
+            mutate(dcf = exp( - 0.03 * date) * cf) %>% {
+              v <- .
+              print(v)
+              mutate(v, new_col = "Y")
+            } %>%
+            mutate(x = dfc - mean(dcf)) %>%
+            mutate(x = dcf / sum(dcf))
+
+distinct(bank, job) %>% mutate(dummy = 1)
+distinct(bank, education) %>% mutate(dummy = 1)
+```
+
+# Filter
+
+```{r}
+filter(balance == min(balance) | balance == max(balance))
+
+sum(ifelse(balance < 500, 1, 0))
+sum(balance < 500)
+
+sum(ifelse(balance < 500, 0, 1))
+sum(balance >= 500)
+```
+
+
+```{r}
+group_by(bank, age_group = ntile(age,4)) %>%
+  summarise(mean_balance = mean(balance), sd_balance = sd(balance)) %>%
+  mutate( x = sd_balance / mean_balance)
+```
+
+## Exercise 1
+
+```{r}
+df <- tibble(dt = c("2019-10-01", "2019-31-12",
+                    "2019-03-17", "2019-02-29",
+                    "2019-09-30"))
+df %>%
+  mutate(try_dt = as.Date(dt)) %>%
+  filter(is.na(try_dt)) %>%
+  .$dt
+```
+
+## Exercise 2
+
+```{r}
+df_sum1 <- bank %>% group_by(job, education) %>%
+  summarise(`mean(Age)` = mean(age, na.rm=TRUE),
+            `mean(Balance)` = mean(balance, na.rm=TRUE))
+
+df_sum2 <- bank %>% group_by(job, education="+") %>%
+  summarise(`mean(Age)` = mean(age, na.rm=TRUE),
+            `mean(Balance)` = mean(balance, na.rm=TRUE))
+
+df_sum3 <- bank %>% group_by(job = "+", education="+") %>%
+  summarise(`mean(Age)` = mean(age, na.rm=TRUE),
+            `mean(Balance)` = mean(balance, na.rm=TRUE))
+
+df_sum3
+```
+
+## Exercise 2 - Version tidy-up
+
+```{r}
+# Refactoring
+mean_age_balance <- function(df) {
+  df %>% summarise(`mean(Age)` = mean(age, na.rm=TRUE),
+                   `mean(Balance)` = mean(balance, na.rm=TRUE))
+}
+
+df_sum1 <- bank %>% group_by(job, education) %>% mean_age_balance
+df_sum2 <- bank %>% group_by(job, education = "+") %>% mean_age_balance
+df_sum3 <- bank %>% group_by(job = "+", education = "+") %>% mean_age_balance
+
+df_mean_age_balance <- bind_rows(df_sum1, df_sum2, df_sum3)
+df_mean_age_balance
+```
+
+## Exercise 3
+
+```{r}
+library(fOptions)
+
+df <- tibble(type = sample(c("c", "p"), 100, replace = TRUE),
+             strike = round(runif(100) * 100, 0),
+             underlying = round(runif(100) * 100, 0),
+             Time = 1,
+             r = 0.01,
+             b = 0,
+             sigma = 0.3)
+
+df %>% rowwise() %>% mutate(
+  price = GBSOption(TypeFlag = type, S = underlying, X = strike,
+                    Time = Time, r = r, b = b, sigma = sigma)@price
+) %>% ungroup()
+```
+
+# bind_rows
+
+```{r}
+x <- c()
+
+for (i in 1:10) {
+  x <- c(x, i)
+}
+
+x <- tibble()
+for (i in 1:10) {
+  x <- bind_rows(x, tibble(a = 1:i))
+}
+x
+```
+
+# Summarise/summarize are the same function.
+
+```{r}
+df1 <- summarise(bank, day = mean(day), balance = mean(balance)) 
+df1 <- summarise_if(bank, is.numeric, mean)
+df1
+tail(bind_rows(bank,df1),1)
+# select(bank, starts_with("p"))
+```
+
+```{r}
+bank
+ncol(bank) * nrow(bank)
+```
+
+```{r}
+# from slide 45
+wfmt <- tibble(date = seq(from = as.Date("2019-01-01"),by = "day",length.out = 5),
+Copper_qty = round(runif(5) * 1000, 0),
+Gold_qty = round(runif(5) * 1000, 0),
+Silver_qty = round(runif(5) * 1000, 0))
+
+# from slide 49
+wfmt %>%
+pivot_longer(!date, names_to="key", values_to="value") %>%
+group_by(date) %>%
+summarize(value1 = sum(value)) %>%
+rename(value = value1)%>%
+mutate(key = "Total") %>%
+pivot_wider(names_from=key, values_from=value) %>%
+inner_join(wfmt, ., by = "date")
+```
+
+# Use filter to create training set.
+
+```{r}
+training_set <- filter(bank,
+        row_number() %in% sample(1:nrow(bank), round(nrow(bank)*0.75,0)))
+
+# refactoring 1
+training_set <- bank %>% filter(.,
+        row_number() %in% sample(1:nrow(.), round(nrow(.)*0.75,0)))
+
+# refactor 2
+training_select <- function(df, perc=0.75) {
+  df %>% filter(.,
+        row_number() %in% sample(1:nrow(.), round(nrow(.)*perc,0)))
+}
+
+bank %>% training_select()
+```
+
+## observe for the change done after group_by
+
+```{r}
+str(bank %>% group_by(age) %>% group_by(job))
+str(bank %>% group_by(age, job))
+
+```

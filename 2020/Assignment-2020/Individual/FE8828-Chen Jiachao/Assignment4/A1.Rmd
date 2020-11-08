@@ -1,0 +1,64 @@
+---
+title: "W4A1"
+author: "CHEN"
+date: "10/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+# bank <- read.csv(file = 'bank.csv',sep=";")
+```
+
+
+#Finding 1
+People who defaulted has an average balance of around 0.
+The age of them ranges from 24-67.
+```{r}
+ggplot(bank,aes(age,balance,color=default))+geom_point()+geom_smooth()
+```
+
+#Finding 2
+
+Management group has the largest proportion of tertiary eduacation while service has the largest proportion of secondary education.
+
+```{r}
+ggplot(data = bank, aes(x = job, fill = education)) + 
+  geom_bar(binwidth = 10) + 
+  theme(text = element_text(size=8))
+```
+
+#Finding 3
+
+people who have a loan has a more centralized balance.
+
+```{r}
+ggplot(data = bank, aes(loan, balance)) + 
+  geom_boxplot() + 
+  theme(text = element_text(size=8))
+```
+
+#Finding 4
+
+People who had a divorce is older than who are married or single on average.
+```{r}
+ggplot(data = bank, aes(marital, age)) + 
+  geom_boxplot() + 
+  theme(text = element_text(size=8))
+```
+
+#Finding 5
+Management group has a higher proportion of divorce than bule collars.
+
+```{r}
+ggplot(data = bank, aes(x = job, fill = marital)) + 
+  geom_bar(binwidth = 10) + 
+  theme(text = element_text(size=8))
+```
+
+#Finding 6
+Most people have duration between 0 and 450.
+```{r}
+ ggplot(data = bank, mapping = aes(x = duration, fill = job)) + geom_histogram(binwidth = 100) + theme(text = element_text(size=8))
+```

@@ -1,0 +1,123 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Xu Xinzhi <sub> <Email:XXU026@e.ntu.edu.sg> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(conflicted)
+conflict_prefer("filter","dplyr")
+conflict_prefer("lag","dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+### Finding #1
+Find people who are single and do not have house and count number of them in age and plot.
+```{r}
+bank%>%
+  dplyr::filter(marital == "single" & housing == "no")%>%
+  group_by(age)%>%
+  summarise(count = n()) -> res
+res
+ggplot(res,aes(x=age,y=count))+geom_bar(stat="identity")
+```
+
+### Finding #2
+Find maximum and minimum balance in terms of education level.
+```{r}
+distinct(bank,education) 
+bank %>%
+  group_by(education) %>%
+  filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+  arrange(education,balance)
+```
+
+### Finding #3
+Find the distirbution of job in different ages as well as in salary and balance.
+```{r}
+distinct(bank,job) 
+temp <- bank %>%
+  group_by(job) %>%
+  summarise(count = n(), "balance <= 1000" = sum(balance <= 1000), "balance >= 1000" = sum(balance >= 1000)) 
+bank %>%
+  group_by(job) %>%
+  summarise(max_age = max(age), median_age = median(age), min_age = min(age)) %>%
+  left_join(temp)
+```
+
+### Finding #4
+Find the mean duration with respect to poutcome and last contact day.
+```{r}
+nrow(bank$poutcome == "unknown") == nrow(bank$pday == -1) 
+#means all the clients with unknown outcomes are those who have no previous contact
+bank %>%
+  group_by(poutcome) %>%
+  summarise("mean_duration" = mean(duration), "mean_past_day" = mean(pdays))
+```
+ We can see:
+ 
+- The mean of contact duration of successful outcome is longer than those are fail or 'other'.
+- The mean of past days from a previous contact is also shorter that the other.
+
+### Finding #5
+Find the mean balance with respect to whether people have housing.
+```{r}
+df1 <- bank %>%
+  group_by(age,housing) %>%
+  summarise(mean_bal = mean(balance)) %>%
+  filter(age >40 & age <50)
+df1
+ggplot(df1,aes(x=age,y=mean_bal, fill=housing)) + geom_bar(stat="identity")
+```
+We can see:
+
+- People without housing tend to have more balance in the age group of 40-50.
+
+### Finding #6
+Get sub-total and total on mean of age and balance, group by job and education.
+```{r}
+#multi-level
+df_sum1 <- bank %>% group_by(job,education)%>%
+  summarise("mean(age)" = mean(age,na.rm = TRUE),
+            "mean(bal)" = mean(balance,na.rm = TRUE))
+df_sum1
+
+  df_sum2 <- bank %>% group_by(job,education = "+")%>%
+  summarise("mean(age)" = mean(age,na.rm = TRUE),
+            "mean(bal)" = mean(balance,na.rm = TRUE))
+df_sum2
+  
+  df_sum3 <- bank %>% group_by(job = "+",education = "+")%>%
+  summarise("mean(age)" = mean(age,na.rm = TRUE),
+            "mean(bal)" = mean(balance,na.rm = TRUE))
+df_sum3
+mean_age_bal <- bind_rows(df_sum1,df_sum2,df_sum3)
+mean_age_bal
+```
+
+### Finding #7
+Use 1,2,3,0 to represent education level of primary, secondary, tertiary and unknown respectively.
+Prob means the probability of default in each education group.
+```{r}
+bank %>%
+  mutate(education = case_when(
+    education == "primary" ~ 1,
+    education == "secondary" ~ 2,
+    education == "tertiary" ~ 3,
+    education == "unknown" ~ 0
+  )) %>%
+  group_by(education, default)%>%
+  summarise(n = n()) %>%
+  mutate(prob = n / sum(n))
+```
+We can see:
+
+- The people with secondary education have a lager probability of default.
+
+

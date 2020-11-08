@@ -1,0 +1,110 @@
+---
+title: "newStart"
+author: "CHEN"
+date: "10/13/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyverse)
+```
+
+the sharp ratio of SPY is shown below:
+```{r spy}
+
+SPY <- read.csv(file = 'SPY.csv')
+SPY$date<- as.Date(SPY$Date, "%Y/%m/%d")
+SPY$valuation <- 2996*SPY$Adj.Close+100000
+SPY <- mutate(SPY, dailyReturn = (Adj.Close- lag(Adj.Close))/lag(Adj.Close)*100)
+SPY$relativeReturn <- SPY$valuation/1000000-1
+SharpeRatioSPY=(mean(na.omit(SPY$dailyReturn))-0.00004)/sd(na.omit(SPY$dailyReturn))
+SharpeRatioSPY
+
+```
+
+
+
+
+Disney
+
+```{r disney, echo=TRUE}
+DIS <- read.csv(file = 'DIS.csv')
+disN<- 1927
+DIS$value <- DIS$Adj.Close*disN
+DIS <- mutate(DIS, dailyre = (Adj.Close- lag(Adj.Close))/lag(Adj.Close)*100)
+
+```
+
+Oracle
+
+```{r oracle, echo=TRUE}
+ORCL <- read.csv(file = 'ORCL.csv')
+orclN<- 4231
+ORCL$value <- ORCL$Adj.Close*orclN
+ORCL <- mutate(ORCL, dailyre = (Adj.Close- lag(Adj.Close))/lag(Adj.Close)*100)
+```
+
+
+Facebook
+```{r, echo=TRUE}
+FB <- read.csv(file = 'FB.csv')
+fbN<- 998
+FB$value <- FB$Adj.Close*fbN
+FB <- mutate(FB, dailyre = (Adj.Close- lag(Adj.Close))/lag(Adj.Close)*100)
+```
+
+Apple
+```{r, echo=TRUE}
+AAPL <- read.csv(file = 'AAPL.csv')
+appleN<- 2833
+AAPL$value <- AAPL$Adj.Close*appleN
+AAPL <- mutate(AAPL, dailyre = (Adj.Close- lag(Adj.Close))/lag(Adj.Close)*100)
+```
+
+the sharpe ratio of the portfolio is shown below:
+```{r portfolio}
+cash <- 100000
+valuation <- DIS$Adj.Close*disN+FB$Adj.Close*fbN+ORCL$Adj.Close*orclN+AAPL$Adj.Close*appleN+cash
+date<- as.Date(DIS$Date, "%Y/%m/%d")
+pf <- data.frame(date=date,dailyValuation=valuation)
+pf$disv <- DIS$value
+pf$orclv <- ORCL$value
+pf$fbv <- FB$value
+pf$applv <- AAPL$value
+pf <- mutate(pf, dailyReturn = (valuation- lag(valuation))/lag(valuation))
+
+SharpeRatioPortfolio <- (mean(na.omit(pf$dailyReturn))-0.00004)/sd(na.omit(pf$dailyReturn))
+SharpeRatioPortfolio
+
+```
+
+the first histogram shows the daily return of portfolio.
+the second chart shows the total valuation of the portfolio(blue) and S&P
+the third chart shows the relativity valuation of the portfolio(blue) and S&P
+the last bar chart shows the relative valuation for the different allocation 
+
+```{r portfolio}
+ggplot(data=pf, aes(dailyReturn))+
+  geom_histogram()
+
+ggplot()+
+  geom_line(data=pf,aes(date,valuation),color='blue')+
+  geom_line(data=SPY,aes(date,valuation))
+
+pf$relativeReturn <-(pf$dailyValuation/999981.3)-1
+ggplot()+
+  geom_line(data=pf,aes(date,relativeReturn),color='blue')+
+  geom_line(data=SPY,aes(date,relativeReturn))
+
+tibble(Date = pf$date,
+       DIS= pf$disv,
+       ORCL = pf$orclv,
+       FB = pf$fbv,
+       APPL = pf$applv,
+       CASH = cash,
+       ) %>% 
+  pivot_longer(DIS:CASH, names_to = "Component", values_to = 'Value') %>%
+  ggplot(.) + geom_area(aes(Date, Value, fill = Component), position = 'fill')
+```

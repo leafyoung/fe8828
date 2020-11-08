@@ -1,0 +1,73 @@
+---
+title: "A4Q1"
+author: "leran"
+date: "2020/10/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding 1
+In most job categories, balance has an increasing trend with age, except for student, unknown, and housemade.
+```{r}
+g <- ggplot(bank, aes(age, balance))
+g + geom_point(mapping = aes(color = job)) + geom_smooth(method = "lm") + facet_grid(. ~ job)
+```
+
+# Finding 2
+It is very obvious that students have the smallest age, while the retired have the largest age.
+Some job categories have a relatively smaller age such as technician, services and entrepreneur.
+Some job categoreis have a relatively larter age such as management, and the unknown group.
+```{r}
+ggplot(bank, aes(age, fill = job, alpha = 0.3)) + geom_density() +
+theme(text = element_text(size=8))
+```
+
+# Finding 3
+As the age increases, there is a larger proportion of the pulation with a primary / secondary education background.
+```{r}
+ggplot(bank) + geom_bar(mapping = aes(x = age, fill = education),
+position = "fill") +
+theme(text = element_text(size=8))
+```
+
+# Finding 4
+No matter the martial status, those without loan usually have a larger bank balance.
+Grouping in this way, the relationship between balance and age is not obvious as finding 1.
+```{r}
+ggplot(data = bank) +
+geom_point(mapping = aes(x = age, y = balance, color = marital)) + geom_smooth(method = "lm", mapping = aes(x = age, y = balance)) +
+facet_wrap(marital~loan , nrow = 3) +
+theme(text = element_text(size=5))
+```
+
+# Finding 5
+For most job categories, the amount of people with or without housing is roughly same. Except the blue-collar group which has a significant larger proportion with housing comparing with those without housing.
+```{r}
+ggplot(data = bank, mapping = aes(x = reorder(housing, age, FUN = median),
+fill = job)) + geom_bar() +
+scale_x_discrete(limit = rev(levels(factor(bank$housing)))) +
+theme(text = element_text(size=8))
+```
+
+# Finding 6
+Generally there is a negative relationship between duration and previous except the group without housing and with a negative y, but the correlation is not strong.
+```{r}
+ggplot(data = bank, mapping = aes(x = previous, y = log10(duration))) + 
+  geom_point(aes(color = job), size = 4, alpha = 1/2)  + geom_smooth(method = "lm") + 
+  facet_wrap(housing~y, nrow = 2) + theme(text = element_text(size=8))
+```
+
+
+
+
+

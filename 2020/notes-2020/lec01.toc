@@ -1,5 +1,0 @@
-\beamer@sectionintoc {1}{0. Introduction to FE8828}{4}{0}{1}
-\beamer@sectionintoc {2}{Lecture 1: What's Internet? What's Web?}{20}{0}{2}
-\beamer@sectionintoc {3}{Lecture 2: Launch into the Cloud: Amazon Web Services}{45}{0}{3}
-\beamer@sectionintoc {4}{Lecture 3: R Markdown and R Shiny/1: layout}{47}{0}{4}
-\beamer@sectionintoc {5}{Lecture 4: R Programming}{86}{0}{5}

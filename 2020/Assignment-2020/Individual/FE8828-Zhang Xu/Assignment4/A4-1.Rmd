@@ -1,0 +1,44 @@
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+view(bank)
+```
+
+```{r}
+ggplot(bank, aes(age,balance)) + geom_point(aes(color=housing),size=3,alpha=1/2)
+```
+
+
+```{r}
+
+ggplot(bank,aes(balance,color=marital))+geom_density()+
+  theme(axis.text.x = element_text(angle = 45,hjust = 1))
+```
+```{r}
+ggplot(bank,aes(x=balance,fill=housing
+                ))+geom_histogram(binwidth = 1000)
+
+
+```
+
+```{r}
+ggplot(data=bank,aes(age,balance))+
+  geom_point()+geom_smooth()+facet_grid(.~housing)
+```
+
+```{r}
+ggplot(bank, aes(age, balance))+ stat_density2d(aes(fill = ..level..), geom="polygon")+ scale_fill_continuous(high='darkred',low='orange')
+```
+
+```{r}
+ggplot(bank,aes(duration))+
+  geom_area(aes(fill=marital),stat="bin",alpha=0.6)
+
+```
+
+

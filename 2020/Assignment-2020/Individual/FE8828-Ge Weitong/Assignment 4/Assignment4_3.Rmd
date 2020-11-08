@@ -1,0 +1,189 @@
+```{r setup}
+library(readxl)
+library(tidyverse)
+
+library(ggplot2)
+library(fOptions)
+library(lubridate)
+library(alphavantager)
+library(shiny)
+library(readr)
+library(hablar)
+#install.packages("hablar")
+# install.packages("ggplot") 
+ # av_api_key("JF0AY4TAAGLRAH6B")
+  # To speed up download, we use compact to download recent 100 days.
+  # outputsize is default to "compact"
+    #is.na(df_res) # TRUE
+  
+if (FALSE) {
+  df_MSFT <- av_get("MSFT", av_fun =
+                 "TIME_SERIES_DAILY_ADJUSTED")
+  df_GOOG <- av_get("GOOG", av_fun =
+                 "TIME_SERIES_DAILY_ADJUSTED")
+  df_AMZN <- av_get("AMZN", av_fun =
+                 "TIME_SERIES_DAILY_ADJUSTED")
+  df_AAPL <- av_get("AAPL", av_fun =
+                 "TIME_SERIES_DAILY_ADJUSTED")
+  df_SPY <- av_get("SPY", av_fun =
+                 "TIME_SERIES_DAILY_ADJUSTED")
+  saveRDS(df_MSFT,file= "Data/MSFT.Rds")
+  saveRDS(df_GOOG,file= "Data/GOOG.Rds")
+  saveRDS(df_AMZN,file= "Data/AMZN.Rds")
+  saveRDS(df_AAPL,file= "Data/AAPL.Rds")
+  saveRDS(df_SPY,file= "Data/SPY.Rds")
+}
+```
+#read data 
+# .Rds files are uploaded in the Data Folder in Google Drive/Assignment 4/Data
+```{r}
+MSFT <- readRDS("Data/MSFT.Rds")
+GOOG <- readRDS("Data/GOOG.Rds")
+AMZN <- readRDS("Data/AMZN.Rds")
+AAPL <- readRDS("Data/AAPL.Rds")
+SPY <- readRDS("Data/SPY.Rds")
+MSFT
+```
+#allocation n
+#1m, 0.9m stocks ($22500 per stock, $90000 for SPY), 0.1m cash
+```{r}
+n <- c(allo = c(22500/head(MSFT['adjusted_close'],1),22500/head(GOOG['adjusted_close'],1),22500/head(AMZN['adjusted_close'],1),
+                    22500/head(AAPL['adjusted_close'],1),90000/head(SPY['adjusted_close'],1)))
+n <- as.integer(n)
+#n <- n %>%   convert(int(allo))
+#n[2]
+MSFT$value <- MSFT$adjusted_close*n[1]
+GOOG$value <- GOOG$adjusted_close*n[1]
+AMZN$value <- AMZN$adjusted_close*n[1]
+AAPL$value <- AAPL$adjusted_close*n[1]
+SPY$value <- SPY$adjusted_close*n[1]
+for (i in 1:100 )
+  {
+   MSFT$return[i] <- (MSFT$value[i+1] /MSFT$value[i])-1
+   GOOG$return[i] <- (GOOG$value[i+1] /GOOG$value[i])-1
+   AMZN$return[i] <- (AMZN$value[i+1] /AMZN$value[i])-1
+   AAPL$return[i] <- (AAPL$value[i+1] /AAPL$value[i])-1
+   SPY$return[i] <- (SPY$value[i+1] /SPY$value[i])-1
+}
+SPY
+#MSFT$return
+#MSFT$value[2]
+```
+#daily valuation
+```{r}
+sum(MSFT$value[2]+GOOG$value[2]+AMZN$value[2]+AAPL$value[2])
+port <- tibble(date = MSFT$timestamp, value = c(rep(0)), return=c(rep(0)),rela_return=c(rep(0)) )
+cash <- tibble(date = MSFT$timestamp, value = c(rep(100000))) 
+SP <- tibble(date = MSFT$timestamp, value = c(rep(0)), return=c(rep(0)) ,rela_return=c(rep(0)))
+```
+
+```{r}
+
+for (i in 1:100 )
+  {
+   cash$value[i+1] <-  cash$value[i]*(1+0.01/250)
+}
+cash
+for (i in 1:100 )
+  {
+   port$value[i] <-  sum(MSFT$value[i]+GOOG$value[i]+AMZN$value[i]+AAPL$value[i]+cash$value[i])
+
+   SP$value[i] <-  sum(SPY$value[i]+cash$value[i])
+
+}
+for (i in 1:100 )
+  {
+   
+   port$return[i] <- (port$value[i+1] /port$value[i])-1
+   
+   SP$return[i] <- (SP$value[i+1] /SP$value[i])-1
+}
+port$return[1] <- 0
+SP$return[1]<-0
+port   #own portfolio
+SP     #S&P portfolio
+```
+#Sharpe ratio
+```{r}
+
+Sharp_port <- (mean(na.omit(port$return)) - 0.01/250)/sd(na.omit(port$return))
+Sharp_SP <- (mean(na.omit(SP$return)) - 0.01/250)/sd(na.omit(SP$return))
+paste0("Sharpe ratio for this portfolio ", Sharp_port)
+paste0("Sharpe ratio for this S&P ", Sharp_SP )
+
+```
+#Plot a histogram of daily return.
+```{r}
+ 
+  ggplot(data = port, aes(return ))+ geom_histogram() 
+```
+#Plot total valuation, and relativity return for your investment portfolio and S&P.
+```{r}
+
+# Plot 1: total valuation vs. time of two lines : your investment portfolio, and S&P. 
+  #own portfolio value
+   ggplot(port, aes(date, value)) +goem_line()
+   ggplot(port, aes(date, value)) +goem_point()
+   #own portfolio + S&P return
+  #ggplot() + geom_point(port, mapping=aes(date, return),color="red")  + geom_point(SP, mapping=aes(date, return))
+  
+  ggplot() + geom_line(port, mapping=aes(date, return),color="red")  + geom_line(SP, mapping=aes(date, return))
+
+```
+
+# Plot 2: relative return vs. time of two lines : your investment portfolio, and S&P. The relative return = (Total valuation in 100 days / valuation on day 0 - 1).
+#relative return
+```{r}
+
+    for (i in 1:100 )
+  {
+      port$rela_return[i] <- (port$value[i] /port$value[1])
+      SP$rela_return[i] <- (SP$value[i] /SP$value[1])
+    }
+
+ port 
+ SP
+   
+ggplot() + geom_line(port, mapping=aes(date, rela_return),color="red")  + geom_line(SP, mapping=aes(date, rela_return))
+  
+```
+- Plot relative valuation for the different allocation (stocks and cash) (Hint: bar chart)
+
+It is expected to produce similar chart as geom_bar(aes(...), position = 'full').
+
+A sibling function to geom_bar (for discrete) is geom_area (for continuous variable).
+
+tibble(t = 1:10, v1 = (1:10) * 2, v2 = 30:21) %>% pivot_longer(cols = v1:v2) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name))
+
+# with position = 'full'
+tibble(t = 1:10, v1 = (1:10) * 2, v2 = 30:21) %>% pivot_longer(cols = v1:v2) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name), position = 'fill')
+  
+```{r}
+#own portfolio v.s S&P
+tibble(Date = port$date,
+       PORT= port$value,
+       SP = SP$value,
+  #     CASH = cash$value,
+       ) %>% 
+  pivot_longer(PORT:SP, names_to = "Component", values_to = 'Value') %>%
+  ggplot(.) + geom_area(aes(Date, Value, fill = Component), position = 'fill')
+
+#breakdown of own portfolio
+tibble(Date = port$date,
+       MSFT= MSFT$value,
+       GOOG = GOOG$value,
+       AMZN = AMZN$value,
+       AAPL = AAPL$value,
+       CASH = cash$value,
+       ) %>% 
+  pivot_longer(MSFT:CASH, names_to = "Component", values_to = 'Value') %>%
+  ggplot(.) + geom_area(aes(Date, Value, fill = Component), position = 'fill')
+
+
+```
+
+
+
+

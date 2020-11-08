@@ -1,0 +1,123 @@
+---
+title: "FE8828 Assignment 4-Q3"
+author: "Xu Xinzhi <sub> <Email:XXU026@e.ntu.edu.sg> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(conflicted)
+conflict_prefer("filter","dplyr")
+conflict_prefer("lag","dplyr")
+```
+
+```{r}
+library(alphavantager)
+library(tidyverse)
+library(conflicted)
+conflict_prefer("filter","dplyr")
+conflict_prefer("lag","dplyr")
+
+av_api_key("KJ8R86OYK4WZGWYC")
+df_500 <- av_get("S&P500",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# df_MSFT <- av_get("MSFT",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# df_AAPL <- av_get("AAPL",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# df_TSLA <- av_get("TSLA",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# df_EBAY <- av_get("EBAY",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# 
+#saveRDS(df_500, "S&P500.rds") 
+# saveRDS(df_MSFT, "MSFT.rds")
+# saveRDS(df_AAPL, "AAPL.rds") 
+# saveRDS(df_TSLA, "TSLA.rds") 
+# saveRDS(df_EBAY, "EBAY.rds") 
+
+df_500 <- readRDS("S_P500.rds")
+df_MSFT <- readRDS("MSFT.rds")
+df_AAPL <- readRDS("AAPL.rds")
+df_TSLA <- readRDS("TSLA.rds")
+df_EBAY <- readRDS("EBAY.rds")
+
+#initial price 2020-05-20
+m0 <- df_MSFT[1,]$adjusted_close
+a0 <- df_AAPL[1,]$adjusted_close
+t0 <- df_TSLA[1,]$adjusted_close
+e0 <- df_EBAY[1,]$adjusted_close
+s0 <- df_500[1,]$adjusted_close
+
+#initial shares
+no_m0 <- round(1e6*0.9/4/m0)
+no_a0 <- round(1e6*0.9/4/a0)
+no_t0 <- round(1e6*0.9/4/t0)
+no_e0 <- round(1e6*0.9/4/e0)
+no_s0 <- round(1e6*0.9/s0)
+```
+
+```{r}
+df <- tibble(Date = df_AAPL$timestamp, SP500 = df_500$adjusted_close, TSLA = df_TSLA$adjusted_close, AAPL = df_AAPL$adjusted_close, MSFT = df_MSFT$adjusted_close, EBAY = df_EBAY$adjusted_close,
+             Cash = 1000000*0.1*exp(0.01/250*seq(0,length(df_AAPL$adjusted_close)-1))) %>%
+  mutate(val_TSLA = no_t0*TSLA, val_AAPL = no_a0*AAPL, val_MSFT = no_m0*MSFT, val_EBAY = no_e0*EBAY, val_SP500 = no_s0*SP500) %>%
+  mutate(stock_Val = no_t0*TSLA + no_a0*AAPL + no_m0*MSFT + no_e0*EBAY)%>%  # Value for Stock
+  mutate(total_Val = stock_Val + Cash) %>%  # value for stock+cash
+  mutate(Rs = stock_Val/lag(stock_Val)-1)%>% # return for stock
+  mutate(Rp = total_Val/lag(total_Val)-1)%>%  # Daily Return of portfolio
+  mutate(total_SP_val = val_SP500 + Cash) %>% # total value for SP500 portfolio
+  mutate(R_sp = total_SP_val/lag(total_SP_val)-1)  # Return for SP500 portfolio
+df
+
+#daily return
+ggplot(df,aes(Rp)) + 
+  geom_histogram()+
+  ggtitle("Histogram of Daily Return")
+
+#total valuation
+ggplot(df) +
+  geom_line(aes(Date,total_Val),color = "red") +
+  geom_line(aes(Date,total_SP_val), color = "blue") +
+  ggtitle("The Change of Total Valuation") 
+
+#relativity return
+#relative return = (Total valuation in 100 days / valuation on day 0 - 1).
+ggplot(df) +
+  geom_line(aes(Date, (total_Val/total_Val[1])-1),color = "red")+
+  geom_line(aes(Date, (total_SP_val/total_SP_val[1])-1),color = "blue")+
+  ggtitle("Relativity Return") 
+
+```
+```{r}
+#Relative Valuation for Different Allocation - Stock and Cash
+df1 <- tibble(date = df$Date, value = df$val_AAPL, label = "AAPL")
+df2 <- tibble(date = df$Date, value = df$val_TSLA, label = "TSLA")
+df3 <- tibble(date = df$Date, value = df$val_MSFT, label = "MSFT")
+df4 <- tibble(date = df$Date, value = df$val_EBAY, label = "EBAY")
+df5 <- tibble(date = df$Date, value = df$Cash, label = "Cash")
+pdf <- bind_rows(df1,df2,df3,df4,df5) 
+ggplot(pdf) + 
+  geom_area(aes(x = date, y = value, fill = label), position = 'fill')+
+  ggtitle("Relative Valuation for Different Allocation - Stock and Cash")
+```
+
+
+```{r}
+#Relative Valuation for Different Allocation - Portfolio and SP500
+df1 <- tibble(date = df$Date, value = df$total_Val, label = "portfolio")
+df2 <- tibble(date = df$Date, value = df$total_SP_val, label = "SP500")
+pdf <- bind_rows(df1,df2) 
+ggplot(pdf) + 
+  geom_area(aes(x = date, y = value, fill = label), position = 'fill')+
+  ggtitle("Relative Valuation for Different Allocation - Portfolio and SP500")
+
+```
+
+```{r}
+SR <- (mean(df$Rp, na.rm = T) - 0.01/250) / sd(df$Rp, na.rm = T)
+cat("Sharp Ratio of portfolio =", paste(round(SR*100,2), "%", sep='') ,"\n")
+
+SR500 <- (mean(df$R_sp, na.rm = T) - 0.01/250) / sd(df$R_sp, na.rm = T)
+cat("Sharp Ratio of S&P500 =", paste(round(SR500*100,2), "%", sep=''))
+```
+
+
+

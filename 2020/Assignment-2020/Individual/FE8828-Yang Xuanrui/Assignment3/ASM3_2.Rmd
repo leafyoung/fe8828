@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+# 2.1
+```{r}
+Sys.setlocale("LC_TIME", "English")
+library(fOptions)
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(readxl)
+library(ggplot2)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+
+ASM3_2 <- read_excel("ASM3_2.xlsx", col_types = c("date",
+"numeric", "text", "numeric", "numeric",
+"text", "numeric", "numeric", "numeric",
+"text", "numeric", "numeric", "text", "numeric")) 
+
+
+ASM3_2 %>% mutate(Call="c", Today = as.Date("2020-10-9"), Underlying=1504) %>%
+      select( `Exp. Date`, Strike, `Open. Int` = `Open Int....7`, OptionType = Call,
+       Bid = Bid...4, Ask = Ask...5, Underlying, Today) -> option1
+
+ASM3_2 %>% mutate(Put ="p", Today = as.Date("2020-10-9"), Underlying=1504) %>%
+      select( `Exp. Date`, Strike, `Open. Int` = `Open Int....14`, OptionType = Put,
+       Bid = Bid...11, Ask = Ask...12, Underlying, Today) -> option2
+
+option <- bind_rows(option1,option2)
+
+option <- mutate(option, `Open. Int` = ifelse(is.na(`Open. Int`), 0, `Open. Int`))
+
+```
+
+2.2 Calcualte the total valuation of 1) call alone, 2) put alone, 3) call and put. Total Valuation = Open Interest * (Bid + Ask) / 2
+```{r}
+option %>% group_by(OptionType) %>%
+  summarise(`Total Valuation` = sum(`Open. Int` * (Bid + Ask) / 2)) %>% ungroup
+
+option %>% summarise(`Total Valuation` = sum(`Open. Int` * (Bid + Ask) / 2))
+
+```
+
+
+2.3 Find those in the money (for calls, strike < underlying. for puts, strike > underlying.) and calculate
+their total Open Interest.
+```{r}
+ITM <- filter(option, (OptionType=="c" & Strike < Underlying) | (OptionType=="p" & Strike > Underlying)) 
+sum(ITM$`Open. Int`)
+
+```
+
+
+
+2.4. Plot the volatility curve, strike v.s. vol. For strike < current price, use puts’ price; for strike > current
+price, use calls’ price.
+```{r}
+OTM <- filter(option, (OptionType=="c" & Strike > Underlying) | (OptionType=="p" & Strike < Underlying))
+
+OTM %>% rowwise() %>% mutate(
+  Vol = GBSVolatility( price=(Bid + Ask) / 2, TypeFlag = OptionType, S = Underlying, X = Strike,
+                       Time = as.numeric((as.Date(`Exp. Date`) - as.Date(Today)))/365, r = 0.03, b=0)
+  ) %>% ungroup() -> OTM2
+
+
+ggplot(OTM2, aes(Strike, Vol)) +
+geom_point() +
+geom_smooth(method = "loess", se = FALSE)
+
+```
+
+
+

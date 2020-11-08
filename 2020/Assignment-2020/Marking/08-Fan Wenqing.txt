@@ -1,0 +1,49 @@
+Fan Wenqing
+
+# A1 Shiny Web
+
+- "Delicious" idea
+
+# A2.1 Secretary
+
+- This loop only run one-time. 
+
+    for(i in 1:(N-n)){
+       if(input_list$sele_list[i] > eval_max){
+          x <- input_list$sele_list[i]
+      #cat(paste0("choice:", x,"\n"))
+          i = i + 1
+          
+       if(x == N){
+          count = count + 1
+       }
+       break
+       }else{break}
+      
+    }
+
+    # Correction
+    # Keep the code well-formatted with indent can help to avoid error.
+    for(i in 1:(N-n)){
+       if(input_list$sele_list[i] > eval_max){
+          x <- input_list$sele_list[i]
+          i <- i + 1
+
+          if(x == N){
+             count = count + 1
+          }
+          break
+       }
+    }
+
+
+# A2.2 Bond Schedule
+
+- Good
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done! Good efforts for producing the findings.
+
+

@@ -1,0 +1,232 @@
+---
+title: "Portfolio Report"
+author: "Tan Mengting"
+date: "2020/10/17"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyquant)
+library(Quandl)
+library(rvest)
+library(dygraphs)
+library(tidyverse)
+library(forecast)
+library(testit)
+library(alphavantager)
+library(ggplot2)
+library(conflicted)
+conflict_prefer("av_api_key", "alphavantager")
+av_api_key("83PICHC4CJJUCF0Y")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Data
+```{r,include=FALSE,echo=FALSE}
+df_Apple <- av_get("AAPL", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+df_Gap <- av_get("GPS", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+df_Netflix <- av_get("NFLX", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+df_Tiffany <- av_get("TIF", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+df_SP <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+
+if (FALSE) {
+  write.csv(df_Apple,"C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Apple.csv",row.names=F)
+  write.csv(df_Gap,"C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Gap.csv",row.names=F)
+  write.csv(df_Netflix,"C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Netflix.csv",row.names=F)
+  write.csv(df_Tiffany,"C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Tiffany.csv",row.names=F)
+  write.csv(df_SP,"C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/SP.csv",row.names=F)
+
+  df_Apple <- read.csv("C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Apple.csv")
+  df_Gap <- read.csv("C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Gap.csv")
+  df_Netflix <- read.csv("C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Netflix.csv")
+  df_Tiffany <- read.csv("C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/Tiffany.csv")
+  df_SP <- read.csv("C:/Users/18519/OneDrive - Nanyang Technological University/FE8828-Tan Mengting/Assignment 4/data/SP.csv")
+}
+
+
+price_Apple <- as.vector(as.matrix(df_Apple[,'adjusted_close']))
+price_Gap <- as.vector(as.matrix(df_Gap[,'adjusted_close']))
+price_Netflix <- as.vector(as.matrix(df_Netflix[,'adjusted_close']))
+price_Tiffany <- as.vector(as.matrix(df_Tiffany[,'adjusted_close']))
+price_SP <- as.vector(as.matrix(df_SP[,'adjusted_close']))
+
+```
+
+# Stock Allocation
+```{r,echo=FALSE,include=FALSE}
+total <- 1000000
+invest <- 900000
+single <- invest/4
+
+value_Apple <- vector()
+value_Gap <- vector()
+value_Netflix <- vector()
+value_Tiffany <- vector()
+value <- vector()
+value_cash <- vector()
+value_SP <- vector()
+
+return_Apple <- vector()
+return_Gap <- vector()
+return_Netflix <- vector()
+return_Tiffany <- vector()
+return <- vector()
+return_SP <- vector()
+
+n0 <- total %/% price_SP[1]
+n1 <- single %/% price_Apple[1]
+n2 <- single %/% price_Gap[1]
+n3 <- single %/% price_Netflix[1]
+n4 <- single %/% price_Tiffany[1]
+
+cash <- 1000000-(price_Apple[1]*n1 + 
+                 price_Gap[1]*n2 + 
+                 price_Netflix[1]*n3 + 
+                 price_Tiffany[1]*n4)
+
+n_df <- data.frame( Type=c("Apple","Gap","Netflix","Tiffany & Co"),
+                    "Number of Shares" = c(n1, n2, n3, n4))
+```
+
+* With $1m, the allocation scheme is as following: 
+```{r,echo=FALSE}
+paste("$",cash, "cash reserved")
+n_df  
+```
+
+```{r,echo=FALSE,include=FALSE}
+# Calculation
+Rf = 0.01/250
+for (i in 1:100){
+  value_cash <- c(value_cash,cash)
+  
+  v0 <- as.numeric(price_SP * n0)
+  value_SP <- c(value_SP, v0)
+  
+  v1 <- as.numeric(price_Apple[i] * n1)
+  value_Apple <- c(value_Apple, v1)
+  
+  v2 <- price_Gap[i] * n2
+  value_Gap <- c(value_Gap, v2)
+  
+  v3 <- as.numeric(price_Netflix[i] * n3)
+  value_Netflix <- c(value_Netflix, v3)
+  
+  v4 <- as.numeric(price_Tiffany[i] * n4)
+  value_Tiffany <- c(value_Tiffany, v4)
+  
+  v <- as.numeric(v1+v2+v3+v4+cash)
+  value <- c(value, v)
+  cash <- as.numeric(cash * (1+Rf) )
+}
+
+v_df <- data.frame(timestamp = df_Apple[,"timestamp"],
+                   total_valuation = value)
+
+value_Apple <- data.frame(type = "Apple",
+                          timestamp = df_Apple[,"timestamp"],
+                          valuation = value_Apple)
+value_Gap<- data.frame(type = "Gap",
+                       timestamp = df_Apple[,"timestamp"],
+                       valuation = value_Gap)
+value_Netflix<- data.frame(type = "Netflix",
+                           timestamp = df_Apple[,"timestamp"],
+                           valuation = value_Netflix)
+value_Tiffany<- data.frame(type = "Tiffany",
+                           timestamp = df_Apple[,"timestamp"],
+                           valuation = value_Tiffany)
+value_cash<- data.frame(type = "cash",
+                        timestamp = df_Apple[,"timestamp"],
+                        valuation = value_cash)
+
+total_v_df <- rbind.data.frame(value_Apple,
+                               value_Gap,
+                               value_Netflix,
+                               value_Tiffany,
+                               value_cash)
+
+for (i in 1:99){
+  r <- round(value_SP[i+1]/value_SP[i]-1,4)
+  return_SP <- c(return_SP, r)
+  
+  r <- round(value[i+1]/value[i]-1,4)
+  return <- c(return, r)
+}
+
+r_df <- data.frame(timestamp = df_Apple[1:99,"timestamp"],
+                   daily_return=return)
+r_SP_df <- data.frame(timestamp = df_Apple[1:99,"timestamp"],
+                      daily_return=return_SP)
+
+sharpe = (mean(return) - Rf) / sd(return)
+sharpe_SP = (mean(return_SP) - Rf) / sd(return_SP)
+s_df <- data.frame( name = c("S&P","Portfolio"),
+                    Sharpe_ratio=c(sharpe_SP, sharpe))
+```
+
+```{r, echo=FALSE,include=FALSE}
+total_v_df
+```
+# Sharpe ratio
+```{r, echo=FALSE}
+s_df
+```
+
+# Portfolio daily return histogram
+```{r, echo=FALSE}
+
+ggplot(r_df, aes(x=daily_return)) +
+  geom_histogram(bins=20) 
+```
+
+# Portfolio total valuation
+```{r, echo=FALSE}
+
+total_v_df %>%
+  group_by(timestamp) %>%
+  summarise(total_valuation = as.numeric(sum(valuation)))%>%
+  arrange(timestamp) -> res
+
+sp <-ggplot(res, aes(timestamp,total_valuation)) +
+  geom_bar(stat = 'identity', position = position_dodge(width=5)) 
+
+sp + theme_bw() +
+      theme(panel.border = element_blank(), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_line(colour = "black"),
+            axis.text.x = element_text(angle=90, hjust=1))
+```
+
+# Relativity return of portfolio against S&P index
+```{r, echo=FALSE}
+relativity <- r_df[,'daily_return'] - r_SP_df[,'daily_return']
+relativity_df <- data.frame(timestamp = df_Apple[1:99,"timestamp"],
+                            relativity_return=relativity)
+ sp <-ggplot(relativity_df, aes(x=timestamp, relativity)) +
+      geom_bar(stat = 'identity', position = position_dodge(width=1)) 
+ 
+ sp + theme_bw() +
+      theme(panel.border = element_blank(), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_line(colour = "black"),
+            axis.text.x = element_text(angle=90, hjust=1))
+```
+
+# Relative valuation for the different allocation
+```{r, echo=FALSE}
+total_v_df %>% 
+  group_by(timestamp,type) %>%
+  summarise(total_valuation = sum(valuation)) %>%
+  arrange(timestamp) -> res
+
+sp <-ggplot(res,aes(x=timestamp,y=total_valuation,fill=type))+
+  geom_bar(position = "fill",stat="identity")
+sp + theme_bw() +
+      theme(panel.border = element_blank(), 
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_line(colour = "black"),
+            axis.text.x = element_text(angle=90, hjust=1))
+  
+```

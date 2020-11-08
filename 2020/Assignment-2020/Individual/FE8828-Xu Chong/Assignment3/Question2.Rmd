@@ -1,0 +1,57 @@
+---
+title: "FE8828 Assignment for book option trades"
+author: "Xu Chong"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(knitr)
+library(fOptions)
+
+option <- read.csv("Options.csv", fileEncoding="UTF-8-BOM")
+
+```
+
+## Q2.1
+Data stored in Options.csv
+
+## Q2.2
+total valuation of call is: 1227917
+total valuation of put is: 625269.2
+total valuation of all option is: 1853187
+```{r Q2.2}
+option <- option %>% mutate(Price=(Bid+Ask)/2)
+option <- option %>% mutate(PriceAndOI=Price*Open.Int.)
+
+call <- dplyr::filter(option, option$OptionType == 'c')
+callSum <- sum( call$PriceAndOI )
+
+put <- dplyr::filter(option, option$OptionType == 'p')
+putSum <- sum( put$PriceAndOI )
+
+totalSum = callSum + putSum
+```
+
+## Q2.3
+total open interest of in the money options are: 6943
+```{r Q2.3}
+callITM <- dplyr::filter(call, call$Strike < call$Underlying )
+putITM <-dplyr::filter(put, put$Strike > put$Underlying )
+totalITMOI <- sum( callITM$Open.Int. ) + sum( putITM$Open.Int. )
+totalITMOI
+```
+## Q2.4
+Plot volatility vs. Strike
+```{r Q2.4}
+ITMOption = rbind( callITM, putITM )
+
+VolStikeTable <- 
+rowwise(ITMOption) %>% mutate(Vol = GBSVolatility(as.numeric(Price), OptionType,as.numeric(Underlying), as.numeric(Strike), as.numeric((as.Date(Exp.Date, "%m/%d/%Y") - as.Date(Today, "%m/%d/%Y"))) / 365, r = 0.01, b = 0)) 
+
+plot(VolStikeTable$Strike, VolStikeTable$Vol)
+
+```

@@ -1,0 +1,121 @@
+## Book option trades
+
+```{r setup}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE, warning = FALSE)
+library(knitr)
+library(fOptions)
+```
+
+---
+
+### 2.1 Data Preparation
+```{r}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+library(readxl)
+goog <- read_excel("D:/Assignment 3/goog.xlsx", 
+                   col_types = c("date", "numeric", "numeric", 
+                                 "numeric", "numeric", "numeric", "numeric", 
+                                 "numeric", "numeric", "numeric", "numeric", 
+                                 "numeric", "numeric", "numeric"))
+
+# Removing unneeded columns
+goog <- select(goog, -contains(c('Last', 'Change', 'Volume')))
+
+underlying = 1484.205
+today = as.Date("2020-10-08")
+
+# Duplicate Strike Price column at the back
+goog <- bind_cols(goog, select(goog, Strike))
+
+# Extracting call information
+call <- goog[-c(6:9)]
+call <- mutate(call, option = 'c')
+# Rearrange and rename columns
+call <- select(call,
+               'Exp. Date',
+               'Strike' = contains('Strike'),
+               'Open Int.' = contains('Int'),
+               'OptionType' = 'option',
+               'Bid' = contains('Bid'),
+               'Ask' = contains('Ask'))
+call <- mutate(call, 'Underlying' = underlying, 'Today' = today)
+
+
+# Extracting put information
+put <- goog[-c(2:5)]
+put <- mutate(put, option = 'p')
+# Rearrange and rename columns
+put <- select(put,
+               'Exp. Date',
+               'Strike' = contains('Strike'),
+               'Open Int.' = contains('Int'),
+               'OptionType' = 'option',
+               'Bid' = contains('Bid'),
+               'Ask' = contains('Ask'))
+put <- mutate(put, 'Underlying' = underlying, 'Today' = today)
+
+
+# Combine call and put
+goog <- bind_rows(call, put)
+
+# Replace NA with 0
+goog[is.na(goog)] <- 0
+
+kable(goog)
+```
+
+---
+
+### 2.2 Calculate Total Valuation
+```{r}
+goog %>%
+  mutate(`Valuation` = `Open Int.` * (`Bid` + `Ask`) / 2) %>%
+  group_by(OptionType) %>%
+  summarise(`Valuations` = sum(`Valuation`)) -> pcVal
+
+kable(pcVal, align="c")
+
+
+pcVal %>%
+  summarise(`Total Valuations` = sum(`Valuations`)) -> totVal
+
+kable(totVal, align="c")
+
+```
+
+---
+
+### 2.3 Find in the money and calculate Total Open Interest
+
+```{r}
+goog %>%
+  filter(((`OptionType` == 'c') & (`Strike` < underlying)) | ((`OptionType` == 'p') & (`Strike` > underlying))) %>%
+  summarise('Total Open Interest' = sum(`Open Int.`)) -> totOpInt
+
+kable(totOpInt, align="c")
+```
+
+---
+
+### 2.4 Plot volatility curve
+
+```{r}
+goog %>%
+  filter(((`OptionType` == 'c') & (`Strike` < underlying)) | ((`OptionType` == 'p') & (`Strike` > underlying))) %>%
+  rowwise() %>%
+  mutate(price = (Bid + Ask) / 2) %>%
+  mutate(
+    volatility = GBSVolatility(price = price,
+                               TypeFlag = OptionType,
+                               S = underlying,
+                               X = Strike,
+                               Time = as.numeric((as.Date("2020-12-18") - as.Date(today)))/365,
+                               r = 0.03,
+                               b = 0)) -> volCurve
+
+plot(volCurve$Strike, volCurve$volatility, xlab="Strike", ylab="Volatility", type="l")
+```

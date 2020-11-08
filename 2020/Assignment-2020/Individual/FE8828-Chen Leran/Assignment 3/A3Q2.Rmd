@@ -1,0 +1,98 @@
+---
+title: "A3Q2"
+author: "leran"
+date: "2020/10/11"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE, }
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(fOptions)
+library(conflicted)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+raw_data <- read.csv("D:/ntu_MFE/Y1TR1/FE8828/A3Q2.csv",encoding="UTF-8")
+conflict_prefer("filter", "dplyr")
+```
+
+# 1. Data Cleansing
+```{r}
+head(raw_data)
+call = data.frame(Exp.Date = raw_data[-c(1,2),1], 
+                  Strike = as.numeric(raw_data[-c(1,2),8]),
+                  "Open Int." = as.numeric(raw_data[-c(1,2),7]),
+                  OptionType = "c",
+                  Bid = as.numeric(raw_data[-c(1,2),4]),
+                  Ask = as.numeric(raw_data[-c(1,2),5]),
+                  Underlying = 1515.22,
+                  Today = as.Date("2020-10-09"))
+put = data.frame(Exp.Date = raw_data[-c(1,2),1], 
+                  Strike = as.numeric(raw_data[-c(1,2),8]),
+                  "Open Int." = as.numeric(raw_data[-c(1,2),14]),
+                  OptionType = "p",
+                  Bid = as.numeric(raw_data[-c(1,2),11]),
+                  Ask = as.numeric(raw_data[-c(1,2),12]),
+                  Underlying = 1515.22,
+                  Today = as.Date("2020-10-09"))
+df = rbind(call, put)
+head(df)
+```
+# 2. Total Valuation
+```{r}
+# Call And Put alone
+df %>%
+  group_by(CallPutAlone = OptionType) %>%
+  summarise(TotalValuation = sum(Open.Int. * (Bid + Ask) / 2, na.rm = TRUE), .groups = "drop") -> res
+res
+# Call and Put
+sum(res[,2])
+```
+
+# 3. Total Open Interest of In-The-Money Options
+```{r}
+df %>%
+  filter((OptionType == "c" & Strike < Underlying) | 
+           OptionType == "p" & Strike > Underlying) %>%
+  group_by(Exp.Date) %>%
+  summarise(TotalOpenInterest = sum(Open.Int., na.rm = TRUE), .groups = "drop")
+```
+# 4. Volatility Plot
+```{r}
+call = data.frame(Exp.Date = raw_data[-c(1,2),1], 
+                  Strike = as.numeric(raw_data[-c(1,2),8]),
+                  "Open Int." = as.numeric(raw_data[-c(1,2),7]),
+                  OptionType = "c",
+                  Bid = as.numeric(raw_data[-c(1,2),4]),
+                  Ask = as.numeric(raw_data[-c(1,2),5]),
+                  Underlying = 1515.22,
+                  Today = as.Date("2020-10-09"),
+                  volume = as.numeric(raw_data[-c(1,2),6]))
+put = data.frame(Exp.Date = raw_data[-c(1,2),1], 
+                  Strike = as.numeric(raw_data[-c(1,2),8]),
+                  "Open Int." = as.numeric(raw_data[-c(1,2),14]),
+                  OptionType = "p",
+                  Bid = as.numeric(raw_data[-c(1,2),11]),
+                  Ask = as.numeric(raw_data[-c(1,2),12]),
+                  Underlying = 1515.22,
+                  Today = as.Date("2020-10-09"),
+                 volume = as.numeric(raw_data[-c(1,2),13]))
+df = rbind(call, put)
+
+df %>%
+  filter((OptionType == "p" & Strike < (Bid+Ask)/2) | 
+           OptionType == "c" & Strike > (Bid+Ask)/2) %>%
+  rowwise() %>%
+  mutate(volatility = GBSVolatility((Bid+Ask)/2,OptionType,Underlying,
+                                    Strike,
+                          as.numeric((as.Date("2020-12-18")-Today))/365,r=0.03,b=0))  %>%
+  ungroup() -> res
+plot(res$volume, res$volatility)
+plot(res$volume, res$Strike)
+```
+
+

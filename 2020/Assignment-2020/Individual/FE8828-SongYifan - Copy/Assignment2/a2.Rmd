@@ -1,0 +1,44 @@
+---
+title: "A2"
+author: "Song Yifan"
+date: "2020/9/25"
+output: html_document
+---
+
+```{r}
+sims <- 10000
+p <- c()
+p[1] <- 0
+
+find_optimal <- function(N){
+  for (k in 1:N/2) {
+  success <- 0
+    for (n in 1:sims) {
+      x <- sample(1:N, N, replace = F)
+      init_best <- max(x[1:k])
+      candidate_score = -1
+      for (i in (k+1):N) {
+        if (x[i] > init_best) {
+          candidate_score <- x[i]
+          break
+        }
+      }
+      if (candidate_score == N)
+        success <- success + 1
+    }
+  p[k] <- success/sims
+  }
+  p
+}
+
+p <- find_optimal(50)
+p
+plot(1:length(p), p, type = "l", xlab = "Candidates Skipped",
+     ylab = "Probability of selecting Best Candidate",
+     main = "The Secretary Problem")
+```
+
+```{r}
+p
+```
+

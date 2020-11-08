@@ -10,19 +10,18 @@ ui <- fluidPage(
   verbatimTextOutput("o1")
 )
 
-scenarios <- c(-100, -50, 0, 50, 100)
-
 server <- function(input, output, session) {
   updateCheckboxGroupInput(session, "scenarios",
                            choices = scenarios,
                            selected = scenarios)  
 
-  observeEvent(input$add, {
-    
+  scenarios <- c(-100, -50, 0, 50, 100)
+  this_env <- environment()
+  observeEvent(input$add, {  
     shock <- isolate(input$shock)
-    
-    if (!(shock %in% scenarios)) {
-      scenarios <<- sort(c(scenarios, shock))
+    if (!(shock %in% scenarios)) 
+    {
+      assign('scenarios',sort(c(scenarios, shock)),envir=this_env)
       updateCheckboxGroupInput(session, "scenarios",
                                choices = scenarios,
                                selected = scenarios)

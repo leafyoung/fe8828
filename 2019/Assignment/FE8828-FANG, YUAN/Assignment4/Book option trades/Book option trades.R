@@ -2,12 +2,13 @@
 library(readxl)
 library(tidyverse)
 library(fOptions)
-Call <- read_excel("Call.xlsx", col_types = c("text", 
-                                              "text", "numeric", "numeric", "numeric", 
+
+setwd('E:/Dropbox/MFE/FE8828/2019/assignment/FE8828-FANG, YUAN/Assignment4/Book option trades')
+
+Call <- read_excel("Call.xlsx", col_types = c("numeric", "numeric", 
                                               "numeric", "numeric", "numeric", "numeric", 
                                               "numeric", "numeric"))
-Put <- read_excel("Put.xlsx", col_types = c("text", 
-                                            "text", "numeric", "numeric", "numeric", 
+Put <- read_excel("Put.xlsx", col_types = c("numeric", "numeric", 
                                             "numeric", "numeric", "numeric", "numeric", 
                                             "numeric", "numeric"))
 Call <- Call %>%

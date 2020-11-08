@@ -1,0 +1,100 @@
+---
+title: "Asssignment3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+knitr::opts_chunk$set(echo = TRUE)
+df <- read.csv(file="C:/Users/josh1/Desktop/option.csv",na.strings = "--")
+```
+
+2.1
+```{r} 
+callsub<-df 
+callsub%>%
+  select(.,Exp..Date,Strike,Open.Int.,Bid,Ask) %>%{
+  callsub['OptionType']<-"c"
+  callsub['Underlying']<-1480.17
+  callsub['Today']<-"05-Oct"
+  callsub['Price']<-callsub['Last']
+  callsub
+  }%>%
+  select(.,Exp.Date=Exp..Date,Strike,OptionType,Open_Int.=Open.Int.,Bid,Ask,Underlying,Today,Price) ->callsub  
+callsub
+  
+
+```
+
+```{r}
+putsub<-df 
+putsub%>%{
+  putsub["Open_Int."]<-putsub["Open.Int..1"]
+  putsub["Bid"]<-putsub["Bid.1"]
+  putsub["Ask"]<-putsub["Ask.1"]
+  
+  putsub
+}%>%
+select(.,Exp..Date,Strike,Open.Int.,Bid,Ask)%>%{
+  putsub['OptionType']<-"p"
+  putsub['Underlying']<-1480.17
+  putsub['Today']<-"05-Oct"
+  putsub["Price"]<-putsub["Last.1"]
+  putsub
+  
+}%>%
+  
+select(.,Exp.Date=Exp..Date,Strike,OptionType,Open_Int.=Open.Int.,Bid,Ask,Underlying,Today,Price) ->putsub
+putsub
+
+
+```
+```{r}
+data<-bind_rows(callsub,putsub)
+data
+
+```
+
+#2.2
+```{r}
+df1<-mutate(data,Valuation=Open_Int.*(Bid+Ask)/2)
+
+sum(dplyr::filter(df1,OptionType=="c")["Valuation"],na.rm=TRUE)
+sum(dplyr::filter(df1,OptionType=="p")["Valuation"],na.rm=TRUE)
+sum(df1["Valuation"],na.rm=TRUE)
+```
+#2.3
+```{r}
+df11<-bind_rows(mutate(dplyr::filter(df1,OptionType=="c"),State=ifelse(Strike<Underlying,"ITM","OTM or ATM")),
+mutate(dplyr::filter(df1,OptionType=="p"),State=ifelse(Strike>Underlying,"ITM","OTM or ATM")))
+sum(dplyr::filter(df11,State=="ITM")["Open_Int."],na.rm=TRUE)
+```
+
+#2.4
+
+```{r}
+df2<-left_join(callsub,putsub,by="Strike")
+df3<-dplyr::filter(df2, Strike < Underlying.x)
+
+df3["Price"]<-df3["Price.y"]
+df3["OptionType"]<-"p"
+df3
+
+df3
+df4<-dplyr::filter(df2, Strike >= Underlying.x)
+
+df4["Price"]<-df4["Price.x"]
+df4["OptionType"]<-"c"
+df4
+bind_rows(df3,df4)%>%
+  select(.,Price,Underlying=Underlying.y,Strike,OptionType)%>%
+  arrange(.,by="Strike") ->data2
+
+data2
+```
+```{r}
+library(fOptions)
+data2%>%rowwise() %>% mutate(.,Vol = GBSVolatility(Price,OptionType,Underlying,Strike,as.numeric((as.Date("2020-12-18") - as.Date("2020-10-06")))/365,r = 0.03, b = 0) )%>% ungroup()->data2
+plot(data2$Strike,data2$Vol)
+```

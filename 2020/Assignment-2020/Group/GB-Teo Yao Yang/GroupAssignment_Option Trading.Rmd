@@ -1,0 +1,183 @@
+---
+title: "Option Trading Assignment"
+subtitle: "FE8828 AY20/21 Group Assignment"
+author: Teo Yao Yang
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, echo=FALSE}
+library(conflicted)
+library(tidyverse)
+library(fOptions)
+library(ggplot2)
+suppressMessages({
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+})
+options(scipen = 999)
+```
+
+# Report
+1.    To produce the following table for 1 generated time series. Table will contain Option price, Delta, Gamma, Theta, Vega, Actual option PNL, Approx option PNL using Taylor's, and Difference between the two PNL
+```{r, echo=FALSE}
+ S <- 100
+  K <- 100
+  sigma <- 0.3 # realized vol can be 0.3 for [2] or 0.5 for [3]
+  drift <- 0 # drift = r - q
+  timestep <- 1 / 250
+  days <- 20 / 250
+  N <- days / timestep
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  
+  ss <- c(100,rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2))))
+  # We can calculate the volatility as below from ss
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  
+  df <- tibble(S = ss, days = N:0)
+  opt <- rowwise(df) %>% mutate(
+    price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+    delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3))
+  
+  opt$option_pnl <- opt$price - lag(opt$price)
+  opt$approx_pnl <- lag(opt$delta) * (opt$S-lag(opt$S)) + 0.5 * lag(opt$gamma) * 
+    (opt$S-lag(opt$S)) ** 2 + lag(opt$vega) * 0 + lag(opt$theta) * 1/250
+  opt$difference <- opt$option_pnl-opt$approx_pnl
+  opt
+```
+
+2.    We will then calculate the average difference in PNL between the two methods. In this case, the average difference is `r mean(opt$difference,na.rm=TRUE)`. For perspective, the total PNL for the actual method is `r sum(opt$option_pnl,na.rm=TRUE)`.
+
+3.    We will then repeat the process 1000 times, to examine the magnitude of the difference relative to the total PNL.
+```{r}
+average_diff <- data.frame()
+total_pnl <- data.frame()
+actual <- data.frame()
+approx <- data.frame()
+for(i in 1:1000){
+  S <- 100
+  K <- 100
+  sigma <- 0.3 # realized vol can be 0.3 for [2] or 0.5 for [3]
+  drift <- 0 # drift = r - q
+  timestep <- 1 / 250
+  days <- 20 / 250
+  N <- days / timestep
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  
+  ss <- c(100,rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2))))
+  # We can calculate the volatility as below from ss
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  
+  df <- tibble(S = ss, days = N:0)
+  opt <- rowwise(df) %>% mutate(
+    price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+    delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3))
+  
+  opt$option_pnl <- opt$price - lag(opt$price)
+  opt$approx_pnl <- lag(opt$delta) * (opt$S-lag(opt$S)) + 0.5 * lag(opt$gamma) * 
+    (opt$S-lag(opt$S)) ** 2 + lag(opt$vega) * 0 + lag(opt$theta) * 1/250
+  opt$difference <- opt$option_pnl-opt$approx_pnl
+  average_diff <- rbind(average_diff,mean(opt$difference,na.rm=TRUE))
+  total_pnl <- rbind(total_pnl,sum(opt$option_pnl,na.rm=TRUE))
+  actual <- rbind(actual, sum(opt$option_pnl,na.rm=TRUE))
+  approx <- rbind(approx, sum(opt$approx_pnl,na.rm=TRUE))
+}
+
+data <- data.frame(iteration=1:1000, average_diff, total_pnl,actual,approx)
+colnames(data) <- c("iteration","average_diff", "total_pnl","actual","approx")
+data
+ggplot(data, aes(actual,approx))+geom_point()
+```
+
+4.    The average of the 1000 iterations is `r mean(data$average_diff)` and `r mean(data$total_pnl)` for the difference in PNL and total PNL respectively. As the difference between the actual PNL and approximation is only `r mean(data$average_diff)/mean(data$total_pnl)*100`% of total PNL, the difference can be said to relatively small. Also, examining the scatterplot, one can see that the actual and approximation data points all lie closely to the diagonal line, suggesting that they are almost similar. Question 1 answered.
+
+5.    To answer question 2, we run 1000 simulations again, keeping sigma at 0.3. We calculate the Gamma PNL and Theta PNL. We then sum up the Gamma and Theta PNL. If they perfectly negate each other, the sum should be 0.
+```{r, echo=TRUE}
+neutral <- data.frame()
+for(i in 1:1000){
+  S <- 100
+  K <- 100
+  sigma <- 0.3 # realized vol can be 0.3 for [2] or 0.5 for [3]
+  drift <- 0 # drift = r - q
+  timestep <- 1 / 250
+  days <- 20 / 250
+  N <- days / timestep
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  
+  ss <- c(100,rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2))))
+  # We can calculate the volatility as below from ss
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  
+  df <- tibble(S = ss, days = N:0)
+  opt <- rowwise(df) %>% mutate(
+    price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+    delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3))
+  
+  opt$gamma_pnl <-  0.5 * lag(opt$gamma) * 
+    (opt$S-lag(opt$S)) ** 2 
+  opt$theta_pnl <- lag(opt$theta) * 1/250
+  neu <- sum(opt$gamma_pnl,na.rm=TRUE) + sum(opt$theta_pnl,na.rm=TRUE)
+  neutral <- rbind(neutral,neu)
+}
+
+data1 <- data.frame(iteration=1:1000, neutral)
+colnames(data1) <- c("iteration","Sum_Gamma_Theta")
+data1
+ggplot(data1,aes(Sum_Gamma_Theta)) + geom_histogram()
+```
+
+6.    After 1000 runs, the average of the sum of Gamma and Theta PNL is `r mean(data1$Sum_Gamma_Theta)`, which is relatively close to 0. Question 2 answered.
+
+7.    To answer Question 3, we run 1000 simulations, but this time with sigma at 0.5. Overall PNL is obtained by adding the cost of buying the call option at implied 0.3 volatility (~$3.38), the final payoff (Share price minus strike price, or 0, whichever is higher), and delta PNL (sum of all daily delta PNL, since we are long call and short underlying, a fall in share price means positive delta PNL).
+```{r, echo=TRUE}
+overall <- data.frame()
+options(scipen = 999)
+for(i in 1:100){
+  S <- 100
+  K <- 100
+  sigma <- 0.5 
+  drift <- 0 # drift = r - q
+  timestep <- 1 / 250
+  days <- 20 / 250
+  N <- days / timestep
+  p1 <- (drift - 0.5 * sigma * sigma) * timestep
+  p2 <- sigma * sqrt(timestep)
+  
+  ss <- c(100,rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2))))
+  # We can calculate the volatility as below from ss
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  
+  df <- tibble(S = ss, days = N:0)
+  opt <- rowwise(df) %>% mutate(
+    price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+    delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+    vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3))
+  
+    opt$delta_pnl <- -lag(opt$delta) * (opt$S-lag(opt$S))   
+    overall_pnl <- -3.384135 + max((opt$S[21]-100),0) + sum(opt$delta_pnl,na.rm=TRUE)
+    overall <- rbind (overall,overall_pnl)
+    
+}
+
+data2 <- data.frame(iteration=1:1000, overall)
+colnames(data2) <- c("iteration","overall_pnl")
+data2
+ggplot(data2,aes(overall_pnl)) + geom_histogram()
+```
+
+8.    After 1000 runs, the average of the Overall PNL is `r mean(data2$overall_pnl)`, which suggests that if realized volatility > implied volatility, there is positive Overall PnL. Question 3 answered. Also, all PNL is positive, as seen by the histogram.

@@ -1,0 +1,63 @@
+---
+title: "Assignment4-Q1"
+output: html_document
+---
+
+```{r}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+options(dplyr.summarise.inform = FALSE)
+```
+
+
+
+```{r}
+#Insight 1: The majority of people doesn't involve with loans and a high balance is expected around age 40.
+ggplot(bank,aes(x=age,y=balance,color=loan)) +
+  geom_point() +
+  theme(legend.position = "right")
+```
+```{r}
+#Insight 2: The largest variance of balance occurs in the tertiary education group
+ggplot(bank,aes(age,balance,color=loan,alpha=0.5))+
+  geom_point()+
+  facet_grid(.~education)
+
+```
+
+```{r}
+#Insight 3: Most of the duration is within 1000 days. Technicians,blue-collars and people work in management are the three main customers.
+ggplot(bank,aes(duration,fill=job))+
+  geom_histogram(binwidth = 30)
+
+ggplot(bank,aes(duration,fill=job))+
+  geom_histogram(binwidth = 30,position = "fill")+
+  coord_flip()
+```
+```{r}
+#Insight 4:The highest mean of balance occurs around age 68. Older people are expected to have a greater balance.
+ggplot(bank,aes(age,balance))+
+  stat_summary(aes(age,balance),
+               fun.min = min,
+               fun.max = max,
+               fun = mean,
+               geom = "pointrange")
+```
+
+```{r}
+#Insight 5: The largest custormer groups works in management with a tertiary background.
+ggplot(bank)+
+  geom_bar(aes(job,fill=marital,position="fill"))+
+  coord_polar()
+```
+
+```{r}
+#Insight 6: Campaigns are preferred by people with an education background higher than primary. A small number of campaigns are expected for the customer majoriy.
+ggplot(bank)+
+  geom_line(aes(x=campaign,y=balance,color=education))
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

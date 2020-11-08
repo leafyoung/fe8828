@@ -1,0 +1,69 @@
+---
+title: "Assignmen 3.2"
+author: "Xiang Guangpei"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#2.1
+library(readxl)
+library(dplyr)
+library(fOptions)
+library(conflicted)
+conflict_prefer("filter","dplyr")
+conflict_prefer("lag","dplyr")
+Dataset <- read_excel("Dataset.xls",
+col_types = c("date", "numeric", "text",
+"numeric", "numeric", "text", "text",
+"numeric", "numeric", "text", "numeric",
+"numeric", "text", "numeric"))
+#2.1
+df <- Dataset %>%
+  select(-Last...2,-Change...3,-Volume...6,-Last...9,-Change...10,-Volume...13)
+date <- c(df$`Exp. Date`,df$`Exp. Date`)
+strike <- c(df$Strike,df$Strike)
+open_int <- c(df$`Open Int....7`,df$`Open Int....14`)
+option_type <- c(rep("c",38),rep("p",38))
+bid <- c(df$Bid...4,df$Bid...11)      
+ask <- c(df$Ask...5,df$Ask...12)
+underlying <- c(rep(1515.22,76))
+today <- c(rep("OCT 09, 2020",76))
+df1 <- tibble("Exp. Date"=date,"Strike"=strike,"Open Int."=open_int,"OptionType"=option_type,"Bid"=bid,"Ask"=ask,"Underlying"=underlying,"Today"=today)
+View(df1)
+```
+
+```{r}
+#2.2
+a<-df1 %>%
+  group_by(OptionType) %>%
+  summarise(Option_valuation= sum(valuation = as.numeric(`Open Int.`)*(Bid+Ask)/2,na.rm = TRUE)) 
+b<-df1 %>%
+  summarise(Total_valuation= sum(valuation = as.numeric(`Open Int.`)*(Bid+Ask)/2,na.rm = TRUE))
+bind_rows(a,b)
+```
+
+```{r}
+#2.3
+df1 %>%
+  filter( (OptionType == "c" & Strike < Underlying) | (OptionType == "p" & Strike > Underlying) ) %>%
+  summarise(Total_Open_interest = sum(as.numeric(`Open Int.`), na.rm = TRUE))
+```
+
+```{r}
+#2.4
+df2 <- df1 %>%
+  group_by(OptionType) %>%
+  filter((OptionType == "p" & Strike < Underlying) | (OptionType == "c" & Strike > Underlying))
+df3 <- df2 %>% rowwise() %>% mutate(
+  Volatility = GBSVolatility((Bid+Ask)/2,OptionType,Underlying,Strike,as.numeric((as.Date("2020-12-18"      ) - as.Date("2020-10-09")))/365,r=0.03,b=0)) %>% ungroup()
+plot(df3$Strike,df3$Volatility)
+
+```
+
+
+

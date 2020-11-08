@@ -1,0 +1,243 @@
+---
+title: "Group Assignment Q2"
+author: "Yang Dun, Ge Weitong, Li Zichang, Wu Hongsheng, Xiang ZiShun"
+output: html_document
+---
+
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(conflicted)
+library("dplyr")
+library(fOptions)
+library(quantmod)
+library(tibble)
+library(ggplot2)
+conflict_prefer("filter","dplyr")
+conflict_prefer("tag","dplyr")
+conflict_prefer("lag","dplyr")
+```
+  
+  \
+
+### Book Option Trades  
+
+  \
+The following analysis is based on a portfolio of long 1000 call options and short delta amount of underlying to make it delta neutral.
+
+It is assumed that we can only trade integer number of shares and there is no transaction cost.  
+  \
+  
+```{r set intial parameters}
+#We assume the portfolio has 1000 call options for ease of hedging.
+size <- 1000
+# volatility for generating share price, the true volatility
+sigma <- 0.4
+#implied volatility for pricing call option, which is the market view
+imsigma <- 0.3
+r <- 0
+q <- 0
+drift <- r-q
+timestep <- 1/250
+days=20/250
+N <- days/timestep
+p1 <- (drift-0.5*sigma**2)*timestep
+p2 <- sigma*sqrt(timestep)
+
+#define analytic stats
+pnl_pct_error <- c()
+pnl_error <- c()
+pnl_actual <- c()
+sum_gamma_theta_pnl <- c()
+overall_profit <- c()
+sigma_r <- c()
+
+# repeat the simulation 1000 times
+case=1000
+i <- 0
+
+repeat{
+  #generate random initial price at day 0
+  S0 <- runif(1,1,100)
+  K <- S0
+  #calcualte greeks and call price for end of day0 based on implied volatility and 1000 call options
+  vega0  <- GBSGreeks("Vega","c",S=S0,X=K,Time=days,r=r,b=0,sigma=imsigma)
+  delta0 <- GBSGreeks("Delta","c",S=S0,X=K,Time=days,r=r,b=0,sigma=imsigma)
+  gamma0 <- GBSGreeks("Gamma","c",S=S0,X=K,Time=days,r=r,b=0,sigma=imsigma)
+  theta0 <- GBSGreeks("Theta","c",S=S0,X=K,Time=days,r=r,b=0,sigma=imsigma)
+  price0 <- GBSOption("c",S=S0,X=K,Time=days,r=r,b=0,sigma=imsigma)@price
+  
+  # #calculate initial number of share to sell to neutralize delta
+  # hedge_s0 <- -1*round(delta0*size)
+  # 
+  # #calculate the cost of initial portfolio
+  # cost <- -1*price0*size
+  
+  ####################### simulation
+  
+  S_path <- c(S0,rep(S0,N)*c(cumprod(rlnorm(N,mean=p1,sd=p2))))
+  
+  Time_series <- tibble(end_of_day=0:20,
+                        Tau=seq(days,0,by=-timestep),
+                        s_path=S_path)%>%
+                 rowwise()%>%
+                 #self note: use "=" in mutate, not" <- "
+                 #option is priced based on market view of implied volatility 
+                 mutate(
+                    vega  = GBSGreeks("Vega","c",S=s_path,X=K,Time=Tau,r=0,b=0,sigma=imsigma),
+                    delta = GBSGreeks("Delta","c",S=s_path,X=K,Time=Tau,r=0,b=0,sigma=imsigma),
+                    gamma = GBSGreeks("Gamma","c",S=s_path,X=K,Time=Tau,r=0,b=0,sigma=imsigma),
+                    theta = GBSGreeks("Theta","c",S=s_path,X=K,Time=Tau,r=0,b=0,sigma=imsigma),
+                    price = GBSOption("c",S=s_path,X=K,Time=Tau,r=r,b=0,sigma=imsigma)@price)%>%
+                #self note: need to ungroup after rowwise, otherwise delta_t below will have problem
+                ungroup()%>%
+                # replace date0's data with initial setting in case sigma is not equal to imsigma
+                mutate(
+                    # vega  = c(vega0,vega[-1]),
+                    # delta = c(delta0,delta[-1]),
+                    # gamma = c(gamma0,gamma[-1]),
+                    # theta = c(theta0,theta[-1]),
+                    # price = c(price0,price[-1]),
+                    delta_s=c(0,(s_path-lag(s_path))[-1]),
+                    delta_t = c(0,rep(timestep,N)),
+                    delta_vol=rep(0,N+1),
+                    ##hedge_s is the amount of shares to sell to neutralize delta
+                    #hedge_s=-1*floor(delta*size),
+                    hedge_s=-1*round(delta*size),
+                    
+                    #pnl_c1 is the option pnl, pnl_c2 is approximate option pnl
+                    #pnl_hedge is the pnl realized by shorting delta amount of shares each day
+                    #Pnl are calculated on cumulative basis
+                    pnl_c1=cumsum(c(0,size*(price-lag(price))[-1])),
+                    pnl_c2=cumsum(c(0,size*(lag(delta)*delta_s+
+                                              0.5*lag(gamma)*delta_s**2+lag(vega)*delta_vol+lag(theta)*delta_t)[-1])),
+                    pnl_hedge = cumsum(c(0,(lag(hedge_s)*delta_s)[-1])),
+                    gamma_theta_pnl=cumsum(c(0,size*(0.5*lag(gamma)*delta_s**2+lag(theta)*delta_t)[-1])),
+                    gamma_pnl=c(0,size*(0.5*lag(gamma)*delta_s**2)[-1]),
+                    theta_pnl=c(0,size*(lag(theta)*delta_t)[-1]),
+                    #debug
+                    #test_vega=c(0,size*(lag(vega)*delta_vol)[-1])
+                    )  #%>%
+                 #calculate implied volatility so as to calculate delta_vol
+                 # rowwise()%>%
+                 # mutate(IV=GBSVolatility(price,"c",S=s_path,X =K,Time =Tau,r =r,b = 0,tot=0.001,maxiter=500))%>%
+                 # ungroup()%>%
+                 # mutate(delta_vol=c(0,(IV-lag(IV))[-1]))
+  
+  #calculate summary stats.
+  pnl_pct_error <- c(pnl_pct_error,100*(Time_series$pnl_c2[nrow(Time_series)]-Time_series$pnl_c1[nrow(Time_series)])/abs(Time_series$pnl_c1[nrow(Time_series)]))
+  
+
+  #difference between estimated pnl and actual pnl
+  pnl_error= c(pnl_error,Time_series$pnl_c2[nrow(Time_series)]-Time_series$pnl_c1[nrow(Time_series)])
+  #actual pnl
+  pnl_actual = c(pnl_actual,Time_series$pnl_c1[nrow(Time_series)])  
+  sum_gamma_theta_pnl <- c(sum_gamma_theta_pnl,Time_series$gamma_theta_pnl[nrow(Time_series)])
+  #sd of the time series
+  sigma_r <- c(sigma_r,sd(log(Time_series$s_path/lag(Time_series$s_path))[-1])/sqrt(timestep))
+  #overall profit of portfolio at day 20
+  overall_profit <- c(overall_profit,-1*size*price0+
+                                     #size*max(0,Time_series$price[nrow(Time_series)])+
+                                     size*max(0,Time_series$s_path[nrow(Time_series)]-Time_series$s_path[1])+
+                                     Time_series$pnl_hedge[nrow(Time_series)])
+  
+  ###debug to see the detail of extreme case
+  # if(abs(100*(Time_series$pnl_c2[nrow(Time_series)]-Time_series$pnl_c1[nrow(Time_series)])/abs(Time_series$pnl_c1[nrow(Time_series)]))>400   #)
+  # {
+  #   break
+  # }
+  
+  i=i+1
+  if(i==case){
+    break
+    }
+}
+# debug
+# summary <- tibble(trial=1:(i+1),#case,
+ summary <- tibble(trial=1:case,
+                  pnl_error_pct=pnl_pct_error,
+                  pnl_error=pnl_error,
+                  pnl_actual= pnl_actual,
+                  sigma_actual=sigma_r,
+                  total_profit=overall_profit,
+                  sum_gamma_theta_pnl=sum_gamma_theta_pnl)
+```
+
+  \
+  
+### Point 1  
+  
+  \
+The density plot and CDF plot below both show that the estiamted PnL based on the first-order taylor expansion is generally very close to the true PnL, i.e. the % error for most cases is very close to 0.
+
+It is also noted that there are several outliers due to high realized volatility, or large price swings, in those simulation cases. 
+
+The median of the total error (sum of 20 days) is `r median(summary$pnl_error_pct)`% of the actual PnL, the average of total error is `r mean(summary$pnl_error_pct)`% of the actual PnL.  
+  \
+  
+
+```{r plot}
+
+ggplot(summary,aes(pnl_pct_error))+geom_density()+
+              scale_x_continuous(name = "% Error Between Actual PNL And Estimated PNL")+
+              ggtitle("Density of % Error")+theme_bw()
+#boxplot 
+# ggplot(summary,aes(pnl_pct_error))+geom_boxplot()
+
+ggplot(summary,aes(pnl_pct_error))+stat_ecdf(geom="point")+
+              scale_x_continuous(name = "% Error Between Actual PNL And Estimated PNL")+
+              scale_y_continuous(name = "Culmulative Probability")+
+              ggtitle("Empirical CDF for % Error of Estimated PnL")+theme_bw()
+
+#density exclude outlier
+ggplot(data=summary%>%filter(abs(pnl_pct_error)<100))+geom_density(aes(pnl_error_pct))+
+              scale_x_continuous(name = "% Error Between Actual PNL And Estimated PNL")+
+              ggtitle("Plot For Point 1 Excluding Outliers")+theme_bw()
+
+```
+
+  \
+
+### Point 2  
+  
+  \
+The Chart 2.1 below plots the sum of Gamma pnl and Theta Pnl per contract (Y axis) against the absolute value of difference between realized vol and implied vol (X axis). It shows that when X approaches zero, Y tends to zero as well.
+
+The chart 2.2 is a zoom-in of chart 2.1 showing that when the absolute difference betweeen realized volatility and implied volatility becomes very small (<1%), the sum of gamma and theta PnL also becomes very small (despite some small deviations from zero).  
+  \
+  
+
+```{r plot 2}
+ggplot(data=mutate(summary,sigma_dif=abs(sigma_actual-imsigma)),aes(sigma_dif,sum_gamma_theta_pnl/size))+geom_point()+
+              scale_x_continuous(name = "DIfference Between Acrtual Vol And Implied Vol")+
+              scale_y_continuous(name = "Sum of Gamma And Theta PnL Per Contract")+
+              ggtitle("2.1 Absolute Difference in Volatility vs Sum of Gamma & Theta PnL Per Contract")+theme_bw()
+
+
+# take a closer look
+ggplot(data=summary%>%mutate(sigma_dif=abs(sigma_actual-imsigma))%>%filter(sigma_dif<0.01),aes(sigma_dif,sum_gamma_theta_pnl/size))+geom_point()+
+              scale_x_continuous(name = "Absolute DIfference Between Acrtual Vol And Implied Vol")+
+              scale_y_continuous(name = "Sum of Gamma And Theta PNL")+
+              ggtitle("2.2 Absolute Difference in Volatility vs Sum of Gamma & Theta PnL-Zoom In")+theme_bw()
+```
+
+  \
+
+### Point 3  
+  
+  \
+The plot below shows that when realized volatility is larger than the implied volatility, we have higher probability of gaining a positive profit.
+
+On the other hand, we are more likely to suffer a loss if actual volatility is lower than the implied volatility.
+
+There are some points falling into the second and fourth quarter due to imperfect hedging and possibly small rounding errors.  
+  \
+  
+```{r ppoint 3 plot}
+ggplot(data=summary%>%mutate(sigma_df=sigma_actual-imsigma),aes(sigma_df,total_profit/size))+geom_point()+
+                                  geom_vline(xintercept = 0)+geom_hline(yintercept = 0)+
+                                  scale_x_continuous(name="Realized Vol - Implied Vol")+
+                                  scale_y_continuous(name="Total Profit Per Contract")+
+                                  ggtitle("Difference in Volatility vs Total Profit Per Contract")+theme_bw()
+
+
+```

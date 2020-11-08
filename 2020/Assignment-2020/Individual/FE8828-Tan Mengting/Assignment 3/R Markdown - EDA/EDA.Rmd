@@ -1,0 +1,162 @@
+---
+title: "Exploratory Data Analysis"
+author: "Tan Mengting"
+date: "2020/10/9"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Markdown
+# Finding #1
+## Discover insights of age distribution, relationship with crdit and mean balance
+* Survey participants are mostly composed of young and middle-aged people
+* 60-70 group has **smaller size** but **larger balance mean**, but the eldest group has a lower balance mean.
+* Peopel below 50 tend to have more credit, but the total credit ownership rate is very low(max  4%).
+* The youngest and oldest group tend to have higher subscription rate.
+* People of middle age have the largest subscription size but the rate is the lowest.
+```{r}
+
+group_by(bank, age) %>%
+  summarise(count = n(), 
+            balance_mean = mean(balance), 
+            default_count = sum(ifelse(default == "no", 0, 1)),
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            "default_rate(%)" = default_count/count*100,
+            "subscription_rate(%)" = subscription_count/count*100) %>%
+  arrange(age) -> res
+res
+res %>% plot
+
+```
+
+# Finding #2
+## Discover insights of job and age
+* Only students and retired people have obvious age bias.
+```{r}
+ggplot(bank, aes(job, age)) + 
+  geom_point() +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+```
+
+# Finding #3
+## Discover insights of job distribution, relationship with balance mean, default rate and subscription rate
+* Many more people take blue0collar and management work.
+* Retired people have highest mean balance.
+* Blue-collar, unemployed and services people have lowest mean balance.
+```{r}
+group_by(bank, job) %>%
+  summarise(count = n(), 
+            balance_mean = mean(balance), 
+            default_count = sum(ifelse(default == "no", 0, 1)),
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            "default_rate(%)" = round(default_count/count*100,2),
+            "subscription_rate(%)" = round(subscription_count/count*100,2)) %>%
+  arrange(job) -> res
+res
+
+ggplot(res, aes(job, count, fill=job))  +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+ggplot(res, aes(job, balance_mean, fill=job))  +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+```
+
+# Finding #4 
+## Discover insights of education and job
+* Primary education leads to most blue-collar jobs.
+* Secondary education leads to most admin, blue-collar, services and technician jobs.
+* Tertiary educaiton leads to most	management jobs, and these prople contributed to the largest total balance.
+```{r}
+group_by(bank, education,job) %>%
+  summarise(count = n(), 
+            balance_mean = mean(balance),
+            balance_sum = sum(balance),
+            default_count = sum(ifelse(default == "no", 0, 1)),
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            "default_rate(%)" = default_count/count*100,
+            "subscription_rate(%)" = subscription_count/count*100) %>%
+  arrange(education) -> res
+res
+
+```
+
+# Finding #5 
+## Discover insights of housing loan
+* People with no housing loans tend to be elder, have more balance and double the subscription rate than those with housing loans
+```{r}
+group_by(bank, housing) %>%
+  summarise(count = n(), 
+            balance_mean = mean(balance), 
+            age_mean = mean(age), 
+            default_count = sum(ifelse(default == "no", 0, 1)),
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            "default_rate(%)" = default_count/count*100,
+            "subscription_rate(%)" = subscription_count/count*100) %>%
+  arrange(housing) -> res
+res
+```
+
+
+# Finding #6
+## Discover insights of contact and type
+* Contacts through teltphone tend to have shorter duration but almost same subscription rate as cellular contact and much higher than unknown contact
+```{r}
+
+ggplot(bank, aes(contact, duration)) + 
+  geom_point() +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+
+group_by(bank, contact) %>%
+  summarise(count = n(), 
+            balance_mean = mean(balance), 
+            duration_mean = mean(duration),
+            default_count = sum(ifelse(default == "no", 0, 1)),
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            "default_rate(%)" = default_count/count*100,
+            "subscription_rate(%)" = subscription_count/count*100) %>%
+  arrange(contact) -> res
+res
+
+
+```
+
+
+# Finding #7
+## Discover insights of last contact month
+* People who last contacted in May tend to have the highest subscription rate and also the largest subscription number
+```{r}
+
+bank %>%
+  group_by(month,y) %>%
+  summarise(count = n()) %>%
+  arrange(month) -> res
+res
+
+ggplot(res, aes(month, count, fill=y)) +
+  geom_bar(stat = 'identity', position = 'dodge') 
+
+
+group_by(bank, month) %>%
+  summarise(count = n(), 
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            "subscription_rate(%)" = round(subscription_count/count*100,2)) %>%
+  arrange(month) -> res
+res
+
+ggplot(res, aes(month, count))  +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme(axis.text.x = element_text(angle=90, hjust=1))
+```

@@ -1,0 +1,111 @@
+---
+title: "shiny"
+author: "LI Xinrui"
+date: "12/10/2020"
+output: html_document
+---
+
+
+```{r}
+
+library(shiny)
+library(ggplot2)
+library(bizdays)
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+```{r}
+ui <- fluidPage(
+  fluidRow(
+    column(3,
+           dateInput("start_date", "start_date", value = "2010-01-01", format = "mm/dd/yyyy"),
+           numericInput("tenor", "Tenor", 5),
+           numericInput("rate", "Coupon rate", 0.10),
+           numericInput("coupon_frequency", "Coupon Frequency", 2),
+           numericInput("yield", "Yield to maturity", 0.10),
+           actionButton("go", "Go"),),
+    column(8, offset = 1,
+               plotOutput("p1")))
+)
+
+server <- function(input, output, session) {
+  observeEvent(input$go, {
+     output$p1 <- renderPlot({ 
+       Ddates <- seq(input$start_date+(1/input$coupon_frequency)*365, input$start_date+input$tenor*365, by=(1/input$coupon_frequency)*365)
+       NPV = rep(NA, input$tenor*input$coupon_frequency)
+       for(i in 1:(input$tenor*input$coupon_frequency)){
+         NPV[i] = (1000*input$rate/input$coupon_frequency)/(prod(1+input$yield/input$coupon_frequency)**(i))
+         }
+       NPV[input$tenor*input$coupon_frequency] = (1000*(1+input$rate/input$coupon_frequency))/(prod(1+input$yield/input$coupon_frequency)**(input$tenor*input$coupon_frequency))
+       schedule<-data.frame(Ddates, NPV)
+       ggplot(data = schedule) + 
+         geom_bar(mapping = aes(x = Ddates, y = NPV), stat = "identity")
+       })
+    })
+}
+
+shinyApp(ui, server)
+```
+
+
+```{r}
+
+Ddates <- seq(as.Date("2010-01-01"), as.Date("2010-01-01")+5*365, by=(1/2)*365)
+Ddates
+```
+
+
+
+```{r}
+ui <- fluidPage(
+  fluidRow(
+        column(3,
+               h4("Please enter the stock ticker"),
+               textInput("stock_ticker","stock_ticker"),
+               actionButton("go", "Go"),
+        ),
+        column(8, offset = 1,
+               plotOutput("p1")
+        )
+
+)
+)
+
+# Define server logic required to draw a histogram
+server <- function(input, output,session) {
+  observeEvent(input$go, {
+    output$p1<-renderPlot({
+      library(ggplot2)
+      av_api_key("02LJKLGOH7WD6PC1")
+      # To speed up download, we use compact to download recent 100 days.
+      # outputsize is default to "compact"
+      df_res <- av_get(input$stock_ticker,av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+      saveRDS(df_res,paste0(input$stock_ticker,".Rds"))
+      df_res<-readRDS(paste0(input$stock_ticker,".Rds"))
+      
+      # plots
+      plot(df_res$timestamp, df_res$adjusted_close) 
+      lines(df_res$timestamp, df_res$adjusted_close)
+      })
+  })
+}
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+

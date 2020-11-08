@@ -1,0 +1,123 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Ge Weitong  "
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+#bank
+
+# Finding #1
+#This data contains 4521  rows.  
+# columns / information avaialble 
+```{r}
+cat(paste0("This data contains ",  nrow(bank),  " rows\n"))
+
+cat(paste0("This data contains information on :", " \n"))
+print(colnames(bank))
+```
+# Finding #2
+#the big age group is 30, with count of 1808
+```{r}
+bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+
+res
+plot(res$age_group, res$count)
+```
+#bank
+
+# Discover insights of data frame: bank
+#finding 3: Employment & Age
+
+#Below plot shows age-group and employment type. for example, for age_group 30, majority are working as Blue-collar and management; 
+#for age_group 60 and above, majority are retired.
+```{r}
+df <- bank %>%  #filter(balance > mean(balance)) %>%t
+  group_by(age_group = (age %/% 10) * 10, job ) %>% summarise(n = n())
+knitr::kable(df)
+
+df %>%
+ggplot(aes(x=age_group, y=job)) +
+geom_point(aes(size = n), alpha = 1/4, color = "red")
+geom_smooth(se = FALSE)
+
+ggplot(aes(x = age_group, y = education)) +
+geom_point(aes(size = n), alpha = 1/4, color = "red") +
+geom_point(aes(size = default_count), alpha = 1/3, color = "blue") +
+geom_smooth(se = FALSE)
+```
+ 
+# Finding 4 Social attributes.
+#average age of single is 34, while average age of marriage is 43, similar to divourced. 
+# Single and Married people tend to keep more bank balance in average, while divorsed people have the lowest balance in average.
+```{r}
+df <- bank %>% 
+  group_by(marital) %>% 
+   summarise(ave_balance = mean(balance),
+             ave_age = mean(age),
+             house_loan = mean(ifelse(housing == "yes", 1, 0)))
+  
+knitr::kable(df)
+```
+# Finding 5
+# for people who own a house, they tend to have more loan and subscription, comparing to people who doesnot own property.
+# among married people, there are 1625 married people own housing whi;e 1172 marrried couple who doesnot own property.
+```{r 5}
+df <- bank %>%
+  group_by(housing) %>%
+  summarise(sloan = sum(ifelse(loan == "yes", 1, 0)), 
+            smarital = sum(ifelse(marital == "married", 1, 0)), 
+            sdefault = sum(ifelse(default == "yes", 1, 0)),
+            subscription = sum(ifelse(y == "yes", 1, 0)),
+            count = n())
+knitr::kable(df)
+```
+# Finding 6
+# plot the average bank balance for different ages
+# From age 10 to 50, the bank balance slowly increse with age increases, and the difference of bank balance is small comaring to peers within same age group.
+#After age 60 and above, the difference of bank balance is quite huge comaring to peers within same age group, for example, for age group 60-70,  the highest bank balance is >$10,000 while the lowest balance is <$1500.
+```{r}
+
+bank_age <- group_by(bank, age) %>%
+summarise(balance_mean = mean(balance),
+count = n(),
+default_count = sum(ifelse(default == "no", 0, 1)))
+
+knitr::kable(bank_age)
+
+bank_age %>%
+ggplot(aes(x = age, y = balance_mean)) +
+geom_point(aes(size = count), alpha = 1/4, color = "red") +
+geom_point(aes(size = default_count), alpha = 1/3, color = "blue") +
+geom_smooth(se = FALSE)
+```
+# Finding 7
+#With age increase, more people to get married. for example, for youth below age 30, only 29.2% youth people get married.
+```{r}
+df <- mutate(bank, age_group = case_when(
+  age <= 30 ~ "youth",
+  age <= 40 ~ "middle-age",
+  age <= 50 ~ "senior",
+  age >  50 ~ "elderly"
+))
+df1 <- df %>% 
+  group_by(age_group) %>% 
+  summarise(married_percentage = sum(ifelse(marital == "married", 1, 0))/n()) %>%
+  arrange(married_percentage)
+knitr::kable(df1)
+#plot(df1$age_group, df1$married_percentage)
+```
+
+
+

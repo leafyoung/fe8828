@@ -1,0 +1,108 @@
+---
+title: "Question3"
+output: html_document
+---
+# Step1 Read data
+```{r setup, include=FALSE}
+library(alphavantager)
+library(dplyr)
+library(ggplot2)
+
+av_api_key("V3XLEMS8AXD32CYN")
+
+if (FALSE) {
+  df0 <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "compact")
+  write.csv(df0,'data/SPY.csv')
+  
+  df1 <- av_get("AAPL", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "compact")
+  write.csv(df1,'data/AAPL.csv')
+  
+  df2 <- av_get("FB", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "compact")
+  write.csv(df2,'data/FB.csv')
+  
+  df3 <- av_get("TSLA", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "compact")
+  write.csv(df3,'data/TSLA.csv')
+  
+  df4 <- av_get("V", av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize = "compact")
+  write.csv(df4,'data/V.csv')
+}
+
+df0 <- read.csv('data/SPY.csv')
+df1 <- read.csv('data/AAPL.csv')
+df2 <- read.csv('data/FB.csv')
+df3 <- read.csv('data/TSLA.csv')
+df4 <- read.csv('data/V.csv')
+```
+
+# Step 2: Create 2 porffolio
+pf1 is market portfolio(S&P), 
+pf2 is equally weighted portfolio.
+```{r step2}
+pf1_weights <- as.integer(900000 / df0$adjusted_close[1])
+pf1_cash <- 1000000 - pf1_weights * df0$adjusted_close[1]
+
+pf2_weights_1 <- as.integer(225000 / df1$adjusted_close[1])
+pf2_weights_2 <- as.integer(225000 / df2$adjusted_close[1])
+pf2_weights_3 <- as.integer(225000 / df3$adjusted_close[1])
+pf2_weights_4 <- as.integer(225000 / df4$adjusted_close[1])
+pf2_cash <- 1000000 - pf2_weights_1 * df1$adjusted_close[1] -
+  pf2_weights_2 * df2$adjusted_close[1] - 
+  pf2_weights_3 * df3$adjusted_close[1] - 
+  pf2_weights_4 * df4$adjusted_close[1]
+
+```
+
+# Step 3: Calculate Return by day and Sharpe Ratio
+Rp1(mean) = 0.001377896
+Rp2(mean) = 0.004719905
+sd1 = 0.01125904
+sd2 = 0.02590812
+sharpe1 = 0.1188286
+sharpe2 = 0.1806347
+```{r step3}
+pf1_value <- df0$adjusted_close * pf1_weights + pf1_cash
+
+pf2_value <- df1$adjusted_close * pf2_weights_1 + 
+  df2$adjusted_close * pf2_weights_2 + 
+  df3$adjusted_close * pf2_weights_3 + 
+  df4$adjusted_close * pf2_weights_4 + pf2_cash
+
+pf1_return <- pf1_value / dplyr::lag(pf1_value,1) - 1
+pf1_return[1] <- 0
+pf2_return <- pf2_value / dplyr::lag(pf2_value,1) - 1
+pf2_return[1] <- 0
+
+pf1_mean <- mean(pf1_return)
+pf2_mean <- mean(pf2_return)
+
+pf1_sd <- sd(pf1_return)
+pf2_sd <- sd(pf2_return)
+
+pf1_sharpe <- ( pf1_mean - 0.01/250 ) / pf1_sd
+pf2_sharpe <- ( pf2_mean - 0.01/250 ) / pf2_sd
+
+```
+
+
+# Step 4: Plot1 - Total Valuation
+
+```{r step4}
+res <- data.frame( time=df0$timestamp, market=pf1_value, investment=pf2_value)
+res <- data.frame( time=as.Date(df0$timestamp), market=pf1_value, investment=pf2_value)
+ggplot(res, aes(x=time)) + 
+  geom_line(aes(y = market), color = "darkred", linetype="twodash") + 
+  geom_line(aes(y = investment), color="steelblue")
+```
+
+
+# Step 5: Plot2 - Relative Return
+
+```{r step5}
+res1 <- data.frame( time=df0$timestamp, return=pf1_return)
+res2 <- data.frame( time=df0$timestamp, return=pf2_return)
+res <- rbind(data.frame(return = pf1_return, port = 'market'),
+              data.frame(return = pf2_return, port = 'investment'))
+ggplot(res, aes(x=return, fill=port)) +
+  geom_histogram(binwidth=0.005, alpha = 0.5,)
+
+```

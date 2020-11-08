@@ -1,0 +1,238 @@
+---
+title: "Assignment 4.3"
+author: "yang dun"
+date: "11/10/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup,echo=FALSE}
+library(conflicted)
+library(dplyr)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(tibble)
+library(tidyr)
+library(scales)   #include unit_format() function
+library(alphavantager)
+
+av_api_key("XTJXSALAN94R88N8")
+conflict_prefer("filter","dplyr")
+conflict_prefer("tag","dplyr")
+conflict_prefer("lag","dplyr")
+knitr::opts_chunk$set(echo = TRUE)
+```
+      
+
+```{r download and save data, only run once, echo=FALSE}
+#self note: av_get daily data, outputsize is only compact (100days) or full.
+# RCL <- av_get("RCL",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# AMZN <- av_get("AMZN",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# PENN <- av_get("PENN",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# TSLA <- av_get("TSLA",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# SPY <- av_get("SPY",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+# 
+# saveRDS(RCL,file="RCL.RDS")
+# saveRDS(AMZN,file="AMZN.RDS")
+# saveRDS(PENN,file="PENN.RDS")
+# saveRDS(TSLA,file="TSLA.RDS")
+# saveRDS(SPY,file="SPY.RDS")
+```
+
+##### 1. The initial position of our one million portfolio consists of an equal value of RCL,AMZN,PENN and TSLA with 10% in Cash
+
+```{r read and tabulate data}
+RCL <-  readRDS(file="RCL.RDS")
+AMZN <- readRDS(file="AMZN.RDS")
+PENN <- readRDS(file="PENN.RDS")
+TSLA <- readRDS(file="TSLA.RDS")
+SPY <- readRDS(file="SPY.RDS")
+
+#tabulate price data
+prc_data <- tibble(Date=SPY$timestamp,
+                rcl=RCL$adjusted_close,
+                amzn=AMZN$adjusted_close,
+                penn=PENN$adjusted_close,
+                tsla=TSLA$adjusted_close,
+                spy=SPY$adjusted_close)
+
+#define portfolio parameters
+amt <- 1000000
+int_Y <- 0.01
+cash_ratio <- 0.1
+CASH <- amt*cash_ratio
+
+#tabulate return data
+rtn_data <- prc_data%>%mutate(
+                rcl_r=c(0,RCL$adjusted_close[-1]/RCL$adjusted_close[-nrow(prc_data)]-1),
+                amzn_r=c(0,AMZN$adjusted_close[-1]/AMZN$adjusted_close[-nrow(prc_data)]-1),
+                penn_r=c(0,PENN$adjusted_close[-1]/PENN$adjusted_close[-nrow(prc_data)]-1),
+                tsla_r=c(0,TSLA$adjusted_close[-1]/TSLA$adjusted_close[-nrow(prc_data)]-1),
+                spy_r=c(0,SPY$adjusted_close[-1]/SPY$adjusted_close[-nrow(prc_data)]-1),
+                cash_r=int_Y/365)
+
+#calculate the initial position in shares for each asset
+position <- tibble(date_bgn=prc_data$Date[1],
+                   rcl_p=floor((amt-CASH)/(ncol(prc_data)-2)/prc_data$rcl[1]),
+                   amzn_p=floor((amt-CASH)/(ncol(prc_data)-2)/prc_data$amzn[1]),
+                   penn_p=floor((amt-CASH)/(ncol(prc_data)-2)/prc_data$penn[1]),
+                   tsla_p=floor((amt-CASH)/(ncol(prc_data)-2)/prc_data$tsla[1]),
+                   cash_p=amt-rcl_p*prc_data$rcl[1]-amzn_p*prc_data$amzn[1]-
+                                                    penn_p*prc_data$penn[1]-tsla_p*prc_data$tsla[1],
+                   #initial position for SPY for comparison
+                   spy_p=floor(amt/prc_data$spy[1])
+            )
+
+#calculate the value for each asset by time
+value <- tibble(
+            Date=SPY$timestamp,
+            rcl_v  =position$rcl_p*prc_data$rcl,
+            amzn_v =position$amzn_p*prc_data$amzn,
+            penn_v =position$penn_p*prc_data$penn,
+            tsla_v =position$tsla_p*prc_data$tsla,
+            cash_v =position$cash_p*(1+int_Y/365)**(bizdays(position$date_bgn,prc_data$Date)),
+            total_v=rcl_v+amzn_v+penn_v+tsla_v+cash_v,
+            total_r=c(0,total_v[-1]/total_v[-nrow(prc_data)]-1),
+            spy_r  =rtn_data$spy_r)%>%
+            mutate(
+              spy_cr=cumsum(rtn_data$spy_r),
+              total_cr=cumsum(c(0,total_v[-1]/total_v[-nrow(prc_data)]-1)),
+              rela_cr=total_cr-spy_cr,
+              #valuation of comparison portfolio spy
+              spy_v = position$spy_p*prc_data$spy)
+            
+            
+```
+
+##### 2. Initial Position In Shares (cash in dollars)
+
+
+Date|RCL|AMZN|PENN|TSLA|CASH|
+|--|--|---|----|---|---|
+|`r position$date_bgn`|`r position$rcl_p`|`r position$amzn_p`|`r position$penn_p`|`r position$tsla_p`|`r sprintf("%.02f",position$cash_p)`|
+
+
+
+```{r calculate sharp ratio}
+
+sharp_r <- (mean(value$total_r)-int_Y/250)/sd(value$total_r)
+              
+
+```
+
+##### 3. The sharp ratio of the portfolio is `r round(sharp_r,2)`
+
+##### 4. Plot the histogram of portfolio daily returns
+
+```{r plot histogram of daily return }
+
+
+ggplot(value,aes(x= total_r))+geom_histogram(binwidth=0.01,color="grey")+
+  scale_x_continuous(name="Portfolio Return",
+                     breaks=seq(-0.08,0.08,by=0.02),
+                     labels = scales::percent_format(accuracy = 1))+
+  ggtitle("Distribution of Daily Portfolio Return")+theme_bw()
+
+
+```
+
+##### 5.1 Plot relative return of Portfolio and SPY (daily and culmulative)
+
+```{r relative return}
+#Daily return
+ggplot(data=value%>%
+         select(Date,total_r,spy_r)%>%
+         gather(key="variable",value = "Return",-Date),
+         aes(x=Date,y=Return))+
+         geom_line(aes(color=variable),size = 1)+
+         scale_y_continuous(
+           breaks=seq(-0.1,0.1,by=0.02),
+           labels = scales::percent_format(accuracy = 1))+
+         theme_bw()+ggtitle("Daily Returns of Portfolio And SPY")+
+         scale_color_manual(values=c("red","green2"))
+#Culmulative return
+ggplot(data=value%>%
+         select(Date,total_cr,spy_cr)%>%
+         gather(key="variable",value = "Return",-Date),
+         aes(x=Date,y=Return))+
+         geom_line(aes(color=variable),size = 1)+
+         scale_y_continuous(
+           #breaks=seq(-0.1,0.1,by=0.02),
+           labels = scales::percent_format(accuracy = 1))+
+         theme_bw()+ggtitle("Culmulative Returns of Portfolio And SPY")+
+         scale_color_manual(values=c("red","green2"))
+
+```
+
+##### 5.2 Plot total valuation and portfolio excess return over SPY
+```{r plot daily valuation of portfolio and excess return over SPY}
+#self note:
+#ggplot(a,aes()) the aes will pass to following plot function, but aes() in geom_line(aes()) will not pass down.
+#geom_line(data,aes()) the data can be df%>%....
+#sec_axis ~. can multiple and divide first then +-, cannot do the other way
+ggplot(data=value%>%
+          select(Date,total_v,spy_v)%>%
+          gather(key="variable",value = "value",-Date),aes(x=Date,y=value))+
+          geom_line(aes(color=variable))+geom_point(aes(color=variable),size = 1)+
+          geom_line(data = mutate(value,rela_cr1=(rela_cr+1)*amt), 
+                    aes(Date,rela_cr1),color="blue",size=1,inherit.aes = F,linetype = "dotted")+
+          scale_y_continuous(
+            name = "Total Value",
+            labels = unit_format(unit = "k",scale=1e-3),
+            sec.axis = sec_axis((~./1000000-1),name="Excess Return Over SPY",
+                                              labels = scales::percent_format(accuracy = 1)))+
+          ggtitle("Portfolio Value And Culmulative Excess Return Over SPY")+
+          theme_bw()+
+          theme(
+             # axis.title.y = element_text(color = "black"),
+              axis.title.y.right = element_text(color = "blue"))
+
+```
+
+<!-- ##### 5.3 Plot total valuation and portfolio excess return over SPY -->
+<!-- ```{r plot ttoal valuation of portfolio and spy} -->
+<!-- #self note: -->
+<!-- #ggplot(a,aes()) the aes will pass to following plot function, but aes() in geom_line(aes()) will not pass down. -->
+<!-- #geom_line(data,aes()) the data can be df%>%.... -->
+<!-- #sec_axis ~. can multiple and divide first then +-, cannot do the other way -->
+<!-- ggplot(value,aes(Date,total_v))+geom_line()+geom_point()+ -->
+<!--               geom_line(data = mutate(value,rela_cr1=(rela_cr+1)*amt),  -->
+<!--                         aes(Date,rela_cr1),color="red",size=1.2,inherit.aes = F)+ -->
+<!--               scale_y_continuous( -->
+<!--                 name = "Total Value", -->
+<!--                 labels = unit_format(unit = "k",scale=1e-3), -->
+<!--                 sec.axis = sec_axis((~./1000000-1),name="Excess Return Over SPY", -->
+<!--                                                   labels = scales::percent_format(accuracy = 1)))+ -->
+<!--               ggtitle("Portfolio Value And Culmulative Excess Return Over SPY")+ -->
+<!--               theme_bw()+ -->
+<!--               theme( -->
+<!--                   axis.title.y = element_text(color = "black"), -->
+<!--                   axis.title.y.right = element_text(color = "red")) -->
+
+<!-- ``` -->
+
+
+##### 6 Plot relative valuation of different allocation
+
+```{r plot relative value of each asset protfolio}
+#self note:
+# fill = variable should be in aes(), other not recognized
+# for bar chart, if y value is given, then need to use stat = "identity" 
+# position = "stack" gives stack chart
+ggplot(data=value%>%
+            select(Date,rcl_v,amzn_v,penn_v,tsla_v,cash_v)%>%
+            gather(key="variable",value = "value",-Date),
+            aes(x=Date,y=value,fill=variable))+
+              geom_bar(stat="identity",position="fill",width=4)+
+            scale_y_continuous(name = "Relative Value")+
+              ggtitle("Relative Valuation of Portfolio Assets Over Time")+
+              theme_bw()
+
+```
+ 
+
+
+
+

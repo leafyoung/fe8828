@@ -1,0 +1,100 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Song Yifan <sub><Email:song0184@e.ntu.edu.sg></sub>"
+date: "2020/10/6"
+output: html_document
+---
+
+```{r Import dataset}
+# bank <- read.csv("C:/Users/Song Yifan/Desktop/NTU/FE8828 Programming Web Application/week 2/code/bank.csv", sep=";")
+```
+
+
+```{r View dataset}
+library(dplyr)
+head(bank)
+```
+
+## Finding 1
+```{r}
+nrow(bank)
+ncol(bank)
+colnames(bank)
+```
+This data contains '4521' rows, '17' columns and column names are listed above.
+
+
+## Finding 2
+```{r}
+# Find the big age group
+min_age <- min(bank$age)
+max_age <- max(bank$age)
+min_age
+max_age
+bank %>%
+  group_by(age_group = (age %/%10)*10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+res
+
+plot(res$age_group, res$count)
+```
+
+The age ranges from 19 to 87, 30-40 age group has the most people. 
+
+
+## Finding 3 & 4
+```{r}
+bank %>%
+  group_by(job) %>%
+  summarise(balance_mean = mean(balance),
+  default_proportion = sum(ifelse(default == "no", 0, 1))/n()) -> res1
+arrange(res1, balance_mean)
+arrange(res1, default_proportion)
+```
+
+Finding 3: retired people have the highest mean balance, maybe because they have already saved lots of money. Blue-collar have the lowest mean balance.
+
+Finding 4: Student has the lowest default proportion, maybe because they also don't have financial burden. Entrepreneur has the highest default proportion maybe because their job is risky.
+
+## Finding 5
+```{r}
+bank %>%
+  group_by(education) %>%
+  summarise(balance_mean = mean(balance),
+  default_proportion = sum(ifelse(default == "no", 0, 1))/n()) -> res2
+arrange(res2, balance_mean)
+arrange(res2, default_proportion)
+```
+
+People who recieve teritary education has the highest balance mean and lowest default proportion.
+
+
+## Finding 6
+```{r}
+df <- bank %>%
+  group_by(default)%>%
+  summarise(with_housing = sum(housing == "yes") / n(),
+            with_loan = sum(loan == "yes")/n() )
+ 
+df
+```
+People with loan is more likely to default.
+
+
+## Finding 7
+```{r}
+d1 <- group_by(bank, job) %>%
+summarise(`balance > 1000` = sum(balance > 1000))
+d2 <- group_by(bank, job) %>%
+summarise(`balance <= 1000` = sum(balance <= 1000))
+df <- distinct(bank, job) %>% arrange(job)
+df <- left_join(df,d1, by = "job")
+df <- left_join(df, d2, by = "job")
+df <- mutate(df, total = `balance > 1000` + `balance <= 1000`)
+df <- mutate(df, proportion_larger_than_1000 = `balance > 1000`/total)
+arrange(df, proportion_larger_than_1000)
+```
+
+Lowest proportion of people whose balance is higher than 1000 work in services industry while highest proportion of people whose balance is higher than 1000 have already retired.
+

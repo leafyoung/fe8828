@@ -1,0 +1,179 @@
+---
+title: "Investment Portfolio"
+author: "Xiang ZiShun"
+date: "10/18/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(conflicted)
+library(tidyverse)
+library(knitr)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+library(alphavantager)
+av_api_key("L0AXDQ8QMWBVJ4L1")
+```
+
+---
+
+```{r}
+
+# # Download data
+# spy <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+# fb <- av_get("FB", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+# amzn <- av_get("AMZN", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+# msft <- av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+# nvda <- av_get("NVDA", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+# 
+# # Save in data folder
+# saveRDS(spy, file="D:/Assignment 4/data/spy.rds")
+# saveRDS(fb, file="D:/Assignment 4/data/fb.rds")
+# saveRDS(amzn, file="D:/Assignment 4/data/amzn.rds")
+# saveRDS(msft, file="D:/Assignment 4/data/msft.rds")
+# saveRDS(nvda, file="D:/Assignment 4/data/nvda.rds")
+
+# Read data
+spy <- read_rds("data/spy.rds")
+fb <- read_rds("data/fb.rds")
+amzn <- read_rds("data/amzn.rds")
+msft <- read_rds("data/msft.rds")
+nvda <- read_rds("data/nvda.rds")
+
+data <- bind_cols(Timestamp = spy$timestamp,
+                  SPY = spy$adjusted_close,
+                  FB = fb$adjusted_close,
+                  AMZN = amzn$adjusted_close,
+                  MSFT = msft$adjusted_close,
+                  NVDA = nvda$adjusted_close)
+
+```
+
+---
+
+### Stock Selection
+Facebook (FB), Amazon (AMZN), Microsoft (MSFT) and Nvidia (NVDA) were selected.  
+Their purchase date was on `r spy$timestamp[1]`
+
+```{r}
+investible = 900000
+
+# Get the number of shares allocated to each stock
+fb_alloc = floor((investible/4) / data$FB[1])
+amzn_alloc = floor((investible/4) / data$AMZN[1])
+msft_alloc = floor((investible/4) / data$MSFT[1])
+nvda_alloc = floor((investible/4) / data$NVDA[1])
+
+# Get valuation of each stock
+data %>%
+  mutate(FB_val = fb_alloc * FB,
+         AMZN_val = amzn_alloc * AMZN,
+         MSFT_val = msft_alloc * MSFT,
+         NVDA_val = nvda_alloc * NVDA) -> data
+
+# Cash left at start after investment
+cash_start = 1000000 - sum(data[1, c("FB_val", "AMZN_val", "MSFT_val", "NVDA_val")])
+
+```
+
+### Initial allocation
+`r fb_alloc` FB stocks, `r amzn_alloc` AMZN stocks, `r msft_alloc` MSFT stocks and `r nvda_alloc` NVDA stocks were purchased.  
+Cash reserve at the start was at $`r format(round(cash_start, 2), scientific=F, nsmall=2)`.  
+
+### Daily valuation and return of the portfolio
+```{r}
+
+Rf = 0.01/250
+
+data %>%
+  mutate(Cash_val = (1+Rf)^c(0:99) * cash_start) %>%
+  mutate(Daily_val = FB_val + AMZN_val + MSFT_val + NVDA_val + Cash_val) %>%
+  mutate(Daily_return = (Daily_val/lag(Daily_val)) - 1) -> data
+
+data %>%
+  select(Timestamp, FB_val, AMZN_val, MSFT_val, NVDA_val, Cash_val, Daily_val, Daily_return) %>%
+  kable
+
+
+```
+
+### Sharpe ratio for the portfolio and S&P
+```{r}
+data %>%
+  mutate(SP_return = (SPY/lag(SPY)) - 1) -> data
+
+sigma_portfolio = sd(data$Daily_return, na.rm = TRUE)
+sigma_SP = sd(data$SP_return, na.rm = TRUE)
+
+sr_portfolio = (mean(data$Daily_return, na.rm = TRUE) - Rf) / sigma_portfolio
+sr_SP = (mean(data$SP_return, na.rm = TRUE) - Rf) / sigma_SP
+
+```
+
+The Sharpe ratio for the portfolio is `r sr_portfolio`.  
+The Sharpe ratio for S&P is `r sr_SP`.
+
+
+### Histogram of daily return
+```{r}
+
+ggplot(data, aes(Daily_return)) +
+  geom_histogram(bins = 30, color="darkblue", fill="lightblue") + 
+  ggtitle("Histogram of portfolio returns")
+
+```
+
+
+### Total valuation and relative returns
+```{r}
+
+spy_alloc = floor(900000 / data$SPY[1])
+spy_cash_start = 1000000 - (spy_alloc*data$SPY[1])
+
+data %>%
+  mutate(SPY_Cash_val = (1+Rf)^c(0:99) * spy_cash_start) %>%
+  mutate(SPY_val = (spy_alloc * SPY) + SPY_Cash_val) %>%
+  mutate(SPY_return = (SPY_val/lag(SPY_val)) - 1) %>%
+  mutate(Portfolio_relative_return = (Daily_val / .$Daily_val[1]) - 1) %>%
+  mutate(SPY_relative_return = (SPY_val / .$SPY_val[1] - 1)) -> data
+
+data %>%
+  select(Timestamp, "SPY Valuations" = SPY_val, "Selected Valuations" = Daily_val) %>%
+  pivot_longer(col = ends_with("ons"),
+               names_to = "Portfolio",
+               values_to = "Valuations") -> valData
+
+ggplot(valData, aes(x=Timestamp, y=Valuations, colour=Portfolio)) +
+  geom_line(size=1) +
+  ylim(c(0,1500000))
+
+
+data %>%
+  select(Timestamp, "SPY Relative Returns" = SPY_relative_return, "Portfolio Relative Returns" = Portfolio_relative_return) %>%
+  pivot_longer(col = ends_with("rns"),
+               names_to = "Portfolio",
+               values_to = "Relative Returns") -> rrData
+
+ggplot(rrData, aes(x=Timestamp, y=`Relative Returns`, colour=Portfolio)) +
+  geom_line(size=1)
+  
+```
+
+
+### Relative valuation for different allocations
+```{r}
+
+data %>%
+  select(Timestamp, Cash_val, FB_val, AMZN_val, MSFT_val, NVDA_val) %>%
+  pivot_longer(col = ends_with("val"),
+               names_to = "Allocations",
+               values_to = "Valuations") -> allocData
+
+ggplot(allocData) +
+  geom_area(aes(Timestamp, Valuations, fill=Allocations, colour=Allocations), position = "fill")
+
+```
+

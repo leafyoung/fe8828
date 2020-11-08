@@ -1,0 +1,64 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Xu Chong"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+conflict_prefer("summarize", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## Finding #1
+This data contains `r ncol(bank)` columns.
+
+## Finding #2
+Average balance of bank customers: 1422.658
+
+```{r Finding2}
+summarise(bank, avg_bal = sum(balance)/nrow(bank))
+```
+# Finding #3
+number of people having negative bank account balance: 366
+```{r Finding3}
+summarize(bank, neg_bal = sum(balance<0))
+```
+# Finding #4
+Age group having most number of negative bank account balance: 30s
+```{r Finding4}
+ageGroups <- mutate(bank, ageGroup = (age %/% 10) * 10)
+
+age_GroupsNum <- group_by(ageGroups, ageGroup) %>% summarize(total=n())
+
+neg_ageNum <- dplyr::filter(ageGroups, balance<0) %>% group_by(ageGroup) %>% summarize(neg_bal_count=n())
+plot(neg_ageNum)
+```
+
+# Finding #5
+Age group having highest ratio of negative bank account balance: 40s
+```{r Finding5}
+left_join(neg_ageNum, age_GroupsNum, by = "ageGroup") %>% 
+  mutate(neg_ratio = neg_bal_count/total) %>% arrange(desc(neg_ratio))
+
+```
+# Finding #6
+job having most number of negative bank account balance: blue-collar
+```{r Finding9, echo = TRUE, warning = FALSE}
+dplyr::filter(ageGroups, balance<0) %>% group_by(job) %>% summarize(neg_bal_count=n()) %>% arrange(desc(neg_bal_count))
+```
+
+
+# Finding #7
+Education level of bank customers: primary - 678, secondary - 2306, tertiary - 1350
+```{r Finding7}
+group_by(bank, education) %>% summarize(n=n())
+```
+
+
+

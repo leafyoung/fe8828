@@ -1,0 +1,136 @@
+---
+title: "Assignment3"
+output: html_document
+---
+
+# Load packages and Download data 
+```{r setup, include=FALSE}
+library(alphavantager) 
+library(tidyverse) 
+library(conflicted)
+library(lubridate) 
+library(bizdays)
+library(ggplot2)
+library(dplyr)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	cache = TRUE,
+	collapse = TRUE
+)
+
+API_KEY <- "WTFDPPSNCVUSLNHP"
+av_api_key(API_KEY)
+# Twitter
+twtr <- av_get("TWTR", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(twtr,file="Assignment3_data/twtr.Rda")
+# Facebook
+fb <- av_get("FB", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(fb,file="Assignment3_data/fb.Rda")
+# Netflix
+nflx <- av_get("NFLX", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(nflx,file="Assignment3_data/nflx.Rda")
+# Disney
+dis <- av_get("DIS", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(dis,file="Assignment3_data/dis.Rda")
+
+# SP500
+sp500 <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+saveRDS(sp500,file="Assignment3_data/sp500.Rda")
+sp500
+```
+
+# Load data 
+``` {r }
+twtr <- readRDS("Assignment3_data/twtr.Rda")
+fb <- readRDS("Assignment3_data/fb.Rda")
+nflx <- readRDS("Assignment3_data/nflx.Rda")
+dis <- readRDS("Assignment3_data/dis.Rda")
+sp500 <- readRDS("Assignment3_data/sp500.Rda")
+dis
+```
+
+# Invest with equal weighted in the 4 stocks
+``` {r }
+options(scipen = 999)
+TOTAL = 1000000
+TOTAL_QUARTER = 0.9*TOTAL/4
+
+df1 <- tibble(time = sp500$timestamp,
+              adj_close_sp500 = sp500$adjusted_close,
+              adj_close_twtr = twtr$adjusted_close,
+              adj_close_fb = fb$adjusted_close,
+              adj_close_nflx = nflx$adjusted_close,
+              adj_close_dis = dis$adjusted_close)
+df1 <- df1 %>%
+  mutate(n_twtr = floor(TOTAL_QUARTER/adj_close_twtr[1])) %>%
+  mutate(n_fb = floor(TOTAL_QUARTER/adj_close_fb[1])) %>%
+  mutate(n_nflx = floor(TOTAL_QUARTER/adj_close_nflx[1])) %>%
+  mutate(n_dis = floor(TOTAL_QUARTER/adj_close_dis[1])) %>%
+  mutate(value_twtr = adj_close_twtr*n_twtr) %>%
+  mutate(value_fb = adj_close_fb*n_fb) %>%
+  mutate(value_nflx= adj_close_nflx*n_nflx) %>%
+  mutate(value_dis = adj_close_dis*n_dis) %>%
+  
+  mutate(cash = TOTAL - n_twtr*adj_close_twtr[1] - n_fb*adj_close_fb[1] -n_nflx*adj_close_nflx[1] -n_dis*adj_close_dis[1]) %>%
+  mutate(value = n_twtr*adj_close_twtr + n_fb*adj_close_fb + n_nflx*adj_close_nflx +n_dis*adj_close_dis) %>%
+  mutate(return = c(NA, diff(value)/value[1])) %>%
+  mutate(sp500_return = c(NA, diff(adj_close_sp500)/adj_close_sp500[1]))
+df1
+```
+
+
+# Calculate Sharpe Ratio
+``` {r }
+# Portfolio
+SharpeRatio = (mean(df1$return, na.rm = TRUE) - 0.01/250)/sd(df1$return, na.rm = TRUE)
+SharpeRatio #0.1163879
+# S&P
+SharpeRatio_SP = (mean(df1$sp500_return, na.rm = TRUE) - 0.01/250)/sd(df1$sp500_return, na.rm = TRUE)
+SharpeRatio_SP #0.1136175
+```
+
+
+# Plot a histogram of daily return.
+``` {r }
+ggplot(df1, aes(x=return)) + 
+  geom_histogram(binwidth = 0.001, color="black", fill="white")
+```
+
+# Plot total valuation
+``` {r }
+ggplot(df1, aes(x=time)) +
+  geom_line(aes(y=value)) 
+  
+```
+
+
+# Plot relative return for your investment portfolio and S&P.
+``` {r }
+colors <- c("Portfolio Return" = "blue", "S&P500 Return" = "black")
+ggplot(df1, aes(x=time)) +
+  geom_line(aes(y=return,color="Portfolio Return"), alpha=0.8) +
+  geom_line(aes(y=sp500_return, color="S&P500 Return"), alpha=0.8) +
+  labs(color = "Legend") +
+  scale_color_manual(values = colors)
+
+```
+
+# Plot relative valuation for the different allocation (stocks and cash) (Hint: bar chart)
+```{r}
+df2 <- data.frame(df1$time, df1$value_twtr, df1$value_fb, df1$value_nflx, df1$value_dis, df1$cash)
+x <- c("Time", "Twitter", "Facebook", "Netflix", "Disney", "Cash")
+colnames(df2) <- x
+df2
+
+df3 <- df2 %>%
+  pivot_longer(!(Time))
+df3
+ 
+# Stacked + percent
+ggplot(df3, aes(fill=name, y=value, x=Time)) + 
+    geom_bar(position="fill", stat="identity")
+```

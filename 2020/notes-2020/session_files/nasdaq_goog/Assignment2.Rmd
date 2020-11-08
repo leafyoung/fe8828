@@ -1,0 +1,108 @@
+---
+title: "Assignment2FE8828 Assignment: Book option trades"
+author: "Song Yifan <sub><Email:song0184@e.ntu.edu.sg></sub>"
+date: "2020/10/6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(dplyr)
+library(fOptions)
+```
+
+## 2.1 Import and clean the data
+```{r}
+library(readxl)
+options <- read_excel("E:/Dropbox/MFE/FE8828/2020/notes-2020/session_files/nasdaq_goog/options.xlsx", 
+    col_types = c("date", "numeric", "text", 
+        "numeric", "numeric", "numeric", 
+        "numeric", "numeric", "numeric", 
+        "text", "numeric", "numeric", "numeric", 
+        "numeric"))
+# View(options)
+
+options <- filter(options, row_number() < 46)
+tail(options)
+# head(options)
+```
+```{r}
+colnames(options)
+Calls <- options[,c(1,4,5,7,8)]
+Calls <- mutate(Calls, OptionType = "c")
+Puts <- options[,c(1,8,11,12,14)]
+Puts <- mutate(Puts, OptionType = "p")
+option <- bind_rows(Calls, Puts)
+option <- mutate(option, Underlying = 1446.43, Today = as.Date("2020-10-07"))
+option
+```
+
+## 2.2 Calcualte the total valuation of 1) call alone, 2) put alone, 3) call and put
+```{r}
+Calls <- dplyr::filter(option, OptionType == "c")
+CallsVal<- mutate(Calls, `Call Total Valuation` = `Open Int.`*(Bid+Ask)/2)%>%
+    select(Strike, `Call Total Valuation`)
+
+Puts <- dplyr::filter(option, OptionType == "p")
+PutsVal <- mutate(Puts, `Put Total Valuation` = `Open Int.`*(Bid+Ask)/2)%>%
+    select(Strike, `Put Total Valuation`)
+
+TotalVal <- inner_join(CallsVal, PutsVal, by = "Strike")
+TotalVal <- TotalVal %>%
+  select(`Call Total Valuation`, `Put Total Valuation`) %>%
+  mutate(`Call Total Valuation` = ifelse(is.na(`Call Total Valuation`),0, `Call Total Valuation`),
+     `Put Total Valuation` = ifelse(is.na(`Put Total Valuation`), 0, `Put Total Valuation`)   
+  ) %>%
+  mutate(total_valuation = `Call Total Valuation`+ `Put Total Valuation`)
+
+
+TotalVal <- TotalVal <- TotalVal %>%
+  mutate(`Call Total Valuation` = ifelse(`Call Total Valuation`==0, NA, `Call Total Valuation`),
+     `Put Total Valuation` = ifelse(`Put Total Valuation`==0, NA, `Put Total Valuation`))
+TotalVal
+
+```
+
+
+
+## 2.3 Find those in the money， and calculate their total Open Interest
+```{r}
+S = 1448.75
+calls_in_the_money <- dplyr::filter(Calls, Strike < S & !is.na(`Open Int.`))%>%
+    select(Strike, `Open Int.`)
+calls_in_the_money
+puts_in_the_money <- dplyr::filter(Puts, Strike > S & !is.na(`Open Int.`))%>%
+    select(Strike, `Open Int.`)
+puts_in_the_money
+Total_Open_Interest <- bind_rows(calls_in_the_money, puts_in_the_money) %>%
+  summarise(`Total Open Interest` = sum(`Open Int.`))
+Total_Open_Interest
+```
+
+## 2.4 Plot the volatility curve, strike v.s. vol.
+```{r}
+S <- 1448.75
+
+OTMC <- filter(Calls, Strike > S)%>%
+    select(`Exp.Date`, Strike, Underlying)
+OTMP <- filter(Puts, Strike < S)%>%
+    select(`Exp.Date`, Strike, Underlying)
+
+find_vol <-function()
+{
+    VolP<- OTMP%>%rowwise()%>%
+    mutate(Volatility = GBSVolatility(Underlying, "p", S, Strike,
+    as.numeric(as.Date("2020-12-18") - as.Date("2020-10-07"))/365,
+    r = 0.03, b = 0))
+  
+    VolC <- OTMC%>%rowwise()%>%
+    mutate(Volatility = GBSVolatility(Underlying, "c", S, Strike,
+    as.numeric(as.Date("2020-12-18") - as.Date("2020-10-07"))/365,
+    r = 0.03, b = 0))
+  
+  return(bind_rows(VolP, VolC))
+}
+
+VolCurve <- find_vol()
+plot(VolCurve$Strike, VolCurve$Volatility, type = "l", xlab = "Strike Price (USD)", ylab = "Volatility", col = "steelblue3", lwd = 2)
+```
+

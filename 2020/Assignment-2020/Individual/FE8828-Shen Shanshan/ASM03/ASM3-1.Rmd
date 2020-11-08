@@ -1,0 +1,86 @@
+---
+title: "ASM3-1"
+author: "Shen Shanshan"
+date: "2020/10/10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+
+library(readr)
+bank <- read_delim("bank.csv", ";", escape_double = FALSE, trim_ws = TRUE)
+
+library(dplyr)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+```
+
+# finding #1: 24% of employed people are management, and entrepreneurs only account for 4% of all employed people
+```{r}
+employed <- filter(bank, !(job %in% c("unknown", "student", "housemaid", "unemployed", "retired")))
+employed %>% group_by(job) %>% summarise(nn = n()) %>% 
+  mutate(percentage = nn/sum(nn)) %>% 
+  arrange(desc(percentage))
+```
+
+# finding #2: Most of the unemployed labor force has had secondary education, and unexpectedly unemployed people who have primary education have most balance
+```{r}
+unemployed <- filter(bank, job %in% c("student", "housemaid", "unemployed", "retired"))
+unemployed %>% group_by(education) %>% summarise(nn = n(), mean_balance = mean(balance)) #%>%
+```
+
+# finding #3: The mean and median of age in each group is shown below and the standard deviation among all groups are close.
+```{r}
+employed %>% group_by(job) %>%
+  summarise(mean_age = mean(age), median_age = median(age), sd_age = sd(age)) %>%
+  arrange(mean_age)
+
+```
+
+# finding #4: The proportion of homeowners in employed group was 30% higher than in unemployed one, and the proportion of people with housing and loan is 4% higher.
+```{r}
+empl_hous_perc <- group_by(employed, housing) %>% summarise(nn = n()) %>% 
+  mutate(perc = nn/sum(nn)) %>% {.$perc[.$housing == 'yes']}
+#empl_hous_perc
+unempl_hous_perc <- group_by(unemployed, housing) %>% summarise(nn = n()) %>% 
+  mutate(perc = nn/sum(nn)) %>% {.$perc[.$housing == 'yes']}
+#unempl_hous_perc
+dif_hous_perc <- empl_hous_perc - unempl_hous_perc
+dif_hous_perc
+
+empl_loan_perc <- nrow(filter(employed, housing == 'yes' & loan == 'yes')) / nrow(employed)
+unempl_loan_perc <- nrow(filter(unemployed, housing == 'yes' & loan == 'yes')) / nrow(unemployed)
+dif_loan_perc <- empl_loan_perc - unempl_loan_perc
+dif_loan_perc
+```
+
+# finding #5: Retired people have the most average balance while people working in services field have the least. The former has more than twice the balance of the latter.
+```{r}
+bank %>% group_by(job) %>% summarise(mean_balance = mean(balance)) %>% 
+  mutate(balance_perc = mean_balance/sum(mean_balance)) %>% 
+  arrange(desc(balance_perc))
+```
+
+# finding #6: The biggest gap between rich and poor may be in retired people. For people who have jobs, the biggebalance_meanst gap may exist in entrepreneurs.
+```{r}
+df1 <- bank %>% group_by(job) %>% 
+  filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>% 
+  arrange(job, balance) %>% 
+  .[-(23:26), , drop = T]  #delete the unknown-job rows
+
+diff <- c()
+diff <- sapply(1:11, function(x){diff <- c(diff, df1$balance[2*x] - df1$balance[2*x-1])})
+df2 <- tibble(diff_balance = diff)
+diff_bala_job <- cbind(arrange(distinct(bank, job)[-12, ],job), df2)
+arrange(diff_bala_job, desc(diff_balance))
+```
+
+# finding #7: Visually show the percentage of people who own homes in different job groups.
+```{r}
+library(ggplot2)
+bank %>% ggplot() +
+  geom_bar(mapping = aes(x = job, fill = housing), position = "fill") +
+  theme(text = element_text(size = 10), axis.text.x = element_text(angle = 45, hjust = 1))
+```

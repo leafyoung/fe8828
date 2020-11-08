@@ -1,0 +1,120 @@
+---
+title: "Oil Trading Game"
+subtitle: "FE8828 AY20/21 Demo"
+author: "Yang Ye"
+output:
+  html_document:
+  df_print: paged
+---
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(Quandl)
+library(xts)
+library(forecast)
+library(dygraphs)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+## Download Price
+
+```{r}
+# It seems find to leave token_qd as empty string. Subject to Quandl package.
+# Setup Quandl
+token_qd <- ''
+Quandl.api_key(token_qd)
+
+# Start with daily data. Note that "type = raw" will download a data frame.
+oil_daily <- Quandl("FRED/DCOILWTICO", type = "raw", collapse = "daily",  
+                    start_date="2006-01-01", end_date="2020-10-05")
+head(oil_daily)
+```
+
+```{r}
+ggplot(oil_daily) + geom_line(aes(Date, Value))
+```
+
+```{r}
+acf(oil_daily$Value)
+```
+
+```{r}
+oil_daily['ret'] = (oil_daily$Value / lead(oil_daily$Value, 1) - 1)
+# plot(oil_daily$Date, oil_daily$ret)
+oil_daily %>% { plot(.$Date, .$ret) }
+
+oil_daily_ret <- head(oil_daily, -1)
+```
+
+```{r}
+acf_result <- acf(oil_daily_ret$ret)
+```
+
+```{r}
+str(acf_result)
+acf_v <- acf_result$acf
+acf_vv <- cbind(acf_v, 1:length(acf_v), abs(acf_v))
+acf_index <- acf_vv[order(acf_vv[,3], decreasing = TRUE),2][2:4]
+acf_index
+```
+
+```{r}
+length(oil_daily_ret$ret)
+
+# ret_res ~ w_1 * ret_2d
+ret_res <- oil_daily_ret$ret[1:(3710-2+1)]
+ret_2d  <- oil_daily_ret$ret[2:(3710-2+1+2-1)]
+
+# ret_res ~ w_1 * ret_2d + w_2 * ret_3d + w_3 * ret_12d
+
+ret_res <- oil_daily_ret$ret[1:(3710-12+1)]
+ret_2d  <- oil_daily_ret$ret[2:(3710-12+1+2-1)]
+ret_3d  <- oil_daily_ret$ret[3:(3710-12+1+3-1)]
+ret_12d  <- oil_daily_ret$ret[12:(3710-12+1+12-1)]
+
+assert(length(ret_res) == length(ret_2d))
+assert(length(ret_res) == length(ret_3d))
+assert(length(ret_res) == length(ret_12d))
+assert(tail(head(ret_res,5),-1) == head(ret_2d,4))
+```
+
+```{r}
+lm_res <- lm(ret_res ~ ret_2d + ret_3d + ret_12d)
+summary(lm_res)
+lm_res$coefficients
+pred_res <- cbind(1, ret_2d, ret_3d, ret_12d) %*% lm_res$coefficients
+pred_res[1]
+```
+
+```{r}
+-0.0006622741 + ret_2d[1] * 0.2645566003 + ret_3d[1] * -0.1611475703 + ret_12d[1] *  -0.0931533025 
+```
+
+```{r}
+plot(lm_res)
+```
+
+```{r}
+length(pred_res)
+oil_daily_ret_truc <- oil_daily_ret[1:3699,]
+oil_daily_ret_truc['pred_ret'] <- pred_res
+```
+
+```{r}
+oil_daily_ret_truc %>% mutate(pred_correct = ret * pred_ret > 0) %>% group_by(pred_correct) %>% summarise(nn = n())
+
+oil_daily_ret_truc['trading_ret'] <- if_else(oil_daily_ret_truc['pred_ret'] > 0, 1, -1) * oil_daily_ret_truc['ret']
+
+arrange(oil_daily_ret_truc, Date) %>% mutate(abs_ret = cumprod(trading_ret + 1)) %>% 
+  { plot(.$Date, .$abs_ret)}
+```
+```{r}
+# plot(lm_res)
+```

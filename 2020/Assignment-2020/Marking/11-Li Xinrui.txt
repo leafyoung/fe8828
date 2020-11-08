@@ -1,0 +1,30 @@
+Li Xinrui
+
+# A1 Shiny Web
+
+- Good idea of the must-have COVID suppliers
+
+# A2.1 Secretary
+
+- Good
+
+# A2.2 Bond Schedule
+
+- Missing scheduler table. Minor issue
+
+# A2.3 Stock data
+# A3.1 Bank data analysis
+
+# A3.2 Option data
+
+
+# A4.1 Bank data analysis
+
+
+# A4.2 Infection rate
+
+
+# A4.3 Portfolio
+
+
+

@@ -1,0 +1,40 @@
+---
+title: "HW2"
+author: "Wei Xinyi"
+date: "2020年10月2日"
+output: html_document
+---
+
+```{r}
+make_choice <- function(N, split_number) {
+  x = 1:N
+  input_list<- sample(x=x)
+  evalu_group<- input_list[1:split_number]
+  selec_group<- input_list[split_number:N]
+  best_evalu<- max(evalu_group)
+  if(selec_group[1] >= best_evalu){
+    return(selec_group[1])
+  }
+  else{
+    return(NA)
+  }
+}
+
+
+find_optimal<- function(N){
+  Prob<-rep(NA,N/2)
+  Ini<-rep(NA,100)
+  for(j in 1:N/2){
+    for(i in 1:100){
+      Ini[i]<- make_choice(N,j)
+    }
+  Prob[j] = sum(!is.na(Ini))/100
+  }
+  return(Prob)
+}
+
+find_optimal(3)
+find_optimal(10)
+find_optimal(100)
+```
+

@@ -1,0 +1,135 @@
+---
+title: "GroupAssignment_Q2"
+author: "leran"
+date: "2020/10/24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(conflicted)
+library(tidyverse)
+library(fOptions)
+```
+
+```{r}
+suppressMessages({
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+})
+days <- 20.0
+
+vega0 <- GBSGreeks("Vega", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+delta0 <- GBSGreeks("Delta", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+gamma0 <- GBSGreeks("Gamma", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+theta0 <- GBSGreeks("Theta", "c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)
+price0 <- GBSOption("c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price
+```
+
+```{r}
+S1 <- 98
+option_pnl <- GBSOption("c", S = S1, X = 100,
+Time = (days - 1) / 250, r = 0, b = 0, sigma = 0.3)@price - price0
+approx_pnl <- delta0 * (S1 - 100) + 0.5 * gamma0 * (S1 - 100) ** 2 + vega0 * 0 + theta0 * 1/250
+cat(paste0("option_pnl: ", option_pnl, ", ", approx_pnl, "\n"))
+
+cat(paste0("diff with approx.: ", option_pnl - approx_pnl, "\n"))
+```
+```{r}
+Simulation = 1000
+diffs = rep(0,Simulation)
+GammaTheta = rep(0, Simulation)
+diffSigma = rep(0, Simulation)
+OverallPnL = rep(0, Simulation)
+
+S <- 100
+K <- 100
+sigma <- 0.3 # realized vol can be 0.3 for [2] or 0.5 for [3]
+drift <- 0 # drift = r - q
+timestep <- 1 / 250
+ndays <- 20 / 250
+N <- ndays / timestep
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+
+for (i in 1:Simulation){
+
+  # ss is the simulated price movement for N days
+  ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+  # We can calculate the volatility as below from ss
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  
+  df <- tibble(S = ss, days = 20:1)
+  df$lag = lag(df$S)
+  df$lag[1] = 100
+  df$temp = df$S - df$lag
+  df$delta <- GBSGreeks("Delta", "c", S = df$lag, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)
+  df$gamma <- GBSGreeks("Gamma", "c", S = df$lag, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)
+  df$theta <- GBSGreeks("Theta", "c", S = df$lag, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)
+  df$vega <- GBSGreeks("Vega", "c", S = df$lag, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)
+  df$price <- GBSOption("c", S = df$lag, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)@price
+  
+  df$option_pnl =  GBSOption("c", S = df$S, X = 100,Time = (df$days - 1) / 250, r = 0, b = 0, sigma = 0.3)@price - df$price
+  df$option_pnl[1] = df$price[1] - price0
+  df$approx_pnl = df$delta * df$temp  + 0.5 * df$gamma * df$temp ** 2 + df$vega * 0 + df$theta * 1 /250
+  df$difference = df$option_pnl - df$approx_pnl
+  
+  df$GammaPlusTheta =  0.5 * df$gamma * df$temp ** 2 + df$theta * 1 /250
+  
+  diffs[i] = mean(df$difference)
+  GammaTheta[i] = sum(df$GammaPlusTheta)
+  diffSigma[i] = sigma_2 - sigma
+  OverallPnL[i] = -df$price[1] + max(0, df$S[20] - K) + sum(df$delta * df$temp)
+  
+}
+
+hist(diffs, breaks=100)
+```
+
+### Part [1]
+The difference between actual PnL and approximated PnL is quite small.
+
+```{r}
+hist(GammaTheta, breaks=100)
+```
+
+### Part [2]
+Gamma PnL and Theta PnL almost neutralized each other.
+
+```{r}
+S <- 100
+K <- 100
+sigma <- 0.5 # realized vol can be 0.3 for [2] or 0.5 for [3]
+drift <- 0 # drift = r - q
+timestep <- 1 / 250
+ndays <- 20 / 250
+N <- ndays / timestep
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+totalPnLs = rep(0, Simulation)
+for (i in 1:Simulation){
+  # ss is the simulated price movement for N days
+  ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+  # We can calculate the volatility as below from ss
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  
+  df <- tibble(S = ss, days = 19:0)
+  
+  df$delta <- GBSGreeks("Delta", "c", S = df$S, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)
+  df$price <- GBSOption("c", S = df$S, X = 100, Time = (df$days) / 250, r = 0, b = 0, sigma = 0.3)@price
+  
+  df$extraDelta <- df$delta - lag(df$delta)
+  df$extraDelta[1] = df$delta[1]
+  
+  df$deltaHedge <- df$S * df$extraDelta
+  
+  totalHedge <- sum(df$deltaHedge)
+  
+  totalPnL <- -df$price[1] + max(0, df$S[20] - K) + totalHedge - df$delta[20] * df$S[20]
+  totalPnLs[i] = totalPnL
+}
+hist(totalPnLs, breaks=100)
+```
+
+### Part [3]
+With a higher volatility (sigma = `r sigma` > 0.3), total PnL is positive in almost every simulation.

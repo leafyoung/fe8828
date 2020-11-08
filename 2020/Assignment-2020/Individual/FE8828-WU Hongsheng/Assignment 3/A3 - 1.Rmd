@@ -1,0 +1,150 @@
+---
+title: "FE8828 Assignment 3 - Exploratory Data Analysis"
+author: "WU Hongsheng <sub> <Email:uncia668@gmail.com> </sub>"
+date: "8 Oct 2020"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+Find the average education level for each age group <br>
+We define point 1 ~ Primary; 2 ~ Secondary; 3 ~ Tertiary <br>
+Exclude the "unknown" education level data
+```{r}
+select(bank, age, education) %>%
+  arrange(age) %>%
+  dplyr::filter(education != "unknown") %>%
+  mutate(edu_points = case_when(
+  education == "primary" ~ 1,
+  education == "secondary" ~ 2,
+  education == "tertiary" ~ 3)) %>%
+  group_by(age_group = (age %/% 5) * 5) %>%
+  summarise(average_edu_points = mean(edu_points)) -> f1
+
+f1
+
+plot(f1$age_group, f1$average_edu_points)
+```
+We can see that the age of (30:35) have the highest education level
+
+# Finding #2
+Explore the relationship between marital and housing <br>
+We define housing rate = total number of people / people whose housing is "yes"
+```{r}
+select(bank, marital, housing) %>%
+  group_by(marital) %>%
+  summarise(house_owning_rate = mean(ifelse(housing == "no", 0, 1))) -> f2
+
+f2
+
+barplot(f2$house_owning_rate, names.arg = f2$marital, col = "lavender")
+```
+We can see that married group have the higest housing ratio while single group have the lowest
+
+# Finding #3
+Find the average age of each type of job
+```{r}
+select(bank, age, job) %>%
+  group_by(job) %>%
+  summarise(average_age = mean(age)) %>% 
+  arrange(average_age) -> f3
+
+f3
+
+barplot(f3$average_age, names.arg = f3$job, col = "aliceblue")
+```
+We can see that students have the lowest average age while retired people have the highest
+
+# Finding #4
+Similar to Finding #1, we explore the relationship between job and education level <br>
+We calculate each education level's percentile within each job
+```{r}
+select(bank, job, education) %>%
+  dplyr::filter(education != "unknown") %>%
+  group_by(job) %>%
+  summarise(Primary = sum(ifelse(education == "primary", 1, 0))/n(),
+            Secondary = sum(ifelse(education == "secondary", 1, 0))/n(),
+            Tertiary = sum(ifelse(education == "tertiary", 1, 0))/n()) -> f4
+
+f4
+
+m4 <- data.matrix(f4)[, 2:4] %>% t
+
+barplot(height = m4,
+        names.arg = f4$job,
+        col = c('cornsilk', 'cyan', "darkseagreen1"),
+        xlab = 'Job',
+        ylab = 'Ratio',
+        horiz = FALSE,
+        ylim = c(0, 1),
+        legend.text = c("Primary", "Secondary", "Tertiary"),
+        beside = FALSE)
+```
+We can see that job "management" has the highest ratio of tertiary education
+
+# Finding #5
+Find the top and last 10% average balance for each job
+```{r}
+select(bank, job, balance) %>%
+  group_by(job, quantile = ntile(balance, 10)) %>%
+  filter(quantile == 10 | quantile == 1) %>%
+  mutate(quantile = case_when(
+    quantile == 10 ~ "Highest balance group",
+    quantile == 1 ~ "Lowest balance group")) %>%
+  summarise(average_balance = mean(balance)) %>%
+  pivot_wider(names_from = quantile, values_from = average_balance) -> f5
+
+f5
+
+m5 <- data.matrix(f5)[, 2:3] %>% t
+
+barplot(height = m5,
+        names.arg = f5$job,
+        col = c('aquamarine', 'cornflowerblue'),
+        xlab = 'Job',
+        ylab = 'Balance',
+        horiz = FALSE,
+        legend.text = c("Highest 10%", "Lowest 10%"),
+        beside = TRUE)
+```
+We can see the distribution of the outcome, indicating that the top 10% entrepreneurs have the highest balance
+
+# Finding #6
+Find the distribution of the balance for all data
+```{r}
+select(bank, balance) %>%
+  mutate(quantile = ntile(balance, 100)) %>%
+  group_by(quantile) %>%
+  summarise(average_balance = mean(balance)) -> f6
+
+f6
+
+plot(f6$quantile, f6$average_balance, col = "skyblue", pch = 16)
+```
+We can see that from 0 - 80% group, the average balance does not change a lot <br>
+However, the last 20% group have a sudden increase of the balance and high variance
+
+# Finding #7
+Find the average balance in each age group
+```{r}
+select(bank, age, balance) %>%
+  group_by(age_group = (age %/% 5) * 5) %>%
+  summarise(average_balance = mean(balance)) -> f7
+
+f7
+
+barplot(f7$average_balance, names.arg = f7$age_group, col = "paleturquoise1")
+
+```
+So we can see in general, balance increase as age increase from 15 ~ 80 <br>
+Group 75 ~ 80 has the largest average balance
+
+# Discover insights of data frame: bank
+- After the above exploration, we can obtain many interesting conclusions and social insights
+- We can learn a lot in terms of data manipulation in R programming

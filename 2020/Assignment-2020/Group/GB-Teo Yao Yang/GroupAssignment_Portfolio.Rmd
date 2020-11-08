@@ -1,0 +1,542 @@
+---
+title: "Portfolio Investment Assignment"
+subtitle: "FE8828 AY20/21 Group Assignment"
+author: Teo Yao Yang
+Email: 
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup}
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+library(alphavantager)
+library(testit)
+library(kableExtra)
+conflict_prefer('last', 'dplyr')
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
+options(dplyr.summarise.inform = FALSE)
+```
+
+# Overview
+
+- SPDR sector ETFs: `c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY')` and `'SPY'`
+- History from 1999-11-01 to now.
+- Strategy:
+  * Equal-weighted with 1) no re-balance, 2) monthly re-balance, 3) annual re-balance
+  * Momentum strategy with 1) long top 4, 2) long top 2 and short bottom 2
+- Note:
+  + All equity position, no cash.
+  + Do not load other library, use only the listed packages here.
+  + Submit Rmd and Rda data files together in a compressed file (.zip, .7z, etc.)
+- Disclaimer: this is no an investment advise.
+
+## Download
+
+```{r}
+# Change (FALSE) to (TRUE), when you need to download data.
+# Usually you only need to run this once.
+# Change file location
+
+# 'XLC', 'XLRE' has shorter history, don't use them.
+all_tickers <- c('XLB','XLE','XLF','XLI','XLK','XLP','XLU','XLV','XLY','SPY')
+
+if (FALSE) {
+  av_api_key("A9MXXEHPH926F3N3")
+  
+  for (tt in all_tickers) {
+    df_xlc <- av_get(tt, av_fun = "TIME_SERIES_DAILY_ADJUSTED", outputsize="full")
+    saveRDS(df_xlc, paste0("C://Users/teoya/Desktop/Web App/",tt,".Rds"))
+    cat(paste(tt,min(df_xlc$timestamp),max(df_xlc$timestamp),"\n"))
+  }
+}
+```
+
+## Load and check
+
+```{r}
+# make sure all starts from the same time and same length.
+wd <- ('E:/Dropbox/MFE/FE8828/2020/Assignment-2020/Group/GA-Xu Xinzhi/Q3/Data')
+# make sure all starts from the same time and same length.
+dd <- list()
+for (tt in all_tickers) {
+  dd[[tt]] <- readRDS(paste0(wd,"/",tt,".Rds"))
+  print(paste(tt, min(dd[[tt]]$timestamp), nrow(dd[[tt]])))
+  assert(min(dd[[tt]]$timestamp) == as.Date('1999-11-01'))
+  assign(paste0('df_',tolower(tt)), dd[[tt]], envir = .GlobalEnv)
+}
+```
+
+### Technology vs. Energy
+
+- Energy was the rock star during 90s and 00s, abruptly stopped during GFC on the journey towards $200/bbl (never there).
+- Technology was a prodigy from late 70s, stumbled in early 00s, but now a rock star.
+
+```{r}
+plot(df_xlk$timestamp, df_xlk$adjusted_close,type='l')
+points(df_xle$timestamp, df_xle$adjusted_close,col='red',type='l')
+```
+
+# Equal-weighted Strategy
+
+## Compute daily return series
+
+```{r}
+len_tickers <- length(all_tickers)
+ii <- 1
+daily_ret <- tail(tibble(Date = dd[[1]]$timestamp), -1)
+for (ii in 1:len_tickers) {
+  daily_ret[all_tickers[ii]] <- tail(dd[[ii]]$adjusted_close / lag(dd[[ii]]$adjusted_close, 1)-1,-1)
+}
+for (ii in 1:len_tickers) {
+  daily_ret[paste0(all_tickers[ii],"_cumret")] <- cumprod(1 + daily_ret[all_tickers[ii]])
+}
+```
+
+## Performance
+```{r}
+matplot(daily_ret$Date, select(daily_ret,ends_with("cumret")),type="l")
+```
+
+## Calculate Strategy return
+
+```{r}
+invest_tickers <- all_tickers[all_tickers != 'SPY']
+len_invest <- length(invest_tickers)
+w <- rep(1, len_invest) / len_invest
+w
+
+daily_ret['EW'] <- as.matrix(daily_ret[,2:(2+len_invest-1)]) %*% w
+daily_ret %>% {plot(.$Date,.$EW,type='l')}
+```
+
+### Relative Performance between EW and SPY
+
+```{r}
+daily_ret['EW_cumret'] <- cumprod(daily_ret['EW'] + 1)
+daily_ret %>% {plot(.$Date,.$SPY,type='l')}
+daily_ret %>% {plot(.$Date,.$EW_cumret,type='l',col='red'); points(.$Date,.$SPY_cumret,type='l');}
+```
+
+### Metric
+
+```{r}
+# annualized return for EW
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW))
+# annualized return for SPY
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY))
+```
+
+
+```{r}
+# simplified Sharp ratio
+prod(daily_ret$EW + 1) ** (250 / length(daily_ret$EW)) / sd(daily_ret$EW) / sqrt(250)
+prod(daily_ret$SPY + 1) ** (250 / length(daily_ret$SPY)) / sd(daily_ret$SPY) / sqrt(250)
+```
+
+```{r}
+# Calculate the Max DD
+# maximum_drawdown <- '' in %
+drawdown <- daily_ret %>% select(Date, EW_cumret, EW, SPY_cumret, SPY) %>% mutate(EW_dd = EW_cumret/cummax(EW_cumret)-1,
+                                                                                  SPY_dd = SPY_cumret/cummax(SPY_cumret)-1)
+matplot(drawdown$Date,select(drawdown,ends_with("dd")),type="l")
+print(paste0("Max drawdown for EW is",round(min(drawdown$EW_dd)*100,2),"%"))
+print(paste0("Max drawdown for SPY is",round(min(drawdown$SPY_dd)*100,2),"%"))
+```
+
+### Analyze
+
+```{r}
+# Rank all ETFs by its contribution to PnL over the entire period.
+# Rank all ETFs by its risk (max. draw down %) over the entire period
+
+```
+
+
+### Let's try improve
+
+- Add Re-balance: reset the weights so each ETF has equal market value.
+
+```{r}
+calc_rebal_days <- function(nn, period) {
+  rev(nn - (0:(round(nn / period,0) - 1)) * period)
+}
+
+# Monthly re-balance
+# every 21 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 21)
+tail(rebal_days)
+
+# Annual re-balance
+# every 252 days
+rebal_days <- calc_rebal_days(length(dd[[1]]$timestamp), 252)
+head(rebal_days)
+```
+
+### Creating a function
+```{r}
+#function
+perf <- function(data, weight,name) {
+  data1 <- data %>% select(Date, everything(), -starts_with("SPY"), -ends_with("cumret")) 
+  data1['Strategy'] <- rowSums(as.data.frame(data1[,2:10]) * weight)
+  for (ii in 2:ncol(data1)) {
+    data1[paste0(colnames(data1)[ii],"_cumret")] <- cumprod(1 + data1[ii])
+  }
+  data1<- data1 %>% na.omit()
+  print(paste0("Annualized return of ",name," is ",prod(data1$Strategy + 1,na.rm=TRUE) ** (250 / length(data1$Strategy))-1))
+  print(paste0("Annualized Sharpe of ",name," is ", (mean(data1$Strategy,na.rm=TRUE) / sd(data1$Strategy,na.rm=TRUE)) * sqrt(252)))
+  
+  data1 <- data1 %>% mutate(Strategy_dd = Strategy_cumret/cummax(Strategy_cumret)-1)
+  print(paste0("Max drawdown for ",name," is",round(min(data1$Strategy_dd, na.rm=TRUE)*100,2),"%"))
+
+  rank <- data1 %>% select(everything(),-starts_with("SPY"), -ends_with("dd"), -Strategy) %>% na.omit()
+  for (ii in 2:10) {
+    rank[paste0(colnames(rank)[ii],"_wgt_pnl")] <- (weight* rank[ii]) * (weight*lag(rank$Strategy_cumret))
+  }
+  rank <- rank %>% select(ends_with("pnl"))
+  rank <- data.frame(colSums(rank, na.rm=TRUE))
+  rank$Percent <- rank$colSums.rank..na.rm...TRUE./sum(rank$colSums.rank..na.rm...TRUE.)
+  rank <- rank %>% select (-colSums.rank..na.rm...TRUE.)
+  print(arrange(rank,desc(Percent)))
+  
+  for (ii in 2:ncol(data1)) {
+    data1[paste0(colnames(data1)[ii],"_wgt_cumret")] <- cumprod(1 + data1[ii] *ifelse(weight!=0,weight/(1/9),1))
+  }
+  rank_dd <- data1 %>% select(Date,ends_with("wgt_cumret"),-starts_with("Strategy")) %>% mutate(XLB_dd = XLB_wgt_cumret/cummax(XLB_wgt_cumret)-1,
+                                                                XLE_dd = XLE_wgt_cumret/cummax(XLE_wgt_cumret)-1,
+                                                                XLF_dd = XLF_wgt_cumret/cummax(XLF_wgt_cumret)-1,
+                                                                XLI_dd = XLI_wgt_cumret/cummax(XLI_wgt_cumret)-1,
+                                                                XLK_dd = XLK_wgt_cumret/cummax(XLK_wgt_cumret)-1,
+                                                                XLP_dd = XLP_wgt_cumret/cummax(XLP_wgt_cumret)-1,
+                                                                XLU_dd = XLU_wgt_cumret/cummax(XLU_wgt_cumret)-1,
+                                                                XLV_dd = XLV_wgt_cumret/cummax(XLV_wgt_cumret)-1,
+                                                                XLY_dd = XLY_wgt_cumret/cummax(XLY_wgt_cumret)-1)
+  
+  rank_dd <- rank_dd %>% na.omit() %>% select(Date,ends_with("dd")) %>% pivot_longer(ends_with("dd"),names_to = "ETF", values_to = "Drawdown")
+  rank_dd <- rank_dd %>% group_by(ETF) %>% summarize(Max_drawdown=min(Drawdown))
+  print(arrange(rank_dd,Max_drawdown))
+  data1$SPY_cumret <- data$SPY_cumret
+  data1$Strategy_cumret <- cumprod(1+data1$Strategy)
+  print(ggplot(data1,aes(Date)) + geom_line(aes(y=Strategy_cumret,color="Strategy_cumret"))+ geom_line(aes(y=SPY_cumret,color="SPY_cumret")))
+}
+```
+### Creating the various weights for each strategy
+```{r}
+#daily rebal
+weight_daily <- matrix(1/9,nrow(daily_ret),len_tickers-1)
+
+
+#no rebal
+weight <- as.data.frame(daily_ret[,12:20])
+weight$total <- rowSums(weight)
+for (ii in 1:9) {
+  weight[paste0(colnames(weight)[ii],"_weight")] <- weight[ii]/weight$total
+}
+weight <- as.matrix(weight[,11:19])
+weight <- weight[-nrow(weight),]
+weight_norebal <- rbind(1/9,weight)
+
+
+#monthly rebal
+rebal_days <- c(1,calc_rebal_days(length(dd[[1]]$timestamp), 21))
+weight <- daily_ret %>% mutate (index = 1:nrow(daily_ret)) %>% select(index,Date, ends_with("cumret"), -starts_with("SPY")) 
+weight$total <- rowSums(weight[,3:11])
+weight$XLB = 1
+weight$XLE =1
+weight$XLF=1
+weight$XLI = 1
+weight$XLK = 1
+weight$XLP = 1
+weight$XLU = 1
+weight$XLV = 1
+weight$XLY =1
+
+for (ii in 2:nrow(daily_ret)) {
+  weight$XLB[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLB_cumret[ii]/weight$XLB_cumret[ii-1] *weight$XLB[ii-1])
+
+  weight$XLE[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLE_cumret[ii]/weight$XLE_cumret[ii-1] *weight$XLE[ii-1])
+
+    weight$XLF[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLF_cumret[ii]/weight$XLF_cumret[ii-1] *weight$XLF[ii-1])
+    
+      weight$XLI[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLI_cumret[ii]/weight$XLI_cumret[ii-1] *weight$XLI[ii-1])
+      
+        weight$XLK[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLK_cumret[ii]/weight$XLK_cumret[ii-1] *weight$XLK[ii-1])
+        
+          weight$XLP[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLP_cumret[ii]/weight$XLP_cumret[ii-1] *weight$XLP[ii-1])
+          
+            weight$XLU[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLU_cumret[ii]/weight$XLU_cumret[ii-1] *weight$XLU[ii-1])
+            
+              weight$XLV[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLV_cumret[ii]/weight$XLV_cumret[ii-1] *weight$XLV[ii-1])
+              
+                weight$XLY[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLY_cumret[ii]/weight$XLY_cumret[ii-1] *weight$XLY[ii-1])
+}
+
+for (ii in 13:21) {
+  weight[paste0(colnames(weight)[ii],"_weight")] <- weight[ii]/weight$total
+}
+weight <- weight %>% select(ends_with("weight"))
+weight_month <- as.matrix(weight)
+
+
+#annual rebal
+rebal_days <- c(1,calc_rebal_days(length(dd[[1]]$timestamp), 252))
+weight <- daily_ret %>% mutate (index = 1:nrow(daily_ret)) %>% select(index,Date, ends_with("cumret"), -starts_with("SPY")) 
+weight$total <- rowSums(weight[,3:11])
+weight$XLB = 1
+weight$XLE =1
+weight$XLF=1
+weight$XLI = 1
+weight$XLK = 1
+weight$XLP = 1
+weight$XLU = 1
+weight$XLV = 1
+weight$XLY =1
+
+for (ii in 2:nrow(daily_ret)) {
+  weight$XLB[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLB_cumret[ii]/weight$XLB_cumret[ii-1] *weight$XLB[ii-1])
+
+  weight$XLE[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLE_cumret[ii]/weight$XLE_cumret[ii-1] *weight$XLE[ii-1])
+
+    weight$XLF[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLF_cumret[ii]/weight$XLF_cumret[ii-1] *weight$XLF[ii-1])
+    
+      weight$XLI[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLI_cumret[ii]/weight$XLI_cumret[ii-1] *weight$XLI[ii-1])
+      
+        weight$XLK[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLK_cumret[ii]/weight$XLK_cumret[ii-1] *weight$XLK[ii-1])
+        
+          weight$XLP[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLP_cumret[ii]/weight$XLP_cumret[ii-1] *weight$XLP[ii-1])
+          
+            weight$XLU[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLU_cumret[ii]/weight$XLU_cumret[ii-1] *weight$XLU[ii-1])
+            
+              weight$XLV[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLV_cumret[ii]/weight$XLV_cumret[ii-1] *weight$XLV[ii-1])
+              
+                weight$XLY[ii] <- ifelse(weight$index[ii] %in% rebal_days, weight$total[ii-1]/9, weight$XLY_cumret[ii]/weight$XLY_cumret[ii-1] *weight$XLY[ii-1])
+}
+
+for (ii in 13:21) {
+  weight[paste0(colnames(weight)[ii],"_weight")] <- weight[ii]/weight$total
+}
+weight <- weight %>% select(ends_with("weight"))
+weight_annual <- as.matrix(weight)
+
+```
+
+### Results - Daily Rebalancing
+```{r}
+perf(daily_ret,weight_daily,"Daily Rebal")
+```
+Daily rebalancing outperforms SPY
+
+### Results - No Rebalance
+```{r}
+perf(daily_ret,weight_norebal,"No Rebal")
+```
+No rebalance underperforms daily rebalancing
+
+### Results - Monthly Rebalance
+```{r}
+perf(daily_ret,weight_month,"Monthly Rebal")
+```
+
+
+### Results - Annual Rebalance
+```{r}
+perf(daily_ret,weight_annual,"Annual Rebal")
+```
+For each of EW strategy:
++ no re-balance
++ monthly re-balance, and
++ annually re-balance.
+
+Do the analysis prescribed in the ## Performance section.
+
+
+# Momentum Strategy
+
+- Empirically, there appears to be certain “inertia” in stock returns known as the
+momentum effect, whereby future returns are positively correlated with past returns.
+
+- We use a price momentum here. At any point, we rank the ETFs according to following.
+  + At row `i`, momentum is `( price[i-21] - price[i-252] ) / price[i-252] - ( price[i-1] - price[i-21] ) / price[i-21]`
+
+- Set to re-balance every month
+  - Long the top 4 stocks with equal weights, or
+  - Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+```{r}
+daily_price <- tibble(Date = dd[[1]]$timestamp)
+for (ii in 1:len_tickers) {
+  if (all_tickers[ii] == 'SPY') { next }
+  daily_price[all_tickers[ii]] <- dd[[ii]]$adjusted_close
+}
+daily_price
+
+rebal_days <- calc_rebal_days(nrow(daily_price), 21)
+rebal_days
+
+# Assume monthly re-balance
+rank <- data.frame()
+for (r in rebal_days) {
+  print(r)
+  mm <- numeric(len_invest)
+  
+  # Generate momentum
+  # print(mm)
+  for (ii in 1:len_invest) {
+     tt <- invest_tickers[ii]
+     
+     # Use 1 if look-back period is not enough.
+     r_prev_d <- if_else(r > 1, r - 1, 1)
+     r_prev_m <- if_else(r > 21, r - 21, 1)
+     r_prev_y <- if_else(r > 252, r - 252, 1)
+     
+ x <- (daily_price[r_prev_m,tt] - daily_price[r_prev_y,tt] ) / daily_price[r_prev_y,tt] - ( daily_price[r_prev_d,tt] - daily_price[r_prev_m,tt] ) / daily_price[r_prev_m,tt]
+     mm[ii] <- as.numeric(x)
+  }
+  # TODO: rank and allocation.
+rank <- rbind(rank,rank(mm))
+ 
+}
+
+#mom long top 4
+#exclude 12 months of lead-in data
+rank1 <- rank
+rank1$index <- rebal_days
+rank1 <- rank1[-(1:12),]
+
+
+weight <- daily_ret %>% mutate (index = 1:nrow(daily_ret)) %>% select(index,Date, ends_with("cumret"), -starts_with("SPY")) 
+weight$total <- rowSums(weight[,3:11])
+weight$XLB = 1
+weight$XLE =1
+weight$XLF=1
+weight$XLI = 1
+weight$XLK = 1
+weight$XLP = 1
+weight$XLU = 1
+weight$XLV = 1
+weight$XLY =1
+weight <- weight[-(1:278),]
+
+colnames(rank1) <- c("XLB_rank","XLE_rank","XLF_rank","XLI_rank","XLK_rank","XLP_rank","XLU_rank","XLV_rank", "XLY_rank", "index")
+weight<- merge(weight,rank1, by="index", all=TRUE)
+weight
+weight$Date = NULL
+weight[is.na(weight)] <- 0
+
+for (ii in 2:nrow(weight)) {
+  weight$XLB[ii] <- ifelse(weight$XLB_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLB_rank[ii]==0,weight$XLB_cumret[ii]/weight$XLB_cumret[ii-1] *weight$XLB[ii-1],
+                                  0))
+    weight$XLE[ii] <- ifelse(weight$XLE_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLE_rank[ii]==0,weight$XLE_cumret[ii]/weight$XLE_cumret[ii-1] *weight$XLE[ii-1],
+                                  0))
+      weight$XLF[ii] <- ifelse(weight$XLF_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLF_rank[ii]==0,weight$XLF_cumret[ii]/weight$XLF_cumret[ii-1] *weight$XLF[ii-1],
+                                  0))
+  weight$XLI[ii] <- ifelse(weight$XLI_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLI_rank[ii]==0,weight$XLI_cumret[ii]/weight$XLI_cumret[ii-1] *weight$XLI[ii-1],
+                                  0))
+          weight$XLK[ii] <- ifelse(weight$XLK_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLK_rank[ii]==0,weight$XLK_cumret[ii]/weight$XLK_cumret[ii-1] *weight$XLK[ii-1],
+                                  0))
+            weight$XLP[ii] <- ifelse(weight$XLP_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLP_rank[ii]==0,weight$XLP_cumret[ii]/weight$XLP_cumret[ii-1] *weight$XLP[ii-1],
+                                  0))
+              weight$XLU[ii] <- ifelse(weight$XLU_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLU_rank[ii]==0,weight$XLU_cumret[ii]/weight$XLU_cumret[ii-1] *weight$XLU[ii-1],
+                                  0))
+                weight$XLV[ii] <- ifelse(weight$XLV_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLV_rank[ii]==0,weight$XLV_cumret[ii]/weight$XLV_cumret[ii-1] *weight$XLV[ii-1],
+                                  0))
+                  weight$XLY[ii] <- ifelse(weight$XLY_rank[ii]>5, weight$total[ii-1]/4, 
+                           ifelse(weight$XLY_rank[ii]==0,weight$XLY_cumret[ii]/weight$XLY_cumret[ii-1] *weight$XLY[ii-1],
+                                  0))
+}
+
+for (ii in 12:20) {
+  weight[paste0(colnames(weight)[ii],"_weight")] <- weight[ii]/weight$total
+}
+weight <- weight %>% select(ends_with("weight"))
+weight_top4_mom <- as.matrix(weight)
+weight_top4_mom <- weight_top4_mom %>% na.omit()
+daily_ret_no_lead <- daily_ret[-(1:278),]
+perf(daily_ret_no_lead,weight_top4_mom,"Monthly Rebal")
+
+
+#mom long top 2 short bottom 2
+rank1 <- rank
+rank1$index <- rebal_days
+rank1 <- rank1[-(1:12),]
+weight <- daily_ret %>% mutate (index = 1:nrow(daily_ret)) %>% select(index,Date, ends_with("cumret"), -starts_with("SPY")) 
+weight$total <- rowSums(weight[,3:11])
+weight$XLB = 1
+weight$XLE =1
+weight$XLF=1
+weight$XLI = 1
+weight$XLK = 1
+weight$XLP = 1
+weight$XLU = 1
+weight$XLV = 1
+weight$XLY =1
+weight <- weight[-(1:278),]
+
+colnames(rank1) <- c("XLB_rank","XLE_rank","XLF_rank","XLI_rank","XLK_rank","XLP_rank","XLU_rank","XLV_rank", "XLY_rank", "index")
+weight<- merge(weight,rank1, by="index", all=TRUE)
+weight$Date = NULL
+weight[is.na(weight)] <- 0
+weight
+for (ii in 2:nrow(weight)) {
+  weight$XLB[ii] <- ifelse(weight$XLB_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLB_rank[ii]==0,weight$XLB_cumret[ii]/weight$XLB_cumret[ii-1] *weight$XLB[ii-1],
+                                  ifelse(weight$XLB_rank[ii]<3,-weight$total[ii-1]/4,0)))
+  weight$XLE[ii] <- ifelse(weight$XLE_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLE_rank[ii]==0,weight$XLE_cumret[ii]/weight$XLE_cumret[ii-1] *weight$XLE[ii-1],
+                                  ifelse(weight$XLE_rank[ii]<3,-weight$total[ii-1]/4,0)))
+    weight$XLF[ii] <- ifelse(weight$XLF_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLF_rank[ii]==0,weight$XLF_cumret[ii]/weight$XLF_cumret[ii-1] *weight$XLF[ii-1],
+                                  ifelse(weight$XLF_rank[ii]<3,-weight$total[ii-1]/4,0)))
+      weight$XLI[ii] <- ifelse(weight$XLI_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLI_rank[ii]==0,weight$XLI_cumret[ii]/weight$XLI_cumret[ii-1] *weight$XLI[ii-1],
+                                  ifelse(weight$XLI_rank[ii]<3,-weight$total[ii-1]/4,0)))
+        weight$XLK[ii] <- ifelse(weight$XLK_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLK_rank[ii]==0,weight$XLK_cumret[ii]/weight$XLK_cumret[ii-1] *weight$XLK[ii-1],
+                                  ifelse(weight$XLK_rank[ii]<3,-weight$total[ii-1]/4,0)))
+          weight$XLP[ii] <- ifelse(weight$XLP_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLP_rank[ii]==0,weight$XLP_cumret[ii]/weight$XLP_cumret[ii-1] *weight$XLP[ii-1],
+                                  ifelse(weight$XLP_rank[ii]<3,-weight$total[ii-1]/4,0)))
+            weight$XLU[ii] <- ifelse(weight$XLU_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLU_rank[ii]==0,weight$XLU_cumret[ii]/weight$XLU_cumret[ii-1] *weight$XLU[ii-1],
+                                  ifelse(weight$XLU_rank[ii]<3,-weight$total[ii-1]/4,0)))
+            weight$XLV[ii] <- ifelse(weight$XLV_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLV_rank[ii]==0,weight$XLV_cumret[ii]/weight$XLV_cumret[ii-1] *weight$XLV[ii-1],
+                                  ifelse(weight$XLV_rank[ii]<3,-weight$total[ii-1]/4,0)))
+            weight$XLY[ii] <- ifelse(weight$XLY_rank[ii]>7, weight$total[ii-1]/4, 
+                           ifelse(weight$XLY_rank[ii]==0,weight$XLY_cumret[ii]/weight$XLY_cumret[ii-1] *weight$XLY[ii-1],
+                                  ifelse(weight$XLY_rank[ii]<3,-weight$total[ii-1]/4,0)))
+}
+weight
+for (ii in 12:20) {
+  weight[paste0(colnames(weight)[ii],"_weight")] <- weight[ii]/weight$total
+}
+weight <- weight %>% select(ends_with("weight"))
+weight_long2short2_mom <- as.matrix(weight)
+weight_long2short2_mom <- weight_long2short2_mom %>% na.omit()
+daily_ret_no_lead <- daily_ret[-(1:278),]
+perf(daily_ret_no_lead,weight_long2short2_mom,"Monthly Rebal")
+
+```
+
+
+### TODO
+
+For each of Momentum strategy:
+- Long the top 4 stocks with equal weights, or
+- Long the top 2 stocks and Short bottom 2 stocks with equal weights.
+
+Do the analysis prescribed in the ## Performance section.
+
+- Note: there is lead-in period *exclude* the lead-in period when Momentum strategy still wait for more data.
+  + For both momentum strategy portfolio and S&P in comparison, you need to exlcude the lead-in period so as to start from the first rebal_day day.

@@ -1,0 +1,16 @@
+Alenson Toh Jun Wei
+
+# A1 Shiny Web
+
+- Good use of css style
+
+# A2.1 Secretary
+
+- Good.
+  Note that make_choice() may return NULL when N is the evaluation_max. This is a case that the best N is not selected.
+  NULL values are skipped when unlist(simulation_results) is performed so your probability is correct.
+
+# A2.2 Bond Schedule
+
+- The use of reactive links the input to output directly. After pressing once the Submit button, it becomes useless. Minor issue.
+

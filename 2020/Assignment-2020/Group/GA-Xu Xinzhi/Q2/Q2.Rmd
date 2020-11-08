@@ -1,0 +1,175 @@
+---
+title: "FE8828 Group Assigment - Problem 2"
+author: "Yang Xuanrui, Shen Shanshan, Zheng Tongrui, Xu Xinzhi, Zhang Yuejiao"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r}
+library(conflicted) 
+library(tidyverse) 
+library(fOptions) 
+```
+
+```{r}
+S <- 100 
+K <- 100 
+
+# stock price for realized volatility = 0.3
+sigma <- 0.3 
+drift <- 0 #drift = r - q 
+timestep <- 1 / 250 
+days <- 20 / 250 
+N <- days / timestep
+p1 <- (drift - 0.5 * sigma * sigma) * timestep 
+p2 <- sigma * sqrt(timestep)
+
+# stock price for realized volatility = 0.5
+sigma <- 0.5
+p1_0.5 <- (drift - 0.5 * sigma * sigma) * timestep 
+p2_0.5 <- sigma * sqrt(timestep)
+```
+
+```{r}
+# function of calculating option price using implied volatility
+p <- function(S, days = 20, i, sigma){
+  price0 <- GBSOption("c", S, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma) @ price
+  return(price0)
+}
+
+# function of calculating gamma using implied volatility
+g <- function(S, days = 20, i, sigma){
+  gamma <- GBSGreeks("Gamma", "c", S, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma)
+  return(gamma)
+}
+
+# function of calculating theta using implied volatility
+t <- function(S, days = 20, i, sigma){
+  theta <- GBSGreeks("Theta", "c", S, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma) 
+  return(theta)
+}
+
+# function of calculating delta using implied volatility
+d <- function(S, days = 20, i, sigma){
+  delta <- GBSGreeks("Delta", "c", S, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma)
+}
+
+# function of calculating option_pnl - approx_pnl
+pnl <- function(S, S0, days = 20, i, sigma_2){
+  vega <- GBSGreeks("Vega", "c", S0, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma_2) 
+  delta <- GBSGreeks("Delta", "c", S0, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma_2) 
+  gamma <- GBSGreeks("Gamma", "c", S0, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma_2) 
+  theta <- GBSGreeks("Theta", "c", S0, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma_2) 
+  price0 <- GBSOption("c", S0, X = 100, Time = (days-i) / 250, r = 0, b = 0, sigma_2) @ price
+  option_pnl <- GBSOption("c", S, X = 100, Time = (days-i-1) / 250, r = 0, b = 0,sigma_2)@price - price0
+  approx_pnl <- delta * (S - S0) + 0.5 * gamma * (S - S0) ** 2 + vega * 0 + theta * 1/250
+  return(option_pnl - approx_pnl)
+}
+
+days <- 20
+diff_pnl <- c()
+price <- c()
+price_0.5 <- c() 
+gamma <- c()
+theta <- c()
+delta_0.5 <- c()
+underlying <- c()
+underlying_0.5 <- c()
+
+# iteration times  = 1000
+for(i in 1:1000){
+  
+  ss <- c(100, rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))) #stock with 0.3 volatility
+  underlying <- rbind(underlying, ss)  #remember underlying price with sigma=0.3
+  
+  ss_0.5 <- c(100, rep(S, N) * c(cumprod(rlnorm(N, mean = p1_0.5, sd = p2_0.5))))
+  underlying_0.5 <- rbind(underlying_0.5, ss_0.5)  #remember underlying price with realized sigma=0.5
+  
+  # Q1
+  # For difference of profit and loss
+  temp <- c()  
+  for (j in 0:days - 1){
+    temp <- c(temp, pnl( ss[j+2], ss[j+1], days = 20, j, 0.3 ))  
+  }
+  diff_pnl <- rbind(diff_pnl,temp)
+  
+  tempp <- c()     #for price with sigma = 0.3
+  tempp_0.5 <- c() #for price with sigma = 0.5
+  tempg <- c()     #for gamma with sigma = 0.3
+  tempt <- c()     #for theta with sigma = 0.3
+  tempd_0.5 <- c() #for delta with sigma = 0.5
+  for (k in 0:days-1){
+    tempp <- c(tempp,p(ss[k+1],days = 20, k, 0.3))
+    tempp_0.5 <- c(tempp_0.5, p(ss_0.5[k+1],days = 20, k, 0.3))
+    tempg <- c(tempg,g(ss[k+1],days = 20, k, 0.3))
+    tempt <- c(tempt,t(ss[k+1],days = 20, k, 0.3))
+    tempd_0.5 <- c(tempd_0.5, d(ss_0.5[k+1],days = 20, k, 0.3))
+  }
+  price <- rbind(price,tempp)
+  price_0.5 <- rbind(price_0.5,tempp_0.5)
+  gamma <- rbind(gamma,tempg)
+  theta <- rbind(theta,tempt)
+  delta_0.5 <- rbind(delta_0.5,tempd_0.5)
+}
+```
+
+```{r}
+df <- tibble(mean = rowMeans(diff_pnl))
+ggplot(df, aes(mean))+ geom_density()
+```
+
++ Question 1
+  - There exists a remainder so that the kurtosis is around 0.
+  - From x axis, the range of these remainders at each time point is also quite small. (within $\pm 0.1$)
+
+```{r}
+# function of calculating sum of GammaPnL + ThetaPnL
+cal_sum <- function(i,gamma,theta,ss){
+  sum <- 0
+  for (j in 1:days){
+    sum <- sum + 0.5 * gamma[i,j] * (ss[i,j+1] - ss[i,j]) ** 2 + theta[i,j] / 250
+  }
+  return(sum)
+}
+
+# function of calculating delta_pln
+deltapnl <- function(delta, underlying, i){
+  sum <- 0
+  for (j in 1:days){
+    sum <- sum - delta[i,j] * (underlying[i,j+1] - underlying[i,j])
+  }
+  return(sum)
+}
+
+imp_vol <- c()
+sum <- c()
+overall_pnl <- c()
+for (i in 1:1000){
+    # Q2: with realized vol = 0.3
+    sum <- c(sum, cal_sum(i, gamma, theta, underlying))
+    # Q3: with realized vol = 0.5
+    overall_pnl <- c(overall_pnl, 
+                     -price_0.5[i,1] + ifelse(underlying_0.5[i,21] > 100, underlying_0.5[i,21] - 100, 0) + deltapnl(delta_0.5, underlying_0.5, i))
+}
+```
+
+```{r}
+#Q2
+# Plot to show Σ(GammaPnL +T hetaPnL) ≈ 0
+sum <- data.frame(sum)
+ggplot(sum, aes(sum))+ geom_density()
+```
+
++ Question 2
+  - We can see that sum of Gamma and Theta follows a normal distribution with mean around 0.
+  - This means Gamma and Theta can almost neutralize each other.
+
+```{r}
+#Q3
+# To show how many times Overall PnL is negative in 1000 times
+cat(paste0("The number of times Overall_PnL < 0 is: ", sum(overall_pnl < 0)))
+```
+
++ Question 3
+  - Overall profit and loss is positive except for a few times. (usually less than 10 times)
+

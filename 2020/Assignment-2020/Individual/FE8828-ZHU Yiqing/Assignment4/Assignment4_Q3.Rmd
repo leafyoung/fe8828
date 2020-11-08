@@ -1,0 +1,97 @@
+---
+title: "Assignment4_Q3"
+author: "Zhu Yiqing"
+date: "2020/10/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(alphavantager)
+library(dplyr)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r}
+total_cash <- 1000000
+reserve <- total_cash * 0.1
+stock_1 <- readRDS("./data/AMZN .rds")
+stock_2 <- readRDS("./data/CSCO .rds")
+stock_3 <- readRDS("./data/FB .rds")
+stock_4 <- readRDS("./data/MSFT .rds")
+SPY <- readRDS("./data/SPY .rds")
+stock_cash <- (total_cash - reserve)/4
+shares_1 <- as.integer(stock_cash/stock_1$adjusted_close[1])
+shares_2 <- as.integer(stock_cash/stock_2$adjusted_close[1])
+shares_3 <- as.integer(stock_cash/stock_3$adjusted_close[1])
+shares_4 <- as.integer(stock_cash/stock_4$adjusted_close[1])
+shares_spy <- as.integer(stock_cash*4/SPY$adjusted_close[1])
+portfolio <- data.frame(date=stock_1$timestamp, value = 0, return = 0)
+portfolio_spy <- data.frame(date=SPY$timestamp, value = 0, return = 0)
+
+for (i in c(1:nrow(portfolio))){
+  portfolio$value[i] <- shares_1 * stock_1$adjusted_close[i] + 
+    shares_2 * stock_2$adjusted_close[i] +
+    shares_3 * stock_3$adjusted_close[i] +
+    shares_4 * stock_4$adjusted_close[i] +
+    reserve
+  portfolio_spy$value[i] <- shares_spy * SPY$adjusted_close[i] + reserve
+}
+
+
+for (i in c(2:nrow(portfolio))){
+  portfolio$return[i] <- portfolio$value[i]/portfolio$value[i-1] - 1
+  portfolio_spy$return[i] <- portfolio_spy$value[i]/portfolio_spy$value[i-1] - 1 
+  # portfolio_spy$return[i] <- SPY$adjusted_close[i]/SPY$adjusted_close[i-1] - 1 
+}
+sharpe_spy <- (mean(portfolio_spy$return[2:nrow(portfolio_spy)])-0.01/250)/sd(portfolio_spy$return[2:nrow(portfolio_spy)])
+sharpe_portfolio <- (mean(portfolio$return[2:nrow(portfolio)])-0.01/250)/sd(portfolio$return[2:nrow(portfolio)])
+print("Sharpe Ratio of SPY:")
+print(sharpe_spy)
+print("Sharpe Ratio of portfolio:")
+print(sharpe_portfolio)
+```
+
+## Including Plots
+
+
+```{r}
+daily_return_plot <- ggplot(portfolio, aes(return)) + geom_histogram(binwidth = 0.002) +  theme(text = element_text(size=8))
+daily_return_plot
+```
+
+```{r}
+final <- data.frame(date=portfolio$date, portfolio_value = portfolio$value,
+                    portfolio_return = portfolio$value/portfolio$value[1],
+                    spy_value = portfolio_spy$value,
+                    spy_return = portfolio_spy$value/portfolio$value[1])
+valuation_portfolio <- ggplot(final) + 
+  geom_line(aes(date, portfolio_value), color='red') +  
+  geom_line(aes(date, spy_value), color='blue') + theme(legend.position="right", text = element_text(size=8)) +
+  xlab("Date") + ylab("Value")
+return_portfolio <- ggplot(final) + 
+  geom_line(aes(date, portfolio_return), color='red') + 
+  geom_line(aes(date, spy_return), color='blue') + 
+  theme(legend.position = "right", text = element_text(size=8)) +
+  xlab("Date") +ylab("Return")
+valuation_portfolio
+return_portfolio
+```
+
+
+```{r}
+final$AMZN = shares_1 * stock_1$adjusted_close / final$portfolio_value
+final$CSCO = shares_2 * stock_2$adjusted_close / final$portfolio_value
+final$FB = shares_3 * stock_3$adjusted_close / final$portfolio_value
+final$MAFT = shares_4 * stock_4$adjusted_close / final$portfolio_value
+final$Cash = reserve / final$portfolio_value
+tibble(t = final$date, AMZN = final$AMZN, CSCO = final$CSCO, FB = final$FB, MAFT = final$MAFT, Cash = final$Cash) %>% 
+  pivot_longer(cols = AMZN: CSCO: FB: MAFT: Cash) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name)) + xlab("Date") + ylab("Proportion")
+```
+
+
+

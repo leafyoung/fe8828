@@ -1,0 +1,125 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+
+
+# Finding #1
+```{r}
+#Student is the least likely customer group (unknown not considered as it gives no information)
+group_by(bank,job) %>% summarise(PiecesOfRecord=n())
+```
+
+# Finding #2
+```{r}
+#Here displays the highest and lowest balance of each employment group
+#The occupation seems not a factor affecting the balance amount
+group_by(bank,job) %>% 
+filter(min_rank((balance))==1|min_rank(desc(balance))==1) %>%
+arrange(job,balance)
+```
+
+# Finding #3
+```{r}
+# Plot the graph between the duration and the duration counts
+# The number of records significantly decreases as the duration increases
+bank %>% 
+  group_by(dur_group = (duration%/% 100) * 100) %>%
+  summarise(count = n()) %>%
+  arrange(dur_group) -> durationPlot
+
+durationPlot
+
+plot(durationPlot$dur_group, durationPlot$count)
+```
+
+# Finding #4
+```{r}
+# Based on this data set, the married people are the most likely to have a negative balance
+# Meanwhile, the married are the main customers as well as they occupy the largest portion among single, married and divorced.
+c1<-group_by(bank,marital)%>%
+  summarise('Balance<0'= sum(balance<0))
+c2<-group_by(bank,marital)%>%
+  summarise('0<Balance<10000'= sum(balance>0 && balance < 10000))
+c3<-group_by(bank,marital)%>%
+  summarise('Balance>10000'= sum(balance>10000))
+
+df<-distinct(bank,marital)%>%
+  arrange(marital)
+df<-left_join(df,c1,by="marital")
+df<-left_join(df,c2,by="marital")
+df<-left_join(df,c3,by="marital")
+df
+```
+
+# Finding #5
+```{r}
+#More than half of the top ten people with the greatest balance doesn't have a housing
+#There is a large gap between the balance of the people ranked first ($71188) and second ($42045)
+#The rest eight are holding a balance around a similar level ($20000)
+df2<-arrange(bank,balance)%>%
+  {
+    bind_rows(tail(.,n=10))
+  }
+df2
+
+df3<-arrange(df2,housing)
+df3<-mutate(df3,housing = ifelse(housing =="yes",1,0))
+df3
+```
+
+# Finding #6
+```{r}
+#Among the top 30 people with the most negative balance, 25 of them has a housing
+df4<-arrange(bank,balance)%>%
+  {
+    bind_rows(head(.,n=30))
+  }
+df4
+df5<-arrange(df4,housing)
+df5<-mutate(df5,housing2 = ifelse(housing =="yes",T,F))
+df5
+group_by(df5,housing2)%>%
+  summarise(Total=n())
+
+```
+
+# Finding #7
+```{r}
+#There seems no significant balance difference between people from different education background
+df6<-filter(bank,education=="primary")%>%
+  summarise(balance=mean(balance))%>%
+  rename('Primary Balance'=balance)
+
+df7<-filter(bank,education=="secondary")%>%
+  summarise(balance=mean(balance))%>%
+  rename('Secondary Balance'=balance)
+
+df8<-filter(bank,education=="tertiary")%>%
+  summarise(balance=mean(balance))%>%
+  rename('Tertiary Balance'=balance)
+
+df9<-filter(bank,education=="unknown")%>%
+  summarise(balance=mean(balance))%>%
+  rename('Unknown Balance'=balance)
+
+df10<-bind_cols(df6,df7,df8,df9)
+df10
+
+```
+
+

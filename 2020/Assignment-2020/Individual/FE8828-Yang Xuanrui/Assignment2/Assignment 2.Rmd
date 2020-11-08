@@ -1,0 +1,33 @@
+---
+title: Assignment 2
+---
+
+
+```{r}
+make_choice <- function(N, split_number){
+  sum <- 0
+  times <- 1e5
+  for(j in 1:times){
+    input_list <- sample(1:N,N,replace = FALSE)
+    criteria <- max(input_list[1:split_number])
+    if(criteria==N){next}
+    
+    selection <- split_number+1
+
+    for(i in (selection+1):N){
+      if(input_list[i]>criteria){
+        criteria <- input_list[i]
+        break
+      }
+    }
+    if(criteria==N ){sum <- sum+1}
+  }
+
+  p <- sum/times
+}
+
+res <- sapply(1:50, make_choice, N=100)
+which.max(res)
+
+```
+

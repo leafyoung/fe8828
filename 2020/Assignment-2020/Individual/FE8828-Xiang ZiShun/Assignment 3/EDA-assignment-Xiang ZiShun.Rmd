@@ -1,0 +1,122 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Xiang ZiShun <sub> <Email:zxiang002@e.ntu.edu.sg> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(knitr)
+conflict_prefer("filter", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+---
+
+### Finding #1
+Percentage within each marital status that has housing
+
+```{r}
+bank %>%
+  group_by('Marital Status' = marital, 'Housing' = housing) %>%
+  summarise('Number' = n()) %>%
+  ungroup('Housing') %>%
+  mutate('Percentage' = scales::percent(Number / sum(Number))) %>%
+  select(-Number) %>%
+  filter(Housing == 'yes') -> f1
+
+kable(f1)
+```
+
+---
+
+### Finding #2
+What percentage of people with housing that is having a loan
+
+```{r}
+# Find the big age group
+bank %>%
+  filter(housing == 'yes') %>%
+  group_by('Housing' = housing, 'Has loan' = loan) %>%
+  summarise('Number' = n()) %>%
+  mutate('Percentage' = scales::percent(Number / sum(Number))) -> f2
+
+kable(f2, align="c")
+```
+
+---
+
+### Finding #3
+Age group with biggest median balance
+
+```{r}
+bank %>%
+  group_by('Age Group' = (age %/% 10) * 10) %>%
+  summarise('Median Balance' = median(balance, rm.na=TRUE)) -> f3
+
+kable(f3)
+```
+
+---
+
+### Finding #4
+Average balance of people with loans categorized by job
+
+```{r}
+bank %>%
+  filter(loan == 'yes') %>%
+  group_by('Jobs' = job, 'Loan' = loan) %>%
+  summarise('Average Balance' = mean(balance, rm.na=TRUE)) -> f4
+
+kable(f4)
+  
+```
+
+---
+
+### Finding #5
+Job with highest default rate
+
+```{r}
+bank %>%
+  group_by('Jobs' = job) %>%
+  summarise('Default Rate' = scales::percent(sum(default == 'yes') / n())) -> f5
+
+kable(f5)
+  
+```
+
+---
+
+### Finding #6
+Difference in balance between the 25th and 75th percentile for each education
+
+```{r}
+bank %>%
+  group_by('Education' = education) %>%
+  summarise(smallBal = quantile(balance, 0.25), largeBal = quantile(balance, 0.75)) %>%
+  mutate('Difference in balance between 25th and 75th percentile' = largeBal - smallBal) %>%
+  select(-smallBal, -largeBal)-> f6
+
+kable(f6, align="c")
+```
+
+---
+
+### Finding #7
+Percentage of martial status in each age group
+```{r}
+bank %>%
+  group_by('Age Group' = (age %/% 10) * 10) %>%
+  summarise('Percentage Married' = scales::percent(sum(marital == 'married') / n()),
+            'Percentage Single' = scales::percent(sum(marital == 'single') / n()),
+            'Percentage Divorced' = scales::percent(sum(marital == 'divorced') / n())) -> f7
+
+kable(f7, align="c")
+  
+```

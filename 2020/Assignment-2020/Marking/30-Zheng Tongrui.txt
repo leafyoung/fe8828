@@ -1,0 +1,32 @@
+Zheng Tongrui
+
+# A1 Shiny Web
+
+- Good
+
+# A2.1 Secretary
+
+- If all items in selection_group is less than best. Below code would not run, best will be returned directly.
+  When best == N (found in evaluation group), this would make a false case.
+  Need to add the handling when i reaches the last item in selection group, return the last item.
+
+  best<-max(evaluation_group)
+  for(i in 1:(N-split_number)){
+    if(selection_group[i]>best) {
+      best<-selection_group[i]
+      break
+    }
+  }
+  return (best)
+
+# A2.2 Bond Schedule
+
+- Neat and fast
+
+# A4.3 Portfolio
+
+- Typo that stores YUM data as SP
+
+SP<-av_get("SPY",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(YUM,file="data5.Rds") # SP
+SP<-readRDS(file="data5.Rds")

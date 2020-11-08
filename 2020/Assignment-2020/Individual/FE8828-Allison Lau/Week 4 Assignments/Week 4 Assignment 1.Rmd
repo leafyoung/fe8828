@@ -1,0 +1,116 @@
+---
+title: "Week 4 Assignment 1 (EDA)"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(dplyr)
+library(gridExtra)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+print(bank)
+```
+
+## Finding #1
+
+The largest age group within the data are individuals in their 30s. The next largest age group are individuals in their 40s.
+
+```{r, include  = FALSE}
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+summarize(count = n()) %>%
+arrange(age_group) -> res
+# res
+print(res)
+ggplot(res, aes(age_group, count)) + geom_point() + geom_line()
+  
+```
+```{r, echo  = FALSE}
+ggplot(res, aes(age_group, count)) + geom_point() + geom_line()
+```
+
+## Finding #2
+
+Within the data, around half of customers have housing loans with the bank, but only about 25% have personal loans. Of those who have personal loans, there are less defaulted customers as compared to those who have housing loans. 
+
+```{r, include = FALSE}
+p1<- ggplot(data = bank) + geom_bar(aes(y=loan, fill=default)) 
+
+p2 <- ggplot(data = bank) + geom_bar(aes(y=housing, fill=default))
+
+grid.arrange(p1, p2, ncol=1, nrow=2)
+```
+```{r, echo  = FALSE}
+p1<- ggplot(data = bank) + geom_bar(aes(y=loan, fill=default)) 
+
+p2 <- ggplot(data = bank) + geom_bar(aes(y=housing, fill=default))
+
+grid.arrange(p1, p2, ncol=1, nrow=2)
+                             
+```
+
+## Finding #3
+
+The largest balance within the data filtered by occupation is `r max(bank$balance)`, from a retired individual who is married. Customers who work in management seem to have generally higher bank balances.
+
+```{r, include = FALSE}
+five <- bank %>%
+group_by(x = job) %>%
+filter(balance == max(balance)) %>%
+head(n = 12)
+print(five)
+ggplot(bank, aes(x= balance, y = job, color=marital)) + geom_point()
+```
+```{r, echo  = FALSE}
+ggplot(bank, aes(x= balance, y = job, color=marital)) + geom_point()
+```
+
+## Finding #4
+
+The majority of customers have an average contact duration of between 100-200 seconds. These contacts usually happen during the months of May to August. 
+
+```{r, include = FALSE}
+ggplot(bank, aes(x=duration, fill = month)) + geom_histogram(binwidth=50)
+```
+```{r, echo  = FALSE}
+ggplot(bank, aes(x=duration, fill = month)) + geom_histogram(binwidth=50)
+```
+
+## Finding #5
+
+Most of the dataset's customers use cellular devices to contact the bank. However, a significant proportion of customers did not indicate how they would prefer to be contacted, especially blue-collar workers, where the ratio of cellular to unknown is almost 50%.
+
+```{r, include = FALSE}
+ggplot(bank, aes(x=job, fill=contact)) + geom_bar() + theme(text = element_text(size=10),
+axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r, echo  = FALSE}
+ggplot(bank, aes(x=job, fill=contact)) + geom_bar() + theme(text = element_text(size=10),
+axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## Finding #6
+
+Most of the dataset's customers seem to have only up to secondary school education, even amongst the younger customer age groups of 20s to 30s. 
+
+```{r, include = FALSE}
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+summarize(social=education) %>%
+arrange(age_group) -> tes
+print(tes)
+ggplot(tes, aes(y=age_group, fill=social)) + geom_histogram(binwidth=5) 
+```
+
+```{r, echo  = FALSE}
+ggplot(tes, aes(y=age_group, fill=social)) + geom_histogram(binwidth=5) 
+```
+
+

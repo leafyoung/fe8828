@@ -1,0 +1,136 @@
+---
+title: "Assignment 4.3"
+author: "XGP"
+date: "10/18/2020"
+output: html_document
+---
+
+```{r}
+library(alphavantager)
+av_api_key("LA5ZRKL6QJIB56JO")
+if (FALSE) {
+  df1 <- av_get("MSFT", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  write.csv(df1, file="C:/Users/xgpsy/Desktop/Assignment 4/Data/MSFT.csv")
+  df2 <- av_get("FB", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  write.csv(df2, file="C:/Users/xgpsy/Desktop/Assignment 4/Data/FB.csv")
+  df3 <- av_get("EBAY", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  write.csv(df3, file="C:/Users/xgpsy/Desktop/Assignment 4/Data/EBAY.csv")
+  df4 <- av_get("FDX", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  write.csv(df4, file="C:/Users/xgpsy/Desktop/Assignment 4/Data/FDX.csv")
+  df5 <- av_get("SPY", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  write.csv(df5, file="C:/Users/xgpsy/Desktop/Assignment 4/Data/SPY.csv")
+}
+```
+
+```{r}
+library(readr)
+library(ggplot2)
+library(tidyverse)
+MSFT <- read_csv("Data/MSFT.csv",
+col_types = cols(timestamp = col_date(format = "%Y-%m-%d")))
+#View(MSFT)
+FB <- read_csv("Data/FB.csv",
+col_types = cols(timestamp = col_date(format = "%Y-%m-%d")))
+#View(FB)
+EBAY <- read_csv("Data/EBAY.csv",
+col_types = cols(timestamp = col_date(format = "%Y-%m-%d")))
+#View(EBAY)
+FDX <- read_csv("Data/FDX.csv",
+col_types = cols(timestamp = col_date(format = "%Y-%m-%d")))
+#View(FDX)
+SPY <- read_csv("Data/SPY.csv",
+col_types = cols(timestamp = col_date(format = "%Y-%m-%d")))
+#View(SPY)
+totalcash <- 1000000
+a <- 1000000*0.9*0.25
+rf <- 0.01/250
+#Holding of 4 stocks
+shareofMSFT <- as.integer(a/MSFT[["adjusted_close"]][1])
+shareofFB <- as.integer(a/FB[["adjusted_close"]][1])
+shareofEBAY <- as.integer(a/EBAY[["adjusted_close"]][1])
+shareofFDX <- as.integer(a/FDX[["adjusted_close"]][1])
+
+#Cash holding after holding 4 stocks
+retained_cash <- totalcash-(shareofMSFT*MSFT[["adjusted_close"]][1]+shareofFB*FB[["adjusted_close"]][1]+
+                 shareofEBAY*EBAY[["adjusted_close"]][1]+shareofFDX*FDX[["adjusted_close"]][1])
+
+#Daily valuation of the portfolio
+Value <- shareofMSFT*MSFT[["adjusted_close"]]+shareofFB*FB[["adjusted_close"]]+
+           shareofEBAY*EBAY[["adjusted_close"]]+shareofFDX*FDX[["adjusted_close"]]
+
+#Return of the portfolio
+Rpl <- list()
+for(i in 1:(length(Value)-1)){
+  Rpl <- c(Rpl,(Value[i+1]+retained_cash*(1+rf)^(i+1))/
+                   (Value[i]+retained_cash*(1+rf)^(i))-1)
+}
+#Rpl
+
+#Holding of SPY
+shareofSPY <- as.integer((totalcash-retained_cash)/SPY[["adjusted_close"]][1])
+
+#Cash holding after holding SPY
+retained_cash2 <- totalcash-(shareofSPY*SPY[["adjusted_close"]][1])
+
+#Daily valuation of the SPY
+Value2 <- shareofSPY*SPY[["adjusted_close"]]
+
+#Return of the SPY
+Rpl2 <- list()
+for(i in 1:(length(Value2)-1)){
+  Rpl2 <- c(Rpl2,(Value2[i+1]+retained_cash2*(1+rf)^(i+1))/
+                   (Value2[i]+retained_cash2*(1+rf)^(i))-1)
+  
+}
+#Rpl2
+
+#Sharp ratio
+Rp1 <- as.numeric(Rpl)
+meanRp1 <- mean(Rp1)  
+stdevRp1 <- sd(Rp1)
+Sharp_Ratio1 <- (meanRp1-Rf)/stdevRp1
+print("The sharp ratio of the portfolio is:")
+Sharp_Ratio1
+
+Rp2 <- as.numeric(Rpl2)
+meanRp2 <- mean(Rp2)  
+stdevRp2 <- sd(Rp2)
+Sharp_Ratio2 <- (meanRp2-Rf)/stdevRp2
+print("The sharp ratio of SPY is:")
+Sharp_Ratio2
+
+```
+
+```{r}
+#Plot the histogram of daily return of the portfolio
+data1 <-data.frame(Rp1)
+ggplot(data, aes(x=Rp1)) + geom_histogram(binwidth=0.001)
+
+#Plot the histogram of daily return of the SPY
+data2 <-data.frame(Rp2)
+ggplot(data, aes(x=Rp2)) + geom_histogram(binwidth=0.001)
+
+#Plot 1: total valuation vs. time of two lines : your investment portfolio, and S&P
+data3 <-tibble (t=c(1:100),Value,Value2)
+ggplot(data3,aes(x=t)) + geom_line(aes(y=Value))+ geom_line(aes(y=Value2), color ="red")
+
+#Plot 2: relative return vs. time of two lines : your investment portfolio, and S&P. 
+prr <- Value/Value[1]
+Srr <- Value2/Value2[1]
+data4 <-tibble (t=c(1:100), prr,Srr)
+ggplot(data4,aes(x=t)) + geom_line(aes(y=prr))+ geom_line(aes(y=Srr), color ="red")
+
+#Plot relative valuation for the different allocation (stocks and cash)
+MSFTvaluation <- shareofMSFT*MSFT[["adjusted_close"]]
+FBvaluation <- shareofFB*FB[["adjusted_close"]]
+EBAYvaluation <- shareofEBAY*EBAY[["adjusted_close"]]
+FDXvaluation <- shareofFDX*FDX[["adjusted_close"]]
+cash <- list()
+for(i in 1:100){
+  cash <- c(cash,retained_cash*(1+rf)^(i))
+}
+Cash <- as.numeric(cash)
+tibble(t = 1:100, MSFTvaluation, FBvaluation,EBAYvaluation,FDXvaluation,Cash) %>% pivot_longer(cols = MSFTvaluation:Cash) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name), position = 'fill')
+
+```

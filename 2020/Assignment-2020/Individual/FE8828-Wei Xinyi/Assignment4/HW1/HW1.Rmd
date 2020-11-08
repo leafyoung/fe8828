@@ -1,0 +1,64 @@
+---
+title: "HW1"
+author: "Wei Xinyi"
+date: "2020年10月12日"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+#### insight1 & insight2
+```{r}
+## Using dataset mpg
+
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))
+
+## Insight1: The smaller the displ, the bigger the hwy  
+
+```
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy)) + 
+  facet_wrap(~ class, nrow = 2)
+
+## Insight2: For the insight above, class `compact`, `pickup`, `subcompact`, `suv` show a more clear trend.
+```
+
+#### insight3 & insight4
+```{r}
+## Using dataset diamonds
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = cut))
+
+## Insight3: The better the cut, the bigger the count.
+```
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+
+## Insight4: At each cut, clarity`SI1` and `VS2` have bigger count.
+```
+
+#### insight5 & insight6
+```{r}
+## Using dataset diamond
+
+ggplot(data = diamonds, mapping = aes(x = price, y = ..density..)) + 
+  geom_freqpoly(mapping = aes(colour = cut), binwidth = 500)
+
+## Insight5: The Price is almost between 0~5000.
+```
+
+```{r}
+diamonds %>% 
+  count(color, cut) %>%  
+  ggplot(mapping = aes(x = color, y = cut)) +
+    geom_tile(mapping = aes(fill = n))
+
+## The biggest group is cut`Ideal` with color`G`.
+```

@@ -1,0 +1,87 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Xiang Guangpei"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r}
+#Group by jobs with mean balance and marriage/housing condition
+bank %>% 
+  group_by(job) %>%
+  summarise(balance_mean = mean (balance),
+  with_house = sum(ifelse(housing =="yes",1,0)),
+  marriage_count = sum(ifelse(marital =="married",1,0)),
+  single_with_house = ifelse(with_house - marriage_count >=0 ,with_house - marriage_count,0))
+```
+# Finding #2
+```{r}
+#Group by jobs to find the youngest and eldest person in each job
+bank %>% 
+  group_by(job) %>%
+  filter(age == min(age) | age == max(age)) %>% 
+  arrange(job,age) 
+```
+
+# Finding #3
+```{r}
+# Find min/max/mean of the balance and list the jobs by the increase of the default counts
+bank %>% 
+  group_by(job) %>%
+  summarise( balance_min = min(balance),
+             balance_max = max(balance),
+             balance_mean = mean(balance),
+  default_count = sum(ifelse(default == "no", 0, 1))) %>%
+  arrange(default_count)
+```
+# Finding #4
+```{r}
+# Group by age to find the youngest to own a house in each job
+bank %>% 
+  group_by(job) %>%
+  filter(age == min(age) & housing =="yes") %>% 
+  arrange(age,housing) 
+```
+# Finding #5
+```{r}
+#Group by education to find balance mean/housing condition/default count
+bank %>% 
+  group_by(education) %>%
+  summarise(count = n(),
+            balance_mean = mean(balance),
+            with_housing = sum(housing == "yes") / n(),
+            default_count = sum(ifelse(default == "no", 0, 1)))
+```
+# Finding #6
+```{r}
+#Group by age to find the percentage of people with house and with loan, and number of people have house without loan
+bank %>% 
+  group_by(age) %>%
+  summarise(count = n(),
+            with_housing = sum(housing == "yes") / n(),
+            with_loan = sum(loan == "yes") / n(),
+            house_without_loan = ifelse((sum(housing == "yes") - sum(loan == "yes")) >=0,
+                                         (sum(housing == "yes") - sum(loan == "yes")),0))
+```
+
+# Finding #7
+```{r}
+# TO list out all the married people with house and loan grouped by age
+bank %>% 
+  group_by(age) %>%
+  filter(marital =="married" & housing =="yes" & loan == "yes" ) %>% 
+  arrange(age,marital,housing) 
+```
+
+
+

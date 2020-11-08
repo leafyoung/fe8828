@@ -1,0 +1,92 @@
+---
+title: "Assignment3-Q3"
+output: html_document
+---
+
+```{r assignment4-3}
+library(alphavantager)
+library(tidyverse)
+library(ggplot2)
+av_api_key("5F5Y5417MP2U0NH0")
+
+DPZ<-av_get("DPZ",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(DPZ,file="data1.Rds")
+DPZ<-readRDS(file="data1.Rds")
+
+MCD<-av_get("MCD",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(MCD,file="data2.Rds")
+MCD<-readRDS(file="data2.Rds")
+
+SBUX<-av_get("SBUX",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(SBUX,file="data3.Rds")
+SBUX<-readRDS(file="data3.Rds")
+
+YUM<-av_get("YUM",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(YUM,file="data4.Rds")
+YUM<-readRDS(file="data4.Rds")
+
+SP<-av_get("S&P500",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(YUM,file="data5.Rds")
+SP<-readRDS(file="data5.Rds")
+
+SP<-av_get("SPY",av_fun="TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+saveRDS(YUM,file="data5.Rds")
+SP<-readRDS(file="data5.Rds")
+
+cls1<-DPZ$adjusted_close
+cls2<-MCD$adjusted_close
+cls3<-SBUX$adjusted_close
+cls4<-YUM$adjusted_close
+cls5<-SP$adjusted_close
+
+rf<-0.01/250
+amount<-1000000*0.9/4
+
+share1<-round(amount/cls1[1])
+share2<-round(amount/cls2[1])
+share3<-round(amount/cls3[1])
+share4<-round(amount/cls4[1])
+
+amountf<-1000000-(share1*cls1[1])-(share2*cls2[1])-(share3*cls3[1])-(share4*cls4[1])
+nrow(cls1)
+date<-MCD$timestamp
+df<-tibble(date=date,cls1=cls1,cls2=cls2,cls3=cls3,cls4=cls4)
+df<-mutate(df,nn=1:n())
+df<-mutate(df,daily_value=share1*df$cls1+share2*df$cls2+share3*df$cls3+share4*df$cls4+amountf*exp(rf*df$nn))
+df<-mutate(df,ret=(daily_value/1000000-1))
+
+df<-mutate(df,daily_value1=share1*df$cls1)%>% mutate(daily_value2=share2*df$cls2)%>%
+mutate(daily_value3=share3*df$cls3) %>%mutate(daily_value4=share4*df$cls4) %>% mutate(daily_value_cash=amountf*exp(rf*df$nn))
+#plot histogram
+sr1<-(mean(df$ret)-rf)/sd(df$ret)
+ggplot(df,mapping=aes(x=ret))+geom_histogram()
+
+#Calculation for S&P500
+share5<-1000000*0.9/cls5[1]
+amountsp<-share5*cls5[1]
+df2<-tibble(date=date,cls5=cls5)
+df2<-mutate(df2,mm=n())
+df2<-mutate(df2,daily_value_sp=share5*cls5+(1000000-amountsp)*exp(rf*df2$mm))
+df2<-mutate(df2,daily_ret_sp=(daily_value_sp/1000000-1))
+sr2<-(mean(df2$daily_ret_sp)-rf)/sd(df2$daily_ret_sp)
+
+
+#plot
+df3<-tibble(date=date,daily_value=df$daily_value,daily_value_sp=df2$daily_value_sp,ret=df$ret,daily_ret_sp=df2$daily_ret_sp)
+#plot2 total valuation
+ggplot(df3)+geom_line(aes(date,daily_value),color="red")+geom_line(aes(date,daily_value_sp))
+#plot3 return
+ggplot(df3)+geom_line(aes(date,ret),color="red")+geom_line(aes(date,daily_ret_sp))
+
+#plot4 relative valuation
+dfa<-tibble(date=df$date,value=df$daily_value1,label="DPZ")
+dfb<-tibble(date=df$date,value=df$daily_value2,label="MCD")
+dfc<-tibble(date=df$date,value=df$daily_value3,label="SBUX")
+dfd<-tibble(date=df$date,value=df$daily_value4,label="YUM")
+dfe<-tibble(date=df$date,value=df$daily_value_cash,label="Cash")
+data<-bind_rows(dfa,dfb,dfc,dfd,dfe)
+ggplot(data)+geom_area(aes(x=date,y=value,fill=label),position="fill")
+
+```
+
+

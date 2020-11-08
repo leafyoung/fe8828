@@ -1,0 +1,85 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Xiang ZiShun <sub> <Email:zxiang002@e.ntu.edu.sg> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+conflict_prefer("filter", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+---
+
+### Finding #1
+The proportion of marital status of different education groups.
+
+```{r}
+ggplot(bank) +
+  geom_bar(aes(x="", fill = marital), position = "fill") +
+  facet_grid(~ education) +
+  coord_polar(theta = "y") 
+```
+
+---
+
+### Finding #2
+Relative proportion within each job that has housing.
+
+```{r}
+ggplot(bank) +
+  geom_bar(aes(x = job, fill = housing),  position = "fill") +
+  scale_x_discrete(limit = rev(levels(factor(bank$job)))) +
+  coord_flip()
+```
+
+---
+
+### Finding 3
+Age distribution in each marital group.
+
+```{r}
+ggplot(bank, aes(age, color = marital, fill = marital)) + 
+  geom_density(alpha = 0.8) +
+  facet_grid(~ marital)
+```
+
+---
+
+### Finding 4
+Proportion of education across each age group.
+
+```{r}
+ggplot(bank, aes(age, colour= education, fill=education)) +
+  geom_histogram(binwidth=1, alpha=0.8)
+```
+
+---
+
+### Finding 5
+The median, 25th and 75th percentage of balance for each job
+
+```{r}
+ggplot(bank, aes(job, balance, fill=job)) +
+  geom_boxplot() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_cartesian(ylim=c(-500, 3000))
+```
+
+---
+
+### Finding 6
+The relative balance of each education group corresponding to their age
+
+```{r}
+ggplot(bank, aes(education, age, alpha=balance, size=balance, colour=education)) +
+  geom_point()
+```
+

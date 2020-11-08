@@ -1,0 +1,174 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Zhang Yuejiao <sub> <Email:yzhang176@e.ntu.edu.com> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(knitr)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+* Among `r nrow(bank)` clients, the minimum balance is `r min(bank$balance)` and the highest is `r max(bank$balance)`.
+* The average duration of last contact is `r round(mean(bank$duration)/60,2)` minutes.
+
+----
+
+# Finding #2
+```{r}
+# An Overview of Client's Education level 
+bank %>% 
+  group_by(education) %>%
+  summarise(n_edu = n(), mean_balance = mean(balance, na.rm=TRUE)) -> res
+res
+barplot(res$n_edu,names.arg=res$education,ylab="Count",main="Number of Clients in each education level")
+barplot(res$mean_balance,names.arg=res$education,ylab="Mean Balance",main="Mean Balance in each eduction level")
+```
+
+* The biggest group is _'secondary'_ with `r max(res$n_edu)` people.
+* Based on available information _'tertiary'_ has highest mean balance of `r round(max(res$mean_balance),2)`.
+
+----
+
+# Finding #3
+
+* Among all jobs, __management__ has the highest number of clients in the sample data.
+* Excluding _unknown_, __students__ has the lowest numberof clients in the sample data.
+* __Management__, __blue-collar__ and __technician__ account for more than 50% of all clients in sample data.
+
+```{r}
+# An Overview of Client's Employment
+
+total <- nrow(bank)
+bank %>% 
+  group_by(job) %>%
+  summarise(n_job = n(), pct = round(n_job/total,4)) %>%
+    arrange(pct) -> job_pct
+job_pct
+pie(job_pct$pct, labels = job_pct$job, main="Pie Chart of Employment")
+
+
+
+```
+
+
+---
+
+
+# Finding #4
+
+* Most clients were last contacted in Summer and Spring.
+
+```{r}
+# An analysis of seasonal change in contacts
+bank <- mutate(bank, season = case_when(
+month =="mar"| month =="apr" | month =="may" ~ "Spring",
+month =="jun"| month =="jul" | month =="aug"  ~ "Summer",
+month =="sep"| month =="oct" | month =="nov"  ~ "Autumn",
+month =="dec"| month =="jan" | month =="feb"  ~ "Winter",
+))
+
+group_by(bank, season) %>% summarise(count = n()) %>%
+    arrange(match(season, c("Spring", "Summer","Autum")))-> res
+res
+barplot(res$count,names.arg=res$season,ylab="# of clients",main="Number of clients last contact of the current campaign")
+
+```
+
+---
+
+# Finding #5
+
+* __Entrepreneur__ has the highest default rate among all jobs in sample data. 
+* __Student__ and __retired__ have very low default rate among all jobs in sample data.
+* __Admin__ has the lowest default rate among all clients currently being employed.
+
+```{r}
+# An analysis of  and default
+
+df1 <- group_by(bank, job) %>%
+    summarise(`with default` = sum(default == "yes"))
+df2 <- group_by(bank, job) %>%
+    summarise(`w/o default` = sum(default == "no"))
+
+res <- left_join(df1, df2, by = "job")
+res <- res %>% 
+    mutate(total = `with default` + `w/o default`) %>%
+    mutate(default_pct = round(100* `with default`/ total, 2))
+res
+barplot(res$default_pct, names.arg=res$job,ylab="% of default",main="Default rate per job", las = 3, 
+    cex.names=0.7,)
+
+
+
+```
+
+---
+
+# Finding #6
+
+* Larger median-balance variance between jobs is observed within the highest decile.
+* Median-balance increases steadily from decile 1 to 7 and grows more rapidly from 7 onwards; a jump is observed between decile 9 and 10.
+
+```{r}
+# An analysis of job distribution in balance deciles  
+bank %>% arrange(balance) %>%
+  group_by(quantile = ntile(balance, 10),job) %>% summarize(count = n(), median_balance = median(balance)) -> res
+
+plot(res$quantile, res$median_balance, xlab="Deciles",ylab="Balance", main="Job-based Median Balance within each Balance Decile")
+filter1 <- filter(res, quantile == 10 & count == max(count))
+cat(paste0("In the highest decile most clients have the job of: ", filter1$job),"\n")
+
+filter1 <- filter(res, quantile == 1 & count == max(count))
+cat(paste0("In the lowest decile most clients have the job of: : ", filter1$job,"\n"))
+
+```
+
+
+---
+
+# Finding #7
+
+* In general, single people have lower percentage of having housing loan
+* Married blue collar have the highest percentage of having housing loan
+* The retired have the lowest percentage of having housing loan (excluding unknown employment).
+* In general, the group with higher percentage of having housing loan tend to have lower mean balance, but noticed that self-employed is an exception here.
+* It was also observed that within each job group, those with single status tend to have higher mean balance...
+
+```{r, results = 'asis'}
+# A view of age, balance, the percentage of having housing loan with respect to employment and marital status
+age_balance_housing <- function(df) {
+  df %>% summarise(`mean(Age)` = mean(age, na.rm=TRUE),
+                   `mean(Balance)` = mean(balance, na.rm=TRUE),
+                   `percentage(Housing Loan)` = round(100*sum(housing == "yes")/n(),2) )
+}
+
+df_lvl1 <- bank %>% group_by(job, marital) %>% age_balance_housing
+df_lvl2 <- bank %>% group_by(job, marital = "+") %>% age_balance_housing
+df_lvl3 <- bank %>% group_by(job = "+", marital = "+") %>% age_balance_housing
+
+df_age_balance_housing <- bind_rows(df_lvl1, df_lvl2, df_lvl3)
+df_age_balance_housing <- arrange(df_age_balance_housing,(job =="+"),job, desc(marital))
+
+
+plot1 <- filter(df_age_balance_housing, job!="+" & marital != "+")
+ggplot(plot1, aes(job, `percentage(Housing Loan)`)) + 
+    geom_point(aes(color = marital, size = `mean(Balance)`), alpha = 1/2) + 
+    theme(legend.position = "left",axis.text.x = element_text(angle = 45, hjust = 1), text = element_text(size=10))
+
+kable(df_age_balance_housing) 
+```
+
+
+
+----
+
+-END-

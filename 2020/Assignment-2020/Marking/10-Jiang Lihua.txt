@@ -1,0 +1,48 @@
+Jiang Lihua
+
+# A1 Shiny Web
+
+- Good. We need sport to keep fit.
+
+# A2.1 Secretary
+
+- This loop will run only one-time.
+  Correction: "else" shall be placed some where else.
+
+  for(i in 1:(N-split_number)){
+    if(selection[[i]]>max_eva){
+      return(selection[[i]])
+      break
+    }
+    else{
+      return(max_eva)
+    }
+  }
+
+  # Correction
+  for(i in 1:(N-split_number)){
+    if(selection[[i]]>max_eva){
+      return(selection[[i]])
+      break
+    }
+  }
+  # return last item if we can not a good one.
+  return(selection[[(N-split_number)]])
+
+# A2.2 Bond Schedule
+
+- Good. Minor issue: Have a bug of Tenor = 1 and Frequency = A.
+The Schedule table has two cashflow. There shall be only one.
+
+Number	Date	Cashflow
+1	2011-02-18	110.00
+1	2010-02-18	110.00
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done! Good efforts for producing the findings.
+
+# A4.3 Portfolio
+
+- Lots of codes for step-by-step details and it's working!

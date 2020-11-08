@@ -1,0 +1,20 @@
+Song Yifan
+
+# A1 Shiny Web
+
+- "Delicious" idea
+
+# A2.1 Secretary
+
+- Good with a plot. You are among few that produces a chart.
+
+# A2.2 Bond Schedule
+
+- Good
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done except that A4.1 miss some comments to explain.
+
+

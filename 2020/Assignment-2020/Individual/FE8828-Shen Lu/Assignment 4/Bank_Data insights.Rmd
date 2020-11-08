@@ -1,0 +1,98 @@
+---
+title: "Bank_Data insights"
+author: "Shen Lu"
+date: "10/9/2020"
+output: html_document
+---
+## Import data
+```{r, echo = TRUE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+### Insight 1
+- Jobs, loans and default
+```{r, echo = TRUE}
+ggplot(bank) + 
+  geom_point(data = bank%>% group_by(job)%>%
+                    summarise(`People with loan` = sum(ifelse(loan == "yes", 1, 0)),
+                              `Total Number of People` = n()), aes(job, `Total Number of People`, col = job, size = 100*`People with loan`/`Total Number of People`), alpha = 0.5, show.legend = c(color = FALSE))+
+  coord_flip()+
+  theme(legend.key.size = unit(2, "native"))+
+  scale_x_discrete(limit = rev(levels(factor(bank$job))))+
+  scale_size_area(name = "People Having\nLoan (%)")
+```
+**From the table above we can see that entrepreneurs are the ones that are most likely to have loans, with the highest percentage of people having credit in default. Even the bank have many clients in management position, only a small portion of them have loans**
+
+### Insight 2
+- last contact month
+```{r, echo = TRUE}
+ggplot(bank%>% mutate(month = {substr(month,1,1) <- toupper(substr(month,1, 1))
+      factor(month, levels = month.abb)}) %>%
+    arrange(month))+
+  geom_bar(aes(month, fill = month, alpha = 0.6), show.legend = FALSE)+
+  scale_x_discrete(name = "Last Contact Month")+
+  scale_y_continuous(limits = c(0,1450), breaks = c(0, 200,400,600,800,1000,1200,1400), name = "Total Number")
+```
+**We can see that most of last contacts happened in May.**
+
+### Insight 3
+- Duration deviation from the sample duration mean among different age groups
+```{r, echo = TRUE}
+ggplot(bank%>%
+  mutate(`Age Group` = case_when(
+      age < 35 ~ "youth",
+      age < 58 ~ "middle-age",
+      age < 65 ~ "senior",
+      TRUE ~ "retired"
+      ),
+    duration_diff = duration - mean(duration, na.rm = TRUE)))+
+  geom_boxplot(aes(factor(`Age Group`,levels = c("youth", "middle-age", "senior", "retired")), duration_diff, fill = `Age Group`, alpha = 0.6), show.legend = FALSE)+
+  scale_x_discrete(name = "Age Group")+
+  scale_y_continuous(limits = c(-260,2800), breaks = c(-260,0,700,1400,2100,2800), name = "Duration Deviation")
+```
+**We can see that retired people have nearest deviation from the sample duration mean, while for other age group, there are many people having much longer last contact duration.**
+
+### Insight 4
+- Balance distribution for people with different jobs
+```{r, echo = TRUE}
+ggplot(bank, aes(balance, color = job, fill = job, alpha = 0.05)) + geom_density(size = 1) +
+  scale_x_continuous(limits = c(-20000, 75000), breaks = seq(-20000, 75000, by = 10000))+
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))+
+  scale_y_continuous(limits = c(0,8e-4), breaks = seq(0, 1e-3, by = 1e-4), name = "Density")+
+  theme_minimal()
+
+ggplot(bank, aes(balance, color = job, fill = job, alpha = 0.05)) + geom_density() +
+  facet_wrap(~ job, nrow = 2)+
+  scale_x_continuous(limits = c(-20000, 75000), breaks = c(0, 15000, 60000))+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  scale_y_continuous(limits = c(0,8e-4), breaks = seq(0, 1e-3, by = 1e-4), name = "Density")
+```
+**Seeing from both graphs, we can conclude that people's balances are mainly around the range of [0, 2000], despite their jobs.**
+
+### Insight 5
+- Find the most common contact method 
+```{r, echo = TRUE}
+ggplot(bank, aes(contact, fill = job))+
+  geom_bar(alpha = 0.8)+
+  scale_y_continuous(limits = c(0, 3000), breaks = seq(0, 3000, by = 500))+
+  scale_x_discrete(name = "Contact Method", limit = rev(levels(factor(bank$contact))))+
+  coord_flip()
+```
+**We can see that the most popular communication type is cellular, and people that are in management position take up a large portion of its composition.**
+
+### Insight 6
+- Succeeded Campaign (%) for each people within different age group and having different job.
+```{r, echo = TRUE}
+ggplot(bank %>% group_by(job, education)%>%
+    summarise(`Successed Campaign(%)` = 100*sum(ifelse(poutcome == "success", 1, 0))/n())%>%
+    arrange(desc(`Successed Campaign(%)`)))+
+  geom_point(aes(job, education, size = `Successed Campaign(%)`, col = job), alpha = 0.8, show.legend = c(color = FALSE))+
+  coord_flip()+
+  scale_x_discrete(limit = rev(levels(factor(bank$job))))
+```
+**We can see that marketing campaign towards student and retired people having tertiary degree, people in management and administration position with unknown degree are all havd relatively higher likelihood of success.**

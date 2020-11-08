@@ -1,0 +1,28 @@
+# A1 Shiny Web
+
+
+# A2.1 Secretary
+
+
+# A2.2 Bond Schedule
+
+
+# A2.3 Stock data
+
+
+# A3.1 Bank data analysis
+
+
+# A3.2 Option data
+
+
+# A4.1 Bank data analysis
+
+
+# A4.2 Infection rate
+
+
+# A4.3 Portfolio
+
+
+

@@ -1,0 +1,115 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yang Ye <sub> <Email:yy@runchee.com> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+This data contains `r nrow(data)` rows.
+
+# Finding #2
+```{r}
+# Find the big age group
+bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+
+res
+
+plot(res$age_group, res$count)
+```
+
+# Discover insights of data frame: bank
+- Employment
+- Social attributes.
+- Count for sub-total / total, plot graph
+
+# Discover insights of data frame: bank
+## Employment and Social Attributes
+```{r insight_1}
+# Divorce Ratio of Employed and Unemployed People
+divorce <- bank %>% 
+  filter(!(job %in% c("Unknown", "Student"))) %>% 
+  mutate(employment = ifelse(job == "unemployed", "unemployed", "employed")) %>% 
+  count(employment, marital) %>% 
+  group_by(employment) %>% 
+  mutate(ratio = n / sum(n) * 100) %>% 
+  filter(marital == "divorced")
+
+
+barplot(divorce$ratio, names.arg=divorce$employment, 
+        xlab = "Employment Status", ylab = "Divorced Percentage (%)", 
+        main = "Percentages of Divorced Among Employed and Unemployed People")
+```
+
+# Mean and Median Ages of People with Different Loan Status
+
+```{r insight_2}
+bank %>% 
+  group_by(loan) %>% 
+  summarise(mean_age = mean(age),
+            median_age = median(age))
+```
+
+# Relationship Between the Balance Amounts and Education Levels
+```{r insight_3}
+education_balance <- bank %>% 
+  filter(education != "unknown") %>% 
+  filter(balance > 0) %>% 
+  mutate(education = factor(education, levels = c("primary","secondary", "tertiary")))
+  
+boxplot(balance ~ education, data = education_balance, log="y")
+```
+
+# Which job group has the highest balance?
+```{r insight_4}
+bank %>% 
+  group_by(job) %>% 
+  summarise(mean_balance = mean(balance),
+            median_balance = median(balance)) %>% 
+  arrange(-median_balance)
+```
+
+# Relationship between positive balance and age
+```{r insight_5}
+
+plot(bank$age, bank$balance, log = "y")
+```
+
+# Proportion of negative balances in each job group
+```{r insight_6}
+bank %>% 
+  mutate(balance_status = ifelse(balance < 0, "negative", "positive")) %>% 
+  count(job, balance_status) %>% 
+  group_by(job) %>% 
+  mutate(percentage = n / sum(n)) %>% 
+  filter(balance_status == "negative") %>% 
+  select(job, negative_balance_ratio=percentage) %>% 
+  arrange(-negative_balance_ratio)
+```
+
+# Proportion of Housing Among Different Education Status
+```{r insight_7}
+edu_housing <- bank %>% 
+  count(education, housing) %>% 
+  group_by(education) %>% 
+  mutate(percentage = n / sum(n) * 100) %>% 
+  filter(housing == "yes") %>% 
+  select(education, housing_percentage=percentage)
+
+barplot(edu_housing$housing_percentage, names.arg=edu_housing$education, 
+        xlab = "Education Level", ylab = "Housing Percentage (%)", 
+        main = "Percentages of Housing Among Different Education Status")
+```
+

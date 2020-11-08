@@ -1,0 +1,170 @@
+---
+title: "Portfolio Analysis"
+author: "H.S. WU"
+date: "2020/10/17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##
+
+```{r }
+
+library(tidyverse)
+library(alphavantager)
+library(quantmod)
+Sys.setlocale("LC_TIME", "English")
+
+av_api_key(api_key = "1E8IOHPTPNIQE4IY")
+
+MSFT <- av_get("MSFT", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+colnames(MSFT)[-1] <- paste("MSFT", colnames(MSFT)[-1], sep = "_")
+
+MMM <- av_get("MMM", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+colnames(MMM)[-1] <- paste("MMM", colnames(MMM)[-1], sep = "_")
+
+AMD <- av_get("AMD", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+colnames(AMD)[-1] <- paste("AMD", colnames(AMD)[-1], sep = "_")
+
+AFL <- av_get("AFL", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+colnames(AFL)[-1] <- paste("AFL", colnames(AFL)[-1], sep = "_")
+
+SPY <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+colnames(SPY)[-1] <- paste("SPY", colnames(SPY)[-1], sep = "_")
+
+if (FALSE) save.image(".\\data\\spdata.RData")
+
+```
+
+## Decide the allocation ni per stock. Calculate daily valuation of the portfolio, return of the portfolio.
+
+```{r }
+
+alldata <- SPY %>%
+  left_join(MSFT, by = "timestamp") %>%
+  left_join(AMD, by = "timestamp") %>%
+  left_join(AFL, by = "timestamp") %>%
+  left_join(MMM, by = "timestamp") %>%
+  select(timestamp, ends_with("adjusted_close")) %>%
+  mutate(MSFT_N = round(1000000 * 0.9 / 4 / MSFT_adjusted_close[1]), # Total No. shares
+         MSFT_V = MSFT_N * MSFT_adjusted_close, # Total value cost
+         
+         AMD_N = round(1000000 * 0.9 / 4 / AMD_adjusted_close[1]),
+         AMD_V = AMD_N * AMD_adjusted_close,
+         
+         AFL_N = round(1000000 * 0.9 / 4 / AFL_adjusted_close[1]),
+         AFL_V = AFL_N * AFL_adjusted_close,
+         
+         MMM_N = round(1000000 * 0.9 / 4 / MMM_adjusted_close[1]),
+         MMM_V = MMM_N * MMM_adjusted_close,
+         
+         Rf = 0.01 / 250,
+         Rf_cum = cumprod(Rf + 1),
+         
+         CASH_1 = (1000000 - MSFT_V[1] - AMD_V[1] - AFL_V[1] - MMM_V[1]) * Rf_cum, 
+         # Allocation of money
+         
+         portfolio_V = MSFT_V + AMD_V + AFL_V + MMM_V + CASH_1,
+         portfolio_R = Delt(portfolio_V), # Return
+         
+         SPY_N = round(1000000 * 0.9 / SPY_adjusted_close[1]),
+         SPY_V = SPY_N * SPY_adjusted_close,
+         
+         CASH_2 = (1000000 - SPY_V[1]) * Rf_cum,
+         
+         SP_V = SPY_V + CASH_2,
+         SP_R = Delt(SP_V))
+
+alldata$portfolio_R[1] <- 0
+alldata$SP_R[1] <- 0
+
+```
+
+## Calculate the Sharpe ratio for this portfolio and S&P
+
+```{r }
+Rf = 0.01 / 250
+# Sharpe ratio for this portfolio
+sr1 <- (mean(alldata$portfolio_R) - Rf)/sd(alldata$portfolio_R)
+
+# Sharpe ratio for S&P
+sr2 <- (mean(alldata$SP_R) - Rf)/sd(alldata$SP_R)
+
+cat(paste0("The Sharpe Ratio for my portfolio is ", sr1), "\n", 
+    paste0("The Sharpe Ratio for S&P is ", sr2))
+
+```
+
+## Plot a histogram of daily return
+
+```{r }
+
+ggplot(alldata, aes(x = portfolio_R)) +
+  geom_histogram(bins = 20, fill = "white", color = "black") +
+  labs(x = "Daily Return", title = "Portfolio") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggplot(alldata, aes(x = SP_R)) +
+  geom_histogram(bins = 20, fill = "white", color = "black") +
+  labs(x = "Daily Return", title = "S&P") +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+## Plot total valuation
+
+```{r }
+
+TotalVal <- alldata %>%
+  select(timestamp, portfolio_V, SP_V) %>%
+  pivot_longer(cols = -1, names_to = "port", values_to = "value")
+
+ggplot(TotalVal, aes(x = timestamp, y = value, colour = port)) +
+  geom_line(size = 1) +
+  scale_color_discrete(labels = c("Portfolio", "S&P")) +
+  labs(x = "Date", y = "Total Valuation", colour = "") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+
+```
+
+## Plot relativity return for your investment portfolio and S&P
+
+```{r }
+
+RelRet <- alldata %>%
+  select(timestamp, portfolio_V, SP_V) %>%
+  mutate(RelativeRet_pf = portfolio_V / portfolio_V[1] - 1,
+         RelativeRet_sp = SP_V / SP_V[1] - 1) %>%
+  select(timestamp, RelativeRet_pf, RelativeRet_sp) %>%
+  pivot_longer(cols = -1, names_to = "port", values_to = "relative_return")
+
+ggplot(RelRet, aes(x = timestamp, y = relative_return, colour = port)) +
+  geom_line(size = 1) +
+  labs(x = "Date", y = "Relative Return") +
+  theme_bw()
+
+```
+
+## Plot relative valuation for the different allocation (stocks and cash)
+
+```{r }
+result <- alldata %>%
+  select(timestamp, MSFT_V, AMD_V, AFL_V, MMM_V, CASH_1) %>%
+  pivot_longer(cols = -1, names_to = "port", values_to = "value") %>%
+  mutate(port = factor(
+    port, levels = c("MSFT_V", "AMD_V", "AFL_V", "MMM_V", "CASH_1")
+  ))
+
+ggplot(result, aes(x = timestamp, y = value, fill = port)) +
+  geom_area(position = "fill") +
+  scale_fill_discrete(labels = c("MSFT", "AMD", "AFL", "MMM", "CASH")) +
+  labs(x = "Date", y = "Relative Valuation", fill = "") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+```

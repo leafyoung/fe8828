@@ -1,0 +1,164 @@
+---
+title: "Insights_from_Bank_dataset"
+author: "Shen Lu"
+date: "10/3/2020"
+output: html_document
+---
+## Import libraries and Bank.csv
+```{r, echo = TRUE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+# View(bank)
+```
+### 1st insight:
+- Jobs, loans and default
+```{r, echo = TRUE}
+dt1 <- group_by(bank, job)%>%
+    summarize(`Total Number of People` = n(),
+              `People with loan` = sum(ifelse(loan == "yes", 1, 0)),
+              PercentageLoan = `People with loan`/`Total Number of People`,
+              `People having credit in default` = sum(ifelse(default == "yes", 1, 0)),
+              PercentageDefault = `People having credit in default`/`Total Number of People`)
+arrange(dt1, desc(PercentageLoan))
+
+```
+* From the table above we can see that entrepreneurs are the ones that are most likely to have loans, with the highest percentage of people having credit in default.
+
+### 2nd insight:
+- Age, education, housing and balance
+```{r, echo = TRUE}
+dt2<- mutate(bank, `Age Group` = case_when(
+  age < 35 ~ 1,
+  age < 58 ~ 2,
+  age < 65 ~ 3,
+  TRUE ~ 4
+)) %>% mutate(education = case_when(
+  education == "unknown" ~ 0,
+  education == "primary" ~ 1,
+  education == "secondary" ~ 2,
+  education == "tertiary" ~ 3
+))
+
+dt2 <- filter(dt2, !is.na(balance))%>%
+    group_by(`Age Group`, education)%>%
+    summarize(`Total People` = n(),
+              `Total Housing` = sum(ifelse(housing == "yes", 1, 0)),
+              Percentage = `Total Housing`/`Total People`,
+              `Average Balane` = mean(balance)) %>%
+    arrange(desc(`Age Group`), desc(education)) %>%
+    mutate(`Age Group`= case_when(
+      `Age Group` == 1 ~ "youth",
+      `Age Group` == 2 ~ "middle-age",
+      `Age Group` == 3 ~ "senior",
+      TRUE ~ "retired")) %>%
+    mutate(education = case_when(
+      education == 0 ~ "unknown" ,
+      education == 1 ~ "primary",
+      education == 2 ~ "secondary",
+      education == 3 ~ "tertiary"
+    ))
+dt2
+```
+* We can see that for bank clients older than 65 and with education being secondary or above, they both have high average balance, with few having their own house. Being compared to such situation, those that only have primary education among the same age group have much lower average balance.
+* Moreover, people younger than 65 are have more houses.
+
+## 3rd insight:
+- last contact month
+```{r, echo = TRUE}
+dt3 <- filter(bank, !is.na(month)) %>% group_by(month) %>%
+    summarise(`Total (Last contact)` = n()) %>% mutate(month = {substr(month,1,1) <- toupper(substr(month,1, 1))
+      factor(month, levels = month.abb)}) %>%
+    arrange(month)
+dt3
+```
+* We can see that most of last contacts are in May
+
+## 4th insight:
+- Duration deviation from the total mean among age groups
+```{r, echo = TRUE}
+dt5 <- filter(bank, !is.na(balance), !is.na(loan))%>%
+  mutate(`Age Group` = case_when(
+      age < 35 ~ 1,
+      age < 58 ~ 2,
+      age < 65 ~ 3,
+      TRUE ~ 4
+    ))%>%
+  transmute(`Age Group`, duration_diff = duration - mean(duration, na.rm = TRUE)) %>%
+  group_by(`Age Group`)
+
+dt5_1 <- filter(dt5, duration_diff == min(duration_diff))%>%
+    mutate(`Lower Bound(duration_diff)` = duration_diff)%>%
+    distinct(`Age Group`, `Lower Bound(duration_diff)`)
+
+dt5_2 <- filter(dt5, duration_diff == max(duration_diff))%>%
+    mutate(`Upper Bound(duration_diff)` = duration_diff)%>%
+    distinct(`Age Group`, `Upper Bound(duration_diff)`)
+
+dt5 <- inner_join(dt5_1, dt5_2, by = "Age Group")%>%
+    arrange(`Age Group`)%>%
+    mutate(`Age Group`= case_when(
+      `Age Group` == 1 ~ "youth",
+      `Age Group` == 2 ~ "middle-age",
+      `Age Group` == 3 ~ "senior",
+      TRUE ~ "retired"))
+dt5
+```
+* We can see that retired people have least contact duration deviated from the total mean, while the last contact duration for senior people can be 2505.0387 seconds longer than the total mean.
+
+## 5th insight:
+- communication type
+```{r,echo = TRUE}
+dt4 <- filter(bank, !is.na(contact))%>% 
+    mutate(`Contact method` = contact)%>%
+    select(-contact)%>%
+    group_by(`Contact method`) %>%
+    summarise(`Total(Number of People)` = n()) 
+dt4
+```
+* We can see that the most popular communication type is cellular.
+
+## 6th insight:
+- Find cellular are most common within which job
+```{r, echo = TRUE}
+dt6 <- group_by(bank, job)%>%
+  summarise(`Cellular_qty` = sum(ifelse(contact == "cellular", 1, 0)),
+            `Telephone_qty` = sum(ifelse(contact == "telephone", 1, 0)))
+dt6 <- dt6%>%ungroup()%>%
+    pivot_longer(col = c("Cellular_qty", "Telephone_qty"), names_to = "type", values_to = "value")%>%
+    group_by(job)%>%
+    summarise(value1 = sum(value))%>%
+    rename(value = value1)%>%
+    mutate(type = "Total") %>%
+    pivot_wider(names_from = type, values_from = value)%>%
+    inner_join(dt6, ., by = "job")%>% #in case the position of job changed
+    mutate(`Percentage(Cellular)` = Cellular_qty/Total)%>%
+    select(-Total)
+arrange(dt6, desc(`Percentage(Cellular)`))
+```
+* Cellular is the most common contact method within self-employed people
+
+## 7th insight
+- Job, education & Succeeded Campaign
+```{r, echo = TRUE}
+sum_success <- function(dt)
+{
+  dt %>% summarise(`Successed Campaign(Percentage)` = sum(ifelse(poutcome == "success", 1, 0))/n())
+}
+
+dt7_1 <- bank %>% group_by(job, education)%>%
+    sum_success%>%
+    arrange(desc(`Successed Campaign(Percentage)`))
+dt7_2 <- bank %>% group_by(job, education = "All")%>%
+    sum_success%>%
+    arrange(desc(`Successed Campaign(Percentage)`))
+dt7_3 <- bank %>% group_by(job = "All", education = "All")%>%
+    sum_success
+
+dt7 <- bind_rows(dt7_1, dt7_2, dt7_3)
+dt7
+```
+* We can see that the highest percentage of the successed marketing campaign is among tertiary students.

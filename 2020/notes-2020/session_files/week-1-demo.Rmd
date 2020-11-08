@@ -69,3 +69,24 @@ sub
 ```{r}
 sub("X\\.$", "Z.", "XYZ ends with X.")
 ```
+
+```{r}
+add_to_map <- function(map, key, value) {
+  if (is.null(map[[key]])) {
+    map[[key]] <- value
+  } else {
+    map[[key]] <- map[[key]] + value
+  }
+  map
+}
+
+basket <- sample(c("Apple", "Orange", "Pear"), 100, replace = TRUE)
+
+fruit_count <- list()
+
+for (b in basket) {
+  fruit_count <- add_to_map(fruit_count, b, 1)
+}
+
+fruit_count
+```

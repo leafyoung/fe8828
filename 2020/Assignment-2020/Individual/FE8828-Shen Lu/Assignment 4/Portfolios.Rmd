@@ -1,0 +1,125 @@
+---
+title: "Portfolios"
+author: "Shen Lu"
+date: "10/12/2020"
+output: html_document
+---
+### Import library
+```{r}
+library(alphavantager)
+library(readr)
+library(conflicted)
+library(tidyverse)
+library(lubridate)
+conflict_prefer("filter", "dplyr")
+```
+
+### Import data
+```{r}
+av_api_key("AYQYMDI2Y114CYVB")
+Amazon <- av_get("AMZN", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+Facebook <- av_get("FB", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+Apple <- av_get("AAPL", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+Google <- av_get("GOOGL", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+SPY <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+
+write.csv(Amazon,"Amazon_data.csv")
+write.csv(Facebook,"Facebook_data.csv")
+write.csv(Apple,"Apple_data.csv")
+write.csv(Google,"Google_data.csv")
+write.csv(SPY,"SPY_data.csv")
+```
+
+### Import and Invest the data
+```{r}
+if (FALSE) {
+  #load the data
+  Amazon <- read_csv("E:/NTU_CLASS/MiniT2/FE8828/Assignment_4/Amazon_data.csv")%>%select(timestamp, adjusted_close)
+  Facebook <- read_csv("E:/NTU_CLASS/MiniT2/FE8828/Assignment_4/Facebook_data.csv")%>%select(adjusted_close)
+  Apple <- read_csv("E:/NTU_CLASS/MiniT2/FE8828/Assignment_4/Apple_data.csv")%>%select(adjusted_close)
+  Google <- read_csv("E:/NTU_CLASS/MiniT2/FE8828/Assignment_4/Google_data.csv")%>%select(adjusted_close)
+  SPY <- read_csv("E:/NTU_CLASS/MiniT2/FE8828/Assignment_4/SPY_data.csv")%>%select(adjusted_close)
+}
+
+DailyVal <- tibble(Date = as.Date(Amazon$timestamp), AMZN = Amazon$adjusted_close, FB = Facebook$adjusted_close, AAPL = Apple$adjusted_close, GOOGL = Google$adjusted_close, SPY = SPY$adjusted_close, cash = 0.1*1e6)
+r = 0.01/250
+for(i in 2:100)
+{
+  DailyVal$cash[i] = DailyVal$cash[i - 1]*(1+r)
+}
+
+rm(Amazon, Facebook, Apple, Google, SPY)
+# Invest
+M <- 0.9*1e6/4
+Pshares <- c(1:5)
+price <- c(DailyVal$AMZN[1], DailyVal$FB[1], DailyVal$AAPL[1], DailyVal$GOOGL[1], DailyVal$SPY[1])
+
+for(i in 1:5)
+{
+  Pshares[i] = ifelse(M - round(M/price[i])*price[i] < 0, floor(M/price[i]), round(M/price[i]))
+  if(i == 5)
+  {
+    Pshares[i] = ifelse(0.9*1e6 - round(0.9*1e6/price[i])*price[i] < 0, floor(0.9*1e6/price[i]), round(0.9*1e6/price[i]))
+  }
+}
+```
+
+### Calculate daily valuation, return and sharp ratio
+```{r}
+DailyVal <- DailyVal%>%rowwise()%>%
+            mutate(AMZNVal = Pshares[1]*AMZN,
+                   FBVal = Pshares[2]*FB,
+                   AAPLVal = Pshares[3]*AAPL,
+                   GOOGLVal = Pshares[4]*GOOGL,
+                   `Portfolio Valuation` = AMZNVal+FBVal+AAPLVal+GOOGLVal+cash,
+                   `S&P Valuation` = Pshares[5]*SPY+ cash,
+                   `Portfolio Return` = 0,
+                   `S&P Return` = 0,
+                   `Portfolio Relative Return` = 0,
+                   `S&P Relative Return` = 0)
+for(i in 2:100)
+{
+  DailyVal$`Portfolio Return`[i] = DailyVal$`Portfolio Valuation`[i]/DailyVal$`Portfolio Valuation`[i - 1] - 1
+  DailyVal$`S&P Return`[i] = DailyVal$`S&P Valuation`[i]/DailyVal$`S&P Valuation`[i - 1] - 1
+  DailyVal$`Portfolio Relative Return`[i] = DailyVal$`Portfolio Valuation`[i]/DailyVal$`Portfolio Valuation`[1] - 1
+  DailyVal$`S&P Relative Return`[i] = DailyVal$`S&P Valuation`[i]/DailyVal$`S&P Valuation`[1] - 1
+}
+
+PortfolioSharp = (mean(DailyVal$`Portfolio Return`[2:100]) - r)/sqrt(var(DailyVal$`Portfolio Return`[2:100]))
+SPYSharp = (mean(DailyVal$`S&P Return`[2:100]) - r)/sqrt(var(DailyVal$`S&P Return`[2:100]))
+paste0("Sharp ratio for the portfolio is: ",PortfolioSharp)
+paste0("Sharp ratio for S&P ETF is: ", SPYSharp)
+```
+
+### Plot a histogram
+```{r}
+`Portfolio Return` <-DailyVal$`Portfolio Return`[2:100]
+hist(`Portfolio Return`)
+```
+### Plot total valuation, and relativity return for the investment portfolio and S&P.
+```{r}
+Valuation <- tibble(Date = DailyVal$Date, Valuation = "Portfolio Valuation", Value = DailyVal$`Portfolio Valuation`)
+Valuation <- bind_rows(Valuation, tibble(Date = DailyVal$Date, Valuation = "S&P Valuation", Value = DailyVal$`S&P Valuation`))
+ggplot(Valuation)+
+  geom_line(aes(Date, Value, col = Valuation), size = 1, alpha = 0.8)+
+  theme_bw()+
+  scale_y_continuous(name = "Valuation")
+
+Return <- tibble(Date = DailyVal$Date, Return = "Portfolio Relative Return", Value = DailyVal$`Portfolio Relative Return`)
+Return <- bind_rows(Return, tibble(Date = DailyVal$Date, Return = "S&P Relative Return", Value = DailyVal$`S&P Relative Return`))
+ggplot(Return)+
+  geom_line(aes(Date, Value, col = Return), size = 1, alpha = 0.8)+
+  theme_bw()+
+  scale_y_continuous(name = "Relative Return")
+
+```
+
+### Plot relative valuation
+```{r}
+
+Valuation2 <- select(DailyVal, AMZNVal, FBVal, AAPLVal, GOOGLVal, cash, Date)%>%
+    pivot_longer(!Date, names_to = "Stocks and Cash allocation", values_to = "Valuation")
+
+ggplot(Valuation2)+
+  geom_area(aes(Date, `Valuation`, fill = `Stocks and Cash allocation`), alpha = 0.8, position = 'fill')
+```

@@ -1,0 +1,18 @@
+Dong Han
+
+# A1 Shiny Web
+
+- Interesting idea of grocery shop
+
+# A2.1 Secretary
+
+- Good.
+
+# A2.2 Bond Schedule
+
+- The last cashflow for bond = face value + coupon, not just coupon.
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done! Good efforts for producing the findings.

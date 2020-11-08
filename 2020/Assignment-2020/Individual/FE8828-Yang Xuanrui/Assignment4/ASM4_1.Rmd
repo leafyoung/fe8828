@@ -1,0 +1,90 @@
+---
+title: "ASM3-1"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+Sys.setlocale("LC_TIME", "English")
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(Hmisc)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+The total banlance is highest in the __May__
+
+```{r,echo = FALSE}
+bank2 <- mutate(bank, Month = case_when(
+month == "jan" ~ 1,month == "feb" ~ 2,month == "mar" ~ 3,month == "apr" ~ 4,
+month == "may" ~ 5,month == "jun" ~ 6,month == "jul" ~ 7,month == "aug" ~ 8,
+month == "sep" ~ 9,month == "oct" ~ 10,month == "nov" ~ 11,month == "dec" ~ 12
+))
+
+bank2 %>% group_by(Month) %>%
+  summarise(balance_sum = sum(balance)) %>%
+  arrange(as.Date(Month,format="%b",origin = Sys.Date()))-> res1
+
+ggplot(res1) + geom_line(aes(x=Month, y=balance_sum)) +
+  scale_x_discrete(limit = levels(factor(res1$Month))) 
+
+```
+
+# Finding #2
+- Getting married may not increase balance. 
+- But balance decline may be a reason or a result of getting divorced.
+
+```{r,echo = FALSE}
+bank %>% group_by(marital) %>% summarise(mean_balance=mean(balance)) -> res2
+
+ggplot(res2) + geom_bar(aes(x=marital, y=mean_balance),stat="identity")
+
+```
+
+# Finding #3
+The balance upon retired are extremely high compared to other age level.
+
+```{r,echo = FALSE}
+bank %>% group_by(age) %>% summarise(mean_balance=mean(balance)) -> res3
+
+ggplot(res3) + geom_bar(aes(x=age, y=mean_balance),stat="identity")+theme(text = element_text(size=12),
+      axis.text.x = element_text(angle=45, hjust=1))
+```
+
+
+# Finding #4
+- For those single or married, the balance increases with the education
+- This pattern can not be seen in divorced group
+
+```{r,echo = FALSE}
+ggplot(bank) +
+geom_point(mapping = aes(x = education, y = balance)) +
+facet_grid( ~ marital) 
+
+```
+
+# Finding #5
+Campaign doesn't have a clear impact on customers' balance
+
+```{r,echo = FALSE}
+bank %>% group_by(campaign) %>% summarise(mean_balance=mean(balance)) -> res2
+
+ggplot(res2) + geom_bar(aes(x=campaign, y=mean_balance),stat="identity")
+```
+
+# Finding #6
+Customers without loan have more balance than those having loan.
+
+```{r,echo = FALSE}
+ggplot(bank, aes(balance)) +
+geom_density(aes(fill = loan), alpha = 0.7) +
+xlim(1, 10) + theme(text = element_text(size=8))
+
+```
+
+
+

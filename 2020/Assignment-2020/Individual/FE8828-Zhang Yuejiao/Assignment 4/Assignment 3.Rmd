@@ -1,0 +1,225 @@
+---
+title: "Week 4 - Assignment 3: "
+subtitle: "FE8828 AY20/21"
+author: "Zhang Yuejiao"
+header-includes:
+   - \usepackage{bbm}
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(tibble)
+library(fOptions)
+library(conflicted)
+library(tidyverse)
+library(ggplot2)
+library(knitr)
+library(alphavantager)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+```
+
+## Data Preperation
+
+In this section we download data of 5 tickers: __MSFT__, __AAPL__, __AMZN__, __IWM__ and __SPY__. Simple cleanup is done to keep adjusted close for past 100 days and save them into one RDS file.
+
+We do not need to run this step every time unless we want to refresh the data.
+```{r eval = FALSE}
+## Please run this part if the data saved in Assignment 4/Data is not working properly
+
+av_api_key("VBA57XNBTQK090XZ")
+
+tickers = c("MSFT","AAPL","AMZN","IWM","SPY")
+
+if (FALSE) {
+  df_data100 <- tibble()
+  range <- c(1:5)
+  for (i in range){
+      df_temp <- av_get(tickers[i], av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+      df_temp <- df_temp %>%
+          select(c(timestamp, adjusted_close)) %>%
+          mutate(ticker = tickers[i])
+      df_data100 <- bind_rows(df_data100, tail(df_temp, 100))
+  }
+  
+  
+  saveRDS(df_data100, "Price_100day.RDS")
+}
+
+      
+```
+## Portfolio Construction
+
+With $1mio cash:
+
+- Keep 10% cash reserve
+    
+- Invest 90% with equal-weighted in the 4 stocks/ETF: __MSFT__, __AAPL__, __AMZN__, __IWM__, with 1st day adjusted_close
+    
+```{r}
+df <- readRDS("data/Price_100day.RDS")
+
+
+inv = c("MSFT","AAPL","AMZN","IWM")
+w0 <- 1000000
+portfolio <- list(MSFT = 0, AAPL = 0, AMZN = 0, IWM = 0,Cash = w0)
+for (s in inv){
+    price <- filter(df, ticker == s)$adjusted_close[1]
+    portfolio[[s]] <- floor(w0*0.9/4/price)
+    portfolio$Cash <- portfolio$Cash - portfolio[[s]]*price   
+}
+inv[5] <- "Cash"
+cat(paste0("Portfolio consists of (# of shares and $ of cash): \n"))
+cat(paste0(inv, ": ", portfolio, collapse = '\n'))
+```
+
+
+## Portfolio Valuation
+Portfolio's daily valuation is calculated by summing up:
+
+- Value = sum of ni * price_i
+        
+- Cash = InitialCash * (1 + Rf)^d
+
+
+
+```{r results = 'asis'}
+Rf <- 0.01/250
+
+df_stock <- df %>% filter(ticker != "SPY") %>%
+    mutate(n_stock = case_when(
+        ticker == "MSFT" ~ portfolio$MSFT,
+        ticker == "AAPL" ~ portfolio$AAPL,
+        ticker == "AMZN" ~ portfolio$AMZN,
+        ticker == "IWM" ~ portfolio$IWM,
+        )) %>%
+    mutate(stockval = adjusted_close * n_stock) 
+
+
+df_p <- df_stock %>% group_by(timestamp) %>%
+    summarize(sum_stockval = sum(stockval))
+
+df_p <- df_p %>% mutate(d = row_number()-1) %>%
+    relocate(d, .after = timestamp) %>%
+    mutate(cash = portfolio$Cash*(1+Rf)^d) %>% 
+    mutate(portfolio_val = sum_stockval + cash) %>% 
+    mutate(Rp = ifelse(d==0, 0, portfolio_val/lag(portfolio_val)-1))
+
+kable(head(df_p), caption = "Portfolio data of the first 10 days") 
+```
+
+## Portfolio construction and valuation for SPY 
+
+Repeat the same steps for a portfolio with 10% cash and 90% invested in __SPY__
+
+```{r results = 'asis'}
+
+#Following the same logic of the 4-stock portfolio calculation
+#Can simplify. But keep the same logic to make it more comparable
+
+portfolio_spy <- list(SPY = 0,Cash = w0)
+price <- filter(df, ticker == "SPY")$adjusted_close[1]
+    portfolio_spy$SPY <- floor(w0*0.9/price)
+    portfolio_spy$Cash <- portfolio_spy$Cash - portfolio_spy$SPY*price   
+
+cat(paste0("Portfolio_SPY consists of: ",portfolio_spy$SPY, " shares of SPY and $", portfolio_spy$Cash, " of cash.\n" ))
+
+df_ps <- df %>% filter(ticker == "SPY") %>%
+    mutate(n_stock = portfolio_spy$SPY ) %>%
+    mutate(stockval = adjusted_close * n_stock)
+
+
+df_ps <- df_ps %>% mutate(d = row_number()-1) %>%
+    relocate(d, .after = timestamp) %>%
+    mutate(cash = portfolio_spy$Cash*(1+Rf)^d) %>%
+    mutate(portfolio_val = stockval + cash) %>% 
+    mutate(Rp = ifelse(d==0, 0, portfolio_val/lag(portfolio_val)-1))
+
+kable(head(df_ps), caption = "Portfolio data of the first 10 days") 
+
+```
+
+
+## Sharpe ratio
+
+
+```{r}
+shratio1 = (mean(df_p$Rp)-Rf)/stdev(df_p$Rp)
+
+shratio2 = (mean(df_ps$Rp)-Rf)/stdev(df_ps$Rp)
+
+cat(paste0("Sharpe Ratio of 4-stock/ETF portfolio: ", round(shratio1,4), "\n"))
+cat(paste0("Sharpe Ratio of SPY portfolio: ", round(shratio2,4), "\n"))
+```
+
+## Daily Return
+
+
+```{r}
+ggplot(data = df_p, mapping = aes(x = Rp)) +
+    geom_histogram(binwidth = 0.01, color = "grey", fill="lightblue") + 
+    ggtitle("4 Stock/ETF Portfolio")+
+    theme(text = element_text(size=14))+
+    theme(plot.title = element_text(hjust = 0.5))+
+    labs(x = "Daily Return", y = "Count")
+
+
+ggplot(data = df_ps, mapping = aes(x = Rp)) +
+    geom_histogram(binwidth = 0.01, color = "grey", fill="lightblue") + 
+    ggtitle("SPY Portfolio")+
+    theme(text = element_text(size=14))+
+    theme(plot.title = element_text(hjust = 0.5))+
+    labs(x = "Daily Return", y = "Count")
+
+    
+
+```
+
+## Total Valuation and Relative Return
+
+
+```{r}
+
+df_all <- full_join(select(df_p,c(timestamp,portfolio_val, Rp)),select(df_ps,c(timestamp,portfolio_val, Rp)), by = "timestamp")
+
+
+ggplot(df_all, aes(x=timestamp)) + 
+  geom_line(aes(y = portfolio_val.x), color = "darkgreen") + 
+  geom_line(aes(y = portfolio_val.y), color="steelblue", linetype="twodash") +
+  ggtitle("Total Valuation")+
+    theme(text = element_text(size=14))+
+    theme(plot.title = element_text(hjust = 0.5))+
+    labs(x = "Time", y = "Total Valuation")
+
+
+df_all <- df_all %>% mutate(relval1 = portfolio_val.x/w0 - 1, relval2 = portfolio_val.y/w0 - 1) 
+
+ggplot(df_all, aes(x=timestamp)) + 
+  geom_line(aes(y = relval1), color = "darkgreen") + 
+  geom_line(aes(y = relval2), color="steelblue", linetype="twodash") +
+  ggtitle("Relative Return ")+
+    theme(text = element_text(size=14))+
+    theme(plot.title = element_text(hjust = 0.5))+
+    labs(x = "Time", y = "Relative Return")
+```
+
+## Relative valuation for the different allocation
+
+```{r}
+
+df_alloc <- df_stock %>% select(c(timestamp, ticker, stockval)) %>% 
+    rename(value = stockval) %>% 
+    bind_rows(tibble(timestamp = df_p$timestamp, ticker = "Cash", value = df_p$cash ))%>%   
+    arrange(timestamp) 
+
+
+ggplot(df_alloc) + 
+    geom_area(aes(x = timestamp, y = value, fill = ticker), position = 'fill') +
+    ggtitle("Relative Valuation ")+
+    theme(text = element_text(size=14))+
+    theme(plot.title = element_text(hjust = 0.5))+
+    labs(x = "Time", y = "Relative valuation")
+
+
+```

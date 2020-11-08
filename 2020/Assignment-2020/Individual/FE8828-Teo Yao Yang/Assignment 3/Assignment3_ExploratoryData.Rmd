@@ -1,0 +1,73 @@
+
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Yao Yang <sub> <Email:teoyaoyang@gmail.com> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(kableExtra)
+
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1 - number of rows
+This data contains `r nrow(bank)` rows.
+
+# Finding #2 - count by age group
+```{r}
+# Find the big age group
+bank %>% 
+  group_by(age_group = (age %/% 10) * 10) %>%
+  summarise(count = n()) %>%
+  arrange(age_group) -> res
+
+res
+
+plot(res$age_group, res$count)
+```
+
+# Finding #3 - mean age and distribution by job
+```{r}
+JobAge<-bank %>% group_by(marital) %>%
+  summarize(MeanAge=mean(age)) %>% arrange(desc(MeanAge))
+
+ggplot(bank, aes(x=job, y=age)) + 
+  geom_boxplot()
+```
+
+# Finding #4 - age and balance (color by job), balance generally increases with age
+```{r}
+ggplot(bank, aes(age,balance)) + geom_point(aes(color=factor(job))) + geom_smooth(method="lm")
+
+```
+
+# Finding #5 - pie chart of education - mostly secondary education
+```{r}
+ggplot(bank, aes(x=factor(1), fill=education))+
+  geom_bar(width = 1)+
+  coord_polar("y")
+
+```
+
+# Finding #6 - balance does not follow a normal distribution, there's fat right tail
+```{r}
+ggplot(bank, aes(x=balance)) + 
+  geom_histogram()
+
+```
+
+# Finding #7 - there's considerable seasonality in the data, with a lot of data from May
+```{r}
+ggplot(bank, aes(x=factor(1), fill=month))+
+  geom_bar(width = 1)+
+  coord_polar("y")
+
+```
+

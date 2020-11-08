@@ -21,8 +21,7 @@ econIndicators <- c("GDP Per Capita" = "WWDI/CHN_NY_GDP_PCAP_KN",
                     "CPI" = "WWDI/CHN_FP_CPI_TOTL_ZG",
                     "Labor Force Part. Rate" = "WWDI/CHN_SL_TLF_ACTI_ZS")
 
-# You might want to supply your Quandl api key. It's free to get one.
-Quandl.api_key("JyeshGuNBGDbbaYoNURG")
+# Quandl does not need key for free data.,
 
 China_all_indicators <- 
   # Start with the vector of Quandl codes

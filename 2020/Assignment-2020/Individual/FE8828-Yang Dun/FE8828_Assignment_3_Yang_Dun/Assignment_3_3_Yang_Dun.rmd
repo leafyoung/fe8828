@@ -1,0 +1,74 @@
+---
+title: "Assignment 3.3"
+author: "yang dun"
+date: "4/10/2020"
+output: html_document
+---
+
+```{r setup,include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(conflicted)
+library("dplyr")
+library(fOptions)
+library(quantmod)
+library(lubridate)
+library(bizdays)
+library(readxl)
+conflict_prefer("filter","dplyr")
+conflict_prefer("tag","dplyr")
+```
+
+## Book Option Trades
+```{r 2.1}
+#Question 2.1
+
+data_goog <- read_excel("C:/Users/104550duya/Dropbox/master in finance/Course material/2nd Year/S8/fe 8828 web application/google option data.xlsx")
+ View(data_goog)
+
+data_goog_c <- data_goog%>%
+             mutate(Today = Sys.Date(),Underlying = getQuote("GOOG",scr="yahoo")$Last,OptionType="c")
+#View(data_goog_c)
+data_goog_c <-data_goog_c[,c(1,8,7,17,4,5,16,15)]%>%
+             rename(`Open Int.`="Open Int....7",Bid="Bid...4",Ask = "Ask...5")%>%
+             mutate(`Open Int.`=as.numeric(`Open Int.`))
+
+data_goog_p <- data_goog%>%
+             mutate(Today = Sys.Date(),Underlying = getQuote("GOOG",scr="yahoo")$Last,OptionType="p")
+#View(data_goog_p)
+data_goog_p <- data_goog_p[,c(1,8,14,17,11,12,16,15)]%>%
+             rename(`Open Int.`="Open Int....14",Bid="Bid...11",Ask = "Ask...12")%>%
+             mutate(`Open Int.`=as.numeric(`Open Int.`))
+
+data_goog_combine <- rbind(data_goog_p,data_goog_c)
+print(data_goog_combine)
+```
+
+```{r 2.2 Calculate open int of call and put}
+
+#Question 2.2
+
+c_value <- data_goog_c%>%
+           mutate(value=.$`Open Int.`*(Bid+Ask)/2)
+c_value_sum <- sum(c_value$value,na.rm = TRUE)
+
+p_value <- data_goog_p%>%
+           mutate(value=.$`Open Int.`*(Bid+Ask)/2)
+p_value_sum <- sum(p_value$value,na.rm = TRUE)
+
+a_value_sum <- p_value_sum + c_value_sum
+```
+
+### 2.2.1 The total valuation of call is `r sprintf("%.02f",c_value_sum)`
+
+### 2.2.2 The total valuation of put is `r sprintf("%.02f",p_value_sum)`
+
+### 2.2.3 The total valuation of call and put is `r sprintf("%.02f",a_value_sum)`
+
+```{r 2.3 find Open Int of int the money options}
+
+#Question 2.3
+
+OI_ITM <- sum(filter(c_value,Strike<Underlying)$`Open Int.`,na.rm=TRUE)+sum(filter(p_value,Strike>Underlying)$`Open Int.`,na.rm=TRUE)
+
+```
+### 2.3 The total open interest of in the money call and put is `r sprintf("%.02f",OI_ITM)`

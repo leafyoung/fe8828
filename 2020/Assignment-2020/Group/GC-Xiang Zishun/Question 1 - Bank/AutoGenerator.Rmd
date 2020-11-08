@@ -1,0 +1,200 @@
+### Setup
+
+```{r}
+library(conflicted)
+library(tidyverse)
+library(readxl)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+
+# Set working directory here
+wd <- "D:/Assignment Web"
+#wd <- getwd()
+```
+
+### 1. Create 10 client accounts
+
+```{r}
+accountNos <- c(1:10)
+clientNames <- c("Alfred", "Betty", "Charlie",  "Denise", "Evan", "Fiona", "George", "Helen", "Ivan", "Jenny")
+initialBalance <- runif(10, min = 1000, max = 2000)
+initialCredit <- rep(2000, times = 10)
+
+clients <- tibble(AccountNo = accountNos,
+                  Name = clientNames,
+                  StartDeposit = initialBalance,
+                  StartCredit = initialCredit)
+
+save(clients, file = paste0(wd, "/Account.rda"))
+
+```
+
+### 2. Create 3 currencies
+
+```{r}
+Exchange_Rates <- read_excel(paste0(wd, "/Exchange Rates.xlsx"), 
+                             col_types = c("date", "numeric", "numeric"))
+
+Exchange_Rates %>%
+  mutate(CNY = `CNY-100` / 100) %>%
+  select("USD", "CNY", "Date") %>%
+  pivot_longer(col = c("USD", "CNY"),
+               names_to = "Currency",
+               values_to = "Conversion") %>%
+  select("Currency", "Conversion", "Date") -> conversion
+
+conversion$Date <- as.Date(conversion$Date)
+
+save(conversion, file = paste0(wd, "/Conversion.rda"))
+
+```
+
+### 3. Generate random transaction data for 10 accounts
+
+```{r}
+
+for (acc in clients$AccountNo) {
+  
+  # Generate Deposit dates, 1 or 2 times per month
+  deposit_dates <- c(sample(seq(as.Date('2020/07/01'), as.Date('2020/07/31'), by="day"), sample(c(1:2), 1)))
+  deposit_dates <- c(deposit_dates, c(sample(seq(as.Date('2020/08/01'), as.Date('2020/08/31'), by="day"), sample(c(1:2), 1))))
+  deposit_dates <- c(deposit_dates, c(sample(seq(as.Date('2020/09/01'), as.Date('2020/09/30'), by="day"), sample(c(1:2), 1))))
+  
+  df_deposit<- tibble(Date = deposit_dates, TransactionType = "Deposit")
+  
+  df_deposit %>%
+    rowwise() %>%
+    mutate(Amount = runif(1, min = 1000, max = 2000)) %>%
+    mutate(Currency = "SGD") %>%
+    ungroup() -> df_deposit
+  
+  # Generate Spend/Withdraw dates
+  
+  spend_dates <- c(sample(seq(as.Date('2020/07/01'), as.Date('2020/09/30'), by="day"), sample(c(0:1000), 1), replace = TRUE))
+  
+  df_spend <- tibble(Date = spend_dates)
+  
+  df_spend %>%
+    rowwise() %>%
+    mutate(TransactionType = sample(c("Spend", "Withdraw"), 1)) %>%
+    mutate(Amount = rlnorm(1,0,3)) %>%
+    mutate(Currency = sample(c("SGD", "USD", "CNY"), 1)) %>%
+    ungroup() -> df_spend
+  
+  # Generate Interest dates
+  
+  interest_dates <- c(as.Date('2020/07/31'), as.Date('2020/08/31'), as.Date('2020/09/30'))
+  
+  df_interest <- tibble(Date = interest_dates, TransactionType = "Interest", Currency = "SGD")
+  
+  
+  runningDeposit <- clients$StartDeposit[acc]
+  runningCredit <- clients$StartCredit[acc]
+  
+  intermediate <- bind_rows(df_deposit, df_spend, df_interest)
+  
+  intermediate$rD <- runningDeposit
+  intermediate$rC <- runningCredit
+  
+  
+  intermediate %>%
+    arrange("Interest" %in% TransactionType) %>%
+    arrange(Date) -> intermediate
+    
+  
+  for (row in 1:nrow(intermediate)) {
+    
+    if(intermediate[row, "TransactionType"] == "Deposit")
+    {
+      runningDeposit = runningDeposit + intermediate[row, "Amount"]
+      
+      intermediate[row,"rD"] <- runningDeposit
+      intermediate[row,"rC"] <- runningCredit
+      
+    }
+    else if(intermediate[row, "TransactionType"] == "Spend")
+    {
+      multiplier <- case_when(
+        intermediate[row, "Currency"] == "SGD" ~ 1.01,
+        intermediate[row, "Currency"] == "USD" ~ 1.02,
+        intermediate[row, "Currency"] == "CNY" ~ 1.02
+      )
+      
+      converter <- case_when(
+        intermediate[row, "Currency"] == "SGD" ~ 1,
+        intermediate[row, "Currency"] == "USD" ~ conversion$Conversion[conversion$Currency == "USD" & conversion$Date == intermediate[[row, "Date"]]],
+        intermediate[row, "Currency"] == "CNY" ~ conversion$Conversion[conversion$Currency == "CNY" & conversion$Date == intermediate[[row, "Date"]]]
+      )
+      
+      if((intermediate[row, "Amount"] * converter * multiplier) < runningCredit)
+      {
+        runningCredit = runningCredit - ((intermediate[row, "Amount"] * converter * multiplier))
+        
+        intermediate[row, "Amount"] = intermediate[row, "Amount"] * multiplier
+        
+      }
+      else
+      {
+        intermediate[row, "TransactionType"] = "Invalid"
+      }
+      
+      intermediate[row,"rD"] <- runningDeposit
+      intermediate[row,"rC"] <- runningCredit
+  
+    }
+    else if(intermediate[row, "TransactionType"] == "Withdraw")
+    {
+      converter <- case_when(
+        intermediate[row, "Currency"] == "SGD" ~ 1,
+        intermediate[row, "Currency"] == "USD" ~ conversion$Conversion[conversion$Currency == "USD" & conversion$Date == intermediate[[row, "Date"]]],
+        intermediate[row, "Currency"] == "CNY" ~ conversion$Conversion[conversion$Currency == "CNY" & conversion$Date == intermediate[[row, "Date"]]]
+      )
+      
+      if(intermediate[row, "Amount"] * converter < runningDeposit)
+      {
+        runningDeposit = runningDeposit - (intermediate[row, "Amount"] * converter)
+      }
+      else
+      {
+        intermediate[row, "TransactionType"] = "Invalid"
+      }
+      
+      intermediate[row,"rD"] <- runningDeposit
+      intermediate[row,"rC"] <- runningCredit
+      
+    }
+    else if(intermediate[row, "TransactionType"] == "Interest")
+    {
+      intermediate[row, "Amount"] = runningDeposit * (0.5/ 100 / 12)
+      
+      intermediate[row,"rD"] <- runningDeposit
+      intermediate[row,"rC"] <- runningCredit
+    }
+  
+  }
+  
+  intermediate %>%
+    filter(TransactionType != "Invalid") %>%
+    mutate(AccountNo = acc) %>%
+    group_by(Date) %>%
+    mutate(TransactionNo = paste0(as.numeric(Date), formatC(AccountNo, width=2, flag="0"), formatC(row_number(), width=3, flag="0"))) %>%
+    ungroup()-> intermediate
+  
+  assign(paste0("t", acc), intermediate)
+  
+}
+
+```
+
+```{r}
+
+transactions <- bind_rows(t1,t2,t3,t4,t5,t6,t7,t8,t9,t10)
+
+transactions %>%
+  select(TransactionNo, Date, AccountNo, TransactionType, Amount, Currency) %>%
+  arrange(Date) -> transactions
+
+save(transactions, file = paste0(wd, "/Transaction.rda"))
+
+```
+

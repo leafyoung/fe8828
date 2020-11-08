@@ -1,0 +1,76 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup}
+library(ggplot2)
+library(tidyverse)
+```
+
+fig.width, fig.height is how we control the size in Rmd.
+Similar like width and height in renderPlot().
+
+```{r fig.width=6, fig.height = 2}
+dd <- tibble(x = c(1,10), y = c(10,1))
+ggplot(dd) + geom_point(aes(x,y)) + theme_minimal()
+```
+Be default setting, ggplot controls the relative 
+So plotting (1,2), (2,1) looks like plotting (1,10), (10,1). 
+This is the problem you have now.
+
+```{r fig.width=6, fig.height = 2}
+dd <- tibble(x = c(1,2), y = c(2,1))
+ggplot(dd) + geom_point(aes(x,y)) + theme_minimal()
+```
+We can tweak the ylim to a slightly large range and increaes the size of the dots, and reduce the height of the figure.
+
+```{r fig.width=6, fig.height = 2}
+dd <- tibble(x = c(1,2,2,1), y = c(2,1,2,1))
+ggplot(dd) + geom_point(aes(x,y), size = 10) + ylim(c(0.5,2.5)) + theme_minimal()
+```
+With height 1.4, size 11 and 0.6,2.4. Now it looks better.
+
+```{r fig.width=6, fig.height = 1.4}
+dd <- tibble(x = c(1,2,2,1), y = c(2,1,2,1))
+ggplot(dd) + geom_point(aes(x,y), size = 11) + ylim(c(0.6,2.4)) + theme_minimal()
+```
+
+```{r}
+df_sensi <- full_join(
+  tibble(x = 1:20, color = 'Actual Neg'),    
+  tibble(y = 1:25, color = 'Actual Neg'),
+  by = 'color')
+
+# At 5% infection rate,
+# Positive 500 * 5% = 25 = Actual Pos (24 at 95%) + False Neg (1 at 5%)
+# Negative 500 * 95% = 475 = Actual Neg (451 at 95%) + False Pos (24 at 5%)
+if (TRUE) {
+df_sensi['color'] <- c(rep('False Neg', 1),
+                       rep('Actual Pos', 24),
+                       rep('False Pos', 24),
+                       rep('Actual Neg', 500 - 1 - 24 - 24))
+}
+
+ggplot(df_sensi) +  
+  geom_point(aes(x, y, colour = color), 
+             size = 4, shape="circle") +
+  theme_bw() + 
+  theme(axis.title.x=element_blank(), axis.title.y=element_blank(),
+        axis.line=element_blank(),axis.text.x=element_blank(),
+        axis.text.y=element_blank(),axis.ticks=element_blank()) +
+  coord_flip() + scale_x_reverse()
+```
+
+```{r}
+df_sensi <- full_join(
+  tibble(x = 1:2, color = 'Actual Neg'),    
+  tibble(y = 1:25, color = 'Actual Neg'),
+  by = 'color') %>%
+  filter((x - 1) * 25 + y <= 30)
+
+ggplot(df_sensi) +  
+  geom_point(aes(x, y, colour = color), 
+             size = 4, shape="circle") +
+  theme_bw() + coord_flip() + scale_x_reverse()
+```

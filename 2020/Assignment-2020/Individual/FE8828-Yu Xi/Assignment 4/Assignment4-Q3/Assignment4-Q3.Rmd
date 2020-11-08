@@ -1,0 +1,231 @@
+---
+title: "Assignment3-Q3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+#Assumptions 1: Based on the formula given by slides, daily valuation, sharp ratio and daily return of the portfolio are calculated by the stocks value
+#Assumptions 2: Cash reserve is included for evaluation only in the Total valuation and Relative Return for the entire portfolio
+
+#Loading the stocks data from alphavantager and saving into local rds file
+#Stocks chosed are MSFT,XOM,MMM and ABT
+library(conflicted)
+library(tidyverse)
+library(alphavantager)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+if (FALSE) {
+  av_api_key("MSFT")
+  av_api_key("XOM")
+  av_api_key("MMM")
+  av_api_key("ABT")
+  
+  df1<-av_get("MSFT",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+  saveRDS(df,file="df1.rds")
+  df2<-av_get("XOM",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+  saveRDS(df2,file="df2.rds")
+  df3<-av_get("MMM",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+  saveRDS(df2,file="df3.rds")
+  df4<-av_get("ABT",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+  saveRDS(df2,file="df4.rds")
+}
+
+df1 <- readRDS("df1.rds")
+df2 <- readRDS("df2.rds")
+df3 <- readRDS("df3.rds")
+df4 <- readRDS("df4.rds")
+
+options(dplyr.summarise.inform = FALSE)
+```
+
+```{r}
+# Deciding the allocation ni
+a<-1000000*0.9*0.25
+n1<-round(a/df1$adjusted_close[1])
+n2<-round(a/df2$adjusted_close[1])
+n3<-round(a/df3$adjusted_close[1])
+n4<-round(a/df4$adjusted_close[1])
+```
+
+```{r}
+# Daily valuation of the portfolio
+dailyVal<-df1$adjusted_close*n1+df2$adjusted_close*n2+df3$adjusted_close*n3+df4$adjusted_close*n4
+t1<-tibble(df1$timestamp,dailyVal)
+colnames(t1)=c("Time","DailyValuation")
+t1
+```
+
+```{r}
+#Return of the portfolio
+#Unit is in %
+returnData<-as.data.frame(t1)
+Rp<-as.data.frame(dailyVal)
+colnames(Rp)="Rp"
+for(i in 1:100)
+  Rp$Rp[i]<-((Rp$Rp[i+1]/Rp$Rp[i])-1)*100
+Rp%>%
+  mutate(Rp,datedata=df1$timestamp)
+  
+```
+
+```{r}
+#Portfolio Sharp ratio
+rf<-0.01/250
+Rp%>%
+  summarise(RpMean=mean(Rp,na.rm=TRUE),RpSd=sd(Rp,na.rm=TRUE),SharpRatio=(RpMean-rf)/RpSd)
+  
+```
+
+
+```{r}
+#S&P sharp ratio
+# df5<-read_csv("/Users/yuxi/Downloads/GSPC.csv")
+# df5 <- av_get("GSPC",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+  
+SPRp<-as.data.frame(df5$`Adj Close`)
+colnames(SPRp)="Rp"
+for(i in 1:100)
+  SPRp$Rp[i]<-((SPRp$Rp[i+1]/SPRp$Rp[i])-1)*100
+
+
+rf<-0.01/250
+SPRp%>%
+  summarise(SPRpMean=mean(SPRp$Rp,na.rm=TRUE),SPRpSd=sd(SPRp$Rp,na.rm=TRUE),SharpRatio=(SPRpMean-rf)/SPRpSd)
+  
+```
+
+```{r}
+#Histogram of daily return
+
+ggplot(data=Rp1, aes(x=date1))+
+  geom_histogram(stat='identity',aes(y=Rp,color=date1))
+
+```
+
+```{r}
+#Total valuation of portfolio
+TotVal<-as.data.frame(1:100)
+colnames(TotVal)="TotalValuation"
+for (i in 1:100)
+{
+ 
+  TotVal$TotalValuation[i]=dailyVal[i]+0.01*i/250*100000+100000
+  RelReturn$RelativeReturn[i]=TotVal$TotalValuation[i]/TotVal$TotalValuation[1]-1
+}
+
+#Total valuation of S&P
+n5<-round(4*a/df5$`Adj Close`[1])
+TotValSP<-as.data.frame(1:100)
+colnames(TotValSP)="TotalValuationSP"
+for (i in 1:100)
+{
+ 
+  TotValSP$TotalValuationSP[i]=df5$`Adj Close`[i]*n5+0.01*i/250*100000
+}
+
+
+#Total valuation plot
+p = ggplot() + 
+  geom_line(data = TotVal, aes(x=df1$timestamp,y=TotalValuation), color = "blue") +
+  geom_line(data = TotValSP, aes(x =df5$Date, y = TotalValuationSP), color = "red") +
+  xlab('Dates') +
+  ylab('Total Valuation')
+
+print(p)
+
+#Relative return of portfolio
+RelReturn<-as.data.frame(1:100)
+colnames(RelReturn)="RelativeReturn"
+for (i in 1:100)
+{
+  RelReturn$RelativeReturn[i]=TotVal$TotalValuation[i]/TotVal$TotalValuation[1]-1
+}
+
+#Relative return of S&P
+RelReturnSP<-as.data.frame(1:100)
+colnames(RelReturnSP)="RelativeReturnSP"
+for (i in 1:100)
+{
+  RelReturnSP$RelativeReturnSP[i]=TotValSP$TotalValuationSP[i]/TotValSP$TotalValuationSP[1]-1
+}
+
+#Relative valuation plot
+p = ggplot() + 
+  geom_line(data = RelReturn, aes(x=df1$timestamp,y=RelativeReturn), color = "blue") +
+  geom_line(data = RelReturnSP, aes(x =df5$Date, y = RelativeReturnSP), color = "red") +
+  xlab('Dates') +
+  ylab('Relative Valuation')
+
+print(p)
+```
+
+```{r}
+df7<-data.frame(df1$timestamp)
+df7$stock1<-df1$adjusted_close*n1
+df7$stock2<-df2$adjusted_close*n2
+df7$stock3<-df3$adjusted_close*n3
+df7$stock4<-df4$adjusted_close*n4
+
+Cash<-as.data.frame(1:100)
+colnames(Cash)="Cash"
+for(i in 1:100)
+  Cash$Cash[i]=0.01*i/250*100000
+df7$Cash<-Cash$Cash
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Wordf documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+RelReturn<-as.data.frame(1:100)
+colnames(RelReturn)="RelativeReturn"
+for (i in 1:100)
+{
+  RelReturn$RelativeReturn[i]=TotVal$TotalValuation[i]/TotVal$TotalValuation[1]-1
+}
+rr1<-as.data.frame(1:100)
+rr2<-as.data.frame(1:100)
+rr3<-as.data.frame(1:100)
+rr4<-as.data.frame(1:100)
+rrCash<-as.data.frame(1:100)
+colnames(rr1)="Stock1 Relative Return"
+colnames(rr2)="Stock2 Relative Return"
+colnames(rr3)="Stock3 Relative Return"
+colnames(rr4)="Stock4 Relative Return"
+colnames(rrCash)="Cash Relative Return"
+for (i in 1:100)
+{
+  rr1$`Stock1 Relative Return`[i]=(df1$adjusted_close[i]*n1)/(df1$adjusted_close[1]*n1)-1
+  rr2$`Stock2 Relative Return`[i]=(df2$adjusted_close[i]*n2)/(df2$adjusted_close[1]*n2)-1
+  rr3$`Stock3 Relative Return`[i]=(df3$adjusted_close[i]*n3)/(df3$adjusted_close[1]*n3)-1
+  rr4$`Stock4 Relative Return`[i]=(df4$adjusted_close[i]*n4)/(df4$adjusted_close[1]*n4)-1
+  rrCash$`Cash Relative Return`[i]=(0.01*i/250*100000+100000)/100000-1
+}
+
+#Relative valuation for different allocation plot
+tibble(t = 1:100, Stock1ReleativeReturn = rr1$`Stock1 Relative Return`, Stock2ReleativeReturn = rr2$`Stock2 Relative Return`,Stock3ReleativeReturn=rr3$`Stock3 Relative Return`,Stock4ReleativeReturn=rr4$`Stock4 Relative Return`,CashRelativeReturn=rrCash$`Cash Relative Return`) %>% 
+  pivot_longer(cols = Stock1ReleativeReturn:CashRelativeReturn) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name))
+
+#Same plot with position = 'full'
+tibble(t = 1:100, Stock1ReleativeReturn = rr1$`Stock1 Relative Return`, Stock2ReleativeReturn = rr2$`Stock2 Relative Return`,Stock3ReleativeReturn=rr3$`Stock3 Relative Return`,Stock4ReleativeReturn=rr4$`Stock4 Relative Return`,CashRelativeReturn=rrCash$`Cash Relative Return`) %>% 
+  pivot_longer(cols = Stock1ReleativeReturn:CashRelativeReturn) %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name), position = 'fill')
+
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

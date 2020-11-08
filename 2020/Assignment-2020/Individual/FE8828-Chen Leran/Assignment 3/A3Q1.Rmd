@@ -1,0 +1,101 @@
+---
+title: "A3Q1"
+author: "leran"
+date: "2020/10/11"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+# Finding #1
+```{r}
+# Check the distribution of balance
+bank %>%
+  group_by(balance_group = (balance %/% 100) * 100) %>%
+  summarise(count = n(),.groups = 'drop') %>%
+  arrange(balance_group) -> res
+res[which(res$count == max(res$count)),,drop=T]
+plot(res$balance_group, res$count)
+```
+
+# Finding #2
+```{r}
+#Check the population distribution of different employment types
+bank %>%
+  group_by(job) %>%
+  summarise(count = n(),.groups = 'drop') %>%
+  arrange(job) -> res
+res
+p <- ggplot(res, aes(x = job, y = count)) + ylab("count")
+p + geom_col(aes(x = job, fill = factor(job))) + theme(axis.text.x = element_text(angle = 45))
+```
+
+# Finding #3
+```{r}
+# Check the relationship betweeen balance and employment type
+bank %>%
+  group_by(job) %>%
+  summarise(average_balance = mean(balance),.groups = 'drop') %>%
+  arrange(job) -> res
+res
+p <- ggplot(res, aes(x = job, y = average_balance)) + ylab("average_balance")
+p + geom_col(aes(x = job, fill = factor(job))) + theme(axis.text.x = element_text(angle = 45))
+```
+
+# Finding #4
+```{r}
+# Find the relationship between age group and marital status
+bank %>% group_by(age_group = (age %/% 10) * 10, marital ) %>%
+  summarise(count = n(),.groups = 'drop') %>%
+  arrange(age_group) ->res
+res
+ggplot(res, aes(age_group, count)) + 
+  geom_bar(aes(fill = marital), stat = "identity", position = "dodge")
+```
+
+
+# Finding #5
+```{r}
+#Find the average balance of each age group
+bank %>%
+  group_by(age_group =  (age %/% 10) * 10) %>%
+  summarise(average_balance = mean(balance),.groups = 'drop') %>%
+  arrange(age_group) -> res
+res
+p <- ggplot(res, aes(x = age_group, y = average_balance)) + ylab("average_balance")
+p + geom_col(aes(x = age_group, fill = factor(age_group))) + theme(axis.text.x = element_text(angle = 45))
+```
+
+# Finding #6
+```{r}
+# Find the sub-total and total on mean of age and balance, group by job and marital
+bank %>%
+  group_by(job,marital) %>%
+  summarise(mean_age = mean(age),mean_balance = mean(balance),.groups = 'drop') %>% arrange(job, marital) -> res
+res
+ggplot(res, aes(job, mean_balance)) + 
+  geom_bar(aes(fill = marital), stat = "identity", position = "dodge") +
+  theme(axis.text.x = element_text(angle = 45))
+```
+
+# Finding #7
+```{r}
+# Check the relationship between balance, default and poutcome
+bank %>%
+  group_by(default, poutcome) %>%
+  summarise(count = n(), mean_balance = mean(balance), .groups = 'drop') ->res
+res
+```
+Only non-default accounts will have a success status in poutcome
+
+

@@ -1,0 +1,118 @@
+---
+title: "assignment3-2"
+output: html_document
+---
+#2.1 clean data
+```{r setup, echo=TRUE}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+library(readxl)
+option <- read_excel("/Users/fanwenqing/Desktop/option.xlsx", 
+    col_types = c("date", "skip", "skip", 
+        "numeric", "numeric", "skip", "numeric", 
+        "numeric", "skip", "skip", "numeric", 
+        "numeric", "skip", "numeric"))
+
+data_c <- option[2:5]
+data_p <- option[6:8]
+data_p <- data_p %>%
+  mutate(Strike = data_c$Strike) %>%
+  mutate(optionType = "p") %>%
+  rename(bid = Bid...6) %>%
+  rename(ask = Ask...7) %>%
+  rename(openint = `Open Int....8`)
+data_c <- data_c %>%
+  mutate(optionType = "c") %>%
+  rename(bid = Bid...2) %>%
+  rename(ask = Ask...3) %>%
+  rename(openint = `Open Int....4`)
+
+option2 <- rbind(data_c, data_p) 
+option2 <- option2 %>%
+  mutate(date = as.Date("2020/12/18")) %>%
+  mutate(underlying = 1493.84) %>%
+  mutate(today = as.Date("2020/10/9"))
+
+```
+
+
+
+##2.2 Calculate "Total Valuation"
+
+```{r}
+#total valuation for call/put alone
+option2 <- option2 %>%
+  mutate(totalval = openint * (bid + ask) / 2)
+
+totalvalcp <- c()
+all_openint = option$`Open Int....4` + option$`Open Int....8`
+all_bid = option$Bid...2 + option$Bid...6
+all_ask = option$Ask...3 + option$Ask...7
+
+option <- option %>% mutate(totalvalcp = all_openint * (all_bid + all_ask) / 2)
+
+print("total valuation for call only:")
+option2$totalval[1:40]
+
+print("total valuation for put only:")
+option2$totalval[41:80]
+
+
+print("total valuation for call and put:")
+option$totalvalcp
+```
+
+##2.3 Calculate option price
+```{r}
+#calculate the money of options
+option2 <- option2 %>% 
+  mutate(price.c = 
+           ifelse(optionType == "c" & underlying >= Strike,
+                  underlying-Strike, 0)) %>%
+  mutate(price.p = 
+           ifelse(optionType == "p" & underlying <= Strike,
+                  Strike-underlying, 0)) 
+option2$price.p[1:40] <- "-"
+option2$price.c[41:80] <- "-"
+
+# calculate total open interest
+group_by(option2, optionType) %>%
+  summarise(sum(openint,na.rm = TRUE))
+```
+
+
+##2.4 Plot the volatility curve
+```{r}
+library(fOptions)
+option2 <- option2 %>%
+  mutate(p = as.numeric(ifelse(Strike < underlying, price.p, price.c)))
+
+d1 <- option2 %>% select(Strike, p, optionType, date, today,
+                         underlying) %>%
+  filter(is.na(p) == FALSE) %>%
+  arrange(Strike)
+
+volSmile<- rep(0,length(d1$p))
+
+for(i in 1:length(d1$p)) {
+  impVol<- GBSVolatility(price=d1$p[i] , 
+                        TypeFlag = d1$optionType[i], 
+                        S = d1$underlying[i], 
+                        X = d1$Strike[i],
+                        Time = as.numeric((as.Date("2020-12-18")
+                              -as.Date("2020-10-09")))/365,, 
+                        r = 0.03, b = 0)
+  volSmile[i]<- impVol
+}
+
+d1 <- d1 %>% mutate(volsmile = volSmile)
+ggplot(d1, aes(x = Strike, y = volsmile)) +
+  geom_point()+
+  geom_line() +
+  geom_smooth() 
+  
+  
+```

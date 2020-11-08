@@ -1,0 +1,103 @@
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Load and clean data
+```{r}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+
+# Read data
+library(readxl)
+df1 <- read_excel("E:/NTU/FE8828 Programming web application/FE8828-Li Zichang/Assignment3/w3-assign2.xlsx")
+
+colnames(df1)
+
+# Delete unnecessary columns
+df2 <- select(df1, -Last...2,-Change...3,-Volume...6, -Last...9, -Change...10, -Volume...13)
+colnames(df2)
+
+# Rename variables
+df2 <- rename(df2, call_bid = Bid...4, call_ask = Ask...5, call_open_int = `Open Int....7`,
+         put_bid = Bid...11, put_ask = Ask...12, put_open_int = `Open Int....14`)
+colnames(df2)
+
+
+# Construct the target data frame
+# Build calls data frame first 
+
+df2$call_open_int <- as.numeric(df2$call_open_int) #transfer type
+df3 <- df2 %>%
+  select(`Exp. Date`, Strike, call_open_int) %>%
+  mutate(Type = "c") 
+
+df3 <- df3 %>% 
+  bind_cols(df2[,2:3]) %>%
+  mutate(Underlying = 1515.22, Today = "2020-10-09")
+
+# Rename variables in order to use row combine
+df3 <- rename(df3, `Open Int.`= call_open_int, Bid = call_bid, Ask = call_ask)
+
+# Data frame of puts
+df4 <- df2 %>%
+  select(`Exp. Date`, Strike, put_open_int) %>%
+  mutate(Type = "p") 
+df4 <- df4 %>% 
+  bind_cols(df2[,6:7]) %>%
+  mutate(Underlying = 1515.22, Today = "2020-10-09")
+df4 <- rename(df4, `Open Int.`= put_open_int, Bid = put_bid, Ask = put_ask)
+
+# Vertical combination
+dft <- bind_rows(df3, df4)    # dft----Final Clean Data frame
+dft
+```
+
+
+# Valuation
+```{r}
+# call and put alone
+dft %>% 
+  filter(Type == "c") %>%
+  mutate(val_alone = `Open Int.` * 0.5 * (Bid + Ask)) %>%
+  summarise(total_call = sum(val_alone, na.rm = TRUE))
+
+dft %>% 
+  filter(Type == "p") %>%
+  mutate(val_alone = `Open Int.` * 0.5 * (Bid + Ask)) %>%
+  summarise(total_put = sum(val_alone, na.rm = TRUE))
+
+# Total valuation
+dft %>%
+  summarise(Total_value = sum(`Open Int.` * (Bid + Ask) * 0.5, na.rm = TRUE))
+
+# Sum of Open Int.for in the money options
+dfs <- filter(dft, (Type == "c" & Strike < Underlying) | (Type == "p" & Strike > Underlying))
+summarise(dfs, Total_Open_Interest = sum(`Open Int.`, na.rm = TRUE))
+
+```
+
+
+# Calculate the volatility and plot
+```{r}
+library(fOptions)
+
+dft1 <- dft %>%
+  filter(Strike < Underlying & Type == "p")
+dft2 <- dft %>%
+  filter(Strike > Underlying & Type == "c")
+dfv <- bind_rows(dft1, dft2)  # The data frame to feed in the GBS function
+
+dfv <- dfv %>% rowwise() %>%
+  mutate(GBSVolatility = GBSVolatility(price = Ask, TypeFlag = Type, S = Underlying, X = Strike, as.numeric((as.Date("2020-12-18") - as.Date("2020-10-09")))/365, r = 0.03, b = 0)) %>%
+  ungroup()
+
+dfv$GBSVolatility
+
+plot(dfv$Strike, dfv$GBSVolatility)
+
+```
+

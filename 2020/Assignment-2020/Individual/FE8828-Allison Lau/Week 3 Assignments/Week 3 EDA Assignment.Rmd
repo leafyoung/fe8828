@@ -1,0 +1,107 @@
+---
+title: "Week 3 EDA Assignment"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+print(bank)
+```
+
+## Finding #1
+
+This data contains `r nrow(bank)` rows.
+
+## Finding #2
+
+The largest age group within the data are individuals in their 30s. 
+```{r, include  = FALSE}
+bank %>%
+group_by(age_group = (age %/% 10) * 10) %>%
+summarize(count = n()) %>%
+arrange(age_group) -> res
+# res
+print(res)
+plot(res$age_group, res$count)
+```
+```{r, echo  = FALSE}
+plot(res$age_group, res$count)
+```
+
+## Finding #3
+
+Individuals who work in management make up the largest proportion of customers within the data.
+
+```{r, include = FALSE}
+bank %>%
+group_by(occupation = job) %>%
+summarize(count = n()) %>%
+arrange(occupation) -> test
+print(test)
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(test)
+```
+
+## Finding #4
+
+The largest balance within the data filtered by occupation is `r max(bank$balance)`, from a retired individual in his 60s. 
+```{r, include = FALSE}
+five <- bank %>%
+group_by(x = job) %>%
+filter(balance == max(balance)) %>%
+head(n = 12)
+print(five)
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(five)
+```
+
+```{r, include = FALSE}
+bank %>%
+filter(balance == max(balance))
+```
+
+## Finding #5
+
+Within the data, the largest proportion of customers who own houses are those who only have secondary school education.
+```{r, include = FALSE}
+four <- bank %>%
+group_by(social = education) %>%
+summarize(with_housing = sum(housing == "yes")) %>%
+print(four)
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(four)
+```
+
+## Finding #6
+
+The median age and balance of customers within the data is 39 years and $444.
+The mean age and balance of customers within the data is 41.1 years and $1,422.66.
+```{r, include = FALSE}
+df1 <- summarise_if(bank, is.numeric, median)
+print(df1)
+```
+```{r, include = FALSE}
+df2 <- summarise_if(bank, is.numeric, mean)
+print(df2)
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(df1, caption = "Median Numerical Values")
+```
+```{r, echo  = FALSE}
+library(knitr)
+kable(df2, caption = "Mean Numerical Values")
+```
+## Finding #7
+
+The total balance of cash held by the bank is `r sum(bank$balance)`.

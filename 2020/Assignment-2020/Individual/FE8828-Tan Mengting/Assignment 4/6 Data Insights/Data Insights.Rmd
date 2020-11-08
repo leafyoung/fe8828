@@ -1,0 +1,106 @@
+---
+title: "Graphical Data Insights"
+author: "Tan Mengting"
+date: "2020/10/15"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(knitr)
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+## R Markdown
+# Finding #1
+## Discover insights of age and balance
+* There're many super rich prople among middle-aged people with high balance, but the difference between people is also big. More people have relatively much lower balance
+* In the average perspective, people in their 70's have highest average balance
+```{r}
+# balance for each person
+ggplot(bank, aes(age, balance)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE)
+
+# mean balance for each age number
+group_by(bank, age) %>%
+  summarise(balance_mean = mean(balance))%>%
+  arrange(age) -> res
+ggplot(res, aes(age, balance_mean)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE)
+
+```
+
+# Finding #2
+## Discover insights of job and balance
+* In general, retired people have the higher balance and students have lowest level of balance.
+* From average perspective, amazingly, housemaid, retired people
+```{r}
+# balance for each person
+ggplot(bank, aes(job, age)) + 
+  geom_point() +
+  theme(text = element_text(size=8),
+        axis.text.x = element_text(angle=90, hjust=1))
+
+# mean balance for each job
+group_by(bank, job) %>%
+  summarise(balance_mean = mean(balance))%>%
+  arrange(job) -> res
+ggplot(res, aes(job, balance_mean)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  theme(text = element_text(size=8),
+        axis.text.x = element_text(angle=90, hjust=1))
+```
+
+# Finding #3 
+## Discover insights of age, education and contact duration
+* Middle-aged people with secondary and tertiary education are more possible to chat for a longer time
+* Elder people tend to chat for a shorter time
+```{r}
+ggplot(bank, aes(x = age, y = duration, color = education)) +
+geom_point() +
+theme(legend.position="left", text = element_text(size=8)) 
+```
+
+# Finding #4 
+## Discover insights of duration and subscription rate 
+* Generally, with longer duration, subscription rate tend to be higher.
+```{r}
+group_by(bank, duration) %>%
+  summarise(count = n(), 
+            subscription_count = sum(ifelse(y == "no", 0, 1)),
+            subscription_rate = subscription_count/count*100) %>%
+  arrange(duration) -> res
+res
+
+ggplot(res, aes(duration, subscription_rate)) +
+  geom_point() +
+  geom_smooth(method = "loess", se = FALSE)
+```
+
+
+# Finding #5
+## Discover insights of age, duration and balance
+* High-balance people tend to talk for short time and the opposite is true for low-balance people. Maybe it's due to they value their time differently.
+```{r}
+ggplot(bank) +
+geom_point(aes(age, duration, alpha = balance))
+
+```
+
+# Finding #6
+## Discover insights of job and education
+* Tertiary education leads to most management positions.
+* Primary education leads to most blue-collar positions.
+* Secondary education leads to most technician, admin and service positions.
+```{r}
+# Find the balance groups
+ggplot(data = bank, mapping = aes(x = job, fill = education)) +
+  geom_bar() + 
+  coord_flip()
+```

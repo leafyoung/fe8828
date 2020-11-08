@@ -1,0 +1,71 @@
+---
+title: "Assignment 4-1"
+author: "Fan Wenqing"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Finding #1
+```{r}
+ggplot(bank, aes(education, duration)) + geom_boxplot() 
+```
+Apart from extreme points, the distributions of duration are almost the same in four groups with different education backgrounds.
+
+# Finding #2
+```{r}
+group_by(bank, balance, job) %>%
+  summarise(nn = n()) %>%
+  ggplot(.) + 
+  geom_point(aes(balance, job, alpha = nn), color = "blue")
+
+group_by(bank, balance, job) %>%
+  filter(balance < 40000) %>%
+  summarise(nn = n()) %>%
+  ggplot(.) + 
+  geom_point(aes(balance, job, alpha = nn), color = "red")
+```
+Most people' balance is less than 40000. Then we can find the balance range of technician, management and blue-collar is between 0 and 5000, which is relatively wider than other groups.
+
+# Finding #3
+```{r}
+group_by(bank, job, age, housing) %>% summarise(nn = n()) %>% 
+  ggplot() +
+  geom_point(data = . %>% filter(housing == "yes"), aes(age, job, size = nn), alpha = 0.5, color = 'red', position = position_nudge(y = -0.2)) +
+  geom_point(data = . %>% filter(housing == "no"), aes(age, job, size = nn), alpha = 0.5, color = 'blue', position = position_nudge(y = 0.2))
+```
+Within the age between 30 and 40, the number of blue-collars with housing is larger than that without housing. 
+
+# Finding #4
+```{r}
+ggplot(bank) + geom_bar(aes(x = job, fill = education)) +
+  coord_flip()
+```
+A large proportion of people with primary education went into blue-collar field. And it is easy to find that jobs about management has a high requirement for people's education background. 
+
+# Finding #5
+```{r}
+bank %>% ggplot() +
+  geom_line(mapping = aes(x = age, y = balance)) +
+  facet_wrap(default~housing~education)
+```
+Holding other variables unchanged(default, age and housing are in the same position perspectively), people with secondary education and those with tertiary education have very similar balance. 
+
+# Finding #6
+```{r}
+ggplot(bank, aes(duration, color = marital, 
+                 fill = marital, alpha = 0.05)) +
+  geom_density() +
+  xlim(0, 1000)
+```
+ The duration distributions do not show much differences in three groups with different marrital information.
+
+

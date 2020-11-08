@@ -1,0 +1,57 @@
+---
+title: "Assignment 3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+# view(bank)
+```
+# Finding #1
+#This data contains `r nrow(data)` rows.
+```{r}
+r<-nrow(bank)
+r
+
+```
+# Finding #2
+```{r}
+
+bank %>%
+group_by(age_group = (age %/% 10) * 10)%>%
+summarise(count = n()) %>%
+arrange(age_group) -> res
+res
+plot(res$age_group, res$count)
+```
+
+# Discover insights of data frame: bank
+- Employment
+- Social attributes.
+- Count for sub-total / total, plot graph
+```{r}
+bank%>%
+group_by(,employment=job)%>%
+summarise(count = n()) %>%
+arrange(employment) -> res
+res<-ungroup(res)
+res
+barplot(res$count,names.arg=res$employment)
+
+```
+
+```{r}
+bank%>%
+group_by(,marital_group=marital)%>%
+summarise(count = n()) %>%
+arrange(marital_group) -> res
+res<-ungroup(res)
+res
+barplot(res$count,names.arg=res$marital_group)
+
+```

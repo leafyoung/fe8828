@@ -1,8 +1,9 @@
 # biorhythm.R
 
-library(dplyr)
-library(tidyr)
-library(ggplot2)
+library(conflicted)
+library(tidyverse)
+conflict_prefer('lag', 'dplyr')
+conflict_prefer('filter', 'dplyr')
 
 biorhythm <- function(dob, target = Sys.Date()) {
   dob <- as.Date(dob)
@@ -13,7 +14,8 @@ biorhythm <- function(dob, target = Sys.Date()) {
                        Physical = sin (2 * pi * days / 23) * 100, 
                        Emotional = sin (2 * pi * days / 28) * 100, 
                        Intellectual = sin (2 * pi * days / 33) * 100)
-  period <- gather(period, key = "Biorhythm", value = "Percentage", -Date)
+  # period <- gather(period, key = "Biorhythm", value = "Percentage", -Date)
+  period <- pivot_longer(period, cols = Physical:Intellectual, names_to = "Biorhythm", values_to = "Percentage")
   ggplot(period, aes(x = Date, y = Percentage, col = Biorhythm)) + geom_line() +  
     ggtitle(paste("DoB:", format(dob, "%d %B %Y"))) + 
     geom_vline(xintercept = as.numeric(target)) +

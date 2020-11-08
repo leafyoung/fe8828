@@ -1,0 +1,271 @@
+---
+title: "FE8828 Question 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(conflicted)
+library(tidyverse)
+library(fOptions)
+library(ggplot2)
+library(knitr)
+suppressMessages({
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+})
+```
+
+## Question 2, Part 1
+
+We generate 1000 simulations of stock prices over 20 days in order to price an ATM call option with strike price 100, assuming the stock price follows a normal distribution. 
+
+We then use the stock price generated to calculate the profit/loss on the option via 2 methods: using the GBSOption package and using Greeks. 
+
+The difference between the profit/loss of both options is then illustrated in the table through their mean, median and standard deviation, as well as in the histogram of the means of each simulation. 
+
+We can see that the overall mean of the difference in profit/loss is very small, ranging from about -0.01 to 0.01. This indicates a very small remainder. Also, the means of all 100 simulations follow a generally normal distribution. 
+
+```{r Q2 part 1, include = FALSE}
+# To generate the 20 day ATM call option
+# Assumption: volatility remains constant until each option expiry
+
+sims <- function(i){
+S <- 100
+K <- 100
+sigma <- 0.3 
+drift <- 0 # drift = r - q
+timestep <- 1/250
+days <- 20/250
+N <- days / timestep
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+# ss is the simulated price movement for N days
+ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+# We can calculate the volatility as below from ss
+#sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+
+# generate different greeks for each day depending on the simulated stock prices
+df <- tibble(S = ss, days = 20:1)
+opt <- rowwise(df) %>% mutate(
+price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3), 
+vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3))
+
+# generate the option_pnL based on the change in prices of stock 
+option_pnl <- c()
+for(i in 2:20){
+option_pnl[1] <- 0
+option_pnl[i] <- opt$price[i] - opt$price[i-1]
+}
+
+# generate the approx_pnL using the changing greeks caused by the change in stock prices
+approx_pnl <- c()
+for(i in 2:20){
+  approx_pnl[1] <- 0
+  approx_pnl[i] <- opt$delta[i-1] * (ss[i] - ss[i-1]) + 0.5 * opt$gamma[i-1] * (ss[i] - ss[i-1])^2 + opt$vega[i-1] * 0 + opt$theta[i-1] * (1/250)
+}
+
+return(option_pnl - approx_pnl)
+
+}
+
+simno <- c()
+mean <- c()
+median <- c()
+stdev <- c()
+temp <- c()
+for(i in 1:1000){
+  temp <- sims()
+  simno[i] <- i
+  mean[i] <- mean(temp)
+  median[i] <- median(temp)
+  stdev[i] <- stdev(temp)
+}
+# code takes about 10 seconds to run
+
+returns <- tibble(
+  No. = simno,
+  Mean = mean,
+  Median = median,
+  StandardDev = stdev
+)
+
+#I have no idea how to show distribution LOL... 
+print(returns)
+ggplot(returns) + geom_histogram(aes(x=`Mean`), bins = 50, color="black", fill="white")
+
+```
+
+```{r, echo=FALSE}
+ggplot(returns) + geom_histogram(aes(x=`Mean`), bins = 50, color="black", fill="white")
+
+```
+
+```{r Q2 part 2, include=FALSE}
+
+sims2 <- function(i){
+S <- 100
+K <- 100
+sigma <- 0.3 
+drift <- 0 # drift = r - q
+timestep <- 1/250
+days <- 20/250
+N <- days / timestep
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+# ss is the simulated price movement for N days
+ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+# We can calculate the volatility as below from ss
+sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+
+# generate different greeks for each day depending on the simulated stock prices
+df <- tibble(S = ss, days = 20:1)
+opt <- rowwise(df) %>% mutate(
+price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3)@price,
+delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3),
+theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3), 
+vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.3))
+
+sums <- c()
+for(i in 2:nrow(opt)){
+sums[i] <- 0.5 * opt$gamma[i-1] * (ss[i] - ss[i-1])^2 + opt$theta[i-1] * (1/250)
+}
+
+return(list(ss=ss, Sigma = sigma_2, Sums = sum(sums, na.rm=TRUE)))
+
+}
+
+simno2 <- c()
+mean2 <- c()
+median2<- c()
+stdev2 <- c()
+sums <- c()
+
+for(i in 1:1000){
+  temp <- sims2()$ss
+  simno2[i] <- i
+  mean2[i] <- mean(temp)
+  median2[i] <- median(temp)
+  stdev2[i] <- sims2()$Sigma
+  sums[i] <- sims2()$Sums
+}
+
+returns2 <- tibble(
+  No. = simno2,
+  Mean = mean2,
+  Median = median2,
+  StandardDev = stdev2,
+  Sums = sums
+) 
+
+out <- returns2 %>% filter(StandardDev >= 0.299) %>% filter(StandardDev <= 0.301)
+
+sum(out$Sums)
+
+```
+
+## Question 2, Part 2
+
+We generated 1000 simulations of 20 days' worth of stock prices and for each simulation, determined the stock prices' mean, median and standard deviation, as well as the sum of their GammaPnl and ThetaPnL values. Then, we filter out those simulations which produced an realised volatility that was extremely close to the implied volatility (between 0.299 and 0.301). Of the remaining simulations, the sum of all the GammaPnL and ThetaPnL values = `r sum(out$Sums)` which is generally equivalent to 0. 
+
+```{r, echo=FALSE}
+
+ggplot(returns2) + geom_histogram(aes(x=`Mean`), bins = 50, color="black", fill="white")
+
+```
+
+
+## Question 2, Part 3
+
+Assuming we long (buy) a single 20 day ATM call option, this means we will short (sell) approximately delta shares of the underlying stock at the beginning of the 20 day period. 
+
+As shown from the graph, all simulations with a realised volatility > implied volatility of 0.5 will have a Overall PnL that is above 0, where the overall PnL = Payoff of option at maturity (which is the higher of S(T)-K and 0) + Delta PnL of the changes in the underlying asset - Cost of purchasing the option at Day 0. 
+
+```{r Question 2, part 3, include = FALSE}
+sims3 <- function(i){
+S <- 100
+K <- 100
+sigma <- 0.5
+drift <- 0 # drift = r - q
+timestep <- 1/250
+days <- 20/250
+N <- days / timestep
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+# ss is the simulated price movement for N days
+ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+# We can calculate the volatility as below from ss
+sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+
+# generate different greeks for each day depending on the simulated stock prices
+df <- tibble(S = ss, days = 20:1)
+opt <- rowwise(df) %>% mutate(
+price = GBSOption("c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5)@price,
+delta = GBSGreeks("Delta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5),
+gamma = GBSGreeks("Gamma", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5),
+theta = GBSGreeks("Theta", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5), 
+vega = GBSGreeks("Vega", "c", S = S, X = 100, Time = days / 250, r = 0, b = 0, sigma = 0.5))
+
+# number of underlying stock we need at the end of each day will be equal to the value of delta: assuming we only have 1 option. 
+stock_pnl <- c()
+for(i in 2:20){
+  stock_pnl[1] <- opt$delta[1]*ss[1]
+  stock_pnl[i] <- (opt$delta[i]-opt$delta[i-1])*ss[i]
+}
+
+finalpayoff <- max((ss[20]-100),0)
+
+deltapnl <- sum(stock_pnl)
+
+return(list(ss=ss, Sigma = sigma_2, FinalPayoff = finalpayoff, DeltaPnL = deltapnl, Cost = opt$price[1], Sum = finalpayoff+deltapnl-opt$price[1]))
+
+}
+
+simno3 <- c()
+mean3 <- c()
+median3<- c()
+stdev3 <- c()
+sums3 <- c()
+finalpayoff <- c()
+deltapnl <- c()
+cost <- c()
+
+for(i in 1:1000){
+  temp <- sims3()
+  temp2<-temp$ss
+  simno3[i] <- i
+  mean3[i] <- mean(temp2)
+  median3[i] <- median(temp2)
+  stdev3[i] <- temp$Sigma
+  sums3[i] <- temp$Sum
+  finalpayoff[i] <- temp$FinalPayoff
+  deltapnl[i] <- temp$DeltaPnL
+  cost[i] <- temp$Cost
+}
+
+returns3 <- tibble(
+  No. = simno3,
+  Mean = mean3,
+  Median = median3,
+  StandardDev = stdev3,
+  Sums = sums3,
+  FinalPayoff = finalpayoff,
+  DeltaPnL = deltapnl,
+  Cost = cost
+) 
+
+out <- returns3 %>% filter(StandardDev > 0.500) 
+
+print(out)
+ggplot(out) + geom_point(aes(x=`StandardDev`, y=`Sums`)) + geom_vline(xintercept=0.500, colour="red")
+
+```
+
+```{r, echo=FALSE}
+ggplot(out) + geom_point(aes(x=`StandardDev`, y=`Sums`)) + geom_vline(xintercept=0.500, colour="red")
+
+```

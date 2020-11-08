@@ -1,0 +1,85 @@
+---
+title: "assignment4"
+author: "Jiang Lihua"
+date: "2020/10/8"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r preparation}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+library(ggplot2)
+#library(base)
+#airquality
+View(bank)
+```
+
+
+```{r insight 1}
+group_by(bank, job, age) %>% summarise(nn = n()) %>%
+  ggplot(.) + geom_point(aes(age, job, size = nn)) +
+  scale_y_discrete(limit = rev(levels(factor(bank$job))))#+
+# scale_x_reverse()
+#data story: we can see the numbers of people in each different job and each different age. The larger the point, the more the people in this age with this kind of job.
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r insight 2}
+group_by(bank, job, age, loan) %>% summarise(nn = n()) %>% 
+  ggplot() +
+  geom_point(data = . %>% filter(loan == "yes"), aes(age, job, size = nn), alpha = 0.5, color = 'red', position = position_nudge(y = -0.2)) +
+  geom_point(data = . %>% filter(loan == "no"), aes(age, job, size = nn), alpha = 0.5, color = 'blue', position = position_nudge(y = 0.2))
+#data story: it divides people in each job into 2 groups: people with loan and people without load. And in each group, we calculate the number of people in each age, the larger the semi-transparent circle, the more people in this age.
+```
+
+```{r insight 3}
+ggplot(bank)+
+  geom_point(mapping = aes(x = day,y = duration, color = contact))+
+  facet_wrap(.~month,nrow = 6)
+#data story:every picture describe the day, duration and contact in each month. As we can see, most of customers like cellular but in May and June, a large percentage of people do not have their contact recording, which means that in these two month, the information is not finished completely.In addition, people tend to go to bank not in Jan and Dec, at the same time the duration in these two months are not very long.
+
+```
+
+
+```{r insight 4}
+ggplot(bank) +
+  geom_point(aes(x=age,y=balance)) +
+  geom_smooth(data = filter(bank, marital=="single"),
+              aes(x=age,y=balance),color="red") +
+  geom_smooth(data = filter(bank, marital=="married"),
+              aes(x=age,y=balance),color="blue") +
+  geom_smooth(data = filter(bank, marital=="divorced"),
+              aes(x=age,y=balance),color="green")+
+  scale_y_log10()
+#data_story: we can see that as age going up, people tend to have more balance. In young people, the divorced people have  the least balance but for old people, who are divorced have the most balance.
+ggplot(bank,aes(age, balance))+ geom_point() + geom_smooth(method="lm")+
+  facet_grid(. ~ marital) +scale_y_log10()
+#data_story: we can get their lm curve, too.
+```
+
+```{r insight 5}
+ggplot(bank,aes(marital,age))+
+  geom_boxplot()+
+  theme(axis.text.x = element_text(angle = 60,hjust = 1))
+#data story: as we can see, the median of age of divorced people is about 45 years old, and these in married and single people are approximately 43 and 32,respectively.
+```
+
+```{r insight 6}
+ggplot(bank)+geom_bar(mapping = aes(x=marital,fill=education),position = "fill")
+#data story: in this plot, we can see that in different marital condition, the education level of people are quite different. In three categories, single people have the highest proportion in tertiary education and the lowest proportion in primary education.
+```
+
+

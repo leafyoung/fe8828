@@ -1,0 +1,171 @@
+---
+title: "Q2"
+author: "Zhu Yiqing"
+date: "2020/10/29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+library(fOptions)
+suppressMessages({
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+})
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+
+```{r}
+# S is to be changed daily
+# Below code generates random sequence of S for 20 days, given starting S and volatility.
+S <- 100
+K <- 100
+days <- 20.0
+sigma <- 0.3
+drift <- 0
+timestep <- 1 / 250
+days <- 20
+N <- days
+p1 <- (drift - 0.5 * sigma * sigma) * timestep
+p2 <- sigma * sqrt(timestep)
+sum <- 0
+total <- data.frame(Option_pnl=double(),
+                 Approx_pnl=double(),
+                 Diff=double(),
+                 Real_vol=double(),
+                 Imp_vol=double(),
+                 Neutral = double(),
+                 Stock = integer(),
+                 Time = integer(),
+                 Day = integer(),
+                 Delta = double(),
+                 stringsAsFactors=FALSE)
+for (j in 1:1000){
+  ss <- vector()
+  ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+  ss <- c(100, ss)
+  sum <- 0
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  days <- 20
+  for (i in 1: N+1){
+    # On day 1, if S1 = 98, volatility is unchanged.
+    vega0 <- GBSGreeks("Vega", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    delta0 <- GBSGreeks("Delta", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    gamma0 <- GBSGreeks("Gamma", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    theta0 <- GBSGreeks("Theta", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    price0 <- GBSOption("c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)@price
+    option_pnl <- GBSOption("c", S = ss[i], X = 100,
+                        Time = (days-1) / 250, r = 0, b = 0, sigma = sigma)@price - price0
+    approx_pnl <- delta0 * (ss[i] - ss[i-1]) + 0.5 * gamma0 * (ss[i] - ss[i-1]) ** 2 + vega0 * 0 + theta0 * 1/250
+    sum <- 0.5 * gamma0 * (ss[i] - ss[i-1]) ** 2 + theta0 * 1/250
+    new <- data.frame(option_pnl, approx_pnl, option_pnl-approx_pnl, sigma_2, sigma, sum, ss[i], j, i-1, delta0)
+    names(new) <- c("Option_pnl", "Approx_pnl", "Diff", "Real_vol", "Imp_vol", "Neutral", "Stock", "Time", "Day", "Delta")
+    total <- rbind(total, new)
+    days <- days - 1
+  }
+}
+
+```
+
+## Taylor’s expansion to actual PnL with indeed small remainder.
+
+```{r}
+print (mean(total$Diff))
+total %>%
+  ggplot(aes(x = Diff)) +
+  geom_histogram(binwidth = 0.001) + theme(text = element_text(size=8))
+# From plot we can get that most of Taylor's expansion's difference with actual Pnl are nearly 0
+```
+
+## If realized volatility and implied volatility are the same, Gamma and Theta can neutralize each other
+## Here we set volatility and implied volatility's difference within 5% as "the same"
+```{r}
+fluctuation <- total %>% mutate(Percentage = ((Real_vol - Imp_vol)/Imp_vol)*100)
+same <- fluctuation %>% filter(abs(Percentage) <= 5) 
+hedge <- (same %>% group_by(Time) %>% summarise(Total = sum(Neutral, na.rm = TRUE)))
+hedge %>%
+  ggplot(aes(x = Total)) +
+  geom_histogram(binwidth = 0.01) + theme(text = element_text(size=8))
+print(mean(hedge$Total))
+# By calculating mean, we get that the overall hedge is nearly 0
+# Of course, there will be some fluctuation. But not too much
+```
+
+## If realized volatility > implied volatility, there is positive “Overall PnL” (profit and loss).
+## Here we set volatility and implied volatility's difference
+```{r}
+# We change implied sigma to 0.3 now
+sigma <- 0.3
+# We let actual sigma as 0.5
+p1 <- (drift - 0.5 * 0.5 * 0.5) * timestep
+p2 <- 0.5 * sqrt(timestep)
+larger <- data.frame(Option_pnl=double(),
+                 Approx_pnl=double(),
+                 Diff=double(),
+                 Real_vol=double(),
+                 Imp_vol=double(),
+                 Neutral = double(),
+                 Stock = integer(),
+                 Time = integer(),
+                 Day = integer(),
+                 Delta = double(),
+                 stringsAsFactors=FALSE)
+for (j in 1:1000){
+  ss <- vector()
+  ss <- rep(S, N) * c(cumprod(rlnorm(N, mean = p1, sd = p2)))
+  ss <- c(100, ss)
+  sum <- 0
+  sigma_2 <- sd((log(ss / lag(ss))[-1])) / sqrt(1 / 250)
+  days <- 20
+  for (i in 1: N+1){
+    # On day 1, if S1 = 98, volatility is unchanged.
+    vega0 <- GBSGreeks("Vega", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    delta0 <- GBSGreeks("Delta", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    gamma0 <- GBSGreeks("Gamma", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    theta0 <- GBSGreeks("Theta", "c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)
+    price0 <- GBSOption("c", S = ss[i-1], X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)@price
+    option_pnl <- GBSOption("c", S = ss[i], X = 100,
+                        Time = (days-1) / 250, r = 0, b = 0, sigma = sigma)@price - price0
+    approx_pnl <- delta0 * (ss[i] - ss[i-1]) + 0.5 * gamma0 * (ss[i] - ss[i-1]) ** 2 + vega0 * 0 + theta0 * 1/250
+    sum <- 0.5 * gamma0 * (ss[i] - ss[i-1]) ** 2 + theta0 * 1/250
+    new <- data.frame(option_pnl, approx_pnl, option_pnl-approx_pnl, sigma_2, sigma, sum, ss[i], j, i-1, delta0)
+    names(new) <- c("Option_pnl", "Approx_pnl", "Diff", "Real_vol", "Imp_vol", "Neutral", "Stock", "Time", "Day", "Delta")
+    larger <- rbind(larger, new)
+    days <- days - 1
+  }
+}
+# cost of buying
+price0 <- GBSOption("c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)@price
+# final pay off
+larger["Payoff"] <- 0
+larger["dS"] <- 0
+larger["Buying"] <- 0
+days <- 20
+for (i in 1:length(larger$Stock)){
+  if (larger$Day[i] == 1){
+    larger$dS[i] = larger$Stock[i] - 100
+    c = -GBSOption("c", S = 100, X = 100, Time = days / 250, r = 0, b = 0, sigma = sigma)@price
+    larger$Buying[i] <- c
+  }
+    
+  else
+    larger$dS[i] = larger$Stock[i] - larger$Stock[i-1]
+  if (larger$Day[i] == 20)
+    larger$Payoff[i] =  (larger$Stock[i]-100)*(larger$Stock[i]>100)
+}
+# Here we use Delta to hedge, so it should multiply by -1
+larger <- larger %>% mutate(DeltaPnl = -Delta * dS)
+output <- larger %>% group_by(Time) %>% summarise(sum_buying = sum(Buying), sum_payoff = sum(Payoff), sum_deltaPnl = sum(DeltaPnl))
+output <- output %>% mutate(Overall_Pnl = sum_buying + sum_deltaPnl + sum_payoff)
+view (output$Overall_Pnl)
+print (mean(output$Overall_Pnl))
+output %>%
+  ggplot(aes(x = Overall_Pnl)) +
+  geom_histogram(binwidth = 0.1) + theme(text = element_text(size=8))
+# By plotting and showing form, we can find that with Real vol > Implied Vol, Overall Pnl is mostly larger than 0
+```

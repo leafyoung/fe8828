@@ -1,0 +1,120 @@
+---
+title: "Assignment1_Bank_Exploratory"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse) 
+library(lubridate) 
+library(bizdays)
+library(ggplot2)
+# Use echo = TRUE for assignment is an exception, so code is visible. 
+knitr::opts_chunk$set(
+	echo = TRUE,
+	fig.align = "center",
+	cache = TRUE,
+	collapse = TRUE
+)
+ 
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+bank
+```
+
+# Finding #1
+```{r}
+# Find the percentage of default by age
+df1 <- bank %>% 
+  group_by(age) %>%
+  summarize(`Default No` = sum(default == 'no')) 
+df2 <- bank %>% 
+  group_by(age) %>%
+  summarize(`Default Yes` = sum(default == 'yes')) 
+df <- distinct(bank, age) %>%
+  arrange(age)
+df <- left_join(df, df1, by = 'age') 
+df <- left_join(df, df2, by = 'age')
+df <- mutate(df, `Percentage of Default` = round(100*`Default Yes`/(`Default Yes`+`Default No`),2))
+df
+           
+```
+
+#Finding #2
+```{r}
+# Find balance among different job
+df <- group_by(bank, job) %>%
+  summarise(max_balance = max(balance),
+            avg_balance = mean(balance),
+            min_balance = min(balance))
+df
+ggplot(data=df, aes(x=job, y=avg_balance, group=1)) +
+  geom_line()+
+  geom_point()+
+  scale_x_discrete(guide = guide_axis(angle = 60)) 
+```
+#Finding #3
+```{r}
+# Show the results of y
+cat("Number of Yes: ", sum(bank$y=='yes'), "\n")
+cat("Number of No: ", sum(bank$y=='no'))
+```
+
+#Finding #4
+```{r}
+# To find relationship between the y and previous attempts
+df <- group_by(bank, y) %>% 
+  summarise(mean_campaign = mean(campaign),
+            mean_pdays = mean(pdays),
+            mean_previous = mean(previous))
+df
+# There is no clear pattern between y and previous contact number pdays passed. 
+```
+
+# Finding #5
+``` {r}
+# The relationship between the previous marketing campaign and y
+# We can tell that people who has success status in previous campaign is more likely to subscribe a term deposit. 
+df <- group_by(bank, poutcome) %>%
+  summarise(count_poutcome = n(),
+            y_yes_count = sum(ifelse(y == "no", 0, 1)),
+            ratio = y_yes_count/count_poutcome)
+df
+```
+
+#Finding #6
+```{r}
+# Find insights on people who has "success" status on previous marketing campaign
+df <- bank %>%
+  filter(poutcome == 'success') %>%
+  summarise(average_age = mean(age),
+            max_balance = max(balance),
+            average_balance = mean(balance),
+            min_balance = min(balance),
+            `#_people_default` = sum(default == 'yes'),
+            `#_people_got_housing` = sum(housing == 'yes'),
+            `#_people_got_loan` = sum(loan == 'yes')
+            )
+df
+```
+
+#Finding #7
+```{r}
+# Find the relationship between y and balance
+df <- mutate(bank, balance_range = case_when(
+    balance < 500 ~ "Balance < 500",
+    balance < 2000 ~ "Balance < 2000",
+    balance < 5000 ~ "Balance < 5000",
+    balance < 10000 ~ "Balance < 10000",
+    TRUE ~ "Balance >= 10000")
+    )   %>% 
+  group_by(y) %>% 
+  summarise(`<500` = sum(ifelse(balance_range == "Balance < 500", 1, 0)),
+            `[500, 2000)` = sum(ifelse(balance_range == "Balance < 2000", 1, 0)),
+            `[2000, 5000)` = sum(ifelse(balance_range == "Balance < 5000", 1, 0)),
+            `[5000, 10000)` = sum(ifelse(balance_range == "Balance < 10000", 1, 0)),
+            `>=10000` = sum(ifelse(balance_range == "Balance >= 10000", 1, 0))) %>%
+  mutate(total=`<500` + `[500, 2000)` + `[2000, 5000)` +`[5000, 10000)` + `>=10000` )
+
+df
+  
+```
+

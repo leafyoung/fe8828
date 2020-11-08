@@ -1,0 +1,293 @@
+---
+title: "Assignment3"
+author: "Song Yifan"
+date: "2020/10/10"
+output: html_document
+---
+Assignment 3-1
+```{r }
+library(alphavantager)
+av_api_key("CVENNBDLYQO8U23Y")
+MSFT <- av_get("MSFT", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+AAPL <- av_get("AAPL", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+AMZN <- av_get("AMZN", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+GOOGL <- av_get("GOOGL", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+SPY <- av_get("SPY", av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+
+```
+
+
+save the data
+```{r cars}
+if (FALSE) {
+  write.csv(MSFT, file = "data/MSFT.csv")
+  write.csv(AAPL, file = "data/AAPL.csv")
+  write.csv(AMZN, file = "data/AMZN.csv")
+  write.csv(GOOGL, file = "data/GOOGL.csv")
+  write.csv(SPY, file = "data/SPY.csv")
+}
+```
+
+Assignment 3-2
+
+Load the data
+```{r }
+if (FALSE) {
+  MSFT <- read.csv("data/MSFT.csv")
+  AAPL <- read.csv("data/AAPL.csv")
+  AMZN <- read.csv("data/AMZN.csv")
+  GOOGL <- read.csv("data/GOOGL.csv")
+  SPY <- read.csv("data/SPY.csv")
+}
+```
+
+Do investment
+```{r}
+cash = 1e6
+cash_investiable = cash*0.9
+cash_left = cash - cash_investiable
+
+# Initial investment
+MSFT_share <- round(cash_investiable/4/MSFT$adjusted_close[1],0)
+AAPL_share <- round(cash_investiable/4/AAPL$adjusted_close[1],0)
+AMZN_share <- round(cash_investiable/4/AMZN$adjusted_close[1],0)
+GOOGL_share <- round(cash_investiable/4/GOOGL$adjusted_close[1],0)
+MSFT_share
+AAPL_share
+AMZN_share
+GOOGL_share
+```
+
+
+```{r}
+library(dplyr)
+Rf = 0.01/250
+MSFT_value <- data.frame(MSFT_share*MSFT$adjusted_close)
+AAPL_value <- data.frame( AAPL_share*AAPL$adjusted_close)
+AMZN_value <- data.frame( AMZN_share*AMZN$adjusted_close)
+GOOGL_value <- data.frame( GOOGL_share*GOOGL$adjusted_close)
+
+MSFT_new <- rename(MSFT_value, MSFT_value = colnames(MSFT_value))
+AAPL_new <- rename(AAPL_value, AAPL_value = colnames(AAPL_value))
+AMZN_new <- rename(AMZN_value, AMZN_value = colnames(AMZN_value))
+GOOGL_new <- rename(GOOGL_value, GOOGL_value = colnames(GOOGL_value))
+
+cash <- data.frame(c(1:100))
+cash <- rename(cash, days = c.1.100.)
+cash['cash value'] <- cash_left*(1+Rf)^(cash$days-1)
+cash['cash_return'] <- Rf
+cash <- cash[,-1]
+```
+
+
+```{r}
+MSFT_new$MSFT_return[2:nrow(MSFT_new)] <- MSFT_new$MSFT_value[-1]/MSFT_new$MSFT_value[-nrow(MSFT_new)]-1
+
+AAPL_new$AAPL_return[2:nrow(AAPL_new)] <- AAPL_new$AAPL_value[-1]/AAPL_new$AAPL_value[-nrow(AAPL_new)]-1
+
+AMZN_new$AMZN_return[2:nrow(AMZN_new)] <- AMZN_new$AMZN_value[-1]/AMZN_new$AMZN_value[-nrow(AMZN_new)]-1
+
+GOOGL_new$GOOGL_return[2:nrow(GOOGL_new)] <- GOOGL_new$GOOGL_value[-1]/GOOGL_new$GOOGL_value[-nrow(GOOGL_new)]-1
+
+SPY$return[2:nrow(SPY)] <- SPY$adjusted_close[-1]/SPY$adjusted_close[-nrow(SPY)]-1
+
+MSFT_new
+AAPL_new
+AMZN_new
+GOOGL_new
+SPY
+```
+
+```{r}
+# If all invest in SPY
+SPY_share <- floor(cash_investiable/SPY$adjusted_close[1])
+SPY_value <- data.frame(SPY_share*SPY$adjusted_close)
+SPY_new <- mutate(SPY_value, SPY$return)
+SPY_new <- rename(SPY_new, SPY_value = SPY_share...SPY.adjusted_close, SPY_return = `SPY$return`)
+SPY_new
+```
+
+
+
+Sharpe ratio
+```{r}
+MSFT_sharpe <- (mean(MSFT_new$MSFT_return, na.rm = T)-Rf)/sd(MSFT_new$MSFT_return, na.rm = T)
+MSFT_sharpe
+
+AAPL_sharpe <- (mean(AAPL_new$AAPL_return, na.rm = T)-Rf)/sd(AAPL_new$AAPL_return, na.rm = T)
+AAPL_sharpe
+
+AMZN_sharpe <- (mean(AMZN_new$AMZN_return, na.rm = T)-Rf)/sd(AMZN_new$AMZN_return, na.rm = T)
+AMZN_sharpe
+
+GOOGL_sharpe <- (mean(GOOGL_new$GOOGL_return, na.rm = T)-Rf)/sd(GOOGL_new$GOOGL_return, na.rm = T)
+GOOGL_sharpe
+
+SPY_sharpe <- (mean(SPY$return, na.rm = T) - Rf)/sd(SPY$return, na.rm = T)
+SPY_sharpe
+
+```
+Plot
+```{r}
+# Plot daily return
+hist(MSFT_new$MSFT_return)
+hist(AAPL_new$AAPL_return)
+hist(AMZN_new$AMZN_return)
+hist(GOOGL_new$GOOGL_return)
+hist(SPY$return)
+```
+```{r}
+Portfolio <- bind_cols(MSFT_new, AAPL_new, AMZN_new, GOOGL_new, cash)
+Portfolio
+Portfolio$Total_valuation <- Portfolio$MSFT_value+Portfolio$AAPL_value+Portfolio$AMZN_value+
+  Portfolio$GOOGL_value+Portfolio$`cash value`
+Portfolio$return <- Portfolio$MSFT_return+Portfolio$AAPL_return+Portfolio$AMZN_return+
+  Portfolio$GOOGL_return+Portfolio$cash_return
+Portfolio
+```
+
+
+
+```{r}
+# Plot total valuation, and relativity return for your investment portfolio and S&P.
+library(ggplot2)
+ggplot(MSFT_new, mapping = aes(x = 1:nrow(MSFT_new),y=MSFT_value))+
+  geom_point()+
+  geom_line() +
+  labs(x = "days", y="value")+
+  labs(title = "MSFT total valuation")
+
+ggplot(AAPL_new, mapping = aes(x = 1:nrow(AAPL_new),y=AAPL_value))+
+  geom_point()+
+  geom_line() +
+  labs(x = "days", y="value")+
+  labs(title = "AAPL total valuation")
+
+ggplot(AMZN_new, mapping = aes(x = 1:nrow(AMZN_new),y=AMZN_value))+
+  geom_point()+
+  geom_line() +
+  labs(x = "days", y="value")+
+  labs(title = "AMZN total valuation")
+
+ggplot(GOOGL_new, mapping = aes(x = 1:nrow(GOOGL_new),y=GOOGL_value))+
+  geom_point()+
+  geom_line() +
+  labs(x = "days", y="value")+
+  labs(title = "GOOGL total valuation")
+
+ggplot(Portfolio, mapping = aes(x = 1:nrow(Portfolio),y=Total_valuation))+
+  geom_point()+
+  geom_line() +
+  labs(x = "days", y="value")+
+  labs(title = "Portfolio total valuation")
+
+
+```
+```{r}
+plot(Portfolio$Total_valuation, xlab = "days", ylab = "total valuation", ylim = c(0.9e6,1.4e6))
+lines(Portfolio$Total_valuation, col = "black")
+lines(SPY_new$SPY_value, col = "red")
+legend("topleft", c("Portfolio", "SPY"), fill = c("black","red"), col = c("black","red"))
+```
+
+
+
+```{r}
+# Plot total valuation, and relativity return for your investment portfolio and S&P.
+ggplot(Portfolio, mapping = aes(x = 1:nrow(Portfolio),y=return))+
+  geom_point()+
+  geom_line() +
+  labs(x = "days", y="return")+
+  labs(title = "Portfolio relative return")
+
+ggplot(SPY, mapping = aes(x = 1:nrow(SPY), y = return))+
+  geom_point() +
+  geom_line()+
+  labs(x = "days", y="return")+
+  labs(title = "SPY relative return")
+
+```
+
+```{r}
+plot(Portfolio$return, xlab = "days", ylab = "return")
+lines(Portfolio$return, col = "black")
+lines(SPY_new$SPY_return, col = "red")
+legend("topleft", c("Portfolio", "SPY"), fill = c("black","red"), col = c("black","red"))
+```
+```{r}
+Portfolio$relative_return <- Portfolio$Total_valuation/Portfolio$Total_valuation[1]-1
+Portfolio
+SPY_new$relative_return <- SPY_new$SPY_value/SPY_new$SPY_value[1]-1
+SPY_new
+```
+```{r}
+plot(Portfolio$relative_return, xlab = "days", ylab = "relative return")
+lines(Portfolio$relative_return, col = "black")
+lines(SPY_new$relative_return, col = "red")
+legend("topleft", c("Portfolio", "SPY"), fill = c("black","red"), col = c("black","red"))
+```
+
+```{r}
+#Plot relative valuation for the different allocation (stocks and cash) (Hint: bar chart)
+if (FALSE) {
+  MSFT <- read.csv("data/MSFT.csv")
+  AAPL <- read.csv("data/AAPL.csv")
+  AMZN <- read.csv("data/AMZN.csv")
+  GOOGL <- read.csv("data/GOOGL.csv")
+}
+
+get_valuation <- function(ratio)
+{
+  cash = 1e6
+  cash_investiable = cash*ratio
+  cash_left = cash - cash_investiable
+  
+  # Initial investment
+  MSFT_share <- round(cash_investiable/4/MSFT$adjusted_close[1],0)
+  AAPL_share <- round(cash_investiable/4/AAPL$adjusted_close[1],0)
+  AMZN_share <- round(cash_investiable/4/AMZN$adjusted_close[1],0)
+  GOOGL_share <- round(cash_investiable/4/GOOGL$adjusted_close[1],0)
+  
+  Rf = 0.01/250
+  MSFT_value <- data.frame(MSFT_share*MSFT$adjusted_close)
+  AAPL_value <- data.frame( AAPL_share*AAPL$adjusted_close)
+  AMZN_value <- data.frame( AMZN_share*AMZN$adjusted_close)
+  GOOGL_value <- data.frame( GOOGL_share*GOOGL$adjusted_close)
+  
+  MSFT_new <- rename(MSFT_value, MSFT_value = colnames(MSFT_value))
+  AAPL_new <- rename(AAPL_value, AAPL_value = colnames(AAPL_value))
+  AMZN_new <- rename(AMZN_value, AMZN_value = colnames(AMZN_value))
+  GOOGL_new <- rename(GOOGL_value, GOOGL_value = colnames(GOOGL_value))
+  
+  cash <- data.frame(c(1:100))
+  cash <- rename(cash, days = c.1.100.)
+  cash['cash value'] <- cash_left*(1+Rf)^(cash$days-1)
+  cash['cash_return'] <- Rf
+  cash <- cash[,-1]
+  
+  Portfolio <- bind_cols(MSFT_new, AAPL_new, AMZN_new, GOOGL_new, cash)
+  Portfolio$Total_valuation <- Portfolio$MSFT_value+Portfolio$AAPL_value+Portfolio$AMZN_value+
+    Portfolio$GOOGL_value+Portfolio$`cash value`
+  Portfolio
+}
+```
+
+
+```{r}
+Portfolio = get_valuation(0.9)
+Portfolio1 = get_valuation(0.7)
+Portfolio2 = get_valuation(0.5)
+Portfolio3 = get_valuation(0.3)
+Portfolio4 = get_valuation(0.1)
+
+Portfolio1
+```
+
+
+
+```{r}
+library(tidyverse)
+tibble(t = 1:100, 'ratio=0.9' = Portfolio$Total_valuation, 'ratio=0.7' = Portfolio1$Total_valuation, 'ratio=0.5' = Portfolio2$Total_valuation, 'ratio=0.3' = Portfolio3$Total_valuation, 'ratio=0.1' = Portfolio4$Total_valuation) %>% pivot_longer(cols = 'ratio=0.9':'ratio=0.1') %>%
+  ggplot(.) + geom_area(aes(x = t, y = value, fill = name), position = 'fill')
+```
+

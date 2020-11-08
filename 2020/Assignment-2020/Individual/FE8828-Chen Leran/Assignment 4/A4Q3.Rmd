@@ -1,0 +1,97 @@
+---
+title: "A4Q3"
+author: "leran"
+date: "2020/10/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(dplyr)
+library(ggplot2)
+library(alphavantager)
+av_api_key("SJH9ANX0KBKUZJKA")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+```
+
+## Download The Data
+```{r eval = FALSE}
+CRM = av_get('CRM', av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+NOW = av_get('NOW', av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+GS = av_get('GS', av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+AAPL = av_get('AAPL', av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+SPY = av_get('SPY', av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+df = data.frame(timestamp = CRM[,'timestamp'], CRM = CRM[,'adjusted_close'], NOW = NOW[,'adjusted_close'],
+            GS = GS[,'adjusted_close'], AAPL = AAPL[,'adjusted_close'], SPY = SPY[, 'adjusted_close'])
+names(df) <- c('timestamp', 'CRM','NOW','GS','AAPL', 'SPY')
+write.csv(df,'df.csv')
+```
+
+
+## Load The Data (Need to Set the current directory as the working directory)
+```{r}
+df = read.csv('df.csv')
+df = df[,c('timestamp', 'CRM', 'NOW', 'GS', 'AAPL', 'SPY')]
+```
+
+
+## Calculate daily value of portfolio
+```{r}
+cash = 1000000
+n_CRM = round(cash * 0.9 / 4 / df[1,2], 0)
+n_NOW = round(cash * 0.9 / 4 / df[1,3], 0)
+n_GS = round(cash * 0.9 / 4 / df[1,4], 0)
+n_AAPL = round(cash * 0.9 / 4 / df[1,5], 0)
+cash = cash - n_CRM * df[1,2] - n_NOW * df[1,3] - n_GS * df[1,4] - n_AAPL * df[1,5]
+
+cash_sp = 1000000
+n_sp = round(cash_sp * 0.9 / df[1,6], 0)
+cash_sp = cash_sp - n_sp * df[1,6]
+df %>% mutate(CRM_return = CRM * n_CRM, NOW_return = NOW * n_NOW, GS_return = GS * n_GS, AAPL_return = AAPL * n_AAPL, cash = cash) %>%
+  mutate(Portfolio_Valuation = CRM_return + NOW_return + GS_return + AAPL_return + cash) %>%
+  mutate(Portfolio_return = (Portfolio_Valuation / lag(Portfolio_Valuation)) - 1) %>%
+  mutate(cash_sp = cash_sp, SP_valuation = SPY * n_sp + cash_sp) %>%
+  mutate(SP_return = (SP_valuation / lag(SP_valuation)) - 1)-> df_new
+df_new$timestamp = as.Date(df_new$timestamp)
+
+n_CRM
+n_NOW
+n_GS
+n_AAPL
+```
+
+## Sharpe ratio
+```{r}
+Rf = 0.01 / 250
+df_new %>% mutate(dummy = 1) %>% group_by(dummy) %>%
+  summarise(Portfolio_sharpe = (mean(Portfolio_return, na.rm = TRUE) - Rf) / sd(Portfolio_return, na.rm = TRUE),
+            SP_sharpe = (mean(SP_return, na.rm = TRUE) - Rf) / sd(SP_return, na.rm = TRUE),.groups = "drop")
+```
+
+## Plot of histogram of daily return
+```{r}
+ggplot(df_new, aes(Portfolio_return)) + geom_histogram(binwidth = 0.005) + theme(text = element_text(size=10))
+```
+
+## Total valuation, and relativity return for your investment portfolio and S&P
+```{r}
+ggplot(df_new, aes(timestamp)) + 
+  geom_line(aes(y = Portfolio_Valuation, colour = "Portfolio_Valuation")) + 
+  geom_line(aes(y = SP_valuation, colour = "SP_valuation"))
+df_new = mutate(df_new, portfolio_relative_return = Portfolio_Valuation / df_new[1,c('Portfolio_Valuation')] - 1,
+                sp_relative_return = SP_valuation / df_new[1, c('SP_valuation')] - 1)
+ggplot(df_new, aes(timestamp)) + 
+  geom_line(aes(y = portfolio_relative_return, colour = "portfolio_relative_return")) + 
+  geom_line(aes(y = sp_relative_return, colour = "sp_relative_return"))
+```
+
+## Plot relative valuation for the different allocation
+```{r}
+df_new %>% select(c(timestamp, CRM_return, NOW_return, GS_return, AAPL_return, cash)) %>% pivot_longer(cols = !timestamp) %>%
+  ggplot(.) + geom_area(aes(x = timestamp, y = value, fill = name), position = 'fill')
+```
+
+

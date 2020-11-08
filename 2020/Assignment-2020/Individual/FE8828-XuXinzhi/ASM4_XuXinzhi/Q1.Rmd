@@ -1,0 +1,123 @@
+---
+title: "FE8828 Assignment for Exploratory Data Analysis"
+author: "Xu Xinzhi <sub> <Email:XXU026@e.ntu.edu.sg> </sub>"
+date: "Oct 2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(conflicted)
+conflict_prefer("filter","dplyr")
+conflict_prefer("lag","dplyr")
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+*Note:
+- The first three findings are from last assigment with some additional improvements and comments.
+
+### Finding #1
+Find the mean balance with respect to whether people have housing.
+Plot in terms of age.
+```{r}
+df1 <- bank %>%
+  group_by(age,housing) %>%
+  summarise(mean_bal = mean(balance))%>%
+  # case_when is a function to deal multiple choices. 
+  mutate(age_group = case_when( 
+    age < 30 ~ "youth", 
+    age < 50 ~ "middle-age", 
+    age < 60 ~ "senior", 
+    TRUE ~ "elder" ))
+df1
+filter(df1,age >=20 & age <40) %>%
+ggplot(aes(x=age,y=mean_bal, fill=housing)) + geom_bar(stat="identity")
+filter(df1,age >=40 & age <60) %>%
+ggplot(aes(x=age,y=mean_bal, fill=housing)) + geom_bar(stat="identity")
+```
+We can see:
+
+- People aging from 20 to 40 have a slight tendency to have a larger balance, but whether people have housing has no influence on the balance.
+- People aging from 40 to 60 have no housing tend to have more balance than those who do not. And the overall mean balance in this age group is larger than people aging from 20 to 40.
+
+### Finding #2
+Use 1,2,3,0 to represent education level of primary, secondary, tertiary and unknown respectively.
+Prob means the probability of default in each education group.
+```{r}
+bank %>%
+  mutate(education = case_when(
+    education == "primary" ~ 1,
+    education == "secondary" ~ 2,
+    education == "tertiary" ~ 3,
+    education == "unknown" ~ 0
+  )) %>%
+  group_by(education, default)%>%
+  summarise(n = n()) %>%
+  mutate(prob = n / sum(n))
+ggplot(bank) +
+  geom_bar(aes(x = education, fill = default), position = "fill")+
+  ylim(0,0.1)
+#Because the percent of people with default record is too small, here I limit the ylim to 0-0.1 to have a clearer comparison between different education group.
+```
+We can see:
+
+- People with secondary education have a lager probability of default while people with tertiary education default with the lowest probability. 
+
+### Finding #3
+
+```{r}
+distinct(bank,education) 
+df <- bank %>%
+  group_by(education) %>%
+  filter(min_rank(balance) == 1 | min_rank(desc(balance)) == 1) %>%
+  arrange(education,balance) 
+df
+ggplot(df,aes(education,balance))+
+  geom_boxplot()
+```
+We can see:
+
+- The range of balance in terms of primary educated people is biggest.
+- People with tertiary education tend to have a higher balance and the their maximum balance is also much higher than the secondary one. 
+
+
+### Finding #4
+Find the relationship between duration and month
+```{r}
+group_by(bank,duration,month) %>% summarize(nn = n()) %>%
+  ggplot(.)+
+  geom_point(aes(duration,month,size=nn))+
+  scale_y_discrete(limit = rev(levels(factor(bank$month)))) #order 
+```
+We can see:
+
+- People have a shorter contact duration in Sep and March and have a more frequency contact in May, June and July.
+
+### Finding #5
+Find the distribution of balance 
+```{r}
+filter(bank, job == c("management", "services", "technician", "entrepreneur", "self-employed")) %>%
+  ggplot(aes(balance, color = job))+
+  geom_density()
+```
+
+### Finding #6
+Find the marital condition in different jobs except for students, the retired and unknown.
+```{r}
+distinct(bank,job)
+filter(bank, job == c("services","unemployed","management","blue-collar","self-employed","technician","entrepreneur","admin.","housemaid")) %>%
+ggplot(aes(x = job, fill = marital)) + 
+  geom_bar(position="fill") +   
+  theme(text = element_text(size=12), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+```
+We can see:
+
+- Housemaid are all married.
+- Administrators have a largest percentage of getting divorced and blue-collar has the second smallest relative probability of getting divorced.
+- People in the area of management hava the largest percentage of being single.
+

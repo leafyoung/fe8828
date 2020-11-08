@@ -1,0 +1,102 @@
+---
+title: "assignment 3"
+author: "LI Xinrui"
+date: "10/10/2020"
+output: html_document
+---
+
+```{r}
+library(readxl)
+df <- read_excel("~/Desktop/FE8828-LI Xinrui/工作簿1.xlsx", col_names = TRUE,
+                 col_types = c("date", "skip", "skip", 
+                               "numeric", "numeric", "skip", "numeric", 
+                               "numeric", "skip", "skip", "numeric", 
+                               "numeric", "skip", "numeric"))
+head(df)
+colnames(df)
+```
+```{r}
+library(conflicted) # help to resolve name conflicts
+library(tidyverse)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+```
+
+
+```{r}
+library(dplyr)
+c<-df%>%
+  select(Exp_Date,Strike,Bid...2,Ask...3,Open_Int...4)%>%
+  rename(Bid=Bid...2,Ask=Ask...3,Open_Int=Open_Int...4)%>%
+  mutate(OptionType="c",Underlying=1513.49,Today=as.Date("2020-10-09"))
+c
+```
+```{r}
+library(dplyr)
+p<-df%>%
+  select(Exp_Date,Strike,Bid...6,Ask...7,Open_Int...8)%>%
+  rename(Bid=Bid...6,Ask=Ask...7,Open_Int=Open_Int...8)%>%
+  mutate(OptionType="p",Underlying=1513.49,Today=as.Date("2020-10-09"))
+p
+```
+#P2.2
+```{r}
+df_sum<-bind_rows(c,p)
+df_sum
+colnames(df_sum)
+df_sum<-mutate(df_sum,Total_valuation=Open_Int*(Bid+Ask)/2)
+df_sum
+
+library(bizdays)
+
+```
+
+
+
+
+```{r}
+df_summ<-pivot_longer(df_sum,!Strike,names_to = "Type",values_to = "values")%>%
+  group_by(Strike)%>%
+  summarize(values=sum(values,na.rm=TRUE))%>%
+  mutate(Type="Total_valuation")%>%
+  pivot_wider(names_from = Type,values_from=values)%>%
+  inner_join(df_sum,.,by="Strike")
+rm(c)
+df_summ
+
+```
+#P2.3
+```{r}
+#for calls, strike < underlying. for puts, strike > underlying.)and calculate their total Open Interest.
+df_sum3<-bind_rows(
+  select(df_sum,Strike,Underlying,Open_Int,OptionType)%>%
+    mutate(dummy=ifelse((OptionType=="c")&(Strike<Underlying),1,0)),
+  select(df_sum,Strike,Underlying,Open_Int,OptionType)%>%
+    mutate(dummy=ifelse((OptionType=="p")&(Strike>Underlying),1,0)))%>%
+  filter(dummy==1)
+df_sum3
+sum(df_sum3$Open_Int,na.rm = TRUE)
+
+```
+
+
+```{r}
+library(fOptions)
+df_f<-df_sum %>% 
+  rowwise() %>% 
+  mutate(vol = GBSVolatility(price=((Ask+Bid)/2),TypeFlag=OptionType, X=Strike,S=Underlying, Time=as.numeric((as.Date("2020-12-18") - as.Date("2020-10-09")))/365, r = 0.03, b = 0)) %>% 
+  ungroup()
+df_f<-df_f%>%
+  select(Strike,Underlying,OptionType,vol)%>%
+  filter(((Strike<Underlying)&(OptionType=="p"))|((Strike>Underlying)&(OptionType=="c")))%>%
+  arrange(Strike)
+df_f
+  #((Strike<Underlying)&(OptionType=="p"))|((Strike>Underlying)&(OptionType=="c"))
+plot(df_f$Strike,df_f$vol) 
+```
+
+```{r}
+vol = GBSVolatility(price=38.4,TypeFlag="p", X=1360,S=1513.49, Time=as.numeric((as.Date("2020-10-09") - as.Date("2018-12-01")))/365, r = 0.03, b = 0)
+vol
+as.numeric((as.Date("2020-12-18") - as.Date("2020-10-09")))/365
+```

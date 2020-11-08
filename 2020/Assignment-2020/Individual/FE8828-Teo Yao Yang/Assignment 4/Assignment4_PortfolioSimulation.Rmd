@@ -1,0 +1,61 @@
+
+title: "FE8828 Assignment for Portfolio Analysis"
+author: "Yao Yang <sub> <Email:teoyaoyang@gmail.com> </sub>"
+date: "Oct 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggplot2)
+library(kableExtra)
+library(alphavantager)
+av_api_key("A9MXXEHPH926F3N3")
+if (FALSE) {
+  cpb <- av_get("CPB", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  ko <- av_get("KO", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  hsy <- av_get("HSY", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  kr <- av_get("KR", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  spy <- av_get("SPY", av_fun ="TIME_SERIES_DAILY_ADJUSTED")
+  data <- data.frame(cpb$timestamp,cpb$adjusted_close,ko$adjusted_close,hsy$adjusted_close,kr$adjusted_close,spy$adjusted_close)
+  colnames(data) <- c("date","cpb","ko","hsy","kr","spy")
+  saveRDS(data, file = "data.rds")
+}
+```
+
+# Analysis
+```{r}
+data <- readRDS('data/data.rds')
+data <- data %>% mutate(cpb_shares=round(900000/4/data$cpb[1]),ko_shares=round(900000/4/data$ko[1]),
+                        hsy_shares=round(900000/4/data$hsy[1]),
+                        kr_shares=round(900000/4/data$kr[1]))
+data <- data %>% mutate(cpb_value=cpb_shares*cpb,ko_value=ko_shares*ko,hsy_value=hsy_shares*hsy,
+                        kr_value=kr_shares*kr)
+cash <- vector()
+cash[1] <- 100000                
+for (i in 2:100){
+  cash[i]=cash[i-1]*(1.01^(1/250))
+}
+data <- cbind(data,cash)
+data <- data %>% mutate(valuation=cpb_value+ko_value+hsy_value+kr_value+cash,port_return=valuation/lag(valuation)-1,
+                        spy_return = spy/lag(spy)-1,port_index=valuation/valuation[1],spy_index=spy/spy[1],
+                        spy_valuation=spy_index*1000000)
+
+sharpe <- (mean(data$port_return, na.rm = TRUE) - (.01/250)) / sd(data$port_return, na.rm=TRUE)
+sharpe
+options(scipen = 999)
+ggplot(data,aes(port_return)) + geom_histogram() + labs(title="Histogram of daily returns")
+head(data)
+ggplot(data) + geom_line(aes(date,valuation, color="Port")) + geom_line(aes(date,spy_valuation, color="SPY")) +  labs(title="Valuation of portfolio vs SPY")
+ggplot(data) + geom_line(aes(date,spy_index, color="SPY return")) + geom_line(aes(date,port_index, color="Portfolio return")) + labs(title="Relative return of portfolio vs SPY (rebased to 1)")
+
+data <- data %>% mutate(stock_valuation=cpb_value+ko_value+hsy_value+kr_value, stock_percent=stock_valuation/valuation,
+                        cash_percent=cash/valuation)
+datanew <- data %>% select(date,cash_percent,stock_percent)
+data_long <- datanew %>% pivot_longer(.,2:3)
+ggplot(data_long, aes(date,value, fill = name)) +geom_bar(stat = 'identity') + coord_cartesian(ylim = c(.85, 1)) +
+  labs(title="Relative weighting of cash vs stock")
+
+```

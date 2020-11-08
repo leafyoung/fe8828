@@ -1,0 +1,170 @@
+---
+title: "assignment4__3"
+author: "Jiang Lihua"
+date: "2020/10/18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r data download}
+library(alphavantager)
+library(ggplot2)
+library(dplyr)
+av_api_key("J317PY07GDGI6M0K")
+df1<-av_get("MSFT",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+df2<-av_get("AAPL",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+df3<-av_get("BABA",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+df4<-av_get("NFLX",av_fun="TIME_SERIES_DAILY_ADJUSTED")
+sp<-av_get("SPY",av_fun = "TIME_SERIES_DAILY_ADJUSTED")
+save(df1,file="data/Assignment 4.Rdata")
+save(df2,file="data/Assignment 4.Rdata")
+save(df3,file="data/Assignment 4.Rdata")
+save(df4,file="data/Assignment 4.Rdata")
+save(sp,file="data/Assignment 4.Rdata")
+```
+
+
+```{r portfolio calculation}
+cash_money<-1000000*0.1
+msft_money<-(1000000*0.9)/4
+aapl_money<-(1000000*0.9)/4
+baba_money<-(1000000*0.9)/4
+nflx_money<-(1000000*0.9)/4
+msft_share<-round(msft_money/df1$adjusted_close[1])
+aapl_share<-round(aapl_money/df2$adjusted_close[1])
+baba_share<-round(baba_money/df3$adjusted_close[1])
+nflx_share<-round(nflx_money/df4$adjusted_close[1])
+rf<-0.01/250
+value<-rep(0,100)
+return<-rep(0,99)
+msft_value<-rep(0,100)
+aapl_value<-rep(0,100)
+baba_value<-rep(0,100)
+nflx_value<-rep(0,100)
+cash_value<-rep(0,100)
+for(i in 1:100){
+  value[i]<-msft_share*df1$adjusted_close[i]+aapl_share*df2$adjusted_close[i]+baba_share*df3$adjusted_close[i]+nflx_share*df4$adjusted_close[i]+cash_money*((1+rf)^i)
+  msft_value[i]<-msft_share*df1$adjusted_close[i]
+  aapl_value[i]<-aapl_share*df2$adjusted_close[i]
+  baba_value[i]<-baba_share*df3$adjusted_close[i]
+  nflx_value[i]<-nflx_share*df4$adjusted_close[i]
+  cash_value[i]<-cash_money*((1+rf)^i)
+}
+value
+rela_return<-rep(0,100)
+msft_rela_ret<-rep(0,100)
+aapl_rela_ret<-rep(0,100)
+baba_rela_ret<-rep(0,100)
+nflx_rela_ret<-rep(0,100)
+cash_rela_ret<-rep(0,100)
+for(i in 1:100){
+  rela_return[i]<-(value[i]/value[1]-1)
+  msft_rela_ret[i]<-(msft_value[i]/msft_value[1]-1)
+  aapl_rela_ret[i]<-(aapl_value[i]/aapl_value[1]-1)
+  baba_rela_ret[i]<-(baba_value[i]/baba_value[1]-1)
+  nflx_rela_ret[i]<-(nflx_value[i]/nflx_value[1]-1)
+  cash_rela_ret[i]<-(cash_value[i]/cash_value[1]-1)
+}
+msft_rela_ret
+aapl_rela_ret
+baba_rela_ret
+nflx_rela_ret
+cash_rela_ret
+rela_return
+
+for(i in 1:99){
+  return[i]<-value[i+1]/value[i]-1
+}
+return
+hist(return)
+```
+
+
+```{r S&P calculation}
+sp_share<-round(1000000*0.9/sp$adjusted_close[1])
+sp_value<-rep(0,100)
+for(i in 1:100){
+  sp_value[i]<-cash_money*((1+rf)^i)+sp_share*sp$adjusted_close[i]
+}
+sp_value
+sp_rela_ret<-rep(0,100)
+for(i in 1:100){
+  sp_rela_ret[i]<-(sp_value[i]/sp_value[1]-1)
+}
+sp_return<-rep(0,99)
+for(i in 1:99){
+  sp_return[i]<-sp_value[i+1]/sp_value[i]-1
+}
+sp_return
+hist(sp_return)
+```
+
+
+```{r sharp ratio calculation}
+mean_return<-mean(return)
+sigma_return<-sd(return)
+sharpe_ratio_port<-(mean_return-rf)/sigma_return
+sharpe_ratio_port
+
+mean_sp_return<-mean(sp_return)
+sigma_sp_return<-sd(sp_return)
+sharpe_ratio_sd_<-(mean_sp_return-rf)/sigma_sp_return
+sharpe_ratio_sd_
+```
+
+
+```{r total valuation ploting}
+x<-as.Date(df1$timestamp)
+y<-value
+z<-sp_value
+val<-data.frame(Time=x,PortValue=y,SPValue=z)
+val
+matplot(x,val,col=2:3,type = "l",lty = 3)
+```
+
+
+```{r relative return ploting}
+x<-as.Date(df1$timestamp)
+rel_re<-data.frame(Time=x,PortRelaReturn=rela_return,SPRelaReturn=sp_rela_ret)
+rel_re
+matplot(x,rel_re,col=2:3,type = "l",lty = 1)
+```
+
+
+```{r relative valuation allocation chart}
+library(tidyr)
+msft_rela_value<-rep(0,100)
+aapl_rela_value<-rep(0,100)
+baba_rela_value<-rep(0,100)
+nflx_rela_value<-rep(0,100)
+cash_rela_value<-rep(0,100)
+for(i in 1:100){
+  msft_rela_value[i]<-msft_value[i]/value[i]
+  aapl_rela_value[i]<-aapl_value[i]/value[i]
+  baba_rela_value[i]<-baba_value[i]/value[i]
+  nflx_rela_value[i]<-nflx_value[i]/value[i]
+  cash_rela_value[i]<-cash_value[i]/value[i]
+}
+
+df <- tibble(Date = x,
+       Valuation_MSFT = msft_rela_value,
+       Valuation_AAPL = aapl_rela_value,
+       Valuation_BABA = baba_rela_value,
+       Valuation_NFLX = nflx_rela_value,
+       Valuation_CASH = cash_rela_value,
+       )
+View(df)
+df %>%
+  pivot_longer(Valuation_MSFT:Valuation_CASH, names_to = "Component", values_to = 'Value') %>%
+  ggplot(.) + geom_area(aes(Date, Value, fill = Component),position = 'fill')
+
+```

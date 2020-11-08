@@ -1,0 +1,67 @@
+---
+title: "Q1_Secretary Problem"
+author: "Shen Lu"
+date: "9/25/2020"
+output: html_document
+---
+Step 1
+```{r}
+library(purrr)
+make_choice <- function(N, split_number)
+{
+  isN <- 0
+  n <- 100000
+  for(i in c(1:n))
+  {
+    input_list <- sample(c(1:N), N, replace = F)
+    evaluation <- input_list[1:split_number]
+    selection <- input_list[-(1:split_number)]
+  
+    bestNum<- max(evaluation)
+    
+    for(q in selection)
+    {
+      if(q >= bestNum)
+      {
+        if(q == N)
+        {
+          isN = isN + 1
+        }
+        break
+      }
+    }
+  }
+  isN <- isN/ n
+  isN
+}
+```
+Step 2
+```{r}
+find_optimal <- function(N)
+{
+  optimal <- 0
+  MaxP <- 0
+  for(x in c(1:round(N/2)))
+  {
+    {
+      
+      Max <- make_choice(N, x)
+      if(Max >= MaxP)
+      {
+        MaxP <- Max
+        optimal <- x
+      }
+    }
+  }
+  print("the optimal evaluantion group size is:")
+  print(optimal)
+  print("the largest probability of getting N is:")
+  print(MaxP)
+}
+```
+Step 3
+```{r}
+find_optimal(3)
+find_optimal(10)
+find_optimal(100)
+```

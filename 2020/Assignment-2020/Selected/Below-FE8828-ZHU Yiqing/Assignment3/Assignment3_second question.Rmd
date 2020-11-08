@@ -1,0 +1,98 @@
+---
+title: "Assignment3_second question"
+author: "Zhu Yiqing"
+date: "2020/10/11"
+output: html_document
+---
+```{r setup, include=FALSE}
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+library(readxl)
+library(bizdays)
+library(ggplot2)
+library(fOptions)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+option <- read_excel("Option.xlsx",sheet = 1) 
+```
+
+## Data Cleaning
+```{r}
+call_option <- option[,1:8]
+put_option <- cbind(option[,1],option[,9:14], option[,8]) 
+# Here I choose to change it in R rather than in Excel to practice my data cleaning
+# Here due to duplicated tags, R add number after original tags
+# Convert it to original one in separate dataframes
+for (i in 2:7){
+  length <- nchar(names(call_option[i]))
+  names(call_option)[i] <- substr(names(call_option)[i], start = 1, stop = length-4) 
+}
+for (i in 1:8){
+  names(put_option)[i] <- names(call_option)[i]
+}
+call_option %>%
+  mutate(OptionType = 'c') %>%
+  mutate(Underlying = 1515.22) %>%
+  mutate(Today = '2020-10-09') -> call_option
+# The last character of $Change is a space, stopping it from converting to number
+# This has to be modified
+for (i in 1:nrow(call_option)){
+  call_option$Change[i] <- substr(call_option$Change[i], 1, (nchar(call_option$Change[i])-1))
+}
+call_option %>%
+  mutate_at(.vars = vars(Last, Change, Bid, Ask, Volume, `Open Int.`, Strike, Underlying), .fun = as.numeric) %>%
+  mutate_at(.vars = vars(Today, `Exp. Date`), .fun=as.Date)-> call_option
+
+# Similar steps with put_option
+put_option %>%
+  mutate(OptionType = 'p') %>%
+  mutate(Underlying = 1515.22) %>%
+  mutate(Today = '2020-10-09') -> put_option
+for (i in 1:nrow(put_option)){
+  put_option$Change[i] <- substr(put_option$Change[i], 1, (nchar(put_option$Change[i])-1))
+}
+put_option %>%
+  mutate_at(.vars = vars(Last, Change, Bid, Ask, Volume, `Open Int.`, Strike, Underlying), .fun = as.numeric) %>%
+  mutate_at(.vars = vars(Today, `Exp. Date`), .fun=as.Date)-> put_option
+
+total_option <- rbind(call_option, put_option)
+```
+
+## Calculate the total valuation of 1) call alone, 2) put alone, 3) call and put.
+
+```{r}
+total_option %>%
+  dplyr::filter(OptionType == 'c') %>%
+  summarise(total =sum(`Open Int.`*(Bid + Ask)/2, na.rm = TRUE)) -> call_sum
+total_option %>%
+  dplyr::filter(OptionType == 'p') %>%
+  summarise(total =sum(`Open Int.`*(Bid + Ask)/2, na.rm = TRUE)) -> put_sum
+total_option %>%
+  summarise(total =sum(`Open Int.`*(Bid + Ask)/2, na.rm = TRUE)) -> total_sum
+```
+
+## Find those in the money (for calls, strike < underlying. for puts, strike > underlying.) 
+## Calculate their total Open Interest.
+
+```{r}
+total_option %>%
+  dplyr::filter(((OptionType == "c") & (Strike < Underlying)) | ((OptionType == "p") & (Strike > Underlying))) %>%
+  summarise(total_interest = sum(`Open Int.`, na.rm = TRUE)) -> total_sum2
+```
+
+## Plot the volatility curve, strike v.s. vol. 
+## For strike < current price, use puts’ price; for strike > current price, use calls’ price.
+
+```{r}
+total_option %>%
+  dplyr::filter(((Strike < Underlying) & (OptionType == "p")) | ((Strike > Underlying) & (OptionType == "c"))) %>%
+  rowwise() %>%
+  mutate(Volatility = GBSVolatility((Bid/2+Ask/2), OptionType, Underlying, Strike, 
+                                    as.numeric(`Exp. Date` - Today)/365, r=0.03, b=0)) -> new_total_option
+ggplot(new_total_option, aes(Strike,Volatility,fill=Volatility)) +geom_line(stat="identity") +
+  xlab("Strike") + ylab("Volatility")
+```
+
+
+

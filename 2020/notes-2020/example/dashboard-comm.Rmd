@@ -53,9 +53,7 @@ dateRangeInput("dateRange",
                end   = "2017-03-30")
 
 ratio_indicator <- reactive({
-  
-  Quandl.api_key("JyeshGuNBGDbbaYoNURG")
-  
+  # Quandl does not need a key for free data.
   start_date <- format(input$dateRange[1])
   end_date <- format(input$dateRange[2])
   

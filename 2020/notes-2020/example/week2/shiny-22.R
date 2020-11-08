@@ -6,12 +6,19 @@ ui <- fluidPage(
   plotOutput("p1")
 )
 
+# input$go -> output$p1
+# (input$num)
+
+
 server <- function(input, output, session) {
   observeEvent(input$go, {
     output$p1 <- renderPlot({
-      # hist(rnorm(isolate(input$num)))
-      # To make code in good clarity, I re-write above one line into below two lines
-      # with additional variable input_num to hold the value from input$num.
+      # Concise code
+      # hist(rnorm(isolate(input$num)))      
+      
+      # Detailed code
+      # To make code in good clarity, I re-write above one line as below.
+      # Additional variable input_num to hold the value from input$num.
       input_num <- isolate(input$num)
       hist(rnorm(input_num))
     }) 

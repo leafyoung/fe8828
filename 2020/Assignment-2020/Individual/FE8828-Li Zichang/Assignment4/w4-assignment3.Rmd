@@ -1,0 +1,105 @@
+---
+title: "3as"
+author: "Li Zichang"
+date: "2020/10/17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load the data
+## Stock choose: df1 -- BAC; df2 -- COG; df3 -- ADBE; df4 -- HSIC; df5 -- SPY
+```{r}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+library(alphavantager)
+library(ggplot2)
+
+df1 <- readRDS(file = "df1.Rds")
+df2 <- readRDS(file = "df2.Rds")
+df3 <- readRDS(file = "df3.Rds")
+df4 <- readRDS(file = "df4.Rds")
+df5 <- readRDS(file = "df5.Rds")
+
+```
+
+
+# Determine the investment plan of portfolio
+```{r}
+tcash <- 1000000
+each_invc <- (tcash - 100000) / 4
+n1 <- round(each_invc / df1$adjusted_close[1]) # For BAC
+n2 <- round(each_invc / df2$adjusted_close[1]) # For COG
+n3 <- round(each_invc / df3$adjusted_close[1]) # For ADBE
+n4 <- round(each_invc / df4$adjusted_close[1]) # For HSIC
+nsp <- round(each_invc * 4 / df5$adjusted_close[1]) # For SPY
+
+# cash reserve
+cashr1 <- tcash - (n1 * df1$adjusted_close[1] + n2 * df2$adjusted_close[1] + n3 * df3$adjusted_close[1] + n4 * df4$adjusted_close[1])
+cashr2 <- tcash - nsp * df5$adjusted_close[1]
+
+## daf is stock portfolio; 
+## daspy is S&P portfolio
+daf <- tibble(timestamp = df1$timestamp, BAC = df1$adjusted_close, COG = df2$adjusted_close, ADBE = df3$adjusted_close, HSIC = df4$adjusted_close, cash = cashr1)
+daf <- mutate(daf, value = n1 * BAC + n2 * COG + n3 * ADBE + n4 * HSIC + cash, return = value / lag(value) - 1)
+
+# Sharpe ratio1 - portfolio 
+# summarise(daf, ratio1 = (mean(return, na.rm = TRUE) - 0.01/250) / sqrt(sum((return - mean_r)^2, na.rm = TRUE) / 99) )
+# daf
+
+daspy <- tibble(timestamp = df5$timestamp, SPY = df5$adjusted_close, cash = cashr2) 
+daspy <- mutate(daspy, value = nsp * SPY + cash, return = value / lag(value) - 1, mean_r = mean(return, na.rm = TRUE))
+
+# Sharpe ratio2 - S&P
+summarise(daspy, ratio2 = (mean(return, na.rm = TRUE) - 0.01/250) / sqrt(sum((return - mean_r)^2, na.rm = TRUE) / 99) )
+
+# Histogram of daily return
+ggplot(daf, aes(return)) + 
+  geom_histogram()
+
+ggplot(daspy, aes(return)) + 
+  geom_histogram() 
+```
+
+
+```{r}
+# Total valuation
+# Portfolio value is the green line
+ggplot() + 
+  geom_line(data = daf, aes(timestamp, value), color = "green") +
+  geom_line(data = daspy, aes(timestamp, value)) 
+
+
+# Relative return
+# Portfolio return is the green line
+real_r_por <- daf %>% 
+  mutate(rela_r = value / daf$value[1] - 1) 
+
+real_r_spy <- daspy %>% 
+  mutate(rela_r = value / daspy$value[1] - 1) 
+
+ggplot() +
+  geom_line(data = real_r_por, aes(timestamp, rela_r), color = "green") +
+  geom_line(data = real_r_spy, aes(timestamp, rela_r))
+  
+```
+
+
+## Relative value for different allocation (4 stocks and cash)
+```{r}
+daf %>%
+  mutate(BAC_rel_value = n1 * BAC, COG_rel_value = n2 * COG, ADBE_rel_value = n3 * ADBE, HSIC_rel_value = n4 * HSIC) %>%
+  select(timestamp, BAC_rel_value, COG_rel_value, ADBE_rel_value, HSIC_rel_value, cash) %>%
+  pivot_longer(cols = BAC_rel_value:cash) %>%
+  ggplot() + geom_area(aes(x = timestamp, y = value, fill = name), position = "fill") 
+
+
+#  ggplot() + geom_area(aes(x = timestamp, y = value, fill = name)) 
+  
+
+```
+

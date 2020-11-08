@@ -1,0 +1,91 @@
+---
+title: "Bank data analysis charts"
+author: "Andrea"
+date: "10/8/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(bizdays)
+library(ggthemes)
+# Use echo = TRUE for assignment is an exception, so code is visible.
+knitr::opts_chunk$set(echo = TRUE, fig.align="center", collapse = TRUE, cache = TRUE)
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+```
+
+# Insight 1
+```{r}
+ggplot(bank) +
+geom_point(aes(age, balance, color = marital),alpha=0.5) +
+  theme_economist_white() +
+  theme(text = element_text(size=8),legend.position="bottom")
+# By observation, the largest proportion of the bank's clients are married, followed by single then divorced and we can confirm this through: group_by(bank,marital) %>% summarise (n = n())
+# Only 2 individuals have bank balances exceeding $40,000 and they are married 
+# Single clients make up a majority of the youngest age group up to age 35 while married clients make up majority of the 35 - 70 age group and divorced clients are distributed across 30s to 80s
+# Majority of the clients have bank balances below $10,000
+```
+# Insight 2
+```{r}
+ggplot(data = bank, mapping = aes(x = reorder(job, balance, FUN = mean), fill = loan)) +
+geom_bar() + 
+theme_bw() +
+theme(text = element_text(size=8),
+axis.text.x = element_text(angle = 45, hjust = 1)) 
+# Jobs are sorted from lowest (blue-collar) to highest (retired) average bank balance
+# Blue collar workers have the highest number of personal loans while students have the lowest number of personal loans (other than unknown)
+# The most common career among the bank's clients is management while the least common career is students (other than unknown) 
+```
+
+# Insight 3
+```{r}
+ggplot(data = bank) +
+geom_point(mapping = aes(x = age, y = balance, color = contact)) +
+facet_grid( ~ y) + theme(text = element_text(size=8))
+# Majority of the bank's clients have not subscribed to a term deposit, especially higher net worth clients (bank balance > $10,000), while most of the clients who have subscribed to the term deposit have bank balances below approximately $8,000
+# Among clients who have subscribed, most of their contact communication type is cellular 
+# Clients with the highest bank balances can be communicated through cellular means 
+# Among older clients (age > 70), more of their contact comunication types are telephone compared to cellular
+```
+
+# Insight 4
+```{r}
+ggplot(bank %>% filter(default == "yes"), aes(age, color = marital, fill = marital, alpha = 0.2)) +
+geom_density() + theme(text = element_text(size=8),legend.position = "left")
+# Among clients who have a history of default, single clients are disproportionately younger while married clients are disproportionately older, and divorced clients are distributed more towards both ends of the age spectrum
+# Among clients who have a history of default, most of them are single (largest area), followed by married then divorced
+```
+
+# Insight 5
+```{r}
+ggplot(data = bank, mapping = aes(x = reorder(marital, age, FUN = mean), fill = education)) +
+geom_bar() +
+scale_x_discrete(limit =
+rev(levels(reorder(bank$marital, bank$age, FUN = mean)))) +
+geom_line(aes(x = marital, y = age)) +
+geom_point(data = group_by(bank, marital) %>%
+summarize(age = mean(age)) %>% ungroup,
+aes(x = marital, y = age), inherit.aes = FALSE) +
+xlab("Job sorted according to\nMedian age\n(Top - younger)") +
+coord_flip() + theme(text = element_text(size=8))
+# Single clients have the lowest median age, followed by married then divorced clients
+# Majority of the bank's clients are married, followed by single then divorced
+# Among single clients, most have a secondary education level. The same goes for married clients and divorced clients.
+# For all 3 groups (single, married, divorced), those with only a primary education level are a minority
+# There are fewer single clients with primary education than divorced clients with primary education
+# There are more single clients with secondary and tertiary education than divorced clients with secondary and tertiary education
+```
+
+# Insight 6
+```{r}
+group_by(bank, job, age) %>% summarise(nn = n(), default_count = sum(ifelse(default == "no",0,1)))  %>% ggplot(.) + geom_point(aes(age,job,size = nn, color = default_count)) +
+scale_y_discrete(limit = rev(levels(factor(bank$job))))
+# Only blue collar workers aged 30 have had a default count of 3, while clients with all the other careers have not defaulted more than twice 
+# None of the unemployed clients, students, self-employed clients, retirees and housemaids have defaulted more than once
+# Many clients in management aged below 50 appear to have defaulted once in their credit history
+# Retirees are disproportionately older than clients in other careers
+# Majority of the bank's clients are in blue-collar, management and technician jobs
+```
+
+

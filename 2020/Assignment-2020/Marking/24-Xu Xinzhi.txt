@@ -1,0 +1,42 @@
+Xu Xinzhi
+
+# A1 Shiny Web
+
+- Good.
+
+# A2.1 Secretary
+
+- Good with a testing code.
+
+
+# A2.2 Bond Schedule
+
+- Wrong intepretation of the problem:
+  Tenor input becomes the interval of coupons. For 3 in tenor, it prints schdule table with 2023, 2026, ..., 2050.
+  It should be the length of bond duration. For 3 in tenor, it means bond shall mature by 2023.
+
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done. Good effort for producing the findings.
+
+
+# A4.3 Portfolio
+
+The data for "S&P500" stops at 2020-04-01.
+
+df_500 <- av_get("S&P500",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+
+This timeseries has been recycled here. That's why there is no error in filling a longer dataframe with a shorter sequence.
+As a result, your figure has a sharp drop in the middle.
+
+  mutate(val_TSLA = no_t0*TSLA, val_AAPL = no_a0*AAPL, val_MSFT = no_m0*MSFT, val_EBAY = no_e0*EBAY,
+         val_SP500 = no_s0*SP500) %>%
+
+Correction: Replace the ticker with SPY
+
+df_500 <- av_get("SPY",av_fun = "TIME_SERIES_DAILY_ADJUSTED",outputsize="compact")
+
+There is difference between index and tradeable. The tradeable for S&P500 index is SPY ETF. There are many ETF for S&P. SPY is the most popular one.
+

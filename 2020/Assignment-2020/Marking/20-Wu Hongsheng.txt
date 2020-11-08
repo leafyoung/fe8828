@@ -1,0 +1,23 @@
+Wu Hongsheng
+
+# A1 Shiny Web
+
+- Good. We will back to travel after COVID.
+
+# A2.1 Secretary
+
+- Good handling of such case
+
+  if(max(sel_group) < best_eval){
+    target <- 0
+  }
+
+
+# A2.3 Stock data
+
+- Good for the error handling
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done!

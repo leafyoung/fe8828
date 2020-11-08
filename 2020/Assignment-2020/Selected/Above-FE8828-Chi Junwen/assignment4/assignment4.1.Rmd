@@ -1,0 +1,58 @@
+---
+title: "assignment4.1"
+author: "Chi Junwen"
+date: "2020/10/11"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(conflicted)
+library(tidyverse)
+conflict_prefer("lag", "dplyr")
+conflict_prefer("filter", "dplyr")
+# bank <- read.csv("https://goo.gl/PBQnBt", sep = ";")
+options(dplyr.summarise.inform = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Finding#1
+
+Regarding the result of telemarketing, the blue-collar tends to be most reluctant with a success rate of only 7.3% while the retired has the highest success rate at around 23.5%.
+
+```{r}
+
+ggplot(bank)+geom_bar(aes(x=job,fill=y),position="fill")+theme(axis.text.x = element_text(angle=45,hjust=1))+scale_x_discrete(limit=levels(factor(bank$job)))
+```
+
+## Finding#2
+The second finding is that most of the single people are relatively young, and most of the married people are at middle age from 30-50 while divorced people locate more uniformly. Also from the boxplot we can discovered that the distribution of single and married people show a trend of right-skewed while the divorced is more like a normal distribution.
+
+```{r}
+group_by(bank,marital,age)%>%summarise(nn=n())%>%ggplot()+geom_point(aes(marital,age,size=nn))+coord_flip()
+ggplot(bank)+geom_boxplot(aes(marital,age))+coord_flip()
+```
+## Finding#3
+As for the impact on housing rate caused by education, we can get that secondary people has the highest housing rate. The unknown, namely the unresponsive one may be caused by low education level which people feel reluctant to tell.
+
+```{r}
+ggplot(bank)+geom_bar(aes(education,fill=housing),position="fill")
+```
+## Finding#4
+we can see from the chart below that it seems technician, management and admin have a relatively higher divorce rate, also we can people having these three jobs has relatively higher balance in bank.
+
+```{r}
+mutate(bank,balance=balance/100)%>%ggplot()+geom_bar(aes(job,fill=marital))+geom_point(data=.%>%group_by(job,balance)%>%summarise(nn=n()),aes(job,balance,size=nn))+geom_point(data=group_by(bank,job)%>%summarise(median=median(balance/100))%>%ungroup,aes(job,median,color="red"),inherit.aes=F)+theme(axis.text.x = element_text(angle=45,hjust=1))+coord_flip()
+```
+## Finding#5
+From finding4, we will be curious about whether the balance will affect the divorce rate. As shown in the chart below，people with higher balance will have a relatively low divorce rate. Poor couple are more likely to divorce.
+
+```{r}
+bank%>%group_by(balance)%>%summarise(divorcerate=sum(ifelse(marital=="divorced",1,0))/n())%>%ggplot()+geom_smooth(aes(balance,divorcerate),method="gam")
+```
+## Finding#6
+The last finding is that people having default experience before have relatively lower balance than people not.
+
+```{r}
+group_by(bank,default,balance)%>%summarise(nn=n())%>%ggplot()+geom_point(aes(default,balance,size=nn))+coord_flip()
+```

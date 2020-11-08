@@ -1,0 +1,18 @@
+Ge Weitong
+
+# A1 Shiny Web
+
+- Good.
+
+# A2.1 Secretary
+
+- Good use of success as flag and return the last item as if !sucess
+
+# A2.2 Bond Schedule
+
+- Good. Minor issue: Have a bug when Tenor = 1 and Frequency = A
+
+# A3.1 Bank data analysis
+# A4.1 Bank data analysis
+
+- Well done! Good efforts for producing the findings.
